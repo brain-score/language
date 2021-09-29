@@ -1,0 +1,166 @@
+################################################################
+#### meta #### 
+# for help, contact asathe @ mit.edu
+################################################################
+version: 2.1
+executors:
+  docker-publisher:
+    environment:
+      IMAGE_NAME: aloxatel/langbrainscore
+    docker:
+      - image: circleci/buildpack-deps:stretch
+
+
+################################################################
+#### definitions of jobs ####
+################################################################
+jobs:
+
+  #### build docker image using Dockerfile ####
+  build:
+    executor: docker-publisher
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: false # not allowed in free tier
+      - run:
+          name: Build Docker image
+          command: docker build -t $IMAGE_NAME:latest .
+      - run:
+          name: Archive Docker image
+          command: docker save -o image.tar $IMAGE_NAME
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./image.tar
+
+  #### upload docker image to Docker hub ####
+  publish-latest:
+    executor: docker-publisher
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - setup_remote_docker:
+          docker_layer_caching: false # not allowed in free tier
+      - run:
+          name: Load archived Docker image
+          command: docker load -i /tmp/workspace/image.tar
+      - run:
+          name: Publish Docker Image to Docker Hub
+          command: |
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker push $IMAGE_NAME:latest
+
+#### run pytest unittests ####
+  test:
+    docker:
+      - image: aloxatel/langbrainscore
+    steps:
+      - checkout
+      #- attach_workspace:
+      #    at: html
+      - run:
+          name: Install and configure dependencies
+          command: make install || poetry install
+      - run:
+          name: Run pytest (unit testing), code coverage, and mypy (static type-checking)
+          command: |
+            make test && mv test-results html/ || ./run_test_coverage.sh
+      - store_artifacts:
+          path: html/
+      - store_test_results:
+          path: html/test-results
+      - persist_to_workspace:
+          root: html/
+          paths: 
+            - '*'
+            - html/test-results
+            - html/test-results/codecov
+            - html/test-results/typing
+
+  #### run pdoc3 to generate documentation ####
+  docs-build:
+    docker:
+      - image: aloxatel/langbrainscore
+    steps:
+      - checkout
+      - attach_workspace:
+          at: html
+      - run:
+          name: Build docs
+          command: make docs || pdoc3 --html langbrainscore --force 
+      - run:
+          name: Unpack docs into root folder of gh-pages
+          command: mv html/langbrainscore/* html/
+      - persist_to_workspace:
+          root: html/
+          paths: '*'
+
+  #### deploy documentation to GitHub pages ####
+  docs-deploy:
+    docker:
+      - image: node:8.10.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: html
+      - add_ssh_keys:
+          fingerprints:
+            - "fb:84:b8:ea:a9:ac:bb:86:e8:77:44:09:92:f1:11:13"
+      - run:
+          name: Install and configure dependencies
+          command: |
+            npm install -g --silent gh-pages@2.0.1
+            git config user.email "pdoc3@circleci.com"
+            git config user.name "asathe"
+      - run:
+          name: List directories
+          command: ls -lah html/ html/test-results
+      - run:
+          name: Deploy docs to gh-pages branch
+          command: gh-pages --dotfiles --message "[skip ci] Docs updates" --dist html -r git@github.com:language-brainscore/lang-brainscore-fuzzy-potato
+
+  
+
+################################################################
+#### definitions and constraints for workflows ####
+################################################################
+workflows:
+  version: 2
+  #### related to building docker image ####
+  docker:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: circle-ci
+      - publish-latest:
+          requires:
+            - build
+          filters:
+            branches:
+              only: circle-ci
+
+  #### related to testing ####
+  tests_and_docs:
+    jobs:
+      - test:
+          filters:
+            branches:
+              ignore:
+                - circle-ci
+  #### related to documentation ####
+  # docs:
+    # jobs:
+      - docs-build:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+      - docs-deploy:
+          requires:
+            - docs-build
+          filters:
+            branches:
+              only: main 
