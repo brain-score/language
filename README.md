@@ -25,7 +25,7 @@ within this project). -->
 
 1. In order to set up your environment, obtain poetry, a lightweight python package, on your machine.
     ```bash
-    curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
+    curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
     ```
 1. [*Optional*] If you want to have a dedicated `conda` environment for this project, create one now (or use an existing one)
     ```bash
