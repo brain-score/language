@@ -45,7 +45,7 @@ class HFEncoder(CompEncoder):
 class PTEncoder(CompEncoder):
     def __init__(self, ptid) -> None:
         super().__init__(self)
-        self._ptid = hfid
+        self._ptid = ptid
 
     def encode(self, X: np.array) -> np.array:
         pass
