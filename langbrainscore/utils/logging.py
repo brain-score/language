@@ -5,10 +5,14 @@ from time import time
 from tqdm import tqdm
 from sys import stderr, stdout
 
+from colorama import init, Fore, Back, Style
+
+init(autoreset=True)
 _START_TIME = time()
 def START_TIME(): return _START_TIME
 
-def log(message, type='INFO'):
+def log(message, type='INFO', **kwargs):
+    # if kwargs is not None:
 
     class T:
         HEADER = '\033[95m'
