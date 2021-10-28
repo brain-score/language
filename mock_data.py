@@ -1,3 +1,14 @@
+########################################################################
+# ######## Language brain-score example API usage notebook
+########################################################################
+
+# we will use this notebook as an end-user example of how LBS may be used, assuming most of the LBS functionality is already implemented (whereas it may not be).
+# In the meantime, the LBS interface will implement placeholder mock methods that either return `NotImplemented`, or otherwise return mock values consistent with types and dimensionality of what we would expect.
+# Step 1 towards this direction is to create a mock dataset matching a real-world dataset in size and dimensionality.
+
+# The Pereira (2018) [[pdf]](https://www.nature.com/articles/s41467-018-03068-4.pdf) [[data]](https://evlab.mit.edu/sites/default/files/documents/index2.html) [[supp OSF]](https://osf.io/crwz7/) dataset consists of `627 = (384 + 243)` stimuli
+
+
 import random
 
 import numpy as np
@@ -8,58 +19,91 @@ from langbrainscore.utils.logging import log
 
 import pdb
 
-# ### Language brain-score example API usage notebook
-# 
-# we will use this notebook as an end-user example of how LBS may be used, assuming most of the LBS functionality is already implemented (whereas it may not be).
-# In the meantime, the LBS interface will implement placeholder mock methods that either return `NotImplemented`, or otherwise return mock values consistent with types and dimensionality of what we would expect.
-# Step 1 towards this direction is to create a mock dataset matching a real-world dataset in size and dimensionality.
-# ## Generate mock dataset
 
-# The Pereira (2018) [[pdf]](https://www.nature.com/articles/s41467-018-03068-4.pdf) [[data]](https://evlab.mit.edu/sites/default/files/documents/index2.html) [[supp OSF]](https://osf.io/crwz7/) dataset consists of `627 = (384 + 243)` stimuli
+
+########################################################################
+# ######## Create mock dataset
+# #### outcome: a DataSet instance that contains the data we will
+# ####          randomly generate and use to test LBS
+########################################################################
 
 # define the size and dimensionality of mock data to create
 num_stimuli = 627
 num_neuroid = 10_000
+
 # now randomly generate the mock data
+log(f'creating mock data with {num_stimuli} stimuli and {num_neuroid} neuroids')
 recorded_data = np.random.rand(num_stimuli, num_neuroid)
 
-log('creating mock data')
-print(recorded_data[:5,:5])
-recorded_data.shape
+log(f'recorded_data[:5,:5] == {recorded_data[:5,:5]}, of shape {recorded_data.shape}')
 
+# also define metadata because the DataSet class requires it
+# for now, pretend like each subject contributes 100 neuroids worth of data per stimulus
 recording_metadata = pd.DataFrame(dict(neuroid_id=[i for i in range(num_neuroid)],
                                        subj_id=[i % 100 for i in range(num_neuroid)]))
 
-
+# create random string stimuli
 stimuli = [''.join(random.sample('abcdefghijklmnopqrstuvwxiz'*20, 7)) for _ in recorded_data]
-print(len(stimuli), stimuli[:4], '...')
+log(f'num. of stimuli generated: {len(stimuli)}, example: {stimuli[:4]} ...')
 
+# instantiate a mock dataset object with associated neuroimaging recordings as well as metadata
+mock_neuro_dataset = lbs.dataset.BrainDataset(stimuli, recorded_data, recording_metadata=recording_metadata)
 
-# instantiate a mock dataset 
-fake_neuro_dataset = lbs.dataset.BrainDataset(stimuli, recorded_data, recording_metadata=recording_metadata)
+########################################################################
+# ######## Create mock brain encoder
+# #### outcome: a BrainEncoder instance that implements .encode()
+########################################################################
 
 mock_brain_encoder = lbs.interface.encoder.BrainEncoder()
 
-brain_encoded_data = mock_brain_encoder.encode(fake_neuro_dataset)
-print(brain_encoded_data, brain_encoded_data.shape)
 
-# pdb.set_trace()
+########################################################################
+# ######## Obtain encoder representation of mock data
+# #### outcome: return value of .encode()
+########################################################################
 
-log('fitting a mapping')
+# expect to obtain data of shape 627 x 10_000
+brain_encoded_data = mock_brain_encoder.encode(mock_neuro_dataset)
+log(f'created brain-encoded data of shape: {brain_encoded_data.shape}')
 
+ANN_encoded_data = brain_encoded_data + np.random.rand(*brain_encoded_data.shape) / 2
+# pretend that an ANN outputted 768-dim vector for each of the 627 stimuli
+ANN_encoded_data = ANN_encoded_data[:, :768]
+log(f'created ANN-encoded data of shape: {ANN_encoded_data.shape}')
+
+
+########################################################################
+# ######## Fit a mapping between two encodings
+# #### outcome: return k [y_pred, y_test] arrays in case of k-fold CV, 
+# ####          else return single [y, y_hat] pair
+########################################################################
+
+log('fitting a mapping using ridge regression')
 ridge_mapping = lbs.mapping.Mapping('ridge')
+output = ridge_mapping.map_cv(ANN_encoded_data, brain_encoded_data)
 
-output = ridge_mapping.map_cv(brain_encoded_data + np.random.rand(*brain_encoded_data.shape), 
-                              brain_encoded_data[:,:400])
+log(f'number of splits: {len(output[:])}, shape of split 0 y_hat: {output[0][0].shape}, shape of split 0 y_test: {output[0][1].shape}')
 
-print(output[0], output[0][0].shape, output[0][1].shape)
 
-metric = lbs.metrics.pearson_r.pearson_r
+########################################################################
+# ######## Compute a distance metric between one encoding mapper to the
+#           other encoding, and the true values of the target encoding
+# #### outcome: return d scalars each corresponding to a neuroid of the
+# ####          target encoding
+########################################################################
+
 
 all_Y_pred = output[0][0]
 all_Y_test = output[0][1]
 
-
 log('calculating pearson r')
+metric = lbs.metrics.pearson_r.pearson_r
 pearson_rs = [metric(all_Y_pred[:, i], all_Y_test[:, i]) for i in range(all_Y_pred.shape[1])]
-print(pearson_rs[:10], '...', len(pearson_rs))
+
+log(f'number of metric scalars computed: {len(pearson_rs)}; examples: {pearson_rs[:10]}')
+
+
+
+########################################################################
+# FIN.
+########################################################################
