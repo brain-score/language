@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 import langbrainscore as lbs
+from langbrainscore.utils.logging import log
 
 import pdb
 
@@ -21,6 +22,8 @@ num_stimuli = 627
 num_neuroid = 10_000
 # now randomly generate the mock data
 recorded_data = np.random.rand(num_stimuli, num_neuroid)
+
+log('creating mock data')
 print(recorded_data[:5,:5])
 recorded_data.shape
 
@@ -42,7 +45,7 @@ print(brain_encoded_data, brain_encoded_data.shape)
 
 # pdb.set_trace()
 
-print('fitting a mapping')
+log('fitting a mapping')
 
 ridge_mapping = lbs.mapping.Mapping('ridge')
 
@@ -56,7 +59,7 @@ metric = lbs.metrics.pearson_r.pearson_r
 all_Y_pred = output[0][0]
 all_Y_test = output[0][1]
 
-# print(all_Y_pred)
 
+log('calculating pearson r')
 pearson_rs = [metric(all_Y_pred[:, i], all_Y_test[:, i]) for i in range(all_Y_pred.shape[1])]
-print(pearson_rs, len(pearson_rs))
+print(pearson_rs[:10], '...', len(pearson_rs))
