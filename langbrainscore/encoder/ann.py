@@ -1,6 +1,6 @@
 
+import numpy as np
 from langbrainscore.interface.encoder import ANNEncoder
-
 
 class HFEncoder(ANNEncoder):
     _model_name_or_path = None
@@ -10,11 +10,12 @@ class HFEncoder(ANNEncoder):
         self._pretrained_model_name_or_path = pretrained_model_name_or_path
 
         from transformers import AutoModel, AutoConfig, AutoTokenizer
-        config = AutoConfig.from_pretrained(self._pretrained_model_name_or_path)
+        self.config = AutoConfig.from_pretrained(self._pretrained_model_name_or_path)
+        self.tokenizer = AutoTokenizer.from_pretrained(self._pretrained_model_name_or_path)
+        self.model = AutoModel.from_pretrained(self._pretrained_model_name_or_path, config=self.config)
 
     def encode(self, X: np.array) -> np.array:
         pass
-
 
 
 
