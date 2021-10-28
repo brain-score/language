@@ -26,6 +26,7 @@ import pdb
 # #### outcome: a DataSet instance that contains the data we will
 # ####          randomly generate and use to test LBS
 ########################################################################
+log('.' * 79, type='EMPH')
 
 # define the size and dimensionality of mock data to create
 num_stimuli = 627
@@ -49,11 +50,14 @@ log(f'num. of stimuli generated: {len(stimuli)}, example: {stimuli[:4]} ...')
 # instantiate a mock dataset object with associated neuroimaging recordings as well as metadata
 mock_neuro_dataset = lbs.dataset.BrainDataset(stimuli, recorded_data, recording_metadata=recording_metadata)
 
+
 ########################################################################
 # ######## Create mock brain encoder
 # #### outcome: a BrainEncoder instance that implements .encode()
 ########################################################################
+log('.' * 79, type='EMPH')
 
+log('creating mock brain encoder')
 mock_brain_encoder = lbs.interface.encoder.BrainEncoder()
 
 
@@ -61,6 +65,7 @@ mock_brain_encoder = lbs.interface.encoder.BrainEncoder()
 # ######## Obtain encoder representation of mock data
 # #### outcome: return value of .encode()
 ########################################################################
+log('.' * 79, type='EMPH')
 
 # expect to obtain data of shape 627 x 10_000
 brain_encoded_data = mock_brain_encoder.encode(mock_neuro_dataset)
@@ -77,6 +82,7 @@ log(f'created ANN-encoded data of shape: {ANN_encoded_data.shape}')
 # #### outcome: return k [y_pred, y_test] arrays in case of k-fold CV, 
 # ####          else return single [y, y_hat] pair
 ########################################################################
+log('.' * 79, type='EMPH')
 
 log('fitting a mapping using ridge regression')
 ridge_mapping = lbs.mapping.Mapping('ridge')
@@ -91,6 +97,7 @@ log(f'number of splits: {len(output[:])}, shape of split 0 y_hat: {output[0][0].
 # #### outcome: return d scalars each corresponding to a neuroid of the
 # ####          target encoding
 ########################################################################
+log('.' * 79, type='EMPH')
 
 
 all_Y_pred = output[0][0]
@@ -107,3 +114,5 @@ log(f'number of metric scalars computed: {len(pearson_rs)}; examples: {pearson_r
 ########################################################################
 # FIN.
 ########################################################################
+log('.' * 79, type='EMPH')
+log('finished.')
