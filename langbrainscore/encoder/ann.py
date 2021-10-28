@@ -2,7 +2,7 @@
 import numpy as np
 from langbrainscore.interface.encoder import ANNEncoder
 
-class HFEncoder(ANNEncoder):
+class HuggingFaceEncoder(ANNEncoder):
     _model_name_or_path = None
 
     def __init__(self, pretrained_model_name_or_path) -> None:
