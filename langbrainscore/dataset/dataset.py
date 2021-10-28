@@ -11,7 +11,6 @@ class Dataset:
                 #  stimuli_path: str = None,
                  stim_metadata: typing.Union[pd.DataFrame] = None) -> None:
 
-        print('setting stimuli in "DataSet"!')
         self._stimuli = stimuli
 
         if stim_metadata:
@@ -62,17 +61,20 @@ class BrainDataset(Dataset):
             raise ValueError(f'forgot to pass recording metadata?')
 
         # make sure the data dimensions make sense
-        num_stimuli = len(self.stimuli)
-        num_neuroids = self._recorded_data.shape[1]
+        self.num_stimuli = len(self.stimuli)
+        self.num_neuroids = self._recorded_data.shape[1]
 
         # recorded_data contains a row per stimulus
-        assert num_stimuli == self._recorded_data.shape[0]
+        assert self.num_stimuli == self._recorded_data.shape[0]
         # recording_metadata contains a row per neuroid
-        assert num_neuroids == self._recording_metadata.shape[0]
+        assert self.num_neuroids == self._recording_metadata.shape[0]
 
 
     @property
-    def recorded_data(self):
+    def recorded_data(self) -> np.array:
+        if type(self._recorded_data) not in {np.array, np.ndarray, }:
+            # TODO: standardize output format for the recorded data 
+            raise NotImplementedError(f'recorded_data of type {type(self._recorded_data)} cannot be returned')
         return self._recorded_data
 
     @property
