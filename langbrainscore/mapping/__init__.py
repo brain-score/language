@@ -31,11 +31,9 @@ class Mapping:
             [type]: [description]
         """        
 
-        ## Store ##
         alpha_across_splits = []
         train_indices = []
         test_indices = []
-
 
         # if no groups are provided, use simple k splits
         if groups is None:
@@ -44,7 +42,6 @@ class Mapping:
             np.random.shuffle(groups)
 
         kf = KFold(n_splits=k_folds, shuffle=True, random_state=42)
-
         
         X_test_collection = []
         Y_test_collection = []
@@ -65,13 +62,12 @@ class Mapping:
             Y_test_collection.append(y_test)
             Y_pred_collection.append(y_pred)
 
-        return Y_test_collection, Y_pred_collection
+        return Y_pred_collection, Y_test_collection
 
 
     def map_full(self, source, target) -> None:
         '''returns a fitted model
         '''
-
 
         
     def save_model(self) -> None:
