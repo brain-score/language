@@ -45,7 +45,7 @@ class BrainEncoder(Encoder):
         """        
         df = pd.DataFrame(dataset.recorded_data)
         df.columns = pd.MultiIndex.from_tuples([(neuroid_id, 0) for neuroid_id in range(dataset.num_neuroids)])
-        return df
+        return df.to_numpy()
 
 
 class ANNEncoder(Encoder):
