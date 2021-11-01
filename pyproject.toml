@@ -4,6 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["EvLab, MIT BCS <evlab-core@mit.edu>"]
 license = "MIT"
+exclude = ["langbrainscore/data/"]
 
 [tool.poetry.dependencies]
 # langbrainscore = {path = "./langbrainscore", develop = true}
