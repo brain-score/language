@@ -1,15 +1,57 @@
-# lang-brainscore
-A lang-brainscore repository for initial dirty development; select code will be migrated to a lean and clean more permanent repo in the future.
-But for now:
+# langbrainscore`[-fuzzy-potato]`
+_the suffix `-fuzzy-potato` (arbitrarily chosen) indicates this project is in the `alpha` stage of software development._
+
+## what is it?
+Provides a library for systematic comparison of encoder representations in the most general sense.
+An `encoder` is an entity that `encode`s linguistic input (e.g., text), and returns a representation of it
+(typically in high-dimensional space).
+We envision encoders to be either human brains or artificial neural networks (ANNs).
+Humans see textual stimuli on a screen which leads to certain computations in the brain,
+which can be measured using several proxies, such as fMRI, EEG, ECOG. Similarly, ANNs process textual input
+in the form of vectors, and output either some sort of embeddings or latent vectors, all
+meant to be useful representations of input for downstream tasks.
+
+## why should I care?
+In this project, and in this general family of research projects, we want to evaluate the similarity between
+various ways of generating representations of input stimuli. We are also interested in eventually understanding
+what kind of representations the brain employs, and how we can go closer to these, and building models helps
+us travel in that direction.
+### Neuroscientists/Cognitive Scientisits
+may be interested in developing better models of brain activation to understand what kind of stimuli drive 
+response in certain parts of the brain. While similar efforts exist in the vision domain, in this project,
+we target language processing in the brain. We provide ways to use several existing fMRI datasets as benchmarks
+for computing a language-brainscore. We also provide ways to work with your own data and test ANN models against
+this data.
+
+### Natural Language Processing (NLP)
+researchers may be interested in comparing how similar representations are across various ANN models,
+particularly models they develop or study. They may be also interested in creating increasingly more
+cognitively plausible models of natural language understanding. Whereas language-brainscore is not a direct
+measure of cognitive plausibility of ANN models, it provides a possible direction to optimize towards.
+
+
+
+# Usage
+(make sure to install the package first. jump to the install section of this README.)
+
+This project has examples hosted on binder. Simply click on the binder launch button to view a Jupyter notebook
+with example usage.
+Alternatively, take a peek at the `examples/` directory for scripts as well as notebooks.
+
+
+## As a library
+```
+import langbrainscore as lbs
+```
+## CLI usage
 
 
 # How to Obtain this Project?
-
-## As an end user, or in another project
+## As an end user, or as a library for use in another project
 ### Installation
-Install this project using PyPI! [`NotImplemented`]
+Install this project using PyPI (not currently up-to-date)
 ```bash
-python3 -m pip install lang-brainscore-fuzzy-potato
+python3 -m pip install langbrainscore
 ```
 
 ## Development
@@ -18,21 +60,20 @@ python3 -m pip install lang-brainscore-fuzzy-potato
 This project uses [`poetry`](https://python-poetry.org/) for dependency management and packaging
 for development purposes (you don't need poetry to install it as a library/package from PyPI). 
 Why? `poetry` allows running the application in a virtual environment while abstracting away *which* 
-virtual environment you use, e.g.  `conda` or `virtualenv`, (or one of many other less commonly used 
-alternatives). 
+virtual environment you use, e.g.  `conda` or `virtualenv`, (or one of other less common alternatives). 
 <!-- In order to use `poetry` within a conda environment, follow step 2 below (and always activate the conda environment prior to using poetry 
 within this project). -->
 
-1. In order to set up your environment, obtain poetry, a lightweight python package, on your machine.
+1. In order to set up your environment, obtain [poetry](https://python-poetry.org/docs/master/#installation), a lightweight python package, on your machine.
     ```bash
     curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
     ```
-1. [*Optional*] If you want to have a dedicated `conda` environment for this project, create one now (or use an existing one)
+2. [*Optional*] If you want to have a dedicated `conda` environment for this project, create one now (or use an existing one)
     ```bash
     conda env create -n lbsfuzpot
     conda activate lbsfuzpot
     ```
-1. Now use `poetry` to install dependencies
+3. Now use `poetry` to install dependencies
     ```bash
     poetry install
     ```
@@ -40,15 +81,14 @@ within this project). -->
 
 There are multiple ways you can do this:
 1. Run the project inside a `poetry shell`!
-    - This activates a virtual environment if one isn't already active. If you would like to use a conda environment, activate it: `conda activate lbsfuzpot`
+    - This activates a virtual environment if one isn't already active. 
+    If you would like to use a conda environment, activate it first: `conda activate fuzzy-potato`
     ```bash
     poetry shell
     ```
-1. Run the project using `poetry run`: if executing a single command, `poetry run` will 
+2. Run the project using `poetry run`: if executing a single command, `poetry run` will 
 spawn the environment, run it, and exit, returning you to your original environment.
     ```bash
     poetry run python -m langbrainscore -h
     ```
 
-
-# Usage
