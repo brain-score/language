@@ -29,11 +29,17 @@ class BrainEncoder(Encoder):
     _dataset: langbrainscore.dataset.Dataset = None
 
     def __init__(self, dataset = None) -> None:
-        ...
+        if not isinstance(dataset, langbrainscore.dataset.BrainDataset):
+            raise TypeError(f"dataset must be of type `langbrainscore.dataset.BrainDataset`, not {type(dataset)}")
+        self._dataset = dataset
+
+    @property
+    def dataset(self) -> langbrainscore.dataset.Dataset:
+        return self._dataset
 
     # @typing.overload
     # def encode(self, stimuli: typing.Union[np.array, list]): ...
-    def encode(self, dataset: 'langbrainscore.dataset.BrainDataset'):
+    def encode(self, dataset: 'langbrainscore.dataset.BrainDataset' = None):
         """returns an "encoding" of stimuli (passed in as a BrainDataset)
 
         Args:
@@ -43,8 +49,9 @@ class BrainEncoder(Encoder):
             pd.DataFrame: neural recordings for each stimulus, multi-indexed 
                           by layer (trivially just 1 layer)
         """        
-        df = pd.DataFrame(dataset.recorded_data)
-        df.columns = pd.MultiIndex.from_tuples([(neuroid_id, 0) for neuroid_id in range(dataset.num_neuroids)])
+        df = pd.DataFrame((dataset or self.dataset).recorded_data)
+        df.columns = pd.MultiIndex.from_tuples([(neuroid_id, 0)
+                                                for neuroid_id in range((dataset or self.dataset).num_neuroids)])
         return df.to_numpy()
 
 
