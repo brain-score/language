@@ -38,12 +38,20 @@ This project has examples hosted on binder. Simply click on the binder launch bu
 with example usage.
 Alternatively, take a peek at the `examples/` directory for scripts as well as notebooks.
 
-
-## As a library
-```
+Following is a schematic of the library usage. Note that it is not a minimal working example (MWE). You will
+find MWEs in `examples/`.
+```python
 import langbrainscore as lbs
+
+gpt2 = lbs.encoder.HuggingFaceEncoder(pretrained_model_name_or_path='gpt2')
+
+pereira18_data = ...
+brain = lbs.encoder.BrainEncoder(pereira18_data)
+
+for encoder in [brain, gpt2]:
+    print(encoder, encoder.encode(pereira18_data).shape)
+
 ```
-## CLI usage
 
 
 # How to Obtain this Project?
@@ -79,16 +87,13 @@ within this project). -->
     ```
 ### Running Scripts & Notebooks
 
-There are multiple ways you can do this:
 1. Run the project inside a `poetry shell`!
     - This activates a virtual environment if one isn't already active. 
     If you would like to use a conda environment, activate it first: `conda activate fuzzy-potato`
     ```bash
     poetry shell
     ```
-2. Run the project using `poetry run`: if executing a single command, `poetry run` will 
-spawn the environment, run it, and exit, returning you to your original environment.
-    ```bash
-    poetry run python -m langbrainscore -h
-    ```
-
+    Then proceed to run scripts as normal
+    
+2. Alternatively (not recommended), use the `pyproject.toml` file to create your own environment
+   from scratch.
