@@ -153,3 +153,8 @@ ts = dataset_xr.sel(
 
 
 sep()
+
+log(f'starting an interpreter so you can play with XArray objects!')
+log(f'you have available: [dataset_xr, neuro_xr, stim_xr, time_xr, data_xr]')
+import IPython
+IPython.embed()
