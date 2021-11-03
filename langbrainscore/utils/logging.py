@@ -11,9 +11,9 @@ init(autoreset=True)
 _START_TIME = time()
 def START_TIME(): return _START_TIME
 
-def log(message, type='INFO', **kwargs):
+def log(message, cmap='INFO', type=None, **kwargs):
     # if kwargs is not None:
-
+    _message = str(message)
     class T:
         HEADER = '\033[95m'
         OKBLUE = '\033[94m'
@@ -25,19 +25,19 @@ def log(message, type='INFO', **kwargs):
         BOLD = '\033[1m'
         UNDERLINE = '\033[4m'
 
-    if type == 'INFO':
-        c = T.OKCYAN
-    elif type == 'WARN':
+    if cmap == 'INFO':
+        c = T.OKGREEN
+    elif cmap == 'WARN':
         c = T.BOLD + T.WARNING
-    elif type == 'ERR':
+    elif cmap == 'ERR':
         c = '\n' + T.BOLD + T.FAIL
     else:
         c = T.OKBLUE
 
     timestamp = f'{time() - START_TIME():.2f}s'
-    lines = textwrap.wrap(message+T.ENDC,
+    lines = textwrap.wrap(_message+T.ENDC,
                           width=120,
-                          initial_indent=c + '%'*4 + f' [{type} @ {timestamp}] ',
-                          subsequent_indent='.'*20+' ')
+                          initial_indent=c + '%'*4 + f' [{type or cmap} @ {timestamp}] ',
+                          subsequent_indent='.  '*7+'')
     tqdm.write('\n'.join(lines), file=stderr)
     # print(*lines, sep='\n', file=stderr)
