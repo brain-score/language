@@ -53,7 +53,7 @@ class BrainDataset(Dataset):
         super().__init__(stimuli, stimuli_metadata)
         self._recorded_data = recorded_data
     
-        if not recording_metadata is None: 
+        if recording_metadata is not None: 
           # ^-- may not be necessary; users should always provide subject_ids
           # for cross-validation 
             self._recording_metadata = recording_metadata
