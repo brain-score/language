@@ -89,8 +89,8 @@ neuro_meta_pd = pd.DataFrame({"subject": subjects, "roi": rois})
 log(f'Let\'s initialize a DataArray based on object: {typeshapeinfo(neuro_meta_pd, "neuro_meta_pd")}')
 neuro_xr = xr.DataArray(
     neuro_meta_pd,
-    dims=("neuroid", *neuro_meta_pd.columns), #"neuro_meta"),
-    coords={"neuroid": neuroid, **{col: neuro_meta_pd[col] for col in neuro_meta_pd.columns}, #"neuro_meta": neuro_meta_pd.columns
+    dims=("neuroid", "neuro_meta"),
+    coords={"neuroid": neuroid, "neuro_meta": neuro_meta_pd.columns
             },
 )
 log(f'we obtained: {typeshapeinfo(neuro_xr, "neuro_xr")} which looks like')
@@ -150,3 +150,6 @@ ts = dataset_xr.sel(
         (dataset_xr.time.loc[:, "is_in_window"] == True), :
     ].timeid,
 ).data.values.squeeze()
+
+
+sep()
