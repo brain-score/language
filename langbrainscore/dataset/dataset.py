@@ -30,6 +30,10 @@ class Dataset:
         return self._xr_dataset.stimuli
 
 
+# TODO: we should implement the packaging into a xarray dataset all in here ^ and below, not expect a pre-packaged xarray.
+# we will minimally require only stimuli and (below:) recorded data, and then construct an xarray internally
+# NOTE: this is to protect users from the low-level details of our data packaging.
+
 class BrainDataset(Dataset):
     '''
     A subclass of `Dataset` to support storage and retrieval of brain data.
@@ -50,10 +54,11 @@ class BrainDataset(Dataset):
     _recording_metadata = None
 
     def __init__(self,
-                 stimuli: typing.Union[list, pd.DataFrame, np.array],
-                 recorded_data: typing.Union[np.ndarray, pd.DataFrame, str],
-                 stimuli_metadata: typing.Union[pd.DataFrame, str] = None,
-                 recording_metadata: typing.Union[pd.DataFrame, str] = None) -> None:
+                #  stimuli: typing.Union[list, pd.DataFrame, np.array],
+                #  recorded_data: typing.Union[np.ndarray, pd.DataFrame, str],
+                #  stimuli_metadata: typing.Union[pd.DataFrame, str] = None,
+                #  recording_metadata: typing.Union[pd.DataFrame, str] = None
+                ) -> None:
                  
         # TODOs for the (distant) future:
         # scipy.io.loadmat stuf
