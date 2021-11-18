@@ -9,6 +9,7 @@ class Dataset:
     _stim_metadata = None
 
     def __init__(self, xr_dataset: xr.Dataset) -> None:
+        # TODO: the below is no longer true
         """initializer method that accepts an xarray with at least the following 
             core coordinates: sampleid, neuroid, timeid
 
@@ -59,29 +60,30 @@ class BrainDataset(Dataset):
                 #  stimuli_metadata: typing.Union[pd.DataFrame, str] = None,
                 #  recording_metadata: typing.Union[pd.DataFrame, str] = None
                 ) -> None:
-                 
+        pass
+
         # TODOs for the (distant) future:
         # scipy.io.loadmat stuf
         # h5py 2 GB limit issue
         
-        super().__init__(stimuli, stimuli_metadata)
-        self._recorded_data = recorded_data
+        # super().__init__()
+        # self._recorded_data = recorded_data
     
-        if recording_metadata is not None: 
-          # ^-- may not be necessary; users should always provide subject_ids
-          # for cross-validation 
-            self._recording_metadata = recording_metadata
-        else:
-            raise ValueError(f'forgot to pass recording metadata?')
+        # if recording_metadata is not None: 
+        #   # ^-- may not be necessary; users should always provide subject_ids
+        #   # for cross-validation 
+        #     self._recording_metadata = recording_metadata
+        # else:
+        #     raise ValueError(f'forgot to pass recording metadata?')
 
-        # make sure the data dimensions make sense
-        self.num_stimuli = len(self.stimuli)
-        self.num_neuroids = self._recorded_data.shape[1]
+        # # make sure the data dimensions make sense
+        # self.num_stimuli = len(self.stimuli)
+        # self.num_neuroids = self._recorded_data.shape[1]
 
-        # recorded_data contains a row per stimulus
-        assert self.num_stimuli == self._recorded_data.shape[0]
-        # recording_metadata contains a row per neuroid
-        assert self.num_neuroids == self._recording_metadata.shape[0]
+        # # recorded_data contains a row per stimulus
+        # assert self.num_stimuli == self._recorded_data.shape[0]
+        # # recording_metadata contains a row per neuroid
+        # assert self.num_neuroids == self._recording_metadata.shape[0]
 
 
     @property
