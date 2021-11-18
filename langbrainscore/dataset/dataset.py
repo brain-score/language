@@ -1,24 +1,33 @@
 import typing
 import numpy as np
 import pandas as pd
+import xarray as xr
 
 class Dataset:
     _stimuli_path = None
     _stimuli = None
     _stim_metadata = None
 
-    def __init__(self, stimuli: typing.Union[list, np.array, pd.DataFrame], 
-                #  stimuli_path: str = None,
-                 stim_metadata: typing.Union[pd.DataFrame] = None) -> None:
+    def __init__(self, xr_dataset: xr.Dataset) -> None:
+        """initializer method that accepts an xarray with at least the following 
+            core coordinates: sampleid, neuroid, timeid
 
-        self._stimuli = stimuli
+            https://docs.google.com/document/d/10U9cPphFQdXcCDQtq-yTqbB_jLa-k4hy5pe9VoD08Sg/edit?usp=sharing
 
-        if stim_metadata:
-            self._stim_metadata = stim_metadata
+        Args:
+            xr_dataset (xr.Dataset): Xarray dataset object with minimal core dimensions
+        """        
+        # set the internal `_xr_dataset` reference to the one passed in to this method 
+        self._xr_dataset = xr_dataset
 
     @property
-    def stimuli(self):
-        return self._stimuli
+    def stimuli(self) -> typing.Union[np.ndarray, xr.DataArray]:
+        """getter method that returns an ndarray-like object of stimuli
+
+        Returns:
+            typing.Union[np.ndarray, xr.DataArray]: array-like object containing the stimuli from the dataset
+        """        
+        return self._xr_dataset.stimuli
 
 
 class BrainDataset(Dataset):

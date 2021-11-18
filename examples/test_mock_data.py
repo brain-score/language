@@ -76,6 +76,7 @@ xr_dataset = xr.DataArray(
         "neuroid": np.arange(recorded_data.shape[1]),
         "timeid": np.arange(recorded_data.shape[2]),
         "stimuli": ("sampleid", stimuli),
+        "sent_identifier": ("sampleid", [f'mycorpus.{i:0>5}' for i in range(num_stimuli)]),
         "experiment": ("sampleid", experiment),
         "passage": ("sampleid", passage),
         "subject": ("neuroid", recording_metadata["subj_id"]),
@@ -86,7 +87,12 @@ xr_dataset = xr.DataArray(
 # instantiate a mock dataset object with associated neuroimaging recordings as well as metadata
 mock_neuro_dataset = lbs.dataset.BrainDataset(xr_dataset)
 
+log(f'stimuli: {mock_neuro_dataset.sitmuli()}')
+
+
 # EVERYTHING AFTER HERE WILL BREAK
+
+raise
 
 ########################################################################
 # ######## Create mock brain encoder
