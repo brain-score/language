@@ -30,3 +30,7 @@ def pearson_r(x, y):
 
     r, p = scipy.stats.pearsonr(x, y)
     return r
+
+def pearson_r_nd(X, Y):
+    assert X.shape == Y.shape
+    return np.diag(np.corrcoef(X.T,Y.T)[X.shape[1]:,:X.shape[1]])
