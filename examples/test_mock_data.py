@@ -85,9 +85,9 @@ xr_dataset = xr.DataArray(
 ).to_dataset(name="data")
 
 # instantiate a mock dataset object with associated neuroimaging recordings as well as metadata
-mock_neuro_dataset = lbs.dataset.BrainDataset(xr_dataset)
+mock_neuro_dataset = lbs.dataset.Dataset(xr_dataset)
 
-log(f'stimuli: {mock_neuro_dataset.sitmuli()}')
+log(f'stimuli: {mock_neuro_dataset.stimuli.values}')
 
 
 # EVERYTHING AFTER HERE WILL BREAK
