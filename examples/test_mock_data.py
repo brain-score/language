@@ -18,6 +18,8 @@ import pandas as pd
 import xarray as xr
 from langbrainscore.utils.logging import log
 
+import IPython
+
 ########################################################################
 # ######## Create mock dataset
 # #### outcome: a DataSet instance that contains the data we will
@@ -48,7 +50,7 @@ recording_metadata = pd.DataFrame(
 # create random string stimuli
 stimuli = np.array(
     [
-        "".join(random.sample("abcdefghijklmnopqrstuvwxiz" * 20, 7))
+        "".join(random.sample("abcdefghijklmnopqrstuvwxiz aeiou aeiou" * 20, 10))
         for _ in recorded_data
     ]
 )
@@ -90,9 +92,6 @@ mock_neuro_dataset = lbs.dataset.Dataset(xr_dataset)
 log(f'stimuli: {mock_neuro_dataset.stimuli.values}')
 
 
-# EVERYTHING AFTER HERE WILL BREAK
-
-raise
 
 ########################################################################
 # ######## Create mock brain encoder
@@ -101,7 +100,8 @@ raise
 log("." * 79, type="WARN")
 
 log("creating mock brain encoder")
-mock_brain_encoder = lbs.interface.encoder.BrainEncoder()
+mock_brain_encoder = lbs.interface.encoder.BrainEncoder(mock_neuro_dataset)
+
 
 
 ########################################################################
@@ -110,14 +110,21 @@ mock_brain_encoder = lbs.interface.encoder.BrainEncoder()
 ########################################################################
 log("." * 79, type="WARN")
 
+
+
+
 # expect to obtain data of shape 627 x 10_000
 brain_encoded_data = mock_brain_encoder.encode(mock_neuro_dataset)
-log(f"created brain-encoded data of shape: {brain_encoded_data.shape}")
+log(f"created brain-encoded data of shape: {brain_encoded_data.dims}")
 
-ANN_encoded_data = brain_encoded_data + np.random.rand(*brain_encoded_data.shape) / 2
+
+ANN_encoded_data = brain_encoded_data + np.random.rand(*brain_encoded_data.dims.values()) / 2
 # pretend that an ANN outputted 768-dim vector for each of the 627 stimuli
-ANN_encoded_data = ANN_encoded_data[:, :768]
-log(f"created ANN-encoded data of shape: {ANN_encoded_data.shape}")
+
+IPython.embed()
+
+ANN_encoded_data = ANN_encoded_data.sel(neuroid=slice(0, 768)) # [:, :768]
+log(f"created ANN-encoded data of shape: {ANN_encoded_data.dims}")
 
 
 ########################################################################

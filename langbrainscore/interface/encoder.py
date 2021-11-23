@@ -29,8 +29,8 @@ class BrainEncoder(Encoder):
     _dataset: langbrainscore.dataset.Dataset = None
 
     def __init__(self, dataset = None) -> None:
-        if not isinstance(dataset, langbrainscore.dataset.BrainDataset):
-            raise TypeError(f"dataset must be of type `langbrainscore.dataset.BrainDataset`, not {type(dataset)}")
+        # if not isinstance(dataset, langbrainscore.dataset.BrainDataset):
+        #     raise TypeError(f"dataset must be of type `langbrainscore.dataset.BrainDataset`, not {type(dataset)}")
         self._dataset = dataset
 
     @property
@@ -39,7 +39,7 @@ class BrainEncoder(Encoder):
 
     # @typing.overload
     # def encode(self, stimuli: typing.Union[np.array, list]): ...
-    def encode(self, dataset: 'langbrainscore.dataset.BrainDataset' = None):
+    def encode(self, dataset: 'langbrainscore.dataset.BrainDataSet' = None):
         """returns an "encoding" of stimuli (passed in as a BrainDataset)
 
         Args:
@@ -49,10 +49,16 @@ class BrainEncoder(Encoder):
             pd.DataFrame: neural recordings for each stimulus, multi-indexed 
                           by layer (trivially just 1 layer)
         """        
-        df = pd.DataFrame((dataset or self.dataset).recorded_data)
-        df.columns = pd.MultiIndex.from_tuples([(neuroid_id, 0)
-                                                for neuroid_id in range((dataset or self.dataset).num_neuroids)])
-        return df.to_numpy()
+        
+        dataset = dataset or self.dataset
+
+        if (timeid_dims := dataset._dataset.dims['timeid']) > 1:
+            return dataset._dataset.mean('timeid')
+        elif timeid_dims == 1:
+            return dataset._dataset.squeeze('timeid')
+        else:
+            raise ValueError(f'timeid has invalid shape {timeid_dims}')
+
 
 
 class ANNEncoder(Encoder):
@@ -73,6 +79,5 @@ class ANNEncoder(Encoder):
         """        
         ...
 
-
-        # df = pd.DataFrame(dataset)
-        # df.columns = pd.MultiIndex.from_tuples([(neuroid_id, 0) for neuroid_id in range(dataset.num_neuroids)])
+        raise NotImplementedError
+        

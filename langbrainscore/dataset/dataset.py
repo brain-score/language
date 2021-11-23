@@ -21,6 +21,15 @@ class Dataset:
         # set the internal `_xr_dataset` reference to the one passed in to this method 
         self._xr_dataset = xr_dataset
 
+
+    @property
+    def _dataset(self):
+        '''
+        returns the internal xarray dataset object. use with caution.
+        '''
+        return self._xr_dataset
+
+
     @property
     def stimuli(self) -> typing.Union[np.ndarray, xr.DataArray]:
         """getter method that returns an ndarray-like object of stimuli
@@ -29,6 +38,12 @@ class Dataset:
             typing.Union[np.ndarray, xr.DataArray]: array-like object containing the stimuli from the dataset
         """        
         return self._xr_dataset.stimuli
+
+    @property
+    def dims(self) -> tuple:
+        '''
+        '''
+        return self._xr_dataset.dims
 
 
 # TODO: we should implement the packaging into a xarray dataset all in here ^ and below, not expect a pre-packaged xarray.
