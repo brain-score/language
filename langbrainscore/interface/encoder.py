@@ -69,7 +69,10 @@ class ANNEncoder(Encoder):
 
     def encode(self, dataset: 'langbrainscore.dataset.DataSet'):
         """[summary]
-
+        
+        # Todo: Arguments: embedding method, lower-casing, punctuation (potentially: standardization, outlier removal?)
+                Link to HF, only load model of interest 
+        
         Args:
             stimuli (langbrainscore.dataset.DataSet): [description]
 
