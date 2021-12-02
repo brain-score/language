@@ -70,8 +70,14 @@ class ANNEncoder(Encoder):
     def encode(self, dataset: 'langbrainscore.dataset.DataSet'):
         """[summary]
         
-        # Todo: Arguments: embedding method, lower-casing, punctuation (potentially: standardization, outlier removal?)
-                Link to HF, only load model of interest 
+        # Todo: Arguments: 
+        Embedding method (emb_method): last-tok, mean-tok, median-tok, all-tok, 
+        
+        Casing (case): lower, upper, None (no edits)
+        Punctuation (punc): strip-all, None
+        Punctuation exceptions, i.e. what NOT to strip (punc_exceptions): default: []
+        Standardization/normalization (norm): None, row, col
+        Outlier removal (outlier_removal): None, 
         
         Args:
             stimuli (langbrainscore.dataset.DataSet): [description]
