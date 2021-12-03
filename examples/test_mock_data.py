@@ -100,28 +100,55 @@ log(f'stimuli: {mock_neuro_dataset.stimuli.values}')
 log("." * 79, type="WARN")
 
 log("creating mock brain encoder")
-mock_brain_encoder = lbs.interface.encoder.BrainEncoder(mock_neuro_dataset)
+mock_brain_encoder = lbs.encoder.BrainEncoder(mock_neuro_dataset)
 
 
 
 ########################################################################
-# ######## Obtain encoder representation of mock data
+# ######## Obtain brain encoder representation of mock data
 # #### outcome: return value of .encode()
 ########################################################################
 log("." * 79, type="WARN")
-
-
-
 
 # expect to obtain data of shape 627 x 10_000
 brain_encoded_data = mock_brain_encoder.encode(mock_neuro_dataset)
 log(f"created brain-encoded data of shape: {brain_encoded_data.dims}")
 
 
-ANN_encoded_data = brain_encoded_data + np.random.rand(*brain_encoded_data.dims.values()) / 2
-# pretend that an ANN outputted 768-dim vector for each of the 627 stimuli
+
+
+########################################################################
+# ######## Create an ANN encoder using distilgpt2 model identifier
+# #### outcome: a HuggingfaceEncoder instance that implements .encode()
+########################################################################
+log("." * 79, type="WARN")
+
+log("creating an ANN encoder using distilgpt2")
+distilgpt_encoder = lbs.encoder.HuggingFaceEncoder('distilgpt2')
+
+
+########################################################################
+# ######## Obtain ANN encoder representation of mock data
+# #### outcome: return value of .encode()
+########################################################################
+log("." * 79, type="WARN")
+
+# expect to obtain data of shape 627 x 10_000
+ann_encoded_data = distilgpt_encoder.encode(mock_neuro_dataset)
+log(f"created ann-encoded data of shape: {ann_encoded_data.dims}")
+
+raise SystemExit(0)
 
 IPython.embed()
+
+
+
+
+
+
+# ANN_encoded_data = brain_encoded_data + np.random.rand(*brain_encoded_data.dims.values()) / 2
+# pretend that an ANN outputted 768-dim vector for each of the 627 stimuli
+
 
 ANN_encoded_data = ANN_encoded_data.sel(neuroid=slice(0, 768)) # [:, :768]
 log(f"created ANN-encoded data of shape: {ANN_encoded_data.dims}")
