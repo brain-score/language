@@ -14,7 +14,9 @@ class RSA:
     using a comparison metric
     """
 
-    def __init__(self, similarity_metric: str, comparison_metric: str) -> None:
+    def __init__(
+        self, similarity_metric: str = "cosine", comparison_metric: str = "spearmanr"
+    ) -> None:
         """
 
         valid similarity metrics: ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
@@ -29,7 +31,7 @@ class RSA:
         self._rdm = RDM(similarity_metric)
         self._comparison_metric = comparison_metric
 
-    def run(self, X: np.ndarray, Y: np.ndarray) -> float:
+    def run(self, X: np.ndarray, Y: np.ndarray) -> tuple[float, float]:
         """
         accepts NxD two sample representations
         returns scalar comparison score and p-value
@@ -54,7 +56,7 @@ class RDM:
     def __init__(self, similarity_metric: str) -> None:
         self._similarity_metric = similarity_metric
 
-    def transform(self, sample_reps: np.ndarray) -> np.ndarray:
+    def transform(self, sample_reps: np.ndarray) -> np.array:
         """
         accepts an N samples x D dimensions embedding
         returns the flattened N(N-1)/2 vector
