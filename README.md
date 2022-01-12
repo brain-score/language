@@ -78,7 +78,7 @@ within this project). -->
     ```
 2. [*Optional*] If you want to have a dedicated `conda` environment for this project, create one now (or use an existing one)
     ```bash
-    conda env create -n lbsfuzpot
+    conda create -n lbsfuzpot
     conda activate lbsfuzpot
     ```
 3. Now use `poetry` to install dependencies
