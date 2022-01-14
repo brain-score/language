@@ -63,6 +63,8 @@ passage = np.concatenate(
     (np.repeat(np.arange(100), 3)[:243], np.repeat(np.arange(100), 4)[:384])
 )
 
+passage_experiment = [f'passage-{p}_exp-{e}' for p, e in zip(passage, experiment)]
+
 log(f"num. of stimuli generated: {len(stimuli)}, example: {stimuli[:4]} ...")
 
 recorded_data[:243, :1000] = np.nan
@@ -80,6 +82,7 @@ xr_dataset = xr.DataArray(
         "stimuli": ("sampleid", stimuli),
         "sent_identifier": ("sampleid", [f'mycorpus.{i:0>5}' for i in range(num_stimuli)]),
         "experiment": ("sampleid", experiment),
+        "passage_experiment": ("sampleid", passage_experiment),
         "passage": ("sampleid", passage),
         "subject": ("neuroid", recording_metadata["subj_id"]),
         "roi": ("neuroid", recording_metadata["roi"]),
@@ -134,7 +137,7 @@ distilgpt_encoder = lbs.encoder.HuggingFaceEncoder('distilgpt2')
 log("." * 79, type="WARN")
 
 # expect to obtain data of shape 627 x 10_000
-ann_encoded_data = distilgpt_encoder.encode(mock_neuro_dataset)
+ann_encoded_data = distilgpt_encoder.encode(mock_neuro_dataset, context_dimension='passage_experiment')
 log(f"created ann-encoded data of shape: {ann_encoded_data.dims}")
 
 raise SystemExit(0)
