@@ -104,9 +104,11 @@ class HuggingFaceEncoder(_ANNEncoder):
             ValueError: [description]
 
         Returns:
-            [type]: [description]
+            xarray Dataset: an xarray Dataset with coordinates as follows: 'sample[id]', 'neuroid', 'time[id]', 
+                            containing an encoder representation per sample
         """
         self.model.eval() 
+        # only for gpt? check the general case 
         n_layer = self.model.config.n_layer
         states_sentences = defaultdict(list)
 
@@ -127,19 +129,23 @@ class HuggingFaceEncoder(_ANNEncoder):
             word_ids_by_stim = [] # contains a list of token->word_id lists per stimulus
             for stimulus in stimuli_in_context:
                 tokenized_stim = self.tokenizer(stimulus, padding=False, truncate=False)
-                tokenized_lengths += len(tokenized_stim)
+                tokenized_lengths += [len(tokenized_stim)]
                 
                 word_ids = tokenized_stim.word_ids() # make sure this is positional, not based on word identity        
                 word_ids_by_stim += [word_ids]
 
             # we want to concatenate all stim of this ctxt group and obtain an encoder representation 
 
+            # 
             concatenated_chunk = ' '.join(stimuli_in_context)
             tokenized_chunk = self.tokenizer(concatenated_chunk)
             if len(tokenized_chunk) >= 512: # too many tokens
                 raise ValueError(f'context too long at {len(tokenized_chunk)} tokens') 
 
+            # in this case, the concatenated chunk should include all the stimuli (even the future ones)
+            # in the context group
             if bidirectional:
+
 
             # this will be a matrix with (n_stimuli_in_context, max_n_tokens, n_dims)
             contextual_rep
@@ -221,6 +227,8 @@ class HuggingFaceEncoder(_ANNEncoder):
 
             states_sentences[i].append(state)
             #### first, we do word-level aggregation according to word_level_args
+
+
 
 
 
