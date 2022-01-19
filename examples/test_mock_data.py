@@ -28,7 +28,8 @@ import IPython
 log("." * 79, type="WARN")
 
 # define the size and dimensionality of mock data to create
-num_stimuli = 627
+#num_stimuli = 627
+num_stimuli = 62
 num_neuroid = 10_000
 
 # now randomly generate the mock data
@@ -56,19 +57,23 @@ stimuli = np.array(
 )
 experiment = stimuli.copy()
 experiment[:] = 2
-experiment[:243] = 1
+# experiment[:243] = 1
+experiment[:24] = 1
 experiment = experiment.astype(int)
 
 passage = np.concatenate(
-    (np.repeat(np.arange(100), 3)[:243], np.repeat(np.arange(100), 4)[:384])
+    # (np.repeat(np.arange(100), 3)[:243], np.repeat(np.arange(100), 4)[:384])
+    (np.repeat(np.arange(100), 3)[:24], np.repeat(np.arange(100), 4)[:38])
 )
 
 passage_experiment = [f'passage-{p}_exp-{e}' for p, e in zip(passage, experiment)]
 
 log(f"num. of stimuli generated: {len(stimuli)}, example: {stimuli[:4]} ...")
 
-recorded_data[:243, :1000] = np.nan
-recorded_data[243:, 1000:2000] = np.nan
+#recorded_data[:243, :1000] = np.nan
+#recorded_data[243:, 1000:2000] = np.nan
+recorded_data[:24, :1000] = np.nan
+recorded_data[24:, 1000:2000] = np.nan
 recorded_data = recorded_data.reshape((*recorded_data.shape, 1))
 
 # generate xarray DataSet
