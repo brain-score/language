@@ -3,7 +3,7 @@ import typing
 
 import numpy as np
 import xarray as xr
-from sklearn.linear_model import Ridge, LinearRegression, LogisticRegression
+from sklearn.linear_model import Ridge, LinearRegression, LogisticRegression, RidgeCV
 from langbrainscore.mapping_tools.rsa import RSA, RDM
 from langbrainscore.utils import logging
 
@@ -19,12 +19,7 @@ from sklearn.model_selection import (
 #KFold, StratifiedShuffleSplit, LeavePOut
 
 
-mapping_classes = {
-    'ridge': (Ridge, {'alpha': 1.0}),
-    'linear': (LinearRegression, {}),
-    'rsa': (RSA, {}),
-    'rdm': (RDM, {}),
-}
+
 
 class Mapping:
     model = None
@@ -58,6 +53,13 @@ class Mapping:
             split_coord (str, optional): [description]. Defaults to None.
         """
         self.random_seed = random_seed
+        mapping_classes = {
+            'ridge': (Ridge, {'alpha': 1.0}),
+            'ridge_cv': (RidgeCV, {'alphas': np.logspace(-3, 3, 13), 'alpha_per_target': True}),
+            'linear': (LinearRegression, {}),
+            'rsa': (RSA, {}),
+            'rdm': (RDM, {}),
+        }
 
         self.k_fold = k_fold or 1
         self.strat_coord = strat_coord
@@ -78,9 +80,11 @@ class Mapping:
             kwargs.update(_kwargs)
         
         # to save (this model uses the entire data rather than constructing splits)
-        self.full_model = mapping_class(**kwargs, random_state=random_seed)
+        self.full_model = mapping_class(**kwargs)
         # placeholder model with the right params that we'll reuse across splits
-        self.model = mapping_class(**kwargs, random_state=random_seed)
+        self.model = mapping_class(**kwargs)
+        
+        logging.log(f'initialized Mapping with {mapping_class}, {type(self.model)}!')
 
     @staticmethod
     def construct_splits_(xr_dataset: xr.Dataset, # Y: xr.Dataset, 
@@ -120,36 +124,34 @@ class Mapping:
         self.fit(X, Y, k_folds=1)
         raise NotImplemented
 
-    def fit(self, X: xr.Dataset, Y: xr.Dataset) -> None:
-        """creates a mapping model using k-fold cross-validation stratified by groups
+    def fit(self, 
+            #X: xr.Dataset, Y: xr.Dataset
+           ) -> None:
+        """creates a mapping model using k-fold cross-validation
+            depending on the class initialization, uses strat_coord
+            and split_coord to stratify and split across group boundaries
 
         Args:, groups=None, k_folds: int = 5
             X ([type]): [description]
             Y ([type]): [description]
-            groups ([type], optional): [description]. Defaults to None.
             k_folds (int, optional): [description]. Defaults to 5.
 
         Returns:
             [type]: [description]
         """        
 
-        alpha_across_splits = []
+        # these collections store each split for our records later
+        alpha_across_splits = [] # only used in case of ridge_cv
         train_indices = []
         test_indices = []
 
-        # if no groups are provided, use simple k splits
-        if groups is None:
-            # k-fold CV for an array 'Y'
-            groups = np.tile(np.arange(k_folds), (Y.shape[0] // k_folds + 1))[: Y.shape[0]]  
-            np.random.shuffle(groups)
+        splits = self.construct_splits()
 
-        kf = KFold(n_splits=k_folds, shuffle=True, random_state=42)
-        
         X_test_collection = []
         Y_test_collection = []
         Y_pred_collection = []
 
-        for train_index, test_index in kf.split(groups):
+        for train_index, test_index in splits:
             
             train_indices.append(train_index)
             test_indices.append(test_index)
