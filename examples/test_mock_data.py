@@ -187,6 +187,7 @@ ridge_cv_mapping_split = lbs.mapping_tools.Mapping(ann_encoded_data, brain_encod
                                           k_fold=5, split_coord='passage_experiment')
 k_fold_split = ridge_cv_mapping_split.construct_splits()
 
+ridge_cv_mapping_split.fit()
 
 # # Stratified Group KFold 
 # ridge_cv_mapping_split_strat = lbs.mapping_tools.Mapping(ann_encoded_data, brain_encoded_data,
