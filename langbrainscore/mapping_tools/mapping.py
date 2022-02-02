@@ -1,9 +1,11 @@
+from random import sample
 import typing
 
 import numpy as np
 import xarray as xr
 from sklearn.linear_model import Ridge, LinearRegression, LogisticRegression
-from langbrainscore.mapping.rsa import RSA, RDM
+from langbrainscore.mapping_tools.rsa import RSA, RDM
+from langbrainscore.utils import logging
 
 from functools import partial
 
@@ -65,8 +67,10 @@ class Mapping:
 
         self.mapping_class = mapping_class
 
-        assert(X.sel(strat_coord.values) == Y.sel(strat_coord.values).all()) 
-        assert(X.sel(split_coord.values) == Y.sel(split_coord.values).all()) 
+        if strat_coord:
+            assert (X[strat_coord].values == Y[strat_coord].values).all()
+        if split_coord:
+            assert (X[split_coord].values == Y[split_coord].values).all() 
         self.X, self.Y = X, Y
 
         if type(mapping_class) == str:
@@ -83,26 +87,29 @@ class Mapping:
                           strat_coord: str = None, k_folds: int = 5,
                           split_coord: str = None, num_split_groups_out: int = None,
                           random_seed: int = 42
-                          ):
+                         ):
+
+        sampleid = xr_dataset.sampleid.values
 
         if strat_coord and split_coord:
             kf = StratifiedGroupKFold(n_splits=k_folds, shuffle=True, random_state=random_seed)
-            split = partial(kf.split, xr_dataset, y=xr_dataset.sel(split_coord), group=xr_dataset.sel(strat_coord))
+            split = partial(kf.split, sampleid, y=xr_dataset[split_coord].values, groups=xr_dataset[strat_coord].values)
         elif split_coord:
-            kf = GroupKFold(n_splits=k_folds, shuffle=True, random_state=random_seed)
-            split = partial(kf.split, xr_dataset, group=xr_dataset.sel(split_coord))
+            kf = GroupKFold(n_splits=k_folds)
+            split = partial(kf.split, sampleid, groups=xr_dataset[split_coord].values)
         elif strat_coord:
             kf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=random_seed)
-            split = partial(kf.split, xr_dataset, y=xr_dataset.sel(strat_coord))
+            split = partial(kf.split, sampleid, y=xr_dataset[strat_coord].values)
         else:
             kf = KFold(n_splits=k_folds, shuffle=True, random_state=random_seed)
-            split = partial(kf.split, xr_dataset)
+            split = partial(kf.split, sampleid)
 
+        logging.log(f'running {type(kf)}!')
         return split()
 
 
-    def construct_splits(self, xr_dataset: xr.Dataset):
-        return self.construct_splits_(xr_dataset,
+    def construct_splits(self):
+        return self.construct_splits_(self.X,
                                       self.strat_coord, self.k_fold, 
                                       self.split_coord, self.num_split_groups_out,
                                       random_seed=self.random_seed)
