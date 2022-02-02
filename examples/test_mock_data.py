@@ -145,9 +145,6 @@ log("." * 79, type="WARN")
 ann_encoded_data = distilgpt_encoder.encode(mock_neuro_dataset, context_dimension='passage_experiment')
 log(f"created ann-encoded data of shape: {ann_encoded_data.dims}")
 
-raise SystemExit(0)
-
-IPython.embed()
 
 
 
@@ -158,8 +155,8 @@ IPython.embed()
 # pretend that an ANN outputted 768-dim vector for each of the 627 stimuli
 
 
-ANN_encoded_data = ANN_encoded_data.sel(neuroid=slice(0, 768)) # [:, :768]
-log(f"created ANN-encoded data of shape: {ANN_encoded_data.dims}")
+ann_encoded_data = ann_encoded_data.sel(neuroid=slice(0, 768)) # [:, :768]
+log(f"created ANN-encoded data of shape: {ann_encoded_data.dims}")
 
 
 ########################################################################
@@ -170,7 +167,39 @@ log(f"created ANN-encoded data of shape: {ANN_encoded_data.dims}")
 log("." * 79, type="WARN")
 
 log("fitting a mapping using ridge regression")
-ridge_mapping = lbs.mapping.Mapping("ridge")
+
+
+# simple KFold
+ridge_mapping = lbs.mapping_tools.Mapping(ann_encoded_data, brain_encoded_data,
+                                          "ridge", k_fold=5)
+k_fold = ridge_mapping.construct_splits()
+
+# Stratified KFold (tries to balance)
+ridge_mapping_strat = lbs.mapping_tools.Mapping(ann_encoded_data, brain_encoded_data,
+                                          "ridge", 
+                                          k_fold=5, strat_coord='experiment')
+k_fold_strat = ridge_mapping_strat.construct_splits()
+
+
+# Group KFold (splits at group borders; same group stays in the same split)
+ridge_mapping_split = lbs.mapping_tools.Mapping(ann_encoded_data, brain_encoded_data,
+                                          "ridge", 
+                                          k_fold=5, split_coord='passage_experiment')
+k_fold_split = ridge_mapping_split.construct_splits()
+
+
+# Stratified Group KFold 
+ridge_mapping_split_strat = lbs.mapping_tools.Mapping(ann_encoded_data, brain_encoded_data,
+                                          "ridge", k_fold=5,
+                                          strat_coord='experiment',
+                                          split_coord='passage_experiment')
+k_fold_split_strat = ridge_mapping_split_strat.construct_splits()
+
+
+
+IPython.embed()
+exit()
+
 y_hat_splits, y_splits = ridge_mapping.map_cv(
     ANN_encoded_data, brain_encoded_data, k_folds=5
 )
