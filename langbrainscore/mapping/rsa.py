@@ -1,3 +1,4 @@
+import typing
 import numpy as np
 from scipy.stats import kendalltau, pearsonr, spearmanr
 from sklearn.metrics import pairwise_distances
@@ -31,7 +32,7 @@ class RSA:
         self._rdm = RDM(similarity_metric)
         self._comparison_metric = comparison_metric
 
-    def run(self, X: np.ndarray, Y: np.ndarray) -> tuple[float, float]:
+    def run(self, X: np.ndarray, Y: np.ndarray) -> typing.Tuple[float, float]:
         """
         accepts NxD two sample representations
         returns scalar comparison score and p-value
