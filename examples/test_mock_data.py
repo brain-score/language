@@ -182,23 +182,26 @@ k_fold_strat = ridge_mapping_strat.construct_splits()
 
 
 # Group KFold (splits at group borders; same group stays in the same split)
-ridge_mapping_split = lbs.mapping_tools.Mapping(ann_encoded_data, brain_encoded_data,
-                                          "ridge", 
+ridge_cv_mapping_split = lbs.mapping_tools.Mapping(ann_encoded_data, brain_encoded_data,
+                                          "ridge_cv", 
                                           k_fold=5, split_coord='passage_experiment')
-k_fold_split = ridge_mapping_split.construct_splits()
+k_fold_split = ridge_cv_mapping_split.construct_splits()
 
 
-# Stratified Group KFold 
-ridge_mapping_split_strat = lbs.mapping_tools.Mapping(ann_encoded_data, brain_encoded_data,
-                                          "ridge", k_fold=5,
-                                          strat_coord='experiment',
-                                          split_coord='passage_experiment')
-k_fold_split_strat = ridge_mapping_split_strat.construct_splits()
+# # Stratified Group KFold 
+# ridge_cv_mapping_split_strat = lbs.mapping_tools.Mapping(ann_encoded_data, brain_encoded_data,
+#                                           "ridge_cv", k_fold=5,
+#                                           strat_coord='experiment',
+#                                           split_coord='passage_experiment')
+# k_fold_split_strat = ridge_cv_mapping_split_strat.construct_splits()
+
 
 
 
 IPython.embed()
 exit()
+
+
 
 y_hat_splits, y_splits = ridge_mapping.map_cv(
     ANN_encoded_data, brain_encoded_data, k_folds=5
@@ -207,6 +210,8 @@ y_hat_splits, y_splits = ridge_mapping.map_cv(
 log(
     f"number of splits: {len(y_hat_splits)}, shape of split 0 y_hat: {y_hat_splits[0].shape}, shape of split 0 y_test: {y_splits[1].shape}"
 )
+
+
 
 
 ########################################################################
