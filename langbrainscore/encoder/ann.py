@@ -256,9 +256,6 @@ class HuggingFaceEncoder(_ANNEncoder):
         for k in dataset._dataset.drop_dims(['neuroid', 'timeid']).coords: #<- keeps only sampleid, and has no data
             xr_encode = xr_encode.assign_coords({k: ('sampleid', dataset._dataset[k].data)})
 
-        IPython.embed()
-
-
 
         #			"stimuli": ("sampleid", stimuli),
         #			"sent_identifier": ("sampleid", [f'mycorpus.{i:0>5}' for i in range(num_stimuli)]),
@@ -269,7 +266,7 @@ class HuggingFaceEncoder(_ANNEncoder):
         #		},
         #	).to_dataset(name="data")
 
-        return xr_dataset
+        return xr_encode
 
 
 class PTEncoder(_ANNEncoder):
