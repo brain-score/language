@@ -156,8 +156,8 @@ class Mapping:
             train_indices.append(train_index)
             test_indices.append(test_index)
 
-            X_train, X_test = X[train_index, :], X[test_index, :]
-            y_train, y_test = Y[train_index, :], Y[test_index, :]
+            X_train, X_test = self.X.sel(sampleid=train_index).to_array(), self.X.sel(sampleid=test_index).to_array()
+            y_train, y_test = self.Y.sel(sampleid=train_index).to_array(), self.Y.sel(sampleid=test_index).to_array()
             self.model.fit(X_train, y_train)
 
             y_pred = self.model.predict(X_test)
