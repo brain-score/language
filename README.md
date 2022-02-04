@@ -95,5 +95,7 @@ within this project). -->
     ```
     Then proceed to run scripts as normal
     
-2. Alternatively (not recommended), use the `pyproject.toml` file to create your own environment
-   from scratch.
+2. Use a docker image with all dependencies pre-installed!
+    `aloxatel/langbrainscore`
+
+3. Use the `pyproject.toml` file to create your own environment from scratch.
