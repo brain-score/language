@@ -21,9 +21,9 @@ WORKDIR /app
 #### install system-wide dependencies and tools ####
 ################################################################
 RUN apt update
-RUN apt install -y python3.8 python3-pip
+RUN apt install -y python3.8 python3-pip python3-dev
 RUN apt install -y curl
-RUN apt install -y gcc musl-dev python3-dev libffi-dev openssl-dev
+RUN apt install -y gcc musl-dev libffi-dev openssl libssl-dev
 # RUN apt install -y build-essential curl 
 
 # RUN pip install "poetry==$POETRY_VERSION"
