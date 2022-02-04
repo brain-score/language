@@ -1,6 +1,5 @@
 from enum import unique
 import typing
-import IPython
 import numpy as np
 from langbrainscore.interface.encoder import _ANNEncoder
 from collections import defaultdict
