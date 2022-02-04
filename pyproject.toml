@@ -2,12 +2,14 @@
 name = "langbrainscore"
 version = "0.1.0"
 description = ""
-authors = ["EvLab, MIT BCS <evlab-core@mit.edu>"]
+authors = ["Greta Tuckute <gretatu@mit.edu>", 
+           "Aalok Sathe <asathe@mit.edu>", 
+           "Ben Lipkin <lipkinb@mit.edu>"]
 license = "MIT"
 exclude = ["langbrainscore/data/"]
 
+
 [tool.poetry.dependencies]
-# langbrainscore = {path = "./langbrainscore", develop = true}
 python = "3.8.*"
 tqdm = "^4.62.3"
 poetry = "^1.1.10"
@@ -21,7 +23,9 @@ pandas = "^1.3.4"
 scikit-learn = "^1.0.1"
 xarray = "^0.20.0"
 
+
 [tool.poetry.dev-dependencies]
+pdoc3 = "^0.10.0"
 
 
 [build-system]
