@@ -25,6 +25,7 @@ xarray = "^0.20.0"
 
 [tool.poetry.dev-dependencies]
 pdoc3 = "^0.10.0"
+ipython = "^8.0.1"
 
 
 [build-system]
