@@ -22,6 +22,7 @@ WORKDIR /app
 ################################################################
 RUN apt update
 RUN apt install -y python3.8 python3-pip
+RUN apt install -y curl
 # RUN apt install -y build-essential curl 
 
 # RUN pip install "poetry==$POETRY_VERSION"
