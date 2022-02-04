@@ -53,7 +53,7 @@ jobs:
       - run:
           name: Build docs
           command: |
-#            poetry shell
+            # poetry shell
             pdoc3 --html langbrainscore --force 
       - persist_to_workspace:
           root: html/langbrainscore
@@ -67,7 +67,7 @@ jobs:
           at: html
       - add_ssh_keys:
           fingerprints:
-            - "69:08:74:89:7c:dd:ed:e2:e3:a8:85:3b:73:3d:dd:24"
+            - ""
       - run:
           name: Install and configure dependencies
           command: |
