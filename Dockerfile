@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM ubuntu:20.04 as builddeps
+FROM ubuntu:20.04 as build
 
 
 ################################################################
@@ -23,6 +23,7 @@ WORKDIR /app
 RUN apt update
 RUN apt install -y python3.8 python3-pip
 RUN apt install -y curl
+RUN apt install -y gcc musl-dev python3-dev libffi-dev openssl-dev
 # RUN apt install -y build-essential curl 
 
 # RUN pip install "poetry==$POETRY_VERSION"
