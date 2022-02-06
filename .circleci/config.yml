@@ -1,5 +1,5 @@
 ################################################################
-#### ####
+#### meta ####
 ################################################################
 version: 2.1
 executors:
@@ -14,6 +14,8 @@ executors:
 #### definitions of jobs ####
 ################################################################
 jobs:
+
+  #### build docker image using Dockerfile ####
   build:
     executor: docker-publisher
     steps:
@@ -30,6 +32,8 @@ jobs:
           root: .
           paths:
             - ./image.tar
+
+  #### upload docker image to Docker hub ####
   publish-latest:
     executor: docker-publisher
     steps:
@@ -45,6 +49,8 @@ jobs:
           command: |
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             docker push $IMAGE_NAME:latest
+
+  #### run pdoc3 to generate documentation ####
   docs-build:
     docker:
       - image: aloxatel/langbrainscore
@@ -58,6 +64,8 @@ jobs:
       - persist_to_workspace:
           root: html/langbrainscore
           paths: '*'
+
+  #### deploy documentation to GitHub pages ####
   docs-deploy:
     docker:
       - image: node:8.10.0
@@ -78,12 +86,47 @@ jobs:
           name: Deploy docs to gh-pages branch
           command: gh-pages --dotfiles --message "[skip ci] Docs updates" --dist html
 
+  #### run pytest unittests ####
+  test:
+    docker:
+      - image: aloxatel/langbrainscore
+    steps:
+      - checkout
+      - run:
+          name: Install and configure dependencies
+          command: |
+            - poetry shell
+            - poetry install
+      - run:
+          name: Run pytest and generate code coverage
+          command: |
+            - coverage -m pytest --junitxml=test-results/pytest.xml # junit.xml
+            - coverage report
+            - coverage html
+      - run:
+          name: Run static type checking
+          command: |
+            - mypy -m langbrainscore --config-file pyproject.toml --junit-xml test-results/mypy.xml --html-report test-results/typecheck
+      - run:
+          name: Move coverage and test results to html/coverage directory
+            - mkdir -p html/
+            - mv htmlcov html/coverage
+            - mv test-results html/coverage/tests
+      - store_artifacts:
+          path: html/coverage
+      - store_test_results:
+          path: html/coverage/tests
+      - persist_to_workspace:
+          root: html/
+          paths: '*'
+
 ################################################################
-#### definitions of workflows ####
+#### definitions and constraints for workflows ####
 ################################################################
 workflows:
   version: 2
-  build-master:
+  #### related to building docker image ####
+  docker:
     jobs:
       - build:
           filters:
@@ -95,6 +138,20 @@ workflows:
           filters:
             branches:
               only: circle-ci
+
+  #### related to testing ####
+  tests:
+    jobs:
+      - test:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+                - circle-ci
+
+  #### related to documentation ####
+  docs:
+    jobs:
       - docs-build:
           filters:
             branches:
@@ -102,6 +159,9 @@ workflows:
       - docs-deploy:
           requires:
             - docs-build
+            - test # so that we can also upload the coverage report
           filters:
             branches:
               only: main
+
+  
