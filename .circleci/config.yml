@@ -61,7 +61,6 @@ jobs:
       - run:
           name: Install and configure dependencies
           command: |
-            # poetry shell
             poetry install
       - run:
           name: Run pytest (unit testing), code coverage, and mypy (static type-checking)
@@ -73,7 +72,11 @@ jobs:
           path: html/test-results
       - persist_to_workspace:
           root: html/
-          paths: '*'
+          paths: 
+            - '*'
+            - html/test-results
+            - html/test-results/codecov
+            - html/test-results/typing
 
   #### run pdoc3 to generate documentation ####
   docs-build:
@@ -107,10 +110,12 @@ jobs:
       - run:
           name: Install and configure dependencies
           command: |
-            ls -lah html/
             npm install -g --silent gh-pages@2.0.1
             git config user.email "pdoc3@circleci.com"
             git config user.name "asathe"
+      - run:
+          name: List directories
+          command: ls -lah html/ html/test-results
       - run:
           name: Deploy docs to gh-pages branch
           command: gh-pages --dotfiles --message "[skip ci] Docs updates" --dist html -r git@github.com:language-brainscore/lang-brainscore-fuzzy-potato
