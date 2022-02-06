@@ -100,7 +100,7 @@ jobs:
       - run:
           name: Run pytest and generate code coverage
           command: |
-            coverage -m pytest --junitxml=test-results/pytest.xml # junit.xml
+            coverage run -m pytest --junitxml=test-results/pytest.xml # junit.xml
             coverage report
             coverage html
       - run:
