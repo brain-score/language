@@ -9,7 +9,7 @@ mkdir -p html test-results
 coverage run -m pytest --junitxml=test-results/tests.xml --html=test-results/tests.html --self-contained-html || true # junit.xml
 
 # generate coverage report
-coverage html langbrainscore/**/*.py -d coverage
+coverage html -d coverage langbrainscore/**/*.py 
 coverage xml -o test-results/coverage.xml langbrainscore/**/*.py 
 
 # run static type checking using mypy
