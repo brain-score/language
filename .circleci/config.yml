@@ -64,24 +64,20 @@ jobs:
             # poetry shell
             poetry install
       - run:
-          name: Run pytest and generate code coverage
+          name: Run pytest (unit testing), code coverage, and mypy (static type-checking)
           command: |
-            coverage run -m pytest --junitxml=test-results/pytest.xml || true # junit.xml
-            coverage report
-            coverage html
+            ./run_test_coverage.sh
       - run:
-          name: Run static type checking
-          command: mypy -m langbrainscore --config-file pyproject.toml --junit-xml test-results/mypy.xml --html-report test-results/typecheck || true
-      - run:
-          name: Move coverage and test results to html/coverage directory
+          name: Move coverage and test results to html/ directory
           command: |
             mkdir -p html/
-            mv htmlcov html/coverage
             mv test-results html/tests
+            mv htmlcov html/tests/coverage
+            ls -lah html/tests
       - store_artifacts:
-          path: html/coverage
+          path: html/
       - store_test_results:
-          path: html/coverage/tests
+          path: html/tests
       - persist_to_workspace:
           root: html/
           paths: '*'
