@@ -1,5 +1,13 @@
-# langbrainscore`[-fuzzy-potato]`
+# langbrainscore
 _the suffix `-fuzzy-potato` (arbitrarily chosen) indicates this project is in the `alpha` stage of software development._
+
+
+### [**Documentation** ![CircleCI](https://circleci.com/gh/language-brainscore/lang-brainscore-fuzzy-potato/tree/main.svg?style=svg)](https://language-brainscore.github.io/lang-brainscore-fuzzy-potato/)
+### development status indicators
+- [Unit Tests](https://language-brainscore.github.io/lang-brainscore-fuzzy-potato/test-results/tests.html): this report lists tests used for the module and their outcomes: success/failure (using [pytest](https://docs.pytest.org/en/7.0.x/))
+- [Code Coverage](https://language-brainscore.github.io/lang-brainscore-fuzzy-potato/test-results/codecov/): describes what parts of the code are tested down to individual lines (using [Coverage.py](https://coverage.readthedocs.io/en/6.3.1/))
+- [Static Type Checks](https://language-brainscore.github.io/lang-brainscore-fuzzy-potato/test-results/typing/): results of static type-checking of the code where [type annotations](https://www.python.org/dev/peps/pep-0484/) are available (using [Mypy](https://mypy.readthedocs.io/en/stable/))
+
 
 ## what is it?
 Provides a library for systematic comparison of encoder representations in the most general sense.
@@ -11,11 +19,13 @@ which can be measured using several proxies, such as fMRI, EEG, ECOG. Similarly,
 in the form of vectors, and output either some sort of embeddings or latent vectors, all
 meant to be useful representations of input for downstream tasks.
 
+
 ## why should I care?
 In this project, and in this general family of research projects, we want to evaluate the similarity between
 various ways of generating representations of input stimuli. We are also interested in eventually understanding
 what kind of representations the brain employs, and how we can go closer to these, and building models helps
 us travel in that direction.
+
 ### Neuroscientists/Cognitive Scientisits
 may be interested in developing better models of brain activation to understand what kind of stimuli drive 
 response in certain parts of the brain. While similar efforts exist in the vision domain, in this project,
@@ -29,12 +39,9 @@ particularly models they develop or study. They may be also interested in creati
 cognitively plausible models of natural language understanding. Whereas language-brainscore is not a direct
 measure of cognitive plausibility of ANN models, it provides a possible direction to optimize towards.
 
-# Documentation
-Click on the badge to go to documentation: [![CircleCI](https://circleci.com/gh/language-brainscore/lang-brainscore-fuzzy-potato/tree/main.svg?style=svg)](https://language-brainscore.github.io/lang-brainscore-fuzzy-potato/)
-
 
 # Usage
-(make sure to install the package first. jump to the install section of this README.)
+(make sure to install the package first: jump to the [install section](https://github.com/language-brainscore/lang-brainscore-fuzzy-potato/edit/main/README.md#option-a-preferred-method) of this README)
 
 This project has examples hosted on binder. Simply click on the binder launch button to view a Jupyter notebook
 with example usage.
@@ -59,7 +66,7 @@ for encoder in [brain, gpt2]:
 # How to Obtain this Project?
 ## As an end user, or as a library for use in another project
 ### Installation
-Install this project using PyPI (not currently up-to-date)
+Install this project using PyPI (not up-to-date; not recommended as of now)
 ```bash
 python3 -m pip install langbrainscore
 ```
