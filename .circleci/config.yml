@@ -100,12 +100,15 @@ jobs:
       - run:
           name: Run pytest and generate code coverage
           command: |
-            coverage run -m pytest --junitxml=test-results/pytest.xml # junit.xml
+            coverage run -m pytest --junitxml=test-results/pytest.xml || true # junit.xml
             coverage report
             coverage html
       - run:
           name: Run static type checking
-          command: mypy -m langbrainscore --config-file pyproject.toml --junit-xml test-results/mypy.xml --html-report test-results/typecheck
+          command: mypy -m langbrainscore \
+                      --config-file pyproject.toml \
+                      --junit-xml test-results/mypy.xml \
+                      --html-report test-results/typecheck || true
       - run:
           name: Move coverage and test results to html/coverage directory
           command:
