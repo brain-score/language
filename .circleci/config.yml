@@ -92,6 +92,8 @@ jobs:
       - image: aloxatel/langbrainscore
     steps:
       - checkout
+      - attach_workspace:
+          at: html
       - run:
           name: Install and configure dependencies
           command: |
@@ -151,7 +153,6 @@ workflows:
           filters:
             branches:
               ignore:
-                - gh-pages
                 - circle-ci
   #### related to documentation ####
   # docs:
