@@ -138,3 +138,6 @@ dmypy.json
 
 langbrainscore/data
 html
+htmlcov
+.vscode
+*.code-workspace
