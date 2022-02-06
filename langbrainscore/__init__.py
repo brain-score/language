@@ -6,4 +6,4 @@ import langbrainscore.mapping_tools
 import langbrainscore.metrics
 import langbrainscore.utils
 
-from langbrainscore.interface.encoder import * 
+from langbrainscore.encoder import * 
