@@ -50,48 +50,40 @@ jobs:
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             docker push $IMAGE_NAME:latest
 
-#### run pytest unittests ####
-  test:
+#### run tests and build docs ####
+  docs-build:
+  #test:
     docker:
       - image: aloxatel/langbrainscore
     steps:
       - checkout
-      #- attach_workspace:
-      #    at: html
       - run:
           name: Install and configure dependencies
-          command: |
-            # poetry shell
-            poetry install
+          command: poetry install
       - run:
           name: Run pytest (unit testing), code coverage, and mypy (static type-checking)
-          command: |
-            ./run_test_coverage.sh
-      - store_artifacts:
-          path: html/
-      - store_test_results:
-          path: html/test-results
-      - persist_to_workspace:
-          root: html/
-          paths: '*'
-
-  #### run pdoc3 to generate documentation ####
-  docs-build:
-    docker:
-      - image: aloxatel/langbrainscore
-    steps:
-      - checkout
-      - attach_workspace:
-          at: html
+          command: ./run_test_coverage.sh
       - run:
           name: Build docs
           command: pdoc3 --html langbrainscore --force 
       - run:
           name: Unpack docs into root folder of gh-pages
           command: mv html/langbrainscore/* html/
+      - run:
+          name: List directories and files in the workspace
+          command: ls -lah html/ html/test-results
       - persist_to_workspace:
           root: html/
-          paths: '*'
+          paths:
+            - test-results/
+            - test-results/coverage/
+            - test-results/typing/
+            - '*'
+      - store_artifacts:
+          path: html/
+      - store_test_results:
+          path: html/test-results
+      
 
   #### deploy documentation to GitHub pages ####
   docs-deploy:
@@ -105,9 +97,11 @@ jobs:
           fingerprints:
             - "fb:84:b8:ea:a9:ac:bb:86:e8:77:44:09:92:f1:11:13"
       - run:
+          name: List directories and files in the workspace
+          command: ls -lah html/ html/test-results 
+      - run:
           name: Install and configure dependencies
           command: |
-            ls -lah html/
             npm install -g --silent gh-pages@2.0.1
             git config user.email "pdoc3@circleci.com"
             git config user.name "asathe"
@@ -136,23 +130,15 @@ workflows:
             branches:
               only: circle-ci
 
-  #### related to testing ####
-  tests_and_docs:
-    jobs:
-      - test:
-          filters:
-            branches:
-              ignore:
-                - circle-ci
   #### related to documentation ####
-  # docs:
-    # jobs:
+  docs:
+    jobs:
       - docs-build:
-          requires:
-            - test
+          #requires:
+          #  - test
           filters:
             branches:
-              only: main
+              ignore: circle-ci
       - docs-deploy:
           requires:
             - docs-build
