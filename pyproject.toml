@@ -1,3 +1,12 @@
+# project langbrainscore
+# (C) Evlab, MIT BCS, 2021-2022
+
+
+
+################################################################
+#### poetry config ####
+################################################################
+
 [tool.poetry]
 name = "langbrainscore"
 version = "0.1.0"
@@ -7,7 +16,6 @@ authors = ["Greta Tuckute <gretatu@mit.edu>",
            "Ben Lipkin <lipkinb@mit.edu>"]
 license = "MIT"
 exclude = ["langbrainscore/data/"]
-
 
 [tool.poetry.dependencies]
 python = "3.8.*"
@@ -22,12 +30,29 @@ pandas = "^1.3.4"
 scikit-learn = "^1.0.1"
 xarray = "^0.20.0"
 
-
 [tool.poetry.dev-dependencies]
 pdoc3 = "^0.10.0"
 ipython = "^8.0.1"
-
+mypy = "^0.931"
+lxml = "^4.7.1"
+pytest = "^7.0.0"
+coverage = {extras = ["toml"], version = "^6.3.1"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+
+
+################################################################
+#### mypy type-checking config ####
+################################################################
+
+[tool.mypy]
+ignore_missing_imports = true
+
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests"
+]
