@@ -79,6 +79,7 @@ jobs:
       - run:
           name: Install and configure dependencies
           command: |
+            ls -lah html/
             npm install -g --silent gh-pages@2.0.1
             git config user.email "pdoc3@circleci.com"
             git config user.name "circleci"
