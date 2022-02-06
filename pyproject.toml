@@ -37,6 +37,7 @@ mypy = "^0.931"
 lxml = "^4.7.1"
 pytest = "^7.0.0"
 coverage = {extras = ["toml"], version = "^6.3.1"}
+pytest-html = "^3.1.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
