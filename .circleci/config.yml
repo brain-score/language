@@ -50,6 +50,42 @@ jobs:
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             docker push $IMAGE_NAME:latest
 
+#### run pytest unittests ####
+  test:
+    docker:
+      - image: aloxatel/langbrainscore
+    steps:
+      - checkout
+      - attach_workspace:
+          at: html
+      - run:
+          name: Install and configure dependencies
+          command: |
+            # poetry shell
+            poetry install
+      - run:
+          name: Run pytest and generate code coverage
+          command: |
+            coverage run -m pytest --junitxml=test-results/pytest.xml || true # junit.xml
+            coverage report
+            coverage html
+      - run:
+          name: Run static type checking
+          command: mypy -m langbrainscore --config-file pyproject.toml --junit-xml test-results/mypy.xml --html-report test-results/typecheck || true
+      - run:
+          name: Move coverage and test results to html/coverage directory
+          command: |
+            mkdir -p html/
+            mv htmlcov html/coverage
+            mv test-results html/tests
+      - store_artifacts:
+          path: html/coverage
+      - store_test_results:
+          path: html/coverage/tests
+      - persist_to_workspace:
+          root: html/
+          paths: '*'
+
   #### run pdoc3 to generate documentation ####
   docs-build:
     docker:
@@ -58,9 +94,7 @@ jobs:
       - checkout
       - run:
           name: Build docs
-          command: |
-            # poetry shell
-            pdoc3 --html langbrainscore --force 
+          command: pdoc3 --html langbrainscore --force 
       - persist_to_workspace:
           root: html/langbrainscore
           paths: '*'
@@ -82,49 +116,12 @@ jobs:
             ls -lah html/
             npm install -g --silent gh-pages@2.0.1
             git config user.email "pdoc3@circleci.com"
-            git config user.name "circleci"
+            git config user.name "asathe"
       - run:
           name: Deploy docs to gh-pages branch
-          command: gh-pages --dotfiles --message "[skip ci] Docs updates" --dist html
+          command: gh-pages --dotfiles --message "[skip ci] Docs updates" --dist /root/project/html -r git@github.com:language-brainscore/lang-brainscore-fuzzy-potato
 
-  #### run pytest unittests ####
-  test:
-    docker:
-      - image: aloxatel/langbrainscore
-    steps:
-      - checkout
-      - attach_workspace:
-          at: html
-      - run:
-          name: Install and configure dependencies
-          command: |
-            # poetry shell
-            poetry install
-      - run:
-          name: Run pytest and generate code coverage
-          command: |
-            coverage run -m pytest --junitxml=test-results/pytest.xml || true # junit.xml
-            coverage report
-            coverage html
-      - run:
-          name: Run static type checking
-          command: mypy -m langbrainscore \
-                      --config-file pyproject.toml \
-                      --junit-xml test-results/mypy.xml \
-                      --html-report test-results/typecheck || true
-      - run:
-          name: Move coverage and test results to html/coverage directory
-          command: |
-            mkdir -p html/
-            mv htmlcov html/coverage
-            mv test-results html/coverage/tests
-      - store_artifacts:
-          path: html/coverage
-      - store_test_results:
-          path: html/coverage/tests
-      - persist_to_workspace:
-          root: html/
-          paths: '*'
+  
 
 ################################################################
 #### definitions and constraints for workflows ####
