@@ -87,7 +87,7 @@ jobs:
           name: Build docs
           command: pdoc3 --html langbrainscore --force 
       - persist_to_workspace:
-          root: html/langbrainscore
+          root: html/
           paths: '*'
 
   #### deploy documentation to GitHub pages ####

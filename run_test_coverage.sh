@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -x
 
-rm -r html test-results htmlcov
+rm -rf html test-results htmlcov
 mkdir -p html htmlcov test-results
 
 coverage run -m pytest --junitxml=test-results/pytest.xml --html=test-results/index.html --self-contained-html || true # junit.xml
