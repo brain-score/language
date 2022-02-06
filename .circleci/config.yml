@@ -111,7 +111,7 @@ jobs:
                       --html-report test-results/typecheck || true
       - run:
           name: Move coverage and test results to html/coverage directory
-          command:
+          command: |
             mkdir -p html/
             mv htmlcov html/coverage
             mv test-results html/coverage/tests
