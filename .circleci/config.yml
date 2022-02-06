@@ -119,7 +119,7 @@ jobs:
             git config user.name "asathe"
       - run:
           name: Deploy docs to gh-pages branch
-          command: gh-pages --dotfiles --message "[skip ci] Docs updates" --dist /root/project/html -r git@github.com:language-brainscore/lang-brainscore-fuzzy-potato
+          command: gh-pages --dotfiles --message "[skip ci] Docs updates" --dist html -r git@github.com:language-brainscore/lang-brainscore-fuzzy-potato
 
   
 
