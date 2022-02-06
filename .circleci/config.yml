@@ -95,23 +95,23 @@ jobs:
       - run:
           name: Install and configure dependencies
           command: |
-            - poetry shell
-            - poetry install
+            # poetry shell
+            poetry install
       - run:
           name: Run pytest and generate code coverage
           command: |
-            - coverage -m pytest --junitxml=test-results/pytest.xml # junit.xml
-            - coverage report
-            - coverage html
+            coverage -m pytest --junitxml=test-results/pytest.xml # junit.xml
+            coverage report
+            coverage html
       - run:
           name: Run static type checking
-          command: |
-            - mypy -m langbrainscore --config-file pyproject.toml --junit-xml test-results/mypy.xml --html-report test-results/typecheck
+          command: mypy -m langbrainscore --config-file pyproject.toml --junit-xml test-results/mypy.xml --html-report test-results/typecheck
       - run:
           name: Move coverage and test results to html/coverage directory
-            - mkdir -p html/
-            - mv htmlcov html/coverage
-            - mv test-results html/coverage/tests
+          command:
+            mkdir -p html/
+            mv htmlcov html/coverage
+            mv test-results html/coverage/tests
       - store_artifacts:
           path: html/coverage
       - store_test_results:
@@ -140,18 +140,19 @@ workflows:
               only: circle-ci
 
   #### related to testing ####
-  tests:
+  tests_and_docs:
     jobs:
       - test:
+          requires:
+            - docs-build
           filters:
             branches:
               ignore:
                 - gh-pages
                 - circle-ci
-
   #### related to documentation ####
-  docs:
-    jobs:
+  # docs:
+    # jobs:
       - docs-build:
           filters:
             branches:
@@ -162,6 +163,4 @@ workflows:
             - test # so that we can also upload the coverage report
           filters:
             branches:
-              only: main
-
-  
+              only: main 
