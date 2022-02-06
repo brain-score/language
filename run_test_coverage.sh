@@ -1,14 +1,23 @@
 #!/usr/bin/env bash
 set -x
 
-rm -rf html test-results htmlcov
-mkdir -p html htmlcov test-results
+# cleanup to start fresh
+rm -rf html test-results coverage
+mkdir -p html test-results
 
-coverage run -m pytest --junitxml=test-results/pytest.xml --html=test-results/index.html --self-contained-html || true # junit.xml
-coverage html langbrainscore/**/*.py
-mv htmlcov html/
+# run pytest using coverage
+coverage run -m pytest --junitxml=test-results/tests.xml --html=test-results/tests.html --self-contained-html || true # junit.xml
 
-mypy -m langbrainscore --config-file pyproject.toml --junit-xml test-results/mypy.xml --html-report test-results/typecheck || true
+# generate coverage report
+coverage html langbrainscore/**/*.py -d coverage
+coverage xml -o test-results/coverage.xml langbrainscore/**/*.py 
+
+# run static type checking using mypy
+mypy -m langbrainscore --config-file pyproject.toml --junit-xml test-results/typing.xml --html-report test-results/typing || true
+
+# move all the reports and tests into the deployment folder
 mv test-results html/
+mv coverage html/test-results/
 
+# sanity check in CI
 ls -lah html html/test-results

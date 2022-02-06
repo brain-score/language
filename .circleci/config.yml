@@ -86,6 +86,9 @@ jobs:
       - run:
           name: Build docs
           command: pdoc3 --html langbrainscore --force 
+      - run:
+          name: Unpack docs into root folder of gh-pages
+          command: mv html/langbrainscore/* html/
       - persist_to_workspace:
           root: html/
           paths: '*'
