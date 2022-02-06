@@ -56,8 +56,8 @@ jobs:
       - image: aloxatel/langbrainscore
     steps:
       - checkout
-      - attach_workspace:
-          at: html
+      #- attach_workspace:
+      #    at: html
       - run:
           name: Install and configure dependencies
           command: |
@@ -81,6 +81,8 @@ jobs:
       - image: aloxatel/langbrainscore
     steps:
       - checkout
+      - attach_workspace:
+          at: html
       - run:
           name: Build docs
           command: pdoc3 --html langbrainscore --force 
