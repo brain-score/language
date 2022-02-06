@@ -67,17 +67,10 @@ jobs:
           name: Run pytest (unit testing), code coverage, and mypy (static type-checking)
           command: |
             ./run_test_coverage.sh
-      - run:
-          name: Move coverage and test results to html/ directory
-          command: |
-            mkdir -p html/
-            mv test-results html/tests
-            mv htmlcov html/tests/coverage
-            ls -lah html/tests
       - store_artifacts:
           path: html/
       - store_test_results:
-          path: html/tests
+          path: html/test-results
       - persist_to_workspace:
           root: html/
           paths: '*'
