@@ -18,7 +18,7 @@ all: build docs test
 poetry:
 	curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/1.1.10/get-poetry.py | python3 -
 
-venv:
+venv: poetry
 	poetry shell
 ###############################################################################
 
@@ -27,11 +27,9 @@ venv:
 # building wheels, and installing the project in the current environment
 ###############################################################################
 install: poetry.lock pyproject.toml langbrainscore/**/*.py
-	poetry shell
 	poetry install
 
 build: poetry.lock pyproject.toml langbrainscore/**/*.py
-	poetry shell
 	poetry build
 ###############################################################################
 
@@ -40,7 +38,6 @@ build: poetry.lock pyproject.toml langbrainscore/**/*.py
 # build the docs
 ###############################################################################
 docs: langbrainscore/**/*.py
-	poetry shell
 	pdoc3 --html langbrainscore --force
 
 
@@ -51,7 +48,6 @@ test: coverage typecheck
 
 
 coverage: langbrainscore/**/*.py tests/*.py
-	poetry shell
 	mkdir -p html test-results
 
 	coverage run -m pytest --junitxml=test-results/tests.xml --html=test-results/tests.html --self-contained-html || true 
@@ -61,7 +57,6 @@ coverage: langbrainscore/**/*.py tests/*.py
 
 
 typecheck: langbrainscore/**/*.py
-	poetry shell
 	mypy -m langbrainscore --config-file pyproject.toml --junit-xml test-results/typing.xml --html-report test-results/typing || true
 
 

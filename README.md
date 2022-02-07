@@ -85,24 +85,31 @@ within this project). -->
 1. In order to set up your environment, obtain [poetry](https://python-poetry.org/docs/master/#installation), a lightweight python package, on your machine.
     <!-- curl -sSL https://install.python-poetry.org | python3 - -->
     ```bash
-    curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/1.1.10/get-poetry.py | python3 -
+    $ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/1.1.10/get-poetry.py | python3 -
+        <OR>
+    $ make poetry
     ```
-    OR
+2. If you want to have a dedicated `conda` environment for this project, create one now (or use an existing one). Else, let `poetry` create a `venv`.
     ```bash
-    make poetry
+    (base) $ conda create -n langbrainscore-env python=3.8
+    (base) $ conda activate langbrainscore-env
+    (langbrainscore-env) $
+
+        <OR>
+
+    $ poetry shell
+    (.venv) $
+
+        <OR>
+
+    $ make venv
+    (.venv) $
     ```
-2. [*Optional*] If you want to have a dedicated `conda` environment for this project, create one now (or use an existing one). If you skip this step, `poetry` will create a venv for you.
+3. Now use `poetry` to install the package and dependencies by navigating inside the repository 
     ```bash
-    conda create -n langbrainscore-env python=3.8
-    conda activate langbrainscore-env
-    ```
-3. Now use `poetry` to install dependencies by navigating inside the repository 
-    ```bash
-    poetry install
-    ```
-    OR
-    ```bash
-    make install
+    (langbrainscore-env) $ poetry install
+        <OR>
+    (.venv) $ make install
     ```
 4. Before running a script using `langbrainscore`, make sure to activate your environment, or type `poetry shell` to create a venv.
 
