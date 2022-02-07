@@ -33,7 +33,7 @@ we target language processing in the brain. We provide ways to use several exist
 for computing a language-brainscore. We also provide ways to work with your own data and test ANN models against
 this data.
 
-### Natural Language Processing (NLP)
+### Natural Language Processing (NLP) and Deep Learning Researchers
 researchers may be interested in comparing how similar representations are across various ANN models,
 particularly models they develop or study. They may be also interested in creating increasingly more
 cognitively plausible models of natural language understanding. Whereas language-brainscore is not a direct
@@ -64,14 +64,14 @@ for encoder in [brain, gpt2]:
 
 
 # How to Obtain this Project?
-## As an end user, or as a library for use in another project
+## Stable: As an end user, or as a library for use in another project
 ### Installation
 Install this project using PyPI (not up-to-date; not recommended as of now)
 ```bash
 python3 -m pip install langbrainscore
 ```
 
-## Development
+## Development: Bleeding edge version from GitHub
 ### Installation
 
 #### Option A (preferred method)
@@ -83,15 +83,16 @@ virtual environment you use, e.g.  `conda` or `virtualenv`, (or one of other les
 within this project). -->
 
 1. In order to set up your environment, obtain [poetry](https://python-poetry.org/docs/master/#installation), a lightweight python package, on your machine.
+    <!-- curl -sSL https://install.python-poetry.org | python3 - -->
     ```bash
-    curl -sSL https://install.python-poetry.org | python3 -
+    curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/1.1.10/get-poetry.py | python3 -
     ```
-2. [*Optional*] If you want to have a dedicated `conda` environment for this project, create one now (or use an existing one)
+2. [*Optional*] If you want to have a dedicated `conda` environment for this project, create one now (or use an existing one). If you skip this step, `poetry` will create a venv for you.
     ```bash
-    conda create -n lbsfuzpot python=3.8
-    conda activate lbsfuzpot
+    conda create -n langbrainscore-env python=3.8
+    conda activate langbrainscore-env
     ```
-3. Now use `poetry` to install dependencies
+3. Now use `poetry` to install dependencies by navigating inside the repository 
     ```bash
     poetry install
     ```
@@ -99,9 +100,25 @@ within this project). -->
 
 #### Option B 
 
-Use a Docker image with all dependencies pre-installed! 
--  `aloxatel/langbrainscore`
--  Click the badge to open the image on Docker hub: [![CircleCI](https://circleci.com/gh/language-brainscore/lang-brainscore-fuzzy-potato/tree/circle-ci.svg?style=svg)](https://hub.docker.com/repository/docker/aloxatel/langbrainscore)
+Use a Docker image with the package and all dependencies pre-installed! 
+-  `aloxatel/langbrainscore` (Debian-Ubuntu 20.04 derivative)
+-  Click the badge to open the image on Docker hub: [![CircleCI](https://circleci.com/gh/language-brainscore/lang-brainscore-fuzzy-potato/tree/circle-ci.svg?style=svg)](https://hub.docker.com/r/aloxatel/langbrainscore)
 
 
 Alternatively, use the `pyproject.toml` file to create your own environment from scratch.
+
+
+<br>
+
+## How to interpret `langbrainscore` versions?
+
+We follow the **Semantic Versioning** spec
+([`semver.org v2.0.0`](https://semver.org/spec/v2.0.0.html)):
+> *Given a version number `MAJOR.MINOR.PATCH`, increment the:*
+> - *`MAJOR` version when you make incompatible API changes,*
+> - *`MINOR` version when you add functionality in a backwards compatible manner, and*
+> - *`PATCH` version when you make backwards compatible bug fixes.*
+> *Additional labels for pre-release and build metadata are available as extensions to the `MAJOR.MINOR.PATCH` format.*
+
+Additionally:
+> *Major version zero `(0.y.z)` is for initial development. Anything MAY change at any time. The public API SHOULD NOT be considered stable. [[ref]](https://semver.org/spec/v2.0.0.html#spec-item-4).*
