@@ -1,5 +1,6 @@
 ################################################################
-#### meta ####
+#### meta #### 
+# for help, contact asathe @ mit.edu
 ################################################################
 version: 2.1
 executors:
@@ -60,12 +61,11 @@ jobs:
       #    at: html
       - run:
           name: Install and configure dependencies
-          command: |
-            poetry install
+          command: make install || poetry install
       - run:
           name: Run pytest (unit testing), code coverage, and mypy (static type-checking)
           command: |
-            ./run_test_coverage.sh
+            make test && mv test-results html/ || ./run_test_coverage.sh
       - store_artifacts:
           path: html/
       - store_test_results:
@@ -88,7 +88,7 @@ jobs:
           at: html
       - run:
           name: Build docs
-          command: pdoc3 --html langbrainscore --force 
+          command: make docs || pdoc3 --html langbrainscore --force 
       - run:
           name: Unpack docs into root folder of gh-pages
           command: mv html/langbrainscore/* html/

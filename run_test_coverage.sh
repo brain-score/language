@@ -2,7 +2,7 @@
 set -xe
 
 # cleanup to start fresh
-rm -rf html test-results codecov
+rm -rf html/test-results test-results codecov
 mkdir -p html test-results
 
 # run pytest using coverage
