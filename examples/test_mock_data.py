@@ -155,8 +155,9 @@ log(f"created ann-encoded data of shape: {ann_encoded_data.dims}")
 # pretend that an ANN outputted 768-dim vector for each of the 627 stimuli
 
 
-ann_encoded_data = ann_encoded_data.sel(neuroid=slice(0, 768)) # [:, :768]
-log(f"created ANN-encoded data of shape: {ann_encoded_data.dims}")
+# ann_encoded_data = ann_encoded_data.sel(neuroid=slice(0, 768)) # [:, :768]
+ann_encoded_data.sel(neuroid=ann_encoded_data.layer==1)
+log(f"created ANN-encoded data of shape: {ann_encoded_data.dims}, {ann_encoded_data.data.shape}")
 
 
 ########################################################################
@@ -187,7 +188,14 @@ ridge_cv_mapping_split = lbs.mapping_tools.Mapping(ann_encoded_data, brain_encod
                                           k_fold=5, split_coord='passage_experiment')
 k_fold_split = ridge_cv_mapping_split.construct_splits()
 
-ridge_cv_mapping_split.fit()
+# result = ridge_cv_mapping_split.fit()
+# y, y_hat = result['test'], result['pred']
+
+
+met = lbs.metrics.Metric(lbs.metrics.pearson_r)
+brsc = lbs.BrainScore(ridge_cv_mapping_split, met)
+
+log(f'brainscore = {brsc.score()}')
 
 # # Stratified Group KFold 
 # ridge_cv_mapping_split_strat = lbs.mapping_tools.Mapping(ann_encoded_data, brain_encoded_data,
