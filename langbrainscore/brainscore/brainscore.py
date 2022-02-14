@@ -11,10 +11,46 @@ from langbrainscore.utils import logging
 class BrainScore(_BrainScore):
 
     def __init__(self, mapping: Mapping, metric: Metric, 
-                 aggregate: typing.Union[None, typing.Callable] = np.mean) -> '_BrainScore':
+                 fold_aggregation: typing.Union[str, None] = 'mean',
+                 run = True) -> '_BrainScore':
         self.mapping = mapping
-        self.metric = metric
-        self.aggregate = aggregate or (lambda x: x)
+        self.metric = metric 
+        self.fold_aggregation = fold_aggregation 
+        self.aggregate_methods_map = {
+            None: self._no_aggregate,
+            'mean': self._aggregate_mean,
+        }
+
+        if run:
+            self.score()
+            self.aggregate_scores()
+
+    def __str__(self) -> str:
+        return f'{self.scores.mean()}'
+
+    def to_dataarray(self, aggregated=True):
+        # returns the aggregated scores as an xarray
+        return self.scores if aggregated else self.scores_across_folds
+    
+    def to_disk(self, aggregated=True):
+        # outputs the aggregated (or not) object to disk
+        # as a dataarray
+        pass
+
+    def aggregate_scores(self):
+        """aggregates scores obtianed over 
+
+        Args:
+            dim (_type_): _description_
+        """
+        fn = self.aggregate_methods_map[self.fold_aggregation]
+        self.scores = fn()
+
+    def _no_aggregate(self):
+        return self.scores_across_folds
+
+    def _aggregate_mean(self):
+        return self.scores_across_folds.mean(dim='cvfoldid')
 
     @staticmethod
     def _score(A, B, metric: Metric) -> np.ndarray:
@@ -25,22 +61,35 @@ class BrainScore(_BrainScore):
         result = self.mapping.fit()
         tests, preds = result['test'], result['pred']
 
-        scores = []
+        sample_scores = []
+        # A, B are lists of xr DataArrays over timeids
         for A, B in zip(tests, preds):
-            this_score = self._score(A, B, self.metric)
-            this_score = xr.DataArray(this_score, dims=('neuroid',), coords={}).to_dataset(name='data')
-    
-            for k in A.to_dataset(name='data').drop_dims(['sampleid']).coords: #<- keeps only neuroid, and has no data
-                this_score = this_score.assign_coords({k: ('neuroid', A[k].data)})
-            scores.append(this_score)
+            fold_scores = []
+            for timeid_ix, timeid in enumerate(A.timeid.values):
+                # A_time, B_time are xr DataArrays at a specific timeid
+                A_time = A.isel(timeid=timeid)
+                B_time = B[timeid_ix]
+                this_score = self._score(A_time, B_time, self.metric)
+                this_score = xr.DataArray(this_score, dims=('neuroid',), coords={}).to_dataset(name='data')
+        
+                # TODO
+                # we want to package the score with the original metadata. we're trying below.
+                for k in A.to_dataset(name='data').drop_dims(['sampleid', 'timeid']).coords: 
+                    # ^- keeps only neuroid, and has no .data
+                    this_score = this_score.assign_coords({k: ('neuroid', A[k].data)})
+                
+                fold_scores.append(this_score)
 
-        self.scores = xr.concat(scores, dim='sampleid')
+            sample_scores.append(xr.concat(fold_scores, dim='timeid'))
+ 
 
-        # self.scores = scores = np.array(scores, dtype='float64')
-        logging.log(f'scores.shape: {self.scores.shape}, dims: {self.scores.dims}')
+        scores = xr.concat(sample_scores, dim='cvfoldid').data
+        scores.assign_coords({'cvfoldid': ('cvfoldid', scores.cvfoldid.data)})
 
-        # aggregating over splits
-        return self.aggregate(np.nan_to_num(scores), axis=0)
+        for k in A.to_dataset(name='data').drop_dims(['sampleid', 'neuroid']).coords: 
+            # ^- keeps only timeid, and has no .data
+            scores = scores.assign_coords({k: ('timeid', A[k].data)})
 
+        self.scores_across_folds = scores.fillna(0)
 
     
