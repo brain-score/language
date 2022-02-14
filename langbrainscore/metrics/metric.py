@@ -4,19 +4,21 @@ import numpy as np
 import typing
 from tqdm import tqdm
 from langbrainscore.interface.metrics import _Metric
+import xarray as xr
 
 class Metric(_Metric):
 
     def __init__(self, metric: typing.Union[str, typing.Callable]) -> None:
         self.metric = metric
 
-    def __call__(self, A, B, **kwds: dict) -> np.ndarray:
+    def __call__(self, A: xr.DataArray, B: xr.DataArray, **kwds: dict) -> np.ndarray:
         if A.shape != B.shape:
             raise ValueError(f'mismatched shapes of A, B:  {A.shape}, {B.shape}')
         if len(A.shape) < 2:
             raise ValueError
         # return np.apply_along_axis(self.metric, 1, )
-        return [self.metric(A[:, i], B[:, i], **kwds) for i in tqdm(range(A.shape[1]), desc='computing metric per voxel')]
+        return [self.metric(A[:, i], B[:, i], **kwds) 
+                for i in tqdm(range(A.shape[1]), desc='computing metric per neuroid in a cvfold')]
 
 
 
