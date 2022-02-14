@@ -182,25 +182,33 @@ class Mapping:
 
             # !! NOTE the _nan_removed variants instead of X and Y
             X_train, X_test = (
-                self.X_nan_removed.sel(sampleid=train_index).to_array(),#.squeeze(),
-                self.X_nan_removed.sel(sampleid=test_index).to_array()#.squeeze()
+                self.X_nan_removed.sel(sampleid=train_index).data,#.squeeze(),
+                self.X_nan_removed.sel(sampleid=test_index).data#.squeeze()
             )
             y_train, y_test = (
-                self.Y_nan_removed.sel(sampleid=train_index).to_array(),#.squeeze(),
-                self.Y_nan_removed.sel(sampleid=test_index).to_array()#.squeeze()
+                self.Y_nan_removed.sel(sampleid=train_index).data,#.squeeze(),
+                self.Y_nan_removed.sel(sampleid=test_index).data#.squeeze()
             )
 
             y_pred_over_time = []
             for timeid in self.Y_nan_removed.timeid.data:
 
-                self.model.fit(X_train, y_train.isel(timeid=timeid))
+                # TODO: change this code for models that also have a non-singleton timeid
+                # i.e., output evolves in time (RNN?)
+                self.model.fit(X_train.isel(timeid=0), y_train.isel(timeid=timeid))
 
-                y_pred = self.model.predict(X_test)
+                y_pred = self.model.predict(X_test.isel(timeid=0))
                 y_pred_over_time.append(y_pred)
+
 
             Y_pred_collection.append(y_pred_over_time)
             Y_test_collection.append(y_test)
 
+        # the return value is a dictionary of test/pred;
+        # each of test/pred is a list of lists with two levels of
+        # nesting as below:
+        #   first level: CV folds
+        #       second level: timeids
         return dict(test=Y_test_collection, 
                     pred=Y_pred_collection)
 
