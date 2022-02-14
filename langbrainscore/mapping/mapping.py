@@ -4,7 +4,6 @@ import typing
 import numpy as np
 import xarray as xr
 from sklearn.linear_model import Ridge, LinearRegression, LogisticRegression, RidgeCV
-from langbrainscore.mapping_tools.rsa import RSA, RDM
 from langbrainscore.utils import logging
 
 from functools import partial
@@ -36,6 +35,11 @@ class Mapping:
                  num_split_groups_out: int = None, # (p, the # of groups in the test split)
                  split_coord: str = None, # (grouping coord)
 
+                 #TODO
+                 # handle predict held-out subject # but then we have to do mean over ROIs
+                 # because individual neuroids do not correspond
+                 # we kind of already have this along the `sampleid` coordinate, but we
+                 # need to implement this in the neuroid coordinate
 
                  **kwargs) -> None:
         """Initializes a Mapping object that establishes a mapping between two encoder representations.
@@ -57,8 +61,8 @@ class Mapping:
             'ridge': (Ridge, {'alpha': 1.0}),
             'ridge_cv': (RidgeCV, {'alphas': np.logspace(-3, 3, 13), 'alpha_per_target': True}),
             'linear': (LinearRegression, {}),
-            'rsa': (RSA, {}),
-            'rdm': (RDM, {}),
+            #'rsa': (RSA, {}),
+            #'rdm': (RDM, {}),
         }
 
         self.k_fold = k_fold or 1
@@ -70,10 +74,29 @@ class Mapping:
         self.mapping_class = mapping_class
 
         if strat_coord:
-            assert (X[strat_coord].values == Y[strat_coord].values).all()
+            try:
+                assert (X[strat_coord].values == Y[strat_coord].values).all()
+            except AssertionError as e:
+                raise ValueError(f'{strat_coord} coordinate does not align across X and Y')
         if split_coord:
-            assert (X[split_coord].values == Y[split_coord].values).all() 
+            try:
+                assert (X[split_coord].values == Y[split_coord].values).all() 
+            except AssertionError as e:
+                raise ValueError(f'{split_coord} coordinate does not align across X and Y')
+        
+        # TODO:
+        # make sure there are no stimuli that have NaNs in all places along the neuroid dimension
+
+
         self.X, self.Y = X, Y
+
+        self.X_nan_mask = X.isnull()
+        self.Y_nan_mask = Y.isnull()
+        self.X_nan_removed = X.dropna('neuroid')
+        self.Y_nan_removed = Y.dropna('neuroid')
+
+        logging.log(f'X shape: {X.data.shape}, NaNs: {self.X_nan_mask.sum()}; after NaN removal: {self.X_nan_removed.data.shape}')
+        logging.log(f'Y shape: {Y.data.shape}, NaNs: {self.Y_nan_mask.sum()}; after NaN removal: {self.Y_nan_removed.data.shape}')
 
         if type(mapping_class) == str:
             mapping_class, _kwargs = mapping_classes[mapping_class]
@@ -87,7 +110,7 @@ class Mapping:
         logging.log(f'initialized Mapping with {mapping_class}, {type(self.model)}!')
 
     @staticmethod
-    def construct_splits_(xr_dataset: xr.Dataset, # Y: xr.Dataset, 
+    def _construct_splits(xr_dataset: xr.Dataset, # Y: xr.Dataset, 
                           strat_coord: str = None, k_folds: int = 5,
                           split_coord: str = None, num_split_groups_out: int = None,
                           random_seed: int = 42
@@ -113,7 +136,7 @@ class Mapping:
 
 
     def construct_splits(self):
-        return self.construct_splits_(self.X,
+        return self._construct_splits(self.X_nan_removed,
                                       self.strat_coord, self.k_fold, 
                                       self.split_coord, self.num_split_groups_out,
                                       random_seed=self.random_seed)
@@ -141,13 +164,14 @@ class Mapping:
         """        
 
         # these collections store each split for our records later
-        alpha_across_splits = [] # only used in case of ridge_cv
+        alpha_across_splits = [] # only used in case of ridge_cv # TODO
+        # TODO we aren't saving this to the object instance yet
         train_indices = []
         test_indices = []
 
         splits = self.construct_splits()
 
-        X_test_collection = []
+        # X_test_collection = []
         Y_test_collection = []
         Y_pred_collection = []
 
@@ -156,25 +180,37 @@ class Mapping:
             train_indices.append(train_index)
             test_indices.append(test_index)
 
-            X_train, X_test = self.X.sel(sampleid=train_index).to_array(), self.X.sel(sampleid=test_index).to_array()
-            y_train, y_test = self.Y.sel(sampleid=train_index).to_array(), self.Y.sel(sampleid=test_index).to_array()
-            self.model.fit(X_train, y_train)
+            # !! NOTE the _nan_removed variants instead of X and Y
+            X_train, X_test = (
+                self.X_nan_removed.sel(sampleid=train_index).to_array(),#.squeeze(),
+                self.X_nan_removed.sel(sampleid=test_index).to_array()#.squeeze()
+            )
+            y_train, y_test = (
+                self.Y_nan_removed.sel(sampleid=train_index).to_array(),#.squeeze(),
+                self.Y_nan_removed.sel(sampleid=test_index).to_array()#.squeeze()
+            )
 
-            y_pred = self.model.predict(X_test)
-            y_pred = np.squeeze(y_pred)
+            y_pred_over_time = []
+            for timeid in self.Y_nan_removed.timeid.data:
 
+                self.model.fit(X_train, y_train.isel(timeid=timeid))
+
+                y_pred = self.model.predict(X_test)
+                y_pred_over_time.append(y_pred)
+
+            Y_pred_collection.append(y_pred_over_time)
             Y_test_collection.append(y_test)
-            Y_pred_collection.append(y_pred)
 
-        return Y_pred_collection, Y_test_collection
+        return dict(test=Y_test_collection, 
+                    pred=Y_pred_collection)
 
-
-    def map(self, source, target) -> None:
-        '''
-        the works: constructs splits, fits models for each split, then evaluates the fit 
-                of each split and returns the result (also for each split)
-        '''
-        pass
+    
+    # def map(self, source, target) -> None:
+    #     '''
+    #     the works: constructs splits, fits models for each split, then evaluates the fit 
+    #             of each split and returns the result (also for each split)
+    #     '''
+    #     pass
 
         
     def save_model(self) -> None:

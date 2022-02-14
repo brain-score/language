@@ -1,5 +1,0 @@
-
-
-
-def ridge_regression():
-    ...
