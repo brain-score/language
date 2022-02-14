@@ -1,6 +1,8 @@
 from langbrainscore.interface.encoder import _BrainEncoder
 import numpy as np
 
+from langbrainscore.utils import logging
+
 
 class BrainEncoder(_BrainEncoder):
     '''
@@ -26,7 +28,8 @@ class BrainEncoder(_BrainEncoder):
 
     # @typing.overload
     # def encode(self, stimuli: typing.Union[np.array, list]): ...
-    def encode(self, dataset: 'langbrainscore.dataset.BrainDataSet' = None):
+    def encode(self, dataset: 'langbrainscore.dataset.BrainDataSet' = None,
+               average_time = True):
         """returns an "encoding" of stimuli (passed in as a BrainDataset)
 
         Args:
@@ -39,9 +42,12 @@ class BrainEncoder(_BrainEncoder):
         
         dataset = dataset or self.dataset
 
-        if (timeid_dims := dataset._dataset.dims['timeid']) > 1:
-            return dataset._dataset.mean('timeid')
-        elif timeid_dims == 1:
-            return dataset._dataset.squeeze('timeid')
+        if (timeid_dims := dataset._dataset.dims['timeid']) >= 1:
+            # TODO: revisit this
+            if average_time:
+                return dataset._dataset.mean('timeid')
+            return dataset._dataset
+        # elif timeid_dims == 1:
+        #     return dataset._dataset.squeeze('timeid')
         else:
             raise ValueError(f'timeid has invalid shape {timeid_dims}')
