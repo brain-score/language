@@ -184,7 +184,7 @@ log("fitting a mapping using ridge regression")
 
 
 # Group KFold (splits at group borders; same group stays in the same split)
-ridge_cv_mapping_split = lbs.mapping_tools.Mapping(ann_encoded_data, brain_encoded_data,
+ridge_cv_mapping_split = lbs.mapping.Mapping(ann_encoded_data, brain_encoded_data,
                                           "ridge_cv", 
                                           k_fold=5, split_coord='passage_experiment')
 k_fold_split = ridge_cv_mapping_split.construct_splits()
@@ -194,9 +194,9 @@ k_fold_split = ridge_cv_mapping_split.construct_splits()
 
 
 met = lbs.metrics.Metric(lbs.metrics.pearson_r)
-brsc = lbs.BrainScore(ridge_cv_mapping_split, met)
+brsc = lbs.BrainScore(ridge_cv_mapping_split, met, run=True)
 
-log(f'brainscore = {brsc.score()}')
+log(f'brainscore = {brsc}')
 
 # # Stratified Group KFold 
 # ridge_cv_mapping_split_strat = lbs.mapping_tools.Mapping(ann_encoded_data, brain_encoded_data,
