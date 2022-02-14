@@ -1,6 +1,6 @@
 '''
 Collection of functions with the general signature
-    (matrix, matrix) -> scalar
+    (`np.ndarray`, `np.ndarray`) -> `np.ndarray`
 '''
 
-import langbrainscore.metrics.pearson_r 
+from langbrainscore.metrics.metric import *
