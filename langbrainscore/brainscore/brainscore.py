@@ -84,7 +84,7 @@ class BrainScore(_BrainScore):
  
 
         scores = xr.concat(sample_scores, dim='cvfoldid').data
-        scores.assign_coords({'cvfoldid': ('cvfoldid', scores.cvfoldid.data)})
+        scores = scores.assign_coords({'cvfoldid': ('cvfoldid', scores.cvfoldid.data)})
 
         for k in A.to_dataset(name='data').drop_dims(['sampleid', 'neuroid']).coords: 
             # ^- keeps only timeid, and has no .data
