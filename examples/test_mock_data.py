@@ -119,7 +119,8 @@ mock_brain_encoder = lbs.encoder.BrainEncoder(mock_neuro_dataset)
 log("." * 79, type="WARN")
 
 # expect to obtain data of shape 627 x 10_000
-brain_encoded_data = mock_brain_encoder.encode(mock_neuro_dataset)
+brain_encoded_data = mock_brain_encoder.encode(mock_neuro_dataset, 
+                                               average_time = False)
 log(f"created brain-encoded data of shape: {brain_encoded_data.dims}")
 
 
@@ -170,16 +171,16 @@ log("." * 79, type="WARN")
 log("fitting a mapping using ridge regression")
 
 
-# simple KFold
-ridge_mapping = lbs.mapping_tools.Mapping(ann_encoded_data, brain_encoded_data,
-                                          "ridge", k_fold=5)
-k_fold = ridge_mapping.construct_splits()
-
-# Stratified KFold (tries to balance)
-ridge_mapping_strat = lbs.mapping_tools.Mapping(ann_encoded_data, brain_encoded_data,
-                                          "ridge", 
-                                          k_fold=5, strat_coord='experiment')
-k_fold_strat = ridge_mapping_strat.construct_splits()
+# # # # simple KFold
+# # # ridge_mapping = lbs.mapping_tools.Mapping(ann_encoded_data, brain_encoded_data,
+# # #                                           "ridge", k_fold=5)
+# # # k_fold = ridge_mapping.construct_splits()
+# # # 
+# # # # Stratified KFold (tries to balance)
+# # # ridge_mapping_strat = lbs.mapping_tools.Mapping(ann_encoded_data, brain_encoded_data,
+# # #                                           "ridge", 
+# # #                                           k_fold=5, strat_coord='experiment')
+# # # k_fold_strat = ridge_mapping_strat.construct_splits()
 
 
 # Group KFold (splits at group borders; same group stays in the same split)
