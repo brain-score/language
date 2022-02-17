@@ -1,5 +1,5 @@
 # langbrainscore
-_the suffix `-fuzzy-potato` (arbitrarily chosen) indicates this project is in the `alpha` stage of software development._
+_release stage: "fuzzy-potato" (alpha)_
 
 
 ### [**Documentation** ![CircleCI](https://circleci.com/gh/language-brainscore/lang-brainscore-fuzzy-potato/tree/main.svg?style=svg)](https://language-brainscore.github.io/lang-brainscore-fuzzy-potato/)
