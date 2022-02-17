@@ -1,4 +1,3 @@
-from tkinter import W
 import scipy.stats
 import numpy as np
 import typing
