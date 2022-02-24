@@ -204,6 +204,10 @@ class Mapping:
             Y_pred_collection.append(y_pred_over_time)
             Y_test_collection.append(y_test)
 
+        # ACTUALLY TODO the below is no longer true:
+        #   now the Y_test_collection members are xarrays with a timeid dimension/coord
+        #   but Y_pred_collection is a list of numpy arrays per discrete timeid
+        
         # the return value is a dictionary of test/pred;
         # each of test/pred is a list of lists with two levels of
         # nesting as below:
