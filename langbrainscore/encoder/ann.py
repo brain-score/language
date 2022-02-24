@@ -253,7 +253,7 @@ class HuggingFaceEncoder(_ANNEncoder):
         # d.drop_dims(['neuroid', 'timeid']) <-- keeps only sampleid, and has no data
 
         # TODO: explain what this does extensively
-        for k in dataset._dataset.drop_dims(['neuroid', 'timeid']).coords: #<- keeps only sampleid, and has no data
+        for k in dataset._dataset.drop(dim=['neuroid', 'timeid']).coords: #<- keeps only sampleid, and has no data
             xr_encode = xr_encode.assign_coords({k: ('sampleid', dataset._dataset[k].data)})
 
 
