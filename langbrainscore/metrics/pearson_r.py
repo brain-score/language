@@ -1,7 +1,5 @@
 import scipy
 
-scipy.stats.pearsonr
-
 
 def pearson_r(x, y):
     """
