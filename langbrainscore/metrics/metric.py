@@ -20,7 +20,7 @@ class Metric(_Metric):
         # return np.apply_along_axis(self.metric, 1, )
         return [self.metric(A[:, i], B[:, i], **kwds) 
                 for i in tqdm(range(A.shape[1]), desc='computing metric per neuroid in a cvfold')]
-
+# hack self.metric(A.dropna(dim='neuroid').values, B.dropna(dim='neuroid').values)
 
 
 def pearson_r(x, y):
