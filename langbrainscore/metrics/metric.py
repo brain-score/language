@@ -5,6 +5,8 @@ from tqdm import tqdm
 from langbrainscore.interface.metrics import _Metric
 import xarray as xr
 
+from langbrainscore.metrics.rsa import RSA, RDM
+
 class Metric(_Metric):
 
     def __init__(self, metric: typing.Union[str, typing.Callable]) -> None:
