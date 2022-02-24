@@ -42,10 +42,10 @@ class BrainEncoder(_BrainEncoder):
         
         dataset = dataset or self.dataset
 
-        if (timeid_dims := dataset._dataset.dims['timeid']) >= 1:
+        if (timeid_dims := dataset._dataset['timeid'].size) >= 1:
             # TODO: revisit this
             if average_time:
-                return dataset._dataset.mean('timeid')
+                return dataset._dataset.mean('timeid').expand_dims('timeid', 2)
             return dataset._dataset
         # elif timeid_dims == 1:
         #     return dataset._dataset.squeeze('timeid')
