@@ -26,7 +26,7 @@ class Mapping:
     def __init__(self,
                  X: xr.Dataset, Y: xr.Dataset,
 
-                 mapping_class: typing.Union[str, typing.Any],
+                 mapping_class: typing.Union[str, typing.Any] = None,
                  random_seed: int = 42, 
 
                  k_fold: int = 5,
@@ -61,8 +61,7 @@ class Mapping:
             'ridge': (Ridge, {'alpha': 1.0}),
             'ridge_cv': (RidgeCV, {'alphas': np.logspace(-3, 3, 13), 'alpha_per_target': True}),
             'linear': (LinearRegression, {}),
-            #'rsa': (RSA, {}),
-            #'rdm': (RDM, {}),
+            None: None,
         }
 
         self.k_fold = k_fold or 1
@@ -87,9 +86,10 @@ class Mapping:
         # TODO:
         # make sure there are no stimuli that have NaNs in all places along the neuroid dimension
 
-
         self.X, self.Y = X, Y
-
+        
+        
+        
         self.X_nan_mask = X.isnull()
         self.Y_nan_mask = Y.isnull()
         self.X_nan_removed = X.dropna('neuroid')
