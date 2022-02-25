@@ -6,10 +6,10 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from langbrainscore.utils.logging import log
-
+from pathlib import Path
 
 def package_mean_froi_pereira2018_firstsess():
-    mpf = pd.read_csv("../data/Pereira_FirstSession_TrialEffectSizes_20220223.csv")
+    mpf = pd.read_csv(f"{Path(__file__).parents[1] / 'data/Pereira_FirstSession_TrialEffectSizes_20220223.csv'}")
     mpf = mpf.sort_values(by=["UID", "Session", "Experiment", "Stim"])
     subj_xrs = []
     neuroidx = 0
@@ -60,19 +60,19 @@ def package_mean_froi_pereira2018_firstsess():
 
 def main():
     mpf_xr = package_mean_froi_pereira2018_firstsess()
-    mpf_dataset = lbs.dataset.Dataset(mpf_xr)
+    mpf_dataset = lbs.dataset.Dataset(mpf_xr.isel(neuroid=mpf_xr.roi=='Lang_LH_AntTemp'))
     log(f"stimuli: {mpf_dataset.stimuli.values}")
     brain_enc = lbs.encoder.BrainEncoder(mpf_dataset)
     brain_enc_mpf = brain_enc.encode()
     log(f"created brain-encoded data of shape: {brain_enc_mpf.dims}")
-    ann_enc = lbs.encoder.HuggingFaceEncoder("gpt2")
+    ann_enc = lbs.encoder.HuggingFaceEncoder("distilgpt2")
     ann_enc_mpf = ann_enc.encode(mpf_dataset, context_dimension="stimuli")
-    ann_enc_mpf = ann_enc_mpf.isel(neuroid=(ann_enc_mpf.layer == 10))
+    ann_enc_mpf = ann_enc_mpf.isel(neuroid=(ann_enc_mpf.layer == 4))
     log(f"created ann-encoded data of shape: {ann_enc_mpf.dims}")
     ridge_cv_mapping_split = lbs.mapping.Mapping(
-        ann_enc_mpf, brain_enc_mpf, "ridge_cv", k_fold=5
+        ann_enc_mpf, brain_enc_mpf, "ridge_cv", k_fold=2
     )
-    k_fold_split = ridge_cv_mapping_split.construct_splits()
+    # k_fold_split = ridge_cv_mapping_split.construct_splits()
     met = lbs.metrics.Metric(lbs.metrics.pearson_r)
     brsc = lbs.BrainScore(ridge_cv_mapping_split, met, run=True)
     log(f"brainscore = {brsc}")

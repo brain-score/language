@@ -8,10 +8,10 @@ import pandas as pd
 import xarray as xr
 from langbrainscore.utils.logging import log
 
+from pathlib import Path
 
 def package_mean_froi_neural_control_data():
-    with open(
-        "../data/dict_UID-853_SESSION-FED_20211013b_3T1_PL2017_FL-control_tr1_20220109.pkl",
+    with open(f"{Path(__file__).parents[1] / 'data/dict_UID-853_SESSION-FED_20211013b_3T1_PL2017_FL-control_tr1_20220109.pkl'}",
         "rb",
     ) as f:
         mnc = pkl.load(f)
@@ -26,7 +26,7 @@ def package_mean_froi_neural_control_data():
             "neuroid": np.arange(recorded_data.shape[1]),
             "timeid": np.arange(recorded_data.shape[2]),
         },
-    ).to_dataset(name="data")
+    )
     neuroid_features = defaultdict(list)
     for col in mnc_rois.columns:
         neuroid_features["froi"].append(col)
@@ -61,7 +61,6 @@ def main():
     ridge_cv_mapping_split = lbs.mapping.Mapping(
         ann_enc_mnc, brain_enc_mnc, "ridge_cv", k_fold=5
     )
-    k_fold_split = ridge_cv_mapping_split.construct_splits()
     met = lbs.metrics.Metric(lbs.metrics.pearson_r)
     brsc = lbs.BrainScore(ridge_cv_mapping_split, met, run=True)
     log(f"brainscore = {brsc}")
