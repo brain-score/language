@@ -136,4 +136,4 @@ We follow the **Semantic Versioning** spec
 > *Additional labels for pre-release and build metadata are available as extensions to the `MAJOR.MINOR.PATCH` format.*
 
 Additionally:
-> *Major version zero `(0.y.z)` is for initial development. Anything MAY change at any time. The public API SHOULD NOT be considered stable. [[ref]](https://semver.org/spec/v2.0.0.html#spec-item-4).*
+> *Major version zero `(0.y.z)` is for initial development. Anything MAY (and will) change at any time. The public API SHOULD NOT be considered stable. [[ref]](https://semver.org/spec/v2.0.0.html#spec-item-4).*

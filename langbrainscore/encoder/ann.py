@@ -173,7 +173,7 @@ class HuggingFaceEncoder(_ANNEncoder):
             # CONTEXT LOOP
             ###############################################################################                  
             for i, stimulus in enumerate(stimuli_in_context):
-                print(f'encoding stimulus {i} of {len(stimuli_in_context)}')
+                # print(f'encoding stimulus {i} of {len(stimuli_in_context)}')
                 # mask based on the uni/bi-directional nature of models :)
                 if not bidirectional:
                     stimuli_directional = stimuli_in_context[:i + 1]
@@ -244,7 +244,7 @@ class HuggingFaceEncoder(_ANNEncoder):
                 "timeid": np.arange(1),
                 "layer": ('neuroid', np.array(layer_ids[0], dtype='int64')),
             }
-        ).to_dataset(name="data")
+        ) #.to_dataset(name="data")
 
         #1 xr.Dataset({‘neuro’:xr1.data,’ann’:xr2.data}) 
         #2 bounds = xr.concat([xr_encode, xr_dataset], dim='sampleid') 
