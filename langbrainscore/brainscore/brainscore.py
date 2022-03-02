@@ -10,12 +10,12 @@ from langbrainscore.utils import logging
 
 class BrainScore(_BrainScore):
 
-    def __init__(self, mapping: Mapping, metric: Metric, 
+    def __init__(self, mapping: Mapping, metric: Metric,
                  fold_aggregation: typing.Union[str, None] = 'mean',
                  run = True) -> '_BrainScore':
         self.mapping = mapping
-        self.metric = metric 
-        self.fold_aggregation = fold_aggregation 
+        self.metric = metric
+        self.fold_aggregation = fold_aggregation
         self.aggregate_methods_map = {
             None: self._no_aggregate,
             'mean': self._aggregate_mean,
@@ -30,14 +30,14 @@ class BrainScore(_BrainScore):
     def to_dataarray(self, aggregated=True):
         # returns the aggregated scores as an xarray
         return self.scores if aggregated else self.scores_across_folds
-    
+
     def to_disk(self, aggregated=True):
         # outputs the aggregated (or not) object to disk
         # as a dataarray
         pass
 
     def aggregate_scores(self):
-        """aggregates scores obtianed over 
+        """aggregates scores obtianed over
 
         Args:
             dim (_type_): _description_
@@ -73,13 +73,13 @@ class BrainScore(_BrainScore):
                     B_time = B.sel(timeid=timeid) # B[timeid_ix]
                     timeid_score_scalar = self._score(A_time, B_time, self.metric)
                     timeid_score = xr.DataArray(timeid_score_scalar,
-                                                dims=('neuroid','timeid'), 
+                                                dims=('neuroid','timeid'),
                                                 coords={'neuroid':('neuroid', B_time.neuroid.values.reshape(-1)),
                                                                               # ^ we want to extract [int] from 0-d array (scalar array)
                                                         'timeid': ('timeid', [timeid]),
                                                         })
                     scores_per_timeid.append(timeid_score)
-            
+
                 fold_score =  xr.concat(scores_per_timeid, dim='timeid').expand_dims('cvfoldid',0).assign_coords(cvfoldid=('cvfoldid', [cvid]))
                 scores_per_fold.append(fold_score)
 
@@ -88,6 +88,13 @@ class BrainScore(_BrainScore):
             scores_per_neuroid.append(neuroid_score)
 
         self.scores_unfolded = xr.concat(scores_per_neuroid, dim='neuroid')
+
+        # fill back in metadata coords for neuroid and timeid from Y
+        for k in self.mapping.Y.to_dataset(name="data").drop_dims(["sampleid", "timeid"]).coords:
+            self.scores_unfolded = self.scores_unfolded.assign_coords({k: ('neuroid', self.mapping.Y[k].data)})
+        for k in self.mapping.Y.to_dataset(name="data").drop_dims(["sampleid", "neuroid"]).coords:
+            self.scores_unfolded = self.scores_unfolded.assign_coords({k: ('timeid', self.mapping.Y[k].data)})
+
         self.aggregate_scores()
 
         return self.scores

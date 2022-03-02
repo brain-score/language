@@ -17,9 +17,6 @@ from sklearn.model_selection import (
 )
 #KFold, StratifiedShuffleSplit, LeavePOut
 
-
-
-
 class Mapping:
     model = None
 
@@ -82,21 +79,11 @@ class Mapping:
                 assert (X[split_coord].values == Y[split_coord].values).all() 
             except AssertionError as e:
                 raise ValueError(f'{split_coord} coordinate does not align across X and Y')
-        
-        # TODO:
-        # make sure there are no stimuli that have NaNs in all places along the neuroid dimension
 
         self.X, self.Y = X, Y
-        
-        
-        
-        self.X_nan_mask = X.isnull()
-        self.Y_nan_mask = Y.isnull()
-        self.X_nan_removed = X.dropna('neuroid')
-        self.Y_nan_removed = Y.dropna('neuroid')
 
-        logging.log(f'X shape: {X.data.shape}, NaNs: {self.X_nan_mask.sum()}; after NaN removal: {self.X_nan_removed.data.shape}')
-        logging.log(f'Y shape: {Y.data.shape}, NaNs: {self.Y_nan_mask.sum()}; after NaN removal: {self.Y_nan_removed.data.shape}')
+        logging.log(f'X shape: {X.data.shape}')
+        logging.log(f'Y shape: {Y.data.shape}')
 
         if type(mapping_class) == str:
             mapping_class, _kwargs = mapping_classes[mapping_class]
@@ -161,9 +148,93 @@ class Mapping:
         # TODO
         self.fit(X, Y, k_folds=1)
         raise NotImplemented
+    
+    def _check_sampleids(self,
+                        X: xr.DataArray, Y: xr.DataArray,
+                        ):
+        """
+        checks that the sampleids in X and Y are the same
+        """
+        
+        if X.sampleid.values.shape != Y.sampleid.values.shape:
+            raise ValueError('X and Y sampleid shapes do not match!')
+        if not np.all(X.sampleid.values == Y.sampleid.values):
+            raise ValueError('X and Y sampleids do not match!')
+        
+        logging.log(
+            f'Passed sampleid check for neuroid {Y.neuroid.values}')
 
+
+    def _drop_na(self,
+                X: xr.DataArray, Y: xr.DataArray,
+                dim: str = 'sampleid',
+                **kwargs):
+        """
+        drop samples with missing values (based on Y) in X or Y along specified dimension
+        Make sure that X and Y now have the same sampleids
+        """
+        # limit data to current neuroid, and then drop the samples that are missing data for this neuroid
+        Y_slice = Y.dropna(dim=dim, **kwargs)
+        Y_filtered_ids = Y_slice[dim].values
+        
+        assert set(Y_filtered_ids).issubset(set(X[dim].values))
+
+        logging.log(
+            f'for neuroid {Y_slice.neuroid.values}, we used {(num_retained := len(Y_filtered_ids))} samples; dropped {len(Y[dim]) - num_retained}')
+
+        # use only the samples that are in Y
+        X_slice = self.X.sel(sampleid=Y_filtered_ids)
+        
+        return X_slice, Y_slice
+
+    def _permute_X(self,
+                  X: xr.DataArray,
+                  method: str = 'shuffle_X_rows',
+                  random_state: int = 42,
+                  ):
+        """Permute the features of X.
+
+		Parameters
+		----------
+		X : xr.DataArray
+			The embeddings to be permuted
+		method : str
+			The method to use for permutation.
+			'shuffle_X_rows' : Shuffle the rows of X (=shuffle the sentences and create a mismatch between the sentence embeddings and target)
+			'shuffle_each_X_col': For each column (=feature/unit) of X, permute that feature's values across all sentences.
+								  Retains the statistics of the original features (e.g., mean per feature) but the values of the features are shuffled for each sentence.
+		random_state : int
+			The seed for the random number generator.
+
+		Returns
+		-------
+		xr.DataArray
+			The permuted dataarray
+		"""
+        
+        X_orig = X.copy(deep=True)
+        
+        logging.log(f'OBS: permuting X with method {method}')
+        
+        if method == 'shuffle_X_rows':
+            X = X.sample(n=X.shape[1], random_state=random_state) # check whether X_shape is correct
+        
+        elif method == 'shuffle_each_X_col':
+            np.random.seed(random_state)
+            for feat in X.data.shape[0]: # per neuroid
+                np.random.shuffle(X.data[feat, :])
+    
+        else:
+            raise ValueError(f'Invalid method: {method}')
+        
+        assert X.shape == X_orig.shape
+        assert np.all(X.data != X_orig.data)
+    
+        return X
+    
+    
     def fit(self, 
-            #X: xr.Dataset, Y: xr.Dataset
+            permute_X: typing.Union[bool, str] = False,
            ) -> None:
         """creates a mapping model using k-fold cross-validation
             -> uses params from the class initialization, uses strat_coord
@@ -172,22 +243,32 @@ class Mapping:
         Returns:
             [type]: [description]
         """        
-
+        
+        # Loop across each Y neuroid (target)
         for neuroid in self.Y.neuroid.values:
-
+            
+            Y_neuroid = self.Y.sel(neuroid=neuroid)
+            
             # limit data to current neuroid, and then drop the samples that are missing data for this neuroid
-            Y_slice = self.Y.sel(neuroid=neuroid).dropna(dim='sampleid')
-            Y_filtered_sampleids = Y_slice.sampleid
-            assert set(Y_filtered_sampleids.values).issubset(set(self.X.sampleid.values))
-            logging.log(f'for neuroid {neuroid}, we used {(num_retained := len(Y_filtered_sampleids))} samples; dropped {len(self.Y.sampleid) - num_retained}') 
-
-            X_slice = self.X.sel(sampleid=Y_filtered_sampleids.values)
-
+            X_slice, Y_slice = self._drop_na(self.X,
+                                             Y_neuroid,
+                                             dim='sampleid')
+            
+            # Assert that X and Y have the same sampleids
+            self._check_sampleids(X_slice, Y_slice)
+            
+            # We can perform various checks by 'permuting' the source, X
+            if permute_X:
+                X_slice = self._permute_X(X_slice,
+                                          method=permute_X)
+            
             # these collections store each split for our records later
             alpha_across_splits = [] # only used in case of ridge_cv # TODO
             # TODO we aren't saving this to the object instance yet
             train_indices = []
             test_indices = []
+            if self.mapping_class.startswith('ridge'):
+                alpha_across_splits = []
 
             splits = self.construct_splits(Y_slice)
 
@@ -211,11 +292,17 @@ class Mapping:
                 )
 
                 y_pred_over_time = []
+                if self.mapping.startswith('ridge'):
+                    alpha_over_time = []
+                    
                 for timeid in y_train.timeid:
 
                     # TODO: change this code for models that also have a non-singleton timeid
                     # i.e., output evolves in time (RNN?)
                     self.model.fit(X_train.sel(timeid=0), y_train.sel(timeid=timeid).values.reshape(-1, 1))
+                    
+                    # Store values related to the fitted models
+                    alpha_over_time.append(self.model.alpha_)
 
                     # deepcopy
                     y_pred = y_test.sel(timeid=timeid).copy(deep=True).expand_dims('timeid', 1)
@@ -227,6 +314,8 @@ class Mapping:
                 Y_pred_collection.append(y_pred_over_time)
 
                 Y_test_collection.append(y_test)
+                
+                alpha_across_splits.append(alpha_over_time)
 
             # ACTUALLY TODO the below is no longer true:
             #   now the Y_test_collection members are xarrays with a timeid dimension/coord

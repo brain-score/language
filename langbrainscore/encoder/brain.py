@@ -7,12 +7,12 @@ from langbrainscore.utils import logging
 class BrainEncoder(_BrainEncoder):
     '''
     This class provides a wrapper around real-world brain data of various kinds
-        which may be: 
+        which may be:
             - neuroimaging [fMRI, PET]
             - physiological [ERP, MEG, ECOG]
             - behavioral [RT, Eye-tracking]
     across several subjects. The class implements `BrainEncoder.encode` which takes in
-    a collection of stimuli (typically `np.array` or `list`) 
+    a collection of stimuli (typically `np.array` or `list`)
     '''
 
     _dataset: 'langbrainscore.dataset.Dataset' = None
@@ -36,16 +36,21 @@ class BrainEncoder(_BrainEncoder):
             stimuli (langbrainscore.dataset.BrainDataset):
 
         Returns:
-            pd.DataFrame: neural recordings for each stimulus, multi-indexed 
+            pd.DataFrame: neural recordings for each stimulus, multi-indexed
                           by layer (trivially just 1 layer)
-        """        
-        
+        """
+
         dataset = dataset or self.dataset
 
         if (timeid_dims := dataset._dataset['timeid'].size) >= 1:
             # TODO: revisit this
             if average_time:
-                return dataset._dataset.mean('timeid').expand_dims('timeid', 2)
+                return (
+                    dataset._dataset
+                    .mean('timeid')
+                    .expand_dims('timeid', 2)
+                    .assign_coords({'timeid': ('timeid', [0])})
+                )
             return dataset._dataset
         # elif timeid_dims == 1:
         #     return dataset._dataset.squeeze('timeid')
