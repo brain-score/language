@@ -154,18 +154,23 @@ class HuggingFaceEncoder(_ANNEncoder):
         else:
             context_groups = dataset.stimuli.coords[context_dimension].values
         
-        states_sentences = defaultdict(list)
+        
         flattened_activations, layer_ids = [], []
         ###############################################################################                  
         # ALL SAMPLES LOOP
         ###############################################################################                  
-        for group in tqdm(np.unique(context_groups)):
+        # NOTE: np.uniques does NOT preserve the order of first appearance of an item
+        # in its return value. it returns a sorted collection.
+        # https://stackoverflow.com/questions/15637336/numpy-unique-with-order-preserved
+        _, unique_ixs = np.unique(context_groups, return_index=True)
+        for group in tqdm(context_groups[np.sort(unique_ixs)]):
             mask_context = context_groups == group
             stimuli_in_context = stimuli[mask_context]  # mask based on the context group
             
             # we want to tokenize all stimuli of this ctxt group individually first in order to keep track of
             # which tokenized subunit belongs to what stimulus
-            
+            # why is "states_sentences" variable outside the outermost loop?
+            states_sentences = defaultdict(list)   
             tokenized_lengths = [0]
             word_ids_by_stim = []  # contains a list of token->word_id lists per stimulus
             states_sentences_across_stimuli = []
@@ -190,17 +195,18 @@ class HuggingFaceEncoder(_ANNEncoder):
                     stimuli_directional = stimuli_directional
                 
                 # tokenize the stimuli
+                #                                > maybe here instead of 'stimuli_directional' we 
+                #                                   should use stimuli_in_context[:i+1] for both
+                #                                   unidirectional and bidirectional cases?
                 tokenized_stim = self.tokenizer(stimuli_directional, padding=False, return_tensors='pt')
                 tokenized_lengths += [tokenized_stim.input_ids.shape[1]]
                 
                 # Get the hidden states
                 result_model = self.model(tokenized_stim.input_ids, output_hidden_states=True, return_dict=True)
-                hidden_states = result_model[
-                    'hidden_states']  # dict with key=layer, value=3D tensor of dims: [batch, tokens, emb size]
+                hidden_states = result_model['hidden_states']  # dict with key=layer, value=3D tensor of dims: [batch, tokens, emb size]
                 
                 word_ids = tokenized_stim.word_ids()  # make sure this is positional, not based on word identity
-                word_ids_by_stim += [
-                    word_ids]  # contains the ids for each tokenized words in stimulus todo: maybe get rid of this?
+                word_ids_by_stim += [word_ids]  # contains the ids for each tokenized words in stimulus todo: maybe get rid of this?
                 
                 # now cut the 'irrelevant' context from the hidden states
                 for idx_layer, layer in enumerate(hidden_states):
@@ -240,34 +246,19 @@ class HuggingFaceEncoder(_ANNEncoder):
             dims=("sampleid", "neuroid", "timeid"),
             coords={
                 "sampleid": dataset._dataset.sampleid.values,
+                # the below way of specifying neuroids assumes all layers have the same # dimensions as the last layer
                 "neuroid": np.arange(np.sum([len(states_sentences_agg[x]) for x in states_sentences_agg])),  # check
                 "timeid": np.arange(1),
                 "layer": ('neuroid', np.array(layer_ids[0], dtype='int64')),
             }
-        ) #.to_dataset(name="data")
+        ) 
 
-        #1 xr.Dataset({‘neuro’:xr1.data,’ann’:xr2.data}) 
-        #2 bounds = xr.concat([xr_encode, xr_dataset], dim='sampleid') 
-        #xr_dataset = xr.concat([xr_encode, dataset._dataset], dim='sampleid')
-        # xr_dataset = xr.Dataset({'ann': xr_encode.data, 'neuro': dataset._dataset.data}) 
-        # d.drop_dims(['neuroid', 'timeid']) <-- keeps only sampleid, and has no data
 
         # TODO: explain what this does extensively
         for k in dataset._dataset.to_dataset(name='data').drop_dims(['neuroid', 'timeid']).coords: #<- keeps only sampleid, and has no data
             xr_encode = xr_encode.assign_coords({k: ('sampleid', dataset._dataset[k].data)})
 
-
-        #			"stimuli": ("sampleid", stimuli),
-        #			"sent_identifier": ("sampleid", [f'mycorpus.{i:0>5}' for i in range(num_stimuli)]),
-        #			"experiment": ("sampleid", dataset._dataset.experiment),
-        #			"passage": ("sampleid", passage),
-        #			"subject": ("neuroid", recording_metadata["subj_id"]),
-        #			"roi": ("neuroid", recording_metadata["roi"]),
-        #		},
-        #	).to_dataset(name="data")
-
         return xr_encode
-
 
 class PTEncoder(_ANNEncoder):
     def __init__(self, ptid) -> None:
