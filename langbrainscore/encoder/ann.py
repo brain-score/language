@@ -155,7 +155,7 @@ class HuggingFaceEncoder(_ANNEncoder):
             context_groups = dataset.stimuli.coords[context_dimension].values
         
         # stores activations for each sitmulus as all layers flattened
-        # layer_ids stores a list similar to [0 0 0 0 1 1 1 ...] indicating which layers
+        # layer_ids stores a list similar to [0 0 0 0 ... 1 1 1 ...] indicating which layers
         # each neuroid/dimension came from
         flattened_activations, layer_ids = [], []
         ###############################################################################                  
@@ -202,7 +202,8 @@ class HuggingFaceEncoder(_ANNEncoder):
                 #                                   should use stimuli_in_context[:i+1] for both
                 #                                   unidirectional and bidirectional cases?
 
-                tokenized_current_stimulus = self.tokenizer(stimulus, padding=False, return_tensors='pt')
+                # we tokenize the current stimulus only to get its length, and thus, we disable adding special tokens
+                tokenized_current_stimulus = self.tokenizer(stimulus, padding=False, return_tensors='pt', add_special_tokens=False)
                 tokenized_current_stim_length = tokenized_current_stimulus.input_ids.shape[1]
                 tokenized_directional_context = self.tokenizer(stimuli_directional, padding=False, return_tensors='pt')
                 
@@ -216,10 +217,15 @@ class HuggingFaceEncoder(_ANNEncoder):
                 layer_wise_activations = dict()   
                 # now cut the 'irrelevant' context from the hidden states
                 for idx_layer, layer in enumerate(hidden_states):
-                    layer_wise_activations[idx_layer] = layer[:, 
-                                                              tokenized_stim_start_index: 
-                                                              tokenized_stim_start_index + tokenized_current_stim_length, 
-                                                              :].squeeze()  # to obtain [tokens;emb dim]
+                    layer_wise_activations[idx_layer] = layer[
+                                                              # batch (singleton)
+                                                              :,
+                                                              # n_tokens
+                                                              tokenized_stim_start_index:
+                                                              tokenized_stim_start_index + tokenized_current_stim_length,
+                                                              # emb_dim (e.g., 768)
+                                                              :,
+                                                            ].squeeze()  # collapse batch dim to obtain shape (n_tokens, emb_dim)
                 
                 tokenized_stim_start_index += tokenized_current_stim_length
 
