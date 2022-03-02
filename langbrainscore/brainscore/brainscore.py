@@ -23,7 +23,6 @@ class BrainScore(_BrainScore):
 
         if run:
             self.score()
-            self.aggregate_scores()
 
     def __str__(self) -> str:
         return f'{self.scores.mean()}'
@@ -84,11 +83,11 @@ class BrainScore(_BrainScore):
                 fold_score =  xr.concat(scores_per_timeid, dim='timeid').expand_dims('cvfoldid',0).assign_coords(cvfoldid=('cvfoldid', [cvid]))
                 scores_per_fold.append(fold_score)
 
-            neuroid_score = xr.concat(scores_per_fold,dim="cvfoldid")
+            neuroid_score = xr.concat(scores_per_fold, dim="cvfoldid")
 
             scores_per_neuroid.append(neuroid_score)
 
         self.scores_unfolded = xr.concat(scores_per_neuroid, dim='neuroid')
+        self.aggregate_scores()
 
-        return self.scores_unfolded
-    
+        return self.scores
