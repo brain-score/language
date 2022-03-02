@@ -33,7 +33,7 @@ def package_mean_froi_pereira2018_firstsess():
                     "neuroid": np.arange(neuroidx, neuroidx + data_array.shape[1]),
                     "timeid": np.arange(data_array.shape[2]),
                     "stimuli": ("sampleid", mpf_sess.Sentence.str.strip('"')),
-                    "passage": ("sampleid", mpf_sess.Stim),
+                    "passage": ("sampleid", list(map(lambda p_s: p_s.split('_')[0], mpf_sess.Stim))),
                     "experiment": ("sampleid", mpf_sess.Experiment),
                     "session": (
                         "neuroid",
@@ -65,12 +65,13 @@ def main():
     brain_enc = lbs.encoder.BrainEncoder(mpf_dataset)
     brain_enc_mpf = brain_enc.encode()
     log(f"created brain-encoded data of shape: {brain_enc_mpf.dims}")
-    ann_enc = lbs.encoder.HuggingFaceEncoder("distilgpt2")
-    ann_enc_mpf = ann_enc.encode(mpf_dataset, context_dimension="stimuli")
+    ann_enc = lbs.encoder.HuggingFaceEncoder("bert-base-uncased")
+    #ann_enc_mpf = ann_enc.encode(mpf_dataset, context_dimension="stimuli")
+    ann_enc_mpf = ann_enc.encode(mpf_dataset, context_dimension="passage")
     ann_enc_mpf = ann_enc_mpf.isel(neuroid=(ann_enc_mpf.layer == 4))
     log(f"created ann-encoded data of shape: {ann_enc_mpf.dims}")
     ridge_cv_mapping_split = lbs.mapping.Mapping(
-        ann_enc_mpf, brain_enc_mpf, "ridge_cv", k_fold=2
+        ann_enc_mpf, brain_enc_mpf, "ridge_cv", k_fold=5
     )
     # k_fold_split = ridge_cv_mapping_split.construct_splits()
     met = lbs.metrics.Metric(lbs.metrics.pearson_r)
