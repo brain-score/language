@@ -154,13 +154,16 @@ class HuggingFaceEncoder(_ANNEncoder):
         else:
             context_groups = dataset.stimuli.coords[context_dimension].values
         
-        
+        # stores activations for each sitmulus as all layers flattened
+        # layer_ids stores a list similar to [0 0 0 0 1 1 1 ...] indicating which layers
+        # each neuroid/dimension came from
         flattened_activations, layer_ids = [], []
         ###############################################################################                  
         # ALL SAMPLES LOOP
         ###############################################################################                  
         # NOTE: np.uniques does NOT preserve the order of first appearance of an item
-        # in its return value. it returns a sorted collection.
+        # in its return value. it returns a sorted collection. so we have to use 
+        # return_index
         # https://stackoverflow.com/questions/15637336/numpy-unique-with-order-preserved
         _, unique_ixs = np.unique(context_groups, return_index=True)
         for group in tqdm(context_groups[np.sort(unique_ixs)]):
@@ -169,9 +172,9 @@ class HuggingFaceEncoder(_ANNEncoder):
             
             # we want to tokenize all stimuli of this ctxt group individually first in order to keep track of
             # which tokenized subunit belongs to what stimulus
-            # why is "states_sentences" variable outside the outermost loop?
-            states_sentences = defaultdict(list)   
-            tokenized_lengths = [0]
+            # this stores the index at which current stimulus starts (the past context ENDS)
+            # in the tokenized sequence
+            tokenized_stim_start_index = 0
             word_ids_by_stim = []  # contains a list of token->word_id lists per stimulus
             states_sentences_across_stimuli = []
             ###############################################################################                  
@@ -198,22 +201,30 @@ class HuggingFaceEncoder(_ANNEncoder):
                 #                                > maybe here instead of 'stimuli_directional' we 
                 #                                   should use stimuli_in_context[:i+1] for both
                 #                                   unidirectional and bidirectional cases?
-                tokenized_stim = self.tokenizer(stimuli_directional, padding=False, return_tensors='pt')
-                tokenized_lengths += [tokenized_stim.input_ids.shape[1]]
+
+                tokenized_current_stimulus = self.tokenizer(stimulus, padding=False, return_tensors='pt')
+                tokenized_current_stim_length = tokenized_current_stimulus.input_ids.shape[1]
+                tokenized_directional_context = self.tokenizer(stimuli_directional, padding=False, return_tensors='pt')
                 
                 # Get the hidden states
-                result_model = self.model(tokenized_stim.input_ids, output_hidden_states=True, return_dict=True)
+                result_model = self.model(tokenized_directional_context.input_ids, output_hidden_states=True, return_dict=True)
                 hidden_states = result_model['hidden_states']  # dict with key=layer, value=3D tensor of dims: [batch, tokens, emb size]
                 
-                word_ids = tokenized_stim.word_ids()  # make sure this is positional, not based on word identity
-                word_ids_by_stim += [word_ids]  # contains the ids for each tokenized words in stimulus todo: maybe get rid of this?
+                # word_ids = tokenized_stim.word_ids()  # make sure this is positional, not based on word identity
+                # word_ids_by_stim += [word_ids]  # contains the ids for each tokenized words in stimulus todo: maybe get rid of this?
                 
+                layer_wise_activations = dict()   
                 # now cut the 'irrelevant' context from the hidden states
                 for idx_layer, layer in enumerate(hidden_states):
-                    states_sentences[idx_layer] = layer[:, tokenized_lengths[-2]: tokenized_lengths[-1], :].squeeze()  # to obtain [tokens;emb dim]
+                    layer_wise_activations[idx_layer] = layer[:, 
+                                                              tokenized_stim_start_index: 
+                                                              tokenized_stim_start_index + tokenized_current_stim_length, 
+                                                              :].squeeze()  # to obtain [tokens;emb dim]
                 
+                tokenized_stim_start_index += tokenized_current_stim_length
+
                 # aggregate within  a stimulus
-                states_sentences_agg = aggregate_layers(states_sentences,
+                states_sentences_agg = aggregate_layers(layer_wise_activations,
                                                         aggregation_args=sentence_level_args)  # fix todo to aggregation args,
                 # dict with key=layer, value=array of # size [emb dim]
                 
@@ -226,7 +237,8 @@ class HuggingFaceEncoder(_ANNEncoder):
             ###############################################################################                  
 
             # flatten across layers and package as xarray
-            flattened_activations_and_layer_ids = [*map(flatten_activations_per_sample, states_sentences_across_stimuli)]
+            flattened_activations_and_layer_ids = [*map(flatten_activations_per_sample, 
+                                                        states_sentences_across_stimuli)]
             for f_as, l_ids in flattened_activations_and_layer_ids:
                 flattened_activations += [f_as]
                 layer_ids += [l_ids]
