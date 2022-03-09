@@ -1,58 +1,34 @@
 from langbrainscore.interface.encoder import _BrainEncoder
-import numpy as np
 
-from langbrainscore.utils import logging
-
+import langbrainscore
 
 class BrainEncoder(_BrainEncoder):
     '''
-    This class provides a wrapper around real-world brain data of various kinds
-        which may be:
-            - neuroimaging [fMRI, PET]
-            - physiological [ERP, MEG, ECOG]
-            - behavioral [RT, Eye-tracking]
-    across several subjects. The class implements `BrainEncoder.encode` which takes in
-    a collection of stimuli (typically `np.array` or `list`)
+    This class provides a wrapper around a brain Dataset object
+    that merely checks a few assertions and returns its contents,
+    but is used to maintain the Encoder interface.
     '''
 
-    _dataset: 'langbrainscore.dataset.Dataset' = None
+    def __init__(self) -> None:
+        pass
 
-    def __init__(self, dataset = None) -> None:
-        # if not isinstance(dataset, langbrainscore.dataset.BrainDataset):
-        #     raise TypeError(f"dataset must be of type `langbrainscore.dataset.BrainDataset`, not {type(dataset)}")
-        self._dataset = dataset
 
-    @property
-    def dataset(self) -> 'langbrainscore.dataset.Dataset':
-        return self._dataset
-
-    # @typing.overload
-    # def encode(self, stimuli: typing.Union[np.array, list]): ...
-    def encode(self, dataset: 'langbrainscore.dataset.BrainDataSet' = None,
-               average_time = True):
-        """returns an "encoding" of stimuli (passed in as a BrainDataset)
+    def encode(self, dataset: 'langbrainscore.dataset.Dataset', average_time = False):
+        """returns an "encoding" of stimuli (passed in as a Dataset)
 
         Args:
-            stimuli (langbrainscore.dataset.BrainDataset):
+            langbrainscore.dataset.Dataset: brain dataset object
 
         Returns:
-            pd.DataFrame: neural recordings for each stimulus, multi-indexed
-                          by layer (trivially just 1 layer)
+            xr.DataArray: contents of brain dataset
         """
-
-        dataset = dataset or self.dataset
-
-        if (timeid_dims := dataset._dataset['timeid'].size) >= 1:
-            # TODO: revisit this
-            if average_time:
-                return (
-                    dataset._dataset
-                    .mean('timeid')
-                    .expand_dims('timeid', 2)
-                    .assign_coords({'timeid': ('timeid', [0])})
-                )
-            return dataset._dataset
-        # elif timeid_dims == 1:
-        #     return dataset._dataset.squeeze('timeid')
-        else:
-            raise ValueError(f'timeid has invalid shape {timeid_dims}')
+        if not isinstance(dataset, langbrainscore.dataset.Dataset):
+            raise TypeError(f"dataset must be of type `langbrainscore.dataset.Dataset`, not {type(dataset)}")
+        if average_time:
+            return (
+                dataset._dataset
+                .mean('timeid')
+                .expand_dims('timeid', 2)
+                .assign_coords({'timeid': ('timeid', [0])})
+            )
+        return dataset._dataset
