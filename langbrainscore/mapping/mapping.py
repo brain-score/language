@@ -11,9 +11,9 @@ from functools import partial
 # TODO: verify behavior of LeavePOut and alternatives LeavePGroupsOut, etc.
 from sklearn.model_selection import (
     KFold, # KFold without regard to any balancing coord (strat_coord) or grouping coord (split_coord)
-    StratifiedKFold, # KFold balancing strat_coord across train/test splits 
+    StratifiedKFold, # KFold balancing strat_coord across train/test splits
     GroupKFold, # KFold keeping grouping coord (split_coord) entirely in one of train/test splits (no leakage)
-    StratifiedGroupKFold, # KFold doing the group thing but also the strat thing on different coords 
+    StratifiedGroupKFold, # KFold doing the group thing but also the strat thing on different coords
 )
 #KFold, StratifiedShuffleSplit, LeavePOut
 
@@ -24,7 +24,7 @@ class Mapping:
                  X: xr.DataArray, Y: xr.DataArray,
 
                  mapping_class: typing.Union[str, typing.Any] = None,
-                 random_seed: int = 42, 
+                 random_seed: int = 42,
 
                  k_fold: int = 5,
                  strat_coord: str = None,
@@ -44,7 +44,7 @@ class Mapping:
            the init function, listed below.
 
         Args:
-            mapping_class (typing.Union[str, typing.Any], required): [description]. 
+            mapping_class (typing.Union[str, typing.Any], required): [description].
                 This Class will be instatiated to get a mapping model. E.g. LinearRegression, Ridge,
                 from the sklearn family. Must implement <?classifier> interface
             random_seed (int, optional): [description]. Defaults to 42.
@@ -76,7 +76,7 @@ class Mapping:
                 raise ValueError(f'{strat_coord} coordinate does not align across X and Y')
         if split_coord:
             try:
-                assert (X[split_coord].values == Y[split_coord].values).all() 
+                assert (X[split_coord].values == Y[split_coord].values).all()
             except AssertionError as e:
                 raise ValueError(f'{split_coord} coordinate does not align across X and Y')
 
@@ -88,23 +88,23 @@ class Mapping:
         if type(mapping_class) == str:
             mapping_class, _kwargs = mapping_classes[mapping_class]
             kwargs.update(_kwargs)
-        
+
         # to save (this model uses the entire data rather than constructing splits)
         self.full_model = mapping_class(**kwargs)
         # placeholder model with the right params that we'll reuse across splits
         self.model = mapping_class(**kwargs)
-        
+
         logging.log(f'initialized Mapping with {mapping_class}, {type(self.model)}!')
 
 
     @staticmethod
     def _extract_dense(A = None):
         '''
-        returns a list of several xarrays each of which is dense (has no NaNs). 
+        returns a list of several xarrays each of which is dense (has no NaNs).
         each will have a subset of the sampleids
 
         Args:
-            A (xr.DataArray): 
+            A (xr.DataArray):
         '''
 
     def extract_dense(self):
@@ -112,7 +112,7 @@ class Mapping:
 
 
     @staticmethod
-    def _construct_splits(xr_dataset: xr.Dataset, # Y: xr.Dataset, 
+    def _construct_splits(xr_dataset: xr.Dataset, # Y: xr.Dataset,
                           strat_coord: str = None, k_folds: int = 5,
                           split_coord: str = None, num_split_groups_out: int = None,
                           random_seed: int = 42
@@ -139,28 +139,28 @@ class Mapping:
 
     def construct_splits(self, A):
         return self._construct_splits(A,
-                                      self.strat_coord, self.k_fold, 
+                                      self.strat_coord, self.k_fold,
                                       self.split_coord, self.num_split_groups_out,
                                       random_seed=self.random_seed)
 
-        
+
     def fit_full(self, X, Y):
         # TODO
         self.fit(X, Y, k_folds=1)
         raise NotImplemented
-    
+
     def _check_sampleids(self,
                         X: xr.DataArray, Y: xr.DataArray,
                         ):
         """
         checks that the sampleids in X and Y are the same
         """
-        
+
         if X.sampleid.values.shape != Y.sampleid.values.shape:
             raise ValueError('X and Y sampleid shapes do not match!')
         if not np.all(X.sampleid.values == Y.sampleid.values):
             raise ValueError('X and Y sampleids do not match!')
-        
+
         logging.log(
             f'Passed sampleid check for neuroid {Y.neuroid.values}')
 
@@ -176,7 +176,7 @@ class Mapping:
         # limit data to current neuroid, and then drop the samples that are missing data for this neuroid
         Y_slice = Y.dropna(dim=dim, **kwargs)
         Y_filtered_ids = Y_slice[dim].values
-        
+
         assert set(Y_filtered_ids).issubset(set(X[dim].values))
 
         logging.log(
@@ -184,7 +184,7 @@ class Mapping:
 
         # use only the samples that are in Y
         X_slice = self.X.sel(sampleid=Y_filtered_ids)
-        
+
         return X_slice, Y_slice
 
     def _permute_X(self,
@@ -211,29 +211,29 @@ class Mapping:
 		xr.DataArray
 			The permuted dataarray
 		"""
-        
+
         X_orig = X.copy(deep=True)
-        
+
         logging.log(f'OBS: permuting X with method {method}')
-        
+
         if method == 'shuffle_X_rows':
             X = X.sample(n=X.shape[1], random_state=random_state) # check whether X_shape is correct
-        
+
         elif method == 'shuffle_each_X_col':
             np.random.seed(random_state)
             for feat in X.data.shape[0]: # per neuroid
                 np.random.shuffle(X.data[feat, :])
-    
+
         else:
             raise ValueError(f'Invalid method: {method}')
-        
+
         assert X.shape == X_orig.shape
         assert np.all(X.data != X_orig.data)
-    
+
         return X
-    
-    
-    def fit(self, 
+
+
+    def fit(self,
             permute_X: typing.Union[bool, str] = False,
            ) -> None:
         """creates a mapping model using k-fold cross-validation
@@ -242,26 +242,26 @@ class Mapping:
 
         Returns:
             [type]: [description]
-        """        
-        
+        """
+
         # Loop across each Y neuroid (target)
         for neuroid in self.Y.neuroid.values:
-            
+
             Y_neuroid = self.Y.sel(neuroid=neuroid)
-            
+
             # limit data to current neuroid, and then drop the samples that are missing data for this neuroid
             X_slice, Y_slice = self._drop_na(self.X,
                                              Y_neuroid,
                                              dim='sampleid')
-            
+
             # Assert that X and Y have the same sampleids
             self._check_sampleids(X_slice, Y_slice)
-            
+
             # We can perform various checks by 'permuting' the source, X
             if permute_X:
                 X_slice = self._permute_X(X_slice,
                                           method=permute_X)
-            
+
             # these collections store each split for our records later
             alpha_across_splits = [] # only used in case of ridge_cv # TODO
             # TODO we aren't saving this to the object instance yet
@@ -277,7 +277,7 @@ class Mapping:
             Y_pred_collection = []
 
             for train_index, test_index in splits:
-                
+
                 train_indices.append(train_index)
                 test_indices.append(test_index)
 
@@ -292,15 +292,15 @@ class Mapping:
                 )
 
                 y_pred_over_time = []
-                if self.mapping.startswith('ridge'):
+                if self.mapping_class.startswith('ridge'):
                     alpha_over_time = []
-                    
+
                 for timeid in y_train.timeid:
 
                     # TODO: change this code for models that also have a non-singleton timeid
                     # i.e., output evolves in time (RNN?)
                     self.model.fit(X_train.sel(timeid=0), y_train.sel(timeid=timeid).values.reshape(-1, 1))
-                    
+
                     # Store values related to the fitted models
                     alpha_over_time.append(self.model.alpha_)
 
@@ -314,7 +314,7 @@ class Mapping:
                 Y_pred_collection.append(y_pred_over_time)
 
                 Y_test_collection.append(y_test)
-                
+
                 alpha_across_splits.append(alpha_over_time)
 
             # ACTUALLY TODO the below is no longer true:
@@ -326,18 +326,18 @@ class Mapping:
             # nesting as below:
             #   first level: CV folds
             #       second level: timeids
-            yield dict(test=Y_test_collection, 
+            yield dict(test=Y_test_collection,
                        pred=Y_pred_collection)
 
-    
+
     # def map(self, source, target) -> None:
     #     '''
-    #     the works: constructs splits, fits models for each split, then evaluates the fit 
+    #     the works: constructs splits, fits models for each split, then evaluates the fit
     #             of each split and returns the result (also for each split)
     #     '''
     #     pass
 
-        
+
     def save_model(self) -> None:
         '''TODO: stuff that needs to be saved eventually
 
@@ -357,7 +357,7 @@ class Mapping:
 
 class IdentityMap(Mapping):
     """Identity mapping for running RSA-type analyses that don't need splits into cv folds and don't need affine maps"""
-    
+
     def fit(self,
             # X: xr.Dataset, Y: xr.Dataset
             ) -> None:
@@ -373,8 +373,6 @@ class IdentityMap(Mapping):
         Returns:
             [type]: [description]
         """
-        
+
         return dict(test=[self.Y.data],
                     pred=[[self.X.data.sel(timeid=i) for i in self.X.timeid.values]])
-    
-    
