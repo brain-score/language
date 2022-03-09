@@ -9,13 +9,13 @@ class Encoder(ABC):
         pass
 
     @abstractmethod
-    def encode(self, dataset: 'langbrainscore.dataset.Dataset' = None) -> xr.DataArray:
+    def encode(self, dataset: 'langbrainscore.dataset.Dataset') -> xr.DataArray:
         raise NotImplementedError
 
 
 class _BrainEncoder(Encoder):
     @abstractmethod
-    def encode(self, dataset: 'langbrainscore.dataset.Dataset' = None):
+    def encode(self, dataset: 'langbrainscore.dataset.Dataset') -> xr.DataArray:
         """returns an "encoding" of stimuli (passed in as a Dataset)
 
         Args:
@@ -29,7 +29,7 @@ class _BrainEncoder(Encoder):
 
 class _ANNEncoder(Encoder):
     @abstractmethod
-    def encode(self, dataset: 'langbrainscore.dataset.Dataset'):
+    def encode(self, dataset: 'langbrainscore.dataset.Dataset') -> xr.DataArray:
         """returns embeddings of stimuli (passed in as a Dataset)
 
         Args:
