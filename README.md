@@ -52,13 +52,13 @@ find MWEs in `examples/`.
 ```python
 import langbrainscore as lbs
 
-gpt2 = lbs.encoder.HuggingFaceEncoder(pretrained_model_name_or_path='gpt2')
-
 pereira18_data = ...
-brain = lbs.encoder.BrainEncoder(pereira18_data)
+
+gpt2 = lbs.encoder.HuggingFaceEncoder('gpt2')
+brain = lbs.encoder.BrainEncoder()
 
 for encoder in [brain, gpt2]:
-    print(encoder, encoder.encode(pereira18_data).shape)
+    print(encoder.encode(pereira18_data).shape)
 
 ```
 

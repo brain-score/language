@@ -1,3 +1,3 @@
 
 
-from langbrainscore.dataset.dataset import Dataset, BrainDataset
+from langbrainscore.dataset.dataset import Dataset
