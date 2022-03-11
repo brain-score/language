@@ -57,34 +57,41 @@ class BrainScore(_BrainScore):
 
     @lru_cache(maxsize=None)
     def score(self):
-
+        '''
+        Computes The BrainScore™ (/s) using predictions/outputs returned by a
+        Mapping instance which is a member attribute of a BrainScore instance
+        '''
         scores_per_neuroid = []
-        # returns generator over neuroid
-        for result in self.mapping.fit(): # TODO: wrong, change to for loop
+        # returns generator over neuroids of (tests, preds, alphas) tuples
+        # tests, preds are xarrays, and alphas is a list of dicts per cvfold.
+        # the dict is indexed using timeids 
+        for result in self.mapping.fit(): 
 
-            tests, preds = result['test'], result['pred']
+            tests, preds, alphas = result['test'], result['pred'], result['alphas']
             scores_per_fold = []
             # A, B are lists of xr DataArrays over timeids
-            for cvid,(A, B) in enumerate(zip(tests, preds)):
+            for cvid, (A, B, T) in enumerate(zip(tests, preds, alphas)):
                 scores_per_timeid = [] # this is a list of n_folds xarrays
                 for timeid in A.timeid.values:
                     # A_time, B_time are xr DataArrays at a specific timeid
                     A_time = A.sel(timeid=0) # TODO RNNs ;_;
                     B_time = B.sel(timeid=timeid) # B[timeid_ix]
+                    alpha_time = T[timeid]
                     timeid_score_scalar = self._score(A_time, B_time, self.metric)
                     timeid_score = xr.DataArray(timeid_score_scalar,
                                                 dims=('neuroid','timeid'),
                                                 coords={'neuroid':('neuroid', B_time.neuroid.values.reshape(-1)),
                                                                               # ^ we want to extract [int] from 0-d array (scalar array)
                                                         'timeid': ('timeid', [timeid]),
+                                                        # WIP: alpha
+                                                        'alpha': (('timeid', 'neuroid'), np.array(alpha_time).reshape(1,1)),
                                                         })
                     scores_per_timeid.append(timeid_score)
 
-                fold_score =  xr.concat(scores_per_timeid, dim='timeid').expand_dims('cvfoldid',0).assign_coords(cvfoldid=('cvfoldid', [cvid]))
+                fold_score =  xr.concat(scores_per_timeid, dim='timeid').expand_dims('cvfoldid', 0).assign_coords(cvfoldid=('cvfoldid', [cvid]))
                 scores_per_fold.append(fold_score)
 
             neuroid_score = xr.concat(scores_per_fold, dim="cvfoldid")
-
             scores_per_neuroid.append(neuroid_score)
 
         self.scores_unfolded = xr.concat(scores_per_neuroid, dim='neuroid')
@@ -95,6 +102,7 @@ class BrainScore(_BrainScore):
         for k in self.mapping.Y.to_dataset(name="data").drop_dims(["sampleid", "neuroid"]).coords:
             self.scores_unfolded = self.scores_unfolded.assign_coords({k: ('timeid', self.mapping.Y[k].data)})
 
+        # aggregate scores across cv folds to obtain scores per neuroid and per timeid
         self.aggregate_scores()
 
         return self.scores

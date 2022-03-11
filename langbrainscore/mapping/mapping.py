@@ -166,9 +166,9 @@ class Mapping:
 
 
     def _drop_na(self,
-                X: xr.DataArray, Y: xr.DataArray,
-                dim: str = 'sampleid',
-                **kwargs):
+                 X: xr.DataArray, Y: xr.DataArray,
+                 dim: str = 'sampleid',
+                 **kwargs):
         """
         drop samples with missing values (based on Y) in X or Y along specified dimension
         Make sure that X and Y now have the same sampleids
@@ -235,7 +235,7 @@ class Mapping:
 
     def fit(self,
             permute_X: typing.Union[bool, str] = False,
-           ) -> None:
+           ) -> typing.Dict:
         """creates a mapping model using k-fold cross-validation
             -> uses params from the class initialization, uses strat_coord
                and split_coord to stratify and split across group boundaries
@@ -243,7 +243,6 @@ class Mapping:
         Returns:
             [type]: [description]
         """
-
         # Loop across each Y neuroid (target)
         for neuroid in self.Y.neuroid.values:
 
@@ -258,17 +257,17 @@ class Mapping:
             self._check_sampleids(X_slice, Y_slice)
 
             # We can perform various checks by 'permuting' the source, X
+            # TODO this is a test! do not use under normal workflow!
             if permute_X:
                 X_slice = self._permute_X(X_slice,
                                           method=permute_X)
 
             # these collections store each split for our records later
-            alpha_across_splits = [] # only used in case of ridge_cv # TODO
             # TODO we aren't saving this to the object instance yet
             train_indices = []
             test_indices = []
-            if self.mapping_class.startswith('ridge'):
-                alpha_across_splits = []
+            # only used in case of ridge_cv or any duck type that uses an alpha hparam 
+            alpha_across_splits = []
 
             splits = self.construct_splits(Y_slice)
 
@@ -291,9 +290,10 @@ class Mapping:
                     Y_slice.sel(sampleid=Y_slice.sampleid.values[test_index]),
                 )
 
+                # empty list to house the y_predictions per timeid
                 y_pred_over_time = []
-                if self.mapping_class.startswith('ridge'):
-                    alpha_over_time = []
+                # empty dictionary to house the hparam alpha per timeid
+                alpha_over_time = {}
 
                 for timeid in y_train.timeid:
 
@@ -301,10 +301,11 @@ class Mapping:
                     # i.e., output evolves in time (RNN?)
                     self.model.fit(X_train.sel(timeid=0), y_train.sel(timeid=timeid).values.reshape(-1, 1))
 
-                    # Store values related to the fitted models
-                    alpha_over_time.append(self.model.alpha_)
+                    # store the hparam values related to the fitted models
+                    alpha_over_time[timeid.item()] = getattr(self.model, 'alpha_', np.nan)
 
-                    # deepcopy
+                    # deepcopy `y_test` as `y_pred` to inherit some of the metadata and dims
+                    # and then populate it with our new predicted values
                     y_pred = y_test.sel(timeid=timeid).copy(deep=True).expand_dims('timeid', 1)
                     y_pred.assign_coords(timeid=('timeid', [timeid]))
                     y_pred.data = self.model.predict(X_test.sel(timeid=0)) #y_pred
@@ -312,14 +313,8 @@ class Mapping:
 
                 y_pred_over_time = xr.concat(y_pred_over_time, dim='timeid')
                 Y_pred_collection.append(y_pred_over_time)
-
                 Y_test_collection.append(y_test)
-
                 alpha_across_splits.append(alpha_over_time)
-
-            # ACTUALLY TODO the below is no longer true:
-            #   now the Y_test_collection members are xarrays with a timeid dimension/coord
-            #   but Y_pred_collection is a list of numpy arrays per discrete timeid
 
             # the return value is a dictionary of test/pred;
             # each of test/pred is a list of lists with two levels of
@@ -327,7 +322,8 @@ class Mapping:
             #   first level: CV folds
             #       second level: timeids
             yield dict(test=Y_test_collection,
-                       pred=Y_pred_collection)
+                       pred=Y_pred_collection,
+                       alphas=alpha_across_splits)
 
 
     # def map(self, source, target) -> None:
