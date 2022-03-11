@@ -197,10 +197,8 @@ class HuggingFaceEncoder(_ANNEncoder):
                 else:
                     stimuli_directional = stimuli_directional
                 
-                # tokenize the stimuli
-                #                                > maybe here instead of 'stimuli_directional' we 
-                #                                   should use stimuli_in_context[:i+1] for both
-                #                                   unidirectional and bidirectional cases?
+                special_token_ids = self.tokenizer(' '.join(self.tokenizer.special_tokens_map.values()))['input_ids']
+                special_token_ids = set(special_token_ids)
 
                 # we tokenize the current stimulus only to get its length, and thus, we disable adding special tokens
                 tokenized_current_stimulus = self.tokenizer(stimulus, padding=False, return_tensors='pt', add_special_tokens=False)
