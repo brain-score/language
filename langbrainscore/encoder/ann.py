@@ -158,6 +158,8 @@ class HuggingFaceEncoder(_ANNEncoder):
             # CONTEXT LOOP
             ###############################################################################
             for i, stimulus in enumerate(stimuli_in_context):
+                stimulus = self._case(sample=stimulus, emb_case=emb_case)
+    
                 # Mask based on the uni/bi-directional nature of models
                 if not bidirectional:
                     stimuli_directional = stimuli_in_context[:i + 1]
@@ -171,7 +173,7 @@ class HuggingFaceEncoder(_ANNEncoder):
                 special_token_ids = set(special_token_ids)
 
                 # Tokenize the current stimulus only to get its length, and disable adding special tokens
-                tokenized_current_stimulus = self.tokenizer(stimulus, padding=False, return_tensors='pt', add_special_tokens=False)
+                tokenized_current_stimulus = self.tokenizer(stimulus, padding=False, return_tensors='pt', add_special_tokens=False) # todo double check this!
                 tokenized_current_stim_length = tokenized_current_stimulus.input_ids.shape[1]
                 tokenized_directional_context = self.tokenizer(stimuli_directional, padding=False, return_tensors='pt')
 
