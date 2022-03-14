@@ -90,11 +90,12 @@ class Mapping:
             kwargs.update(_kwargs)
 
         # to save (this model uses the entire data rather than constructing splits)
-        self.full_model = mapping_class(**kwargs)
-        # placeholder model with the right params that we'll reuse across splits
-        self.model = mapping_class(**kwargs)
+        if mapping_class:
+            self.full_model = mapping_class(**kwargs)
+            # placeholder model with the right params that we'll reuse across splits
+            self.model = mapping_class(**kwargs)
 
-        logging.log(f'initialized Mapping with {mapping_class}, {type(self.model)}!')
+            logging.log(f'initialized Mapping with {mapping_class}, {type(self.model)}!')
 
 
     @staticmethod
@@ -266,7 +267,7 @@ class Mapping:
             # TODO we aren't saving this to the object instance yet
             train_indices = []
             test_indices = []
-            # only used in case of ridge_cv or any duck type that uses an alpha hparam 
+            # only used in case of ridge_cv or any duck type that uses an alpha hparam
             alpha_across_splits = []
 
             splits = self.construct_splits(Y_slice)
@@ -354,21 +355,6 @@ class Mapping:
 class IdentityMap(Mapping):
     """Identity mapping for running RSA-type analyses that don't need splits into cv folds and don't need affine maps"""
 
-    def fit(self,
-            # X: xr.Dataset, Y: xr.Dataset
-            ) -> None:
-        """creates a mapping model using k-fold cross-validation
-            depending on the class initialization, uses strat_coord
-            and split_coord to stratify and split across group boundaries
-
-        Args:, groups=None, k_folds: int = 5
-            X ([type]): [description]
-            Y ([type]): [description]
-            k_folds (int, optional): [description]. Defaults to 5.
-
-        Returns:
-            [type]: [description]
-        """
-
+    def fit(self):
         return dict(test=[self.Y.data],
                     pred=[[self.X.data.sel(timeid=i) for i in self.X.timeid.values]])

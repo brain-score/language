@@ -64,8 +64,10 @@ class BrainScore(_BrainScore):
         scores_per_neuroid = []
         # returns generator over neuroids of (tests, preds, alphas) tuples
         # tests, preds are xarrays, and alphas is a list of dicts per cvfold.
-        # the dict is indexed using timeids 
-        for result in self.mapping.fit(): 
+        # the dict is indexed using timeids
+
+        # NOTE: need to modify this to support IdentityMap scenario
+        for result in self.mapping.fit():
 
             tests, preds, alphas = result['test'], result['pred'], result['alphas']
             scores_per_fold = []

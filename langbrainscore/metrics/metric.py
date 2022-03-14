@@ -1,55 +1,123 @@
-import scipy.stats
-import numpy as np
 import typing
-from tqdm import tqdm
-from langbrainscore.interface.metrics import _Metric
+
+import numpy as np
 import xarray as xr
 
-from langbrainscore.metrics.rsa import RSA, RDM
+from scipy.stats import kendalltau, pearsonr, spearmanr
+from sklearn.metrics import accuracy_score, mean_squared_error, pairwise_distances
 
-class Metric(_Metric):
-
-    def __init__(self, metric: typing.Union[str, typing.Callable]) -> None:
-        self.metric = metric
-
-    def __call__(self, A: xr.DataArray, B: xr.DataArray, **kwds: dict) -> np.ndarray:
-        if A.shape != B.shape:
-            raise ValueError(f'mismatched shapes of A, B:  {A.shape}, {B.shape}')
-        if len(A.shape) > 1:
-            raise ValueError
-        # return np.apply_along_axis(self.metric, 1, )
-        return self.metric(A, B, **kwds)
-# hack self.metric(A.dropna(dim='neuroid').values, B.dropna(dim='neuroid').values)
+from langbrainscore.interface.metrics import _Metric, _VectorMetric, _MatrixMetric
 
 
-def pearson_r(x, y):
+class Metric:
     """
-    Calculates the Pearson correlation coefficient between two lists of
-    numbers.
-
-    Parameters
-    ----------
-    x : list
-        List of numbers.
-    y : list
-        List of numbers.
-
-    Returns
-    -------
-    float
-        Pearson correlation coefficient.
-
-    Raises
-    ------
-    ValueError
-        If lists are not of equal length.
+    wrapper for metric classes that confirms they instantiate the proper interface
+    and coordinates their execution over the contents of supplied xarrays
     """
-    if len(x) != len(y):
-        raise ValueError("Lists must be of equal length.")
+    def __init__(self, metric: _Metric):
+        assert issubclass(metric, _Metric)
+        self._metric = metric()
 
-    r, p = scipy.stats.pearsonr(x, y)
-    return r
+    def __call__(self, X: xr.DataArray, Y: xr.DataArray) -> typing.Union[np.float, np.array]:
+        """
+        args:
+            xr.DataArray: X
+            xr.DataArray: Y
 
-def pearson_r_nd(X, Y):
-    assert X.shape == Y.shape
-    return np.diag(np.corrcoef(X.T,Y.T)[X.shape[1]:,:X.shape[1]])
+        returns:
+            score of specified metric applied to X and Y
+        """
+        return self._metric(X.values, Y.values)
+
+
+class PearsonR(_VectorMetric):
+    @staticmethod
+    def _score(x: np.array, y: np.array) -> np.float:
+        r, p = pearsonr(x, y)
+        return r
+
+
+class SpearmanRho(_VectorMetric):
+    @staticmethod
+    def _score(x: np.array, y: np.array) -> np.float:
+        rho, p = spearmanr(x, y)
+        return rho
+
+
+class KendallTau(_VectorMetric):
+    @staticmethod
+    def _score(x: np.array, y: np.array) -> np.float:
+        tau, p = kendalltau(x, y)
+        return tau
+
+
+class RMSE(_VectorMetric):
+    @staticmethod
+    def _score(x: np.array, y: np.array) -> np.float:
+        loss = mean_squared_error(x, y, squared=False)
+        return loss
+
+
+class ClassificationAccuracy(_VectorMetric):
+    @staticmethod
+    def _score(x: np.array, y: np.array) -> np.float:
+        score = accuracy_score(x, y, normalize=True)
+        return score
+
+
+class RSA(_MatrixMetric):
+    """
+    evaluates representational similarity between two matrices for a given
+    distance measure and vector comparison metric
+    """
+    def __init__(self, distance="correlation", comparison=PearsonR()):
+        """
+        args:
+            string: distance (anything accepted by sklearn.metrics.pairwise_distances)
+            _VectorMetric: comparison
+        """
+        self._distance = distance
+        self._comparison = comparison
+        super().__init__()
+
+    def _score(self, X: np.ndarray, Y: np.ndarray) -> np.float:
+        X_rdm = pairwise_distances(X, metric=self._distance)
+        Y_rdm = pairwise_distances(Y, metric=self._distance)
+        if any([m.shape[1] == 1 for m in (X, Y)]):  # can't calc 1D corr dists
+            X_rdm[np.isnan(X_rdm)] = 0
+            Y_rdm[np.isnan(Y_rdm)] = 0
+        indices = np.triu_indices(X_rdm.shape[0], k=1)
+        score = self._comparison(X_rdm[indices], Y_rdm[indices])
+        return score
+
+
+# inspired by https://github.com/yuanli2333/CKA-Centered-Kernel-Alignment/blob/master/CKA.py
+class CKA(_MatrixMetric):
+    """
+    evaluates centered kernel alignment distance between two matrices
+    currently only implements linear kernel
+    """
+    def __init__(self):
+        super().__init__()
+
+    @staticmethod
+    def _center(K):
+        N = K.shape[0]
+        U = np.ones([N, N])
+        I = np.eye(N)
+        H = I - U / N
+        centered = H @ K @ H
+        return centered
+
+    def _HSIC(self, A, B):
+        L_A = A @ A.T
+        L_B = B @ B.T
+        HSIC = np.sum(self._center(L_A) * self._center(L_B))
+        return HSIC
+
+    def _score(self, X: np.ndarray, Y: np.ndarray) -> np.float:
+        HSIC_XY = self._HSIC(X, Y)
+        HSIC_XX = self._HSIC(X, X)
+        HSIC_YY = self._HSIC(Y, Y)
+        score = HSIC_XY / (np.sqrt(HSIC_XX) * np.sqrt(HSIC_YY))
+        return score
