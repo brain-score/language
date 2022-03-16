@@ -32,7 +32,7 @@ def package_mean_froi_pereira2018_firstsess():
                     ),
                     "neuroid": np.arange(neuroidx, neuroidx + data_array.shape[1]),
                     "timeid": np.arange(data_array.shape[2]),
-                    "stimuli": ("sampleid", mpf_sess.Sentence.str.strip('"')),
+                    "stimulus": ("sampleid", mpf_sess.Sentence.str.strip('"')),
                     "passage": (
                         "sampleid",
                         list(map(lambda p_s: p_s.split("_")[0], mpf_sess.Stim)),
@@ -42,7 +42,10 @@ def package_mean_froi_pereira2018_firstsess():
                         "neuroid",
                         [mpf_sess.Session.values[0]] * data_array.shape[1],
                     ),
-                    "uid": ("neuroid", [mpf_sess.UID.values[0]] * data_array.shape[1]),
+                    "subject": (
+                        "neuroid",
+                        [mpf_sess.UID.values[0]] * data_array.shape[1],
+                    ),
                     "roi": ("neuroid", mpf_rois.columns),
                 },
             )
@@ -53,7 +56,7 @@ def package_mean_froi_pereira2018_firstsess():
     mpf_xr = xr.concat(subj_xrs, dim="neuroid")
     mpf_xr = mpf_xr.assign_coords(
         {
-            "stimuli": ("sampleid", mpf_xr.stimuli[0].values),
+            "stimulus": ("sampleid", mpf_xr.stimulus[0].values),
             "passage": ("sampleid", mpf_xr.passage[0].values),
             "experiment": ("sampleid", mpf_xr.experiment[0].values),
         }

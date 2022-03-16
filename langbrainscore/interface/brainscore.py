@@ -4,17 +4,21 @@ from mimetypes import init
 
 import numpy as np
 import xarray as xr
-from langbrainscore.interface.mapping import _Mapping
-from langbrainscore.interface.metrics import _Metric
+from langbrainscore.mapping import Mapping
+from langbrainscore.metrics import Metric
 
 
 class _BrainScore(ABC):
-    def __init__(self, mapping: _Mapping, metric: _Metric):
+    def __init__(
+        self, X: xr.DataArray, Y: xr.DataArray, mapping: Mapping, metric: Metric
+    ):
         pass
 
-    @staticmethod
-    def _score(A: xr.DataArray, B: xr.DataArray, metric: _Metric) -> np.ndarray:
-        raise NotImplementedError
-
     def score(self) -> xr.DataArray:
+        """
+        applies mapping to (X, Y), then evaluates using metric
+
+        Returns:
+            xr.DataArray: scores
+        """
         raise NotImplementedError
