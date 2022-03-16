@@ -4,7 +4,7 @@ import xarray as xr
 
 
 class Dataset:
-    def __init__(self, xr_data: xr.DataArray) -> "Dataset":
+    def __init__(self, xr_obj: xr.DataArray) -> "Dataset":
         """
         accepts an xarray with the following core
         dimensions: sampleid, neuroid, timeid
@@ -12,21 +12,21 @@ class Dataset:
         coordinates: sampleid, neuroid, timeid, stimulus, subject
 
         Args:
-            xr_data (xr.DataArray): xarray object with core dimensions and coordinates
+            xr_obj (xr.DataArray): xarray object with core dimensions and coordinates
         """
         dims = ("sampleid", "neuroid", "timeid")
         coords = dims + ("stimulus", "subject")
-        assert xr_data.ndim == len(dims)
-        assert all([dim in xr_data.dims for dim in dims])
-        assert all([coord in xr_data.coords for coord in coords])
-        self._xr_data = xr_data
+        assert xr_obj.ndim == len(dims)
+        assert all([dim in xr_obj.dims for dim in dims])
+        assert all([coord in xr_obj.coords for coord in coords])
+        self._xr_obj = xr_obj
 
     @property
-    def _dataset(self) -> xr.DataArray:
+    def contents(self) -> xr.DataArray:
         """
         access the internal xarray object. use with caution.
         """
-        return self._xr_data
+        return self._xr_obj
 
     @property
     def stimuli(self) -> xr.DataArray:
@@ -36,7 +36,7 @@ class Dataset:
         Returns:
             xr.DataArray: xarray object containing the stimuli from the dataset and associated metadata
         """
-        return self._dataset.stimulus
+        return self.contents.stimulus
 
     @property
     def dims(self) -> tuple:
@@ -46,7 +46,7 @@ class Dataset:
         Returns:
             tuple[str]: dimensions of internal xarray object
         """
-        return self._dataset.dims
+        return self.contents.dims
 
 
 # TODO: we should adapt the above to package an xarray object automatically if a path to files is passed.

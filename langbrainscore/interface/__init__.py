@@ -1,1 +1,1 @@
-from langbrainscore.interface import encoder
+from langbrainscore.interface.encoder import _Encoder, _ModelEncoder
