@@ -1,33 +1,21 @@
 import typing
 from functools import partial
 from random import sample
+from typing import Tuple
 
 import numpy as np
 import xarray as xr
+from langbrainscore.interface.mapping import _Mapping
 from langbrainscore.utils import logging
-from sklearn.linear_model import (LinearRegression, LogisticRegression, Ridge,
-                                  RidgeCV)
-# TODO: verify behavior of LeavePOut and alternatives LeavePGroupsOut, etc.
-from sklearn.model_selection import \
-    GroupKFold  # KFold keeping grouping coord (split_coord) entirely in one of train/test splits (no leakage)
-from sklearn.model_selection import \
-    KFold  # KFold without regard to any balancing coord (strat_coord) or grouping coord (split_coord)
-from sklearn.model_selection import \
-    StratifiedGroupKFold  # KFold doing the group thing but also the strat thing on different coords
-from sklearn.model_selection import \
-    StratifiedKFold  # KFold balancing strat_coord across train/test splits
-
-# KFold, StratifiedShuffleSplit, LeavePOut
+from sklearn.linear_model import LinearRegression, Ridge, RidgeCV
+from sklearn.model_selection import (GroupKFold, KFold, StratifiedGroupKFold,
+                                     StratifiedKFold)
 
 
-class Mapping:
-    model = None
-
+class Mapping(_Mapping):
     def __init__(
         self,
-        X: xr.DataArray,
-        Y: xr.DataArray,
-        mapping_class: typing.Union[str, typing.Any] = None,
+        mapping_class: typing.Union[str, typing.Any],
         random_seed: int = 42,
         k_fold: int = 5,
         strat_coord: str = None,
@@ -39,10 +27,9 @@ class Mapping:
         # we kind of already have this along the `sampleid` coordinate, but we
         # need to implement this in the neuroid coordinate
         **kwargs,
-    ) -> None:
-        """Initializes a Mapping object that establishes a mapping between two encoder representations.
-           The mapping is initialized with certain parameters baked in, accepted as arguments to
-           the init function, listed below.
+    ) -> "Mapping":
+        """
+        Initializes a Mapping object that describes a mapping between two encoder representations.
 
         Args:
             mapping_class (typing.Union[str, typing.Any], required): [description].
@@ -55,6 +42,11 @@ class Mapping:
             split_coord (str, optional): [description]. Defaults to None.
         """
         self.random_seed = random_seed
+        self.k_fold = k_fold
+        self.strat_coord = strat_coord
+        self.num_split_groups_out = num_split_groups_out
+        self.split_coord = split_coord
+        self.mapping_class = mapping_class
         mapping_classes = {
             "ridge": (Ridge, {"alpha": 1.0}),
             "ridge_cv": (
@@ -62,72 +54,28 @@ class Mapping:
                 {"alphas": np.logspace(-3, 3, 13), "alpha_per_target": True},
             ),
             "linear": (LinearRegression, {}),
-            None: None,
         }
-
-        self.k_fold = k_fold or 1
-        self.strat_coord = strat_coord
-
-        self.num_split_groups_out = num_split_groups_out
-        self.split_coord = split_coord
-
-        self.mapping_class = mapping_class
-
-        if strat_coord:
-            try:
-                assert (X[strat_coord].values == Y[strat_coord].values).all()
-            except AssertionError as e:
-                raise ValueError(
-                    f"{strat_coord} coordinate does not align across X and Y"
-                )
-        if split_coord:
-            try:
-                assert (X[split_coord].values == Y[split_coord].values).all()
-            except AssertionError as e:
-                raise ValueError(
-                    f"{split_coord} coordinate does not align across X and Y"
-                )
-
-        self.X, self.Y = X, Y
-
-        logging.log(f"X shape: {X.data.shape}")
-        logging.log(f"Y shape: {Y.data.shape}")
 
         if type(mapping_class) == str:
             mapping_class, _kwargs = mapping_classes[mapping_class]
             kwargs.update(_kwargs)
+        else:
+            assert callable(mapping_class)
+            assert hasattr(mapping_class(), "fit")
+            assert hasattr(mapping_class(), "predict")
 
-        # to save (this model uses the entire data rather than constructing splits)
-        if mapping_class:
-            self.full_model = mapping_class(**kwargs)
-            # placeholder model with the right params that we'll reuse across splits
-            self.model = mapping_class(**kwargs)
-
-            logging.log(
-                f"initialized Mapping with {mapping_class}, {type(self.model)}!"
-            )
-
-    @staticmethod
-    def _extract_dense(A=None):
-        """
-        returns a list of several xarrays each of which is dense (has no NaNs).
-        each will have a subset of the sampleids
-
-        Args:
-            A (xr.DataArray):
-        """
-
-    def extract_dense(self):
-        dense_X = self._extract_dense_arrays(self.X)
+        self.full_model = mapping_class(**kwargs)
+        self.model = mapping_class(**kwargs)
+        logging.log(f"initialized Mapping with {mapping_class}, {type(self.model)}!")
 
     @staticmethod
     def _construct_splits(
-        xr_dataset: xr.Dataset,  # Y: xr.Dataset,
-        strat_coord: str = None,
-        k_folds: int = 5,
-        split_coord: str = None,
-        num_split_groups_out: int = None,
-        random_seed: int = 42,
+        xr_dataset: xr.Dataset,
+        strat_coord: str,
+        k_folds: int,
+        split_coord: str,
+        num_split_groups_out: int,
+        random_seed: int,
     ):
 
         sampleid = xr_dataset.sampleid.values
@@ -204,7 +152,7 @@ class Mapping:
         )
 
         # use only the samples that are in Y
-        X_slice = self.X.sel(sampleid=Y_filtered_ids)
+        X_slice = X.sel(sampleid=Y_filtered_ids)
 
         return X_slice, Y_slice
 
@@ -253,7 +201,12 @@ class Mapping:
 
         return X
 
-    def fit(self, permute_X: typing.Union[bool, str] = False,) -> typing.Dict:
+    def fit_transform(
+        self,
+        X: xr.DataArray,
+        Y: xr.DataArray,
+        permute_X: typing.Union[bool, str] = False,
+    ) -> Tuple[xr.DataArray, xr.DataArray]:
         """creates a mapping model using k-fold cross-validation
             -> uses params from the class initialization, uses strat_coord
                and split_coord to stratify and split across group boundaries
@@ -261,13 +214,29 @@ class Mapping:
         Returns:
             [type]: [description]
         """
+        logging.log(f"X shape: {X.data.shape}")
+        logging.log(f"Y shape: {Y.data.shape}")
+        if self.strat_coord:
+            try:
+                assert (X[self.strat_coord].values == Y[self.strat_coord].values).all()
+            except AssertionError as e:
+                raise ValueError(
+                    f"{self.strat_coord} coordinate does not align across X and Y"
+                )
+        if self.split_coord:
+            try:
+                assert (X[self.split_coord].values == Y[self.split_coord].values).all()
+            except AssertionError as e:
+                raise ValueError(
+                    f"{self.split_coord} coordinate does not align across X and Y"
+                )
         # Loop across each Y neuroid (target)
-        for neuroid in self.Y.neuroid.values:
+        for neuroid in Y.neuroid.values:
 
-            Y_neuroid = self.Y.sel(neuroid=neuroid)
+            Y_neuroid = Y.sel(neuroid=neuroid)
 
             # limit data to current neuroid, and then drop the samples that are missing data for this neuroid
-            X_slice, Y_slice = self._drop_na(self.X, Y_neuroid, dim="sampleid")
+            X_slice, Y_slice = self._drop_na(X, Y_neuroid, dim="sampleid")
 
             # Assert that X and Y have the same sampleids
             self._check_sampleids(X_slice, Y_slice)
@@ -375,10 +344,11 @@ class Mapping:
         pass
 
 
-class IdentityMap(Mapping):
-    """Identity mapping for running RSA-type analyses that don't need splits into cv folds and don't need affine maps"""
+class IdentityMap(_Mapping):
+    """
+    Identity mapping for use with metrics that operate
+    on non column-aligned matrices, e.g., RSA, CKA
+    """
 
-    def fit(self):
-        return dict(
-            test=[self.Y], pred=[[self.X.sel(timeid=i) for i in self.X.timeid.values]]
-        )
+    def fit_transform(self, X: xr.DataArray, Y: xr.DataArray):
+        return X, Y

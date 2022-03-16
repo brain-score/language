@@ -63,11 +63,9 @@ def main():
     ann_enc_mnc = ann_enc.encode(mnc_dataset, context_dimension="stimulus")
     ann_enc_mnc = ann_enc_mnc.isel(neuroid=(ann_enc_mnc.layer == 10))
     log(f"created ann-encoded data of shape: {ann_enc_mnc.dims}")
-    ridge_cv_mapping_split = lbs.mapping.Mapping(
-        ann_enc_mnc, brain_enc_mnc, "ridge_cv", k_fold=5
-    )
+    ridge_cv_kfold = lbs.mapping.Mapping("ridge_cv", k_fold=5)
     met = lbs.metrics.Metric(lbs.metrics.PearsonR)
-    brsc = lbs.BrainScore(ridge_cv_mapping_split, met, run=True)
+    brsc = lbs.BrainScore(ann_enc_mnc, brain_enc_mnc, ridge_cv_kfold, met, run=True)
     log(f"brainscore = {brsc}")
     IPython.embed()
 

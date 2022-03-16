@@ -12,11 +12,15 @@ from methodtools import lru_cache
 class BrainScore(_BrainScore):
     def __init__(
         self,
+        X: xr.DataArray,
+        Y: xr.DataArray,
         mapping: Mapping,
         metric: Metric,
         fold_aggregation: typing.Union[str, None] = "mean",
         run=True,
     ) -> "BrainScore":
+        self.X = X
+        self.Y = Y
         self.mapping = mapping
         self.metric = metric
         self.fold_aggregation = fold_aggregation
@@ -72,7 +76,7 @@ class BrainScore(_BrainScore):
         # the dict is indexed using timeids
 
         # NOTE: need to modify this to support IdentityMap scenario
-        for result in self.mapping.fit():
+        for result in self.mapping.fit_transform(self.X, self.Y):
 
             tests, preds, alphas = result["test"], result["pred"], result["alphas"]
             scores_per_fold = []
@@ -115,20 +119,16 @@ class BrainScore(_BrainScore):
 
         # fill back in metadata coords for neuroid and timeid from Y
         for k in (
-            self.mapping.Y.to_dataset(name="data")
-            .drop_dims(["sampleid", "timeid"])
-            .coords
+            self.Y.to_dataset(name="data").drop_dims(["sampleid", "timeid"]).coords
         ):
             self.scores_unfolded = self.scores_unfolded.assign_coords(
-                {k: ("neuroid", self.mapping.Y[k].data)}
+                {k: ("neuroid", self.Y[k].data)}
             )
         for k in (
-            self.mapping.Y.to_dataset(name="data")
-            .drop_dims(["sampleid", "neuroid"])
-            .coords
+            self.Y.to_dataset(name="data").drop_dims(["sampleid", "neuroid"]).coords
         ):
             self.scores_unfolded = self.scores_unfolded.assign_coords(
-                {k: ("timeid", self.mapping.Y[k].data)}
+                {k: ("timeid", self.Y[k].data)}
             )
 
         # aggregate scores across cv folds to obtain scores per neuroid and per timeid
