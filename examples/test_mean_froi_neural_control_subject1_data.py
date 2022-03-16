@@ -1,5 +1,6 @@
 import pickle as pkl
 from collections import defaultdict
+from pathlib import Path
 
 import IPython
 import langbrainscore as lbs
@@ -8,10 +9,10 @@ import pandas as pd
 import xarray as xr
 from langbrainscore.utils.logging import log
 
-from pathlib import Path
 
 def package_mean_froi_neural_control_data():
-    with open(f"{Path(__file__).parents[1] / 'data/dict_UID-853_SESSION-FED_20211013b_3T1_PL2017_FL-control_tr1_20220109.pkl'}",
+    with open(
+        f"{Path(__file__).parents[1] / 'data/dict_UID-853_SESSION-FED_20211013b_3T1_PL2017_FL-control_tr1_20220109.pkl'}",
         "rb",
     ) as f:
         mnc = pkl.load(f)
@@ -51,7 +52,7 @@ def main():
     mnc_xr = package_mean_froi_neural_control_data()
     mnc_dataset = lbs.dataset.Dataset(mnc_xr)
     log(f"stimuli: {mnc_dataset.stimuli.values}")
-    brain_enc = lbs.encoder.BrainEncoder() #(mnc_dataset)
+    brain_enc = lbs.encoder.BrainEncoder()  # (mnc_dataset)
     brain_enc_mnc = brain_enc.encode(mnc_dataset, average_time=False)
     log(f"created brain-encoded data of shape: {brain_enc_mnc.dims}")
     ann_enc = lbs.encoder.HuggingFaceEncoder("gpt2")

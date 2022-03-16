@@ -2,11 +2,11 @@ import typing
 
 import numpy as np
 import xarray as xr
-
+from langbrainscore.interface.metrics import (_MatrixMetric, _Metric,
+                                              _VectorMetric)
 from scipy.stats import kendalltau, pearsonr, spearmanr
-from sklearn.metrics import accuracy_score, mean_squared_error, pairwise_distances
-
-from langbrainscore.interface.metrics import _Metric, _VectorMetric, _MatrixMetric
+from sklearn.metrics import (accuracy_score, mean_squared_error,
+                             pairwise_distances)
 
 
 class Metric:
@@ -14,11 +14,14 @@ class Metric:
     wrapper for metric classes that confirms they instantiate the proper interface
     and coordinates their execution over the contents of supplied xarrays
     """
-    def __init__(self, metric: _Metric):
-        assert issubclass(metric, _Metric)
-        self._metric = metric()
 
-    def __call__(self, X: xr.DataArray, Y: xr.DataArray) -> typing.Union[np.float, np.array]:
+    def __init__(self, metric: _Metric, **kwargs) -> "Metric":
+        assert issubclass(metric, _Metric)
+        self._metric = metric(**kwargs)
+
+    def __call__(
+        self, X: xr.DataArray, Y: xr.DataArray
+    ) -> typing.Union[np.float, np.array]:
         """
         args:
             xr.DataArray: X
@@ -70,6 +73,7 @@ class RSA(_MatrixMetric):
     evaluates representational similarity between two matrices for a given
     distance measure and vector comparison metric
     """
+
     def __init__(self, distance="correlation", comparison=PearsonR()):
         """
         args:
@@ -97,6 +101,7 @@ class CKA(_MatrixMetric):
     evaluates centered kernel alignment distance between two matrices
     currently only implements linear kernel
     """
+
     def __init__(self):
         super().__init__()
 

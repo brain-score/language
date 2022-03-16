@@ -1,5 +1,6 @@
-from abc import ABC, abstractmethod
 import typing
+from abc import ABC, abstractmethod
+
 import numpy as np
 
 
@@ -21,13 +22,15 @@ class _Metric(ABC):
         ValueError: for most metrics, X and Y must have same number of dimensions.
 
     """
+
     def __init__(self):
         pass
 
-    def __call__(self,
+    def __call__(
+        self,
         X: typing.Union[np.array, np.ndarray],
         Y: typing.Union[np.array, np.ndarray],
-        ) -> typing.Union[np.float, np.array]:
+    ) -> typing.Union[np.float, np.array]:
         if X.ndim == 1:
             X = X.reshape(-1, 1)
         if Y.ndim == 1:
@@ -42,10 +45,9 @@ class _Metric(ABC):
         return self._apply_metric(X, Y)
 
     @abstractmethod
-    def _apply_metric(self,
-            X: np.ndarray,
-            Y: np.ndarray,
-        ) -> typing.Union[np.float, np.array]:
+    def _apply_metric(
+        self, X: np.ndarray, Y: np.ndarray,
+    ) -> typing.Union[np.float, np.array]:
         raise NotImplementedError
 
 
@@ -54,7 +56,8 @@ class _VectorMetric(_Metric):
     subclass of _Metric that applies relevant vector similarity metric
     along each column of the input arrays.
     """
-    def __init__(self, reduction = np.mean):
+
+    def __init__(self, reduction=np.mean):
         """
         args:
             callable: reduction (can also be None or False)
@@ -68,9 +71,8 @@ class _VectorMetric(_Metric):
         self._reduction = reduction
         super().__init__()
 
-    def _apply_metric(self,
-        X: np.ndarray,
-        Y: np.ndarray,
+    def _apply_metric(
+        self, X: np.ndarray, Y: np.ndarray,
     ) -> typing.Union[np.float, np.array]:
         """
         internal function that applies scoring function along each array dimension
@@ -97,6 +99,7 @@ class _MatrixMetric(_Metric):
     """
     interface for similarity metrics that operate over entire matrices, e.g., RSA
     """
+
     def __init__(self):
         super().__init__()
 

@@ -1,4 +1,3 @@
-from collections import defaultdict
 from pathlib import Path
 
 import langbrainscore as lbs
@@ -78,9 +77,13 @@ def main():
     ridge_cv_mapping_split = lbs.mapping.Mapping(
         ann_enc_mpf, brain_enc_mpf, "ridge_cv", k_fold=5
     )
-    met = lbs.metrics.Metric(lbs.metrics.SpearmanRho)
+    met = lbs.metrics.Metric(lbs.metrics.PearsonR)
     brsc = lbs.BrainScore(ridge_cv_mapping_split, met, run=True)
-    log(f"brainscore = {brsc}")
+    log(f"brainscore (ridge, pearson) = {brsc}")
+    i_map = lbs.mapping.IdentityMap(ann_enc_mpf, brain_enc_mpf)
+    rsa = lbs.metrics.Metric(lbs.metrics.RSA, distance="correlation")
+    # brsc_rsa = lbs.BrainScore(i_map, rsa, run=True)
+    # log(f"brainscore (rsa, pearson) = {brsc_rsa}")
 
 
 if __name__ == "__main__":

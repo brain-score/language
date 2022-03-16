@@ -1,32 +1,20 @@
-
+import typing
 from abc import ABC, abstractmethod
 from mimetypes import init
-import typing
-import numpy as np
 
+import numpy as np
+import xarray as xr
 from langbrainscore.interface.mapping import _Mapping
 from langbrainscore.interface.metrics import _Metric
 
-class _BrainScore(ABC):
-    
-    mapping: _Mapping = None
-    ''' an instance of the Mapping class with a particular 
-        split, stratification, and data'''
 
-    def __init__(self, mapping: _Mapping, metric: _Metric) -> '_BrainScore':
-        NotImplemented
+class _BrainScore(ABC):
+    def __init__(self, mapping: _Mapping, metric: _Metric):
+        pass
 
     @staticmethod
-    def _score(A, B, metric: typing.Union[str, typing.Any]) -> np.ndarray:
-        NotImplemented
+    def _score(A: xr.DataArray, B: xr.DataArray, metric: _Metric) -> np.ndarray:
+        raise NotImplementedError
 
-    def score(self):
-        '''
-        Scores the Mapping instance we have according to a metric this object was
-        instantiated with
-        '''
-        NotImplemented
-
-
-
-
+    def score(self) -> xr.DataArray:
+        raise NotImplementedError
