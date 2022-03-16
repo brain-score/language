@@ -1,6 +1,6 @@
 import typing
 from abc import ABC, abstractmethod
-
+from sklearn.impute import SimpleImputer
 import numpy as np
 
 
@@ -57,7 +57,7 @@ class _VectorMetric(_Metric):
     along each column of the input arrays.
     """
 
-    def __init__(self, reduction=np.mean):
+    def __init__(self, reduction=None):
         """
         args:
             callable: reduction (can also be None or False)
@@ -85,7 +85,10 @@ class _VectorMetric(_Metric):
         """
         scores = np.zeros(X.shape[1])
         for i in range(scores.size):
-            scores[i] = self._score(X[:, i], Y[:, i])
+            x = X[:, i]
+            y = Y[:, i]
+            nan = np.isnan(x) | np.isnan(y)
+            scores[i] = self._score(x[~nan], y[~nan])
         if self._reduction:
             return self._reduction(scores)
         return scores
@@ -104,6 +107,8 @@ class _MatrixMetric(_Metric):
         super().__init__()
 
     def _apply_metric(self, X: np.ndarray, Y: np.ndarray) -> np.float:
+        X = SimpleImputer(missing_values=np.nan, strategy="mean").fit_transform(X)
+        Y = SimpleImputer(missing_values=np.nan, strategy="mean").fit_transform(Y)
         score = self._score(X, Y)
         return score
 

@@ -6,6 +6,7 @@ from langbrainscore.interface.brainscore import _BrainScore
 from langbrainscore.mapping import Mapping
 from langbrainscore.metrics import Metric
 from langbrainscore.utils import logging
+from langbrainscore.utils.xarray import copy_metadata
 from methodtools import lru_cache
 
 
@@ -70,68 +71,40 @@ class BrainScore(_BrainScore):
         Computes The BrainScore™ (/s) using predictions/outputs returned by a
         Mapping instance which is a member attribute of a BrainScore instance
         """
-        scores_per_neuroid = []
-        # returns generator over neuroids of (tests, preds, alphas) tuples
-        # tests, preds are xarrays, and alphas is a list of dicts per cvfold.
-        # the dict is indexed using timeids
 
-        # NOTE: need to modify this to support IdentityMap scenario
-        for result in self.mapping.fit_transform(self.X, self.Y):
+        y_pred, y_true = self.mapping.fit_transform(self.X, self.Y)
 
-            tests, preds, alphas = result["test"], result["pred"], result["alphas"]
-            scores_per_fold = []
-            # A, B are lists of xr DataArrays over timeids
-            for cvid, (A, B, T) in enumerate(zip(tests, preds, alphas)):
-                scores_per_timeid = []  # this is a list of n_folds xarrays
-                for timeid in A.timeid.values:
-                    # A_time, B_time are xr DataArrays at a specific timeid
-                    A_time = A.sel(timeid=0)  # TODO RNNs ;_;
-                    B_time = B.sel(timeid=timeid)  # B[timeid_ix]
-                    alpha_time = T[timeid]
-                    timeid_score_scalar = self._score(A_time, B_time, self.metric)
-                    timeid_score = xr.DataArray(
-                        timeid_score_scalar,
-                        dims=("neuroid", "timeid"),
-                        coords={
-                            "neuroid": ("neuroid", B_time.neuroid.values.reshape(-1)),
-                            # ^ we want to extract [int] from 0-d array (scalar array)
-                            "timeid": ("timeid", [timeid]),
-                            # WIP: alpha
-                            "alpha": (
-                                ("timeid", "neuroid"),
-                                np.array(alpha_time).reshape(1, 1),
-                            ),
-                        },
-                    )
-                    scores_per_timeid.append(timeid_score)
+        scores_over_time = []
+        for timeid in y_true.timeid.values:
 
-                fold_score = (
-                    xr.concat(scores_per_timeid, dim="timeid")
-                    .expand_dims("cvfoldid", 0)
-                    .assign_coords(cvfoldid=("cvfoldid", [cvid]))
+            y_pred_time = y_pred.sel(timeid=timeid).transpose("sampleid", "neuroid")
+            y_true_time = y_true.sel(timeid=timeid).transpose("sampleid", "neuroid")
+
+            score_per_timeid = self._score(y_pred_time, y_true_time, self.metric)
+
+            if len(score_per_timeid) < y_true_time.shape[1]:  # e.g., RSA
+                neuroids = [np.nan]
+            else:
+                neuroids = y_true_time.neuroid.data
+
+            scores_over_time.append(
+                xr.DataArray(
+                    score_per_timeid.reshape(-1, 1),
+                    dims=("neuroid", "timeid"),
+                    coords={
+                        "neuroid": ("neuroid", neuroids),
+                        "timeid": ("timeid", [timeid]),
+                    },
                 )
-                scores_per_fold.append(fold_score)
-
-            neuroid_score = xr.concat(scores_per_fold, dim="cvfoldid")
-            scores_per_neuroid.append(neuroid_score)
-
-        self.scores_unfolded = xr.concat(scores_per_neuroid, dim="neuroid")
-
-        # fill back in metadata coords for neuroid and timeid from Y
-        for k in (
-            self.Y.to_dataset(name="data").drop_dims(["sampleid", "timeid"]).coords
-        ):
-            self.scores_unfolded = self.scores_unfolded.assign_coords(
-                {k: ("neuroid", self.Y[k].data)}
-            )
-        for k in (
-            self.Y.to_dataset(name="data").drop_dims(["sampleid", "neuroid"]).coords
-        ):
-            self.scores_unfolded = self.scores_unfolded.assign_coords(
-                {k: ("timeid", self.Y[k].data)}
             )
 
-        # aggregate scores across cv folds to obtain scores per neuroid and per timeid
-        self.aggregate_scores()
+        scores = xr.concat(scores_over_time, dim="timeid")
+
+        if scores.neuroid.size > 1:  # not RSA
+            scores = copy_metadata(scores, self.Y, "neuroid")
+
+        scores = copy_metadata(scores, self.Y, "timeid")
+
+        self.scores = scores
 
         return self.scores

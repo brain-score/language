@@ -231,6 +231,8 @@ class Mapping(_Mapping):
                     f"{self.split_coord} coordinate does not align across X and Y"
                 )
         # Loop across each Y neuroid (target)
+        test = []
+        pred = []
         for neuroid in Y.neuroid.values:
 
             Y_neuroid = Y.sel(neuroid=neuroid)
@@ -251,7 +253,6 @@ class Mapping(_Mapping):
             train_indices = []
             test_indices = []
             # only used in case of ridge_cv or any duck type that uses an alpha hparam
-            alpha_across_splits = []
 
             splits = self.construct_splits(Y_slice)
 
@@ -259,7 +260,7 @@ class Mapping(_Mapping):
             Y_test_collection = []
             Y_pred_collection = []
 
-            for train_index, test_index in splits:
+            for cvfoldid, (train_index, test_index) in enumerate(splits):
 
                 train_indices.append(train_index)
                 test_indices.append(test_index)
@@ -276,8 +277,6 @@ class Mapping(_Mapping):
 
                 # empty list to house the y_predictions per timeid
                 y_pred_over_time = []
-                # empty dictionary to house the hparam alpha per timeid
-                alpha_over_time = {}
 
                 for timeid in y_train.timeid:
 
@@ -289,9 +288,7 @@ class Mapping(_Mapping):
                     )
 
                     # store the hparam values related to the fitted models
-                    alpha_over_time[timeid.item()] = getattr(
-                        self.model, "alpha_", np.nan
-                    )
+                    alpha = getattr(self.model, "alpha_", np.nan)
 
                     # deepcopy `y_test` as `y_pred` to inherit some of the metadata and dims
                     # and then populate it with our new predicted values
@@ -302,23 +299,23 @@ class Mapping(_Mapping):
                     )
                     y_pred.assign_coords(timeid=("timeid", [timeid]))
                     y_pred.data = self.model.predict(X_test.sel(timeid=0))  # y_pred
+                    y_pred = y_pred.assign_coords(alpha=("timeid", [alpha]))
+                    y_pred = y_pred.assign_coords(alpha=("timeid", [cvfoldid]))
                     y_pred_over_time.append(y_pred)
 
                 y_pred_over_time = xr.concat(y_pred_over_time, dim="timeid")
                 Y_pred_collection.append(y_pred_over_time)
                 Y_test_collection.append(y_test)
-                alpha_across_splits.append(alpha_over_time)
 
-            # the return value is a dictionary of test/pred;
-            # each of test/pred is a list of lists with two levels of
-            # nesting as below:
-            #   first level: CV folds
-            #       second level: timeids
-            yield dict(
-                test=Y_test_collection,
-                pred=Y_pred_collection,
-                alphas=alpha_across_splits,
-            )
+            Y_test = xr.concat(Y_test_collection, dim="sampleid").sortby("sampleid")
+            Y_pred = xr.concat(Y_pred_collection, dim="sampleid").sortby("sampleid")
+
+            test.append(Y_test)
+            pred.append(Y_pred)
+
+        test_xr = xr.concat(test, dim="neuroid")
+        pred_xr = xr.concat(pred, dim="neuroid")
+        return pred_xr, test_xr
 
     # def map(self, source, target) -> None:
     #     '''

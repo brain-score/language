@@ -83,8 +83,8 @@ def main():
     log(f"brainscore (ridge, pearson) = {brsc}")
     i_map = lbs.mapping.IdentityMap()
     rsa = lbs.metrics.Metric(lbs.metrics.RSA, distance="correlation")
-    # brsc_rsa = lbs.BrainScore(i_map, rsa, run=True)
-    # log(f"brainscore (rsa, pearson) = {brsc_rsa}")
+    brsc_rsa = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, i_map, rsa, run=True)
+    log(f"brainscore (rsa, pearson) = {brsc_rsa}")
 
 
 if __name__ == "__main__":
