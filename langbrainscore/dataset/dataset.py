@@ -1,25 +1,12 @@
 import typing
 
 import xarray as xr
+from langbrainscore.interface import _Dataset
 
 
-class Dataset:
+class Dataset(_Dataset):
     def __init__(self, xr_obj: xr.DataArray) -> "Dataset":
-        """
-        accepts an xarray with the following core
-        dimensions: sampleid, neuroid, timeid
-        and at least the following core
-        coordinates: sampleid, neuroid, timeid, stimulus, subject
-
-        Args:
-            xr_obj (xr.DataArray): xarray object with core dimensions and coordinates
-        """
-        dims = ("sampleid", "neuroid", "timeid")
-        coords = dims + ("stimulus", "subject")
-        assert xr_obj.ndim == len(dims)
-        assert all([dim in xr_obj.dims for dim in dims])
-        assert all([coord in xr_obj.coords for coord in coords])
-        self._xr_obj = xr_obj
+        super().__init__(xr_obj)
 
     @property
     def contents(self) -> xr.DataArray:
