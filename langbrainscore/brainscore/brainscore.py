@@ -65,7 +65,7 @@ class BrainScore(_BrainScore):
 
             score_per_timeid = self._score(y_pred_time, y_true_time, self.metric)
 
-            if len(score_per_timeid) < y_true_time.shape[1]:  # e.g., RSA
+            if len(score_per_timeid) == 1:  # e.g., RSA, CKA
                 neuroids = [np.nan]
             else:
                 neuroids = y_true_time.neuroid.data

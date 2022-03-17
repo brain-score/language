@@ -91,6 +91,8 @@ class _VectorMetric(_Metric):
             scores[i] = self._score(x[~nan], y[~nan])
         if self._reduction:
             return self._reduction(scores)
+        if len(scores) == 1:
+            return scores[0]
         return scores
 
     @abstractmethod

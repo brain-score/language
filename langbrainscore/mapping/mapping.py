@@ -30,14 +30,14 @@ class IdentityMap(_Mapping):
     ):
         # TODO: figure out how to handle NaNs better...
         if self._nan_strategy == "drop":
-            X = X.dropna(dim="neuroid")
-            Y = Y.dropna(dim="neuroid")
+            X_clean = X.copy(deep=True).dropna(dim="neuroid")
+            Y_clean = Y.copy(deep=True).dropna(dim="neuroid")
         elif self._nan_strategy == "impute":
-            X = X.fillna(0)
-            Y = Y.fillna(0)
+            X_clean = X.copy(deep=True).fillna(0)
+            Y_clean = Y.copy(deep=True).fillna(0)
         else:
             raise NotImplementedError("unsupported nan strategy.")
-        return X, Y
+        return X_clean, Y_clean
 
 
 class LearnedMap(_Mapping):

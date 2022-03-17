@@ -18,9 +18,7 @@ class Metric:
         assert issubclass(metric, _Metric)
         self._metric = metric(**kwargs)
 
-    def __call__(
-        self, X: xr.DataArray, Y: xr.DataArray
-    ) -> typing.Union[np.float, np.array]:
+    def __call__(self, X: xr.DataArray, Y: xr.DataArray) -> np.array:
         """
         args:
             xr.DataArray: X
@@ -29,7 +27,10 @@ class Metric:
         returns:
             score of specified metric applied to X and Y
         """
-        return self._metric(X.values, Y.values)
+        score = self._metric(X.values, Y.values)
+        if not isinstance(score, np.ndarray):
+            return np.array(score).reshape(-1)
+        return score
 
 
 class PearsonR(_VectorMetric):

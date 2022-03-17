@@ -79,13 +79,15 @@ def main():
     log(f"created brain-encoded data of shape: {brain_enc_mpf.dims}")
     log(f"created ann-encoded data of shape: {ann_enc_mpf.dims}")
     ridge_cv_kfold = lbs.mapping.LearnedMap("ridge_cv", k_fold=5)
-    met = lbs.metrics.Metric(lbs.metrics.PearsonR)
-    brsc = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, ridge_cv_kfold, met, run=True)
-    log(f"brainscore (ridge, pearson) = {brsc}")
+    pearson = lbs.metrics.Metric(lbs.metrics.PearsonR)
+    brsc_ridge_pearson = lbs.BrainScore(
+        ann_enc_mpf, brain_enc_mpf, ridge_cv_kfold, pearson, run=True
+    )
+    log(f"brainscore (ridge, pearson) = {brsc_ridge_pearson}")
     i_map = lbs.mapping.IdentityMap(nan_strategy="drop")
-    rsa = lbs.metrics.Metric(lbs.metrics.RSA, distance="correlation")
-    brsc_rsa = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, i_map, rsa, run=True)
-    log(f"brainscore (rsa, pearson) = {brsc_rsa}")
+    cka = lbs.metrics.Metric(lbs.metrics.CKA)
+    brsc_cka = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, i_map, cka, run=True)
+    log(f"brainscore (cka) = {brsc_cka}")
 
 
 if __name__ == "__main__":
