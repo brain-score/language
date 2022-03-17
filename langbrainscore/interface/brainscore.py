@@ -9,6 +9,10 @@ from langbrainscore.interface.metrics import _Metric
 
 
 class _BrainScore(ABC):
+    """
+    evaluates a `Mapping` of `X` and `Y` using `Metric`
+    """
+
     def __init__(
         self, X: xr.DataArray, Y: xr.DataArray, mapping: _Mapping, metric: _Metric
     ):

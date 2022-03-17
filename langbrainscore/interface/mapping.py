@@ -5,6 +5,10 @@ import xarray as xr
 
 
 class _Mapping(ABC):
+    """
+    object that defines and applies map between two xarrays with the same number of samples
+    """
+
     def __init__(self):
         pass
 
