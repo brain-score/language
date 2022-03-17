@@ -4,9 +4,9 @@ _release stage: "fuzzy-potato" (alpha)_
 
 ### [**Documentation** ![CircleCI](https://circleci.com/gh/language-brainscore/lang-brainscore-fuzzy-potato/tree/main.svg?style=svg)](https://language-brainscore.github.io/lang-brainscore-fuzzy-potato/)
 ### development status indicators
-- [Unit Tests](https://language-brainscore.github.io/lang-brainscore-fuzzy-potato/test-results/tests.html): this report lists tests used for the module and their outcomes: success/failure (using [pytest](https://docs.pytest.org/en/7.0.x/))
-- [Code Coverage](https://language-brainscore.github.io/lang-brainscore-fuzzy-potato/test-results/codecov/): describes what parts of the code are tested down to individual lines (using [Coverage.py](https://coverage.readthedocs.io/en/6.3.1/))
-- [Static Type Checks](https://language-brainscore.github.io/lang-brainscore-fuzzy-potato/test-results/typing/): results of static type-checking of the code where [type annotations](https://www.python.org/dev/peps/pep-0484/) are available (using [Mypy](https://mypy.readthedocs.io/en/stable/))
+- [Unit Tests](https://language-brainscore.github.io/langbrainscore/test-results/tests.html): this report lists tests used for the module and their outcomes: success/failure (using [pytest](https://docs.pytest.org/en/7.0.x/))
+- [Code Coverage](https://language-brainscore.github.io/langbrainscore/test-results/codecov/): describes what parts of the code are tested down to individual lines (using [Coverage.py](https://coverage.readthedocs.io/en/6.3.1/))
+- [Static Type Checks](https://language-brainscore.github.io/langbrainscore/test-results/typing/): results of static type-checking of the code where [type annotations](https://www.python.org/dev/peps/pep-0484/) are available (using [Mypy](https://mypy.readthedocs.io/en/stable/))
 
 
 ## what is it?
