@@ -1,6 +1,6 @@
 import typing
 from abc import ABC, abstractmethod
-from sklearn.impute import SimpleImputer
+
 import numpy as np
 
 
@@ -107,8 +107,6 @@ class _MatrixMetric(_Metric):
         super().__init__()
 
     def _apply_metric(self, X: np.ndarray, Y: np.ndarray) -> np.float:
-        X = SimpleImputer(missing_values=np.nan, strategy="mean").fit_transform(X)
-        Y = SimpleImputer(missing_values=np.nan, strategy="mean").fit_transform(Y)
         score = self._score(X, Y)
         return score
 

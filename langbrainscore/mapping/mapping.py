@@ -5,11 +5,37 @@ from typing import Tuple
 
 import numpy as np
 import xarray as xr
-from langbrainscore.interface.mapping import _Mapping
+from langbrainscore.interface import _Mapping
 from langbrainscore.utils import logging
+from langbrainscore.utils.xarray import collapse_multidim_coord
+from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression, Ridge, RidgeCV
 from sklearn.model_selection import (GroupKFold, KFold, StratifiedGroupKFold,
                                      StratifiedKFold)
+
+
+class IdentityMap(_Mapping):
+    """
+    Identity mapping for use with metrics that operate
+    on non column-aligned matrices, e.g., RSA, CKA
+
+    Imputes NaNs for downstream metrics.
+    """
+
+    def __init__(
+        self, impute_nans: bool = True, fill_value: typing.Union[int, float] = 0,
+    ) -> "IdentityMap":
+        self._impute_nans = impute_nans
+        self._fill_value = fill_value
+
+    def fit_transform(
+        self, X: xr.DataArray, Y: xr.DataArray,
+    ):
+        # TODO: figure out how to handle NaNs better...
+        if self._impute_nans:
+            X = X.fillna(self._fill_value)
+            Y = Y.fillna(self._fill_value)
+        return X, Y
 
 
 class Mapping(_Mapping):
@@ -300,7 +326,7 @@ class Mapping(_Mapping):
                     y_pred.assign_coords(timeid=("timeid", [timeid]))
                     y_pred.data = self.model.predict(X_test.sel(timeid=0))  # y_pred
                     y_pred = y_pred.assign_coords(alpha=("timeid", [alpha]))
-                    y_pred = y_pred.assign_coords(alpha=("timeid", [cvfoldid]))
+                    y_pred = y_pred.assign_coords(cvfoldid=("timeid", [cvfoldid]))
                     y_pred_over_time.append(y_pred)
 
                 y_pred_over_time = xr.concat(y_pred_over_time, dim="timeid")
@@ -313,8 +339,18 @@ class Mapping(_Mapping):
             test.append(Y_test)
             pred.append(Y_pred)
 
-        test_xr = xr.concat(test, dim="neuroid")
-        pred_xr = xr.concat(pred, dim="neuroid")
+        test_xr = xr.concat(test, dim="neuroid").transpose(
+            "sampleid", "neuroid", "timeid"
+        )
+        pred_xr = xr.concat(pred, dim="neuroid").transpose(
+            "sampleid", "neuroid", "timeid"
+        )
+
+        if test_xr.stimulus.ndim > 1:
+            test_xr = collapse_multidim_coord(test_xr, "stimulus", "sampleid")
+        if pred_xr.stimulus.ndim > 1:
+            pred_xr = collapse_multidim_coord(pred_xr, "stimulus", "sampleid")
+
         return pred_xr, test_xr
 
     # def map(self, source, target) -> None:
@@ -339,13 +375,3 @@ class Mapping(_Mapping):
 
     def predict(self, source) -> None:
         pass
-
-
-class IdentityMap(_Mapping):
-    """
-    Identity mapping for use with metrics that operate
-    on non column-aligned matrices, e.g., RSA, CKA
-    """
-
-    def fit_transform(self, X: xr.DataArray, Y: xr.DataArray):
-        return X, Y

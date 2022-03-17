@@ -2,8 +2,7 @@ import typing
 
 import numpy as np
 import xarray as xr
-from langbrainscore.interface.metrics import (_MatrixMetric, _Metric,
-                                              _VectorMetric)
+from langbrainscore.interface import _MatrixMetric, _Metric, _VectorMetric
 from scipy.stats import kendalltau, pearsonr, spearmanr
 from sklearn.metrics import (accuracy_score, mean_squared_error,
                              pairwise_distances)

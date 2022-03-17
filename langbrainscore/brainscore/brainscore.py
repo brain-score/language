@@ -2,7 +2,7 @@ import typing
 
 import numpy as np
 import xarray as xr
-from langbrainscore.interface.brainscore import _BrainScore
+from langbrainscore.interface import _BrainScore
 from langbrainscore.mapping import Mapping
 from langbrainscore.metrics import Metric
 from langbrainscore.utils import logging
@@ -17,49 +17,26 @@ class BrainScore(_BrainScore):
         Y: xr.DataArray,
         mapping: Mapping,
         metric: Metric,
-        fold_aggregation: typing.Union[str, None] = "mean",
         run=True,
     ) -> "BrainScore":
         self.X = X
         self.Y = Y
         self.mapping = mapping
         self.metric = metric
-        self.fold_aggregation = fold_aggregation
-        self.aggregate_methods_map = {
-            None: self._no_aggregate,
-            "mean": self._aggregate_mean,
-        }
-
         if run:
             self.score()
 
     def __str__(self) -> str:
         return f"{self.scores.mean()}"
 
-    def to_dataarray(self, aggregated: bool = True) -> xr.DataArray:
-        # returns the aggregated scores as an xarray
-        return self.scores if aggregated else self.scores_across_folds
+    def to_dataset(self) -> xr.Dataset:
+        return xr.Dataset({"Y": self.Y, "Y_pred": self.Y_pred, "scores": self.scores})
 
-    def to_disk(self, aggregated=True):
-        # outputs the aggregated (or not) object to disk
-        # as a dataarray
+    def to_disk(self):
+        X = self.X
+        dataset = self.to_dataset()
+        # TODO
         pass
-
-    def aggregate_scores(self):
-        """
-        aggregates scores obtianed over
-
-        Args:
-            dim (_type_): _description_
-        """
-        fn = self.aggregate_methods_map[self.fold_aggregation]
-        self.scores = fn()
-
-    def _no_aggregate(self):
-        return self.scores_unfolded
-
-    def _aggregate_mean(self):
-        return self.scores_unfolded.mean(dim="cvfoldid")
 
     @staticmethod
     def _score(A, B, metric: Metric) -> np.ndarray:
@@ -73,6 +50,13 @@ class BrainScore(_BrainScore):
         """
 
         y_pred, y_true = self.mapping.fit_transform(self.X, self.Y)
+
+        if y_pred.shape == y_true.shape:  # not IdentityMap
+            y_pred = copy_metadata(y_pred, self.Y, "sampleid")
+            y_pred = copy_metadata(y_pred, self.Y, "neuroid")
+            y_pred = copy_metadata(y_pred, self.Y, "timeid")
+
+        self.Y_pred = y_pred
 
         scores_over_time = []
         for timeid in y_true.timeid.values:

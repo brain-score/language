@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from langbrainscore.utils.logging import log
+from langbrainscore.utils.xarray import collapse_multidim_coord
 
 
 def package_mean_froi_pereira2018_firstsess():
@@ -40,7 +41,10 @@ def package_mean_froi_pereira2018_firstsess():
                     "experiment": ("sampleid", mpf_sess.Experiment),
                     "session": (
                         "neuroid",
-                        [mpf_sess.Session.values[0]] * data_array.shape[1],
+                        np.array(
+                            [mpf_sess.Session.values[0]] * data_array.shape[1],
+                            dtype=object,
+                        ),
                     ),
                     "subject": (
                         "neuroid",
@@ -54,13 +58,10 @@ def package_mean_froi_pereira2018_firstsess():
         subj_xr = xr.concat(sess_xrs, dim="sampleid")
         subj_xrs.append(subj_xr)
     mpf_xr = xr.concat(subj_xrs, dim="neuroid")
-    mpf_xr = mpf_xr.assign_coords(
-        {
-            "stimulus": ("sampleid", mpf_xr.stimulus[0].values),
-            "passage": ("sampleid", mpf_xr.passage[0].values),
-            "experiment": ("sampleid", mpf_xr.experiment[0].values),
-        }
-    )
+    mpf_xr = collapse_multidim_coord(mpf_xr, "stimulus", "sampleid")
+    mpf_xr = collapse_multidim_coord(mpf_xr, "passage", "sampleid")
+    mpf_xr = collapse_multidim_coord(mpf_xr, "experiment", "sampleid")
+    mpf_xr = collapse_multidim_coord(mpf_xr, "session", "neuroid")
     return mpf_xr
 
 
@@ -81,7 +82,7 @@ def main():
     met = lbs.metrics.Metric(lbs.metrics.PearsonR)
     brsc = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, ridge_cv_kfold, met, run=True)
     log(f"brainscore (ridge, pearson) = {brsc}")
-    i_map = lbs.mapping.IdentityMap()
+    i_map = lbs.mapping.IdentityMap(impute_nans=True, fill_value=0)
     rsa = lbs.metrics.Metric(lbs.metrics.RSA, distance="correlation")
     brsc_rsa = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, i_map, rsa, run=True)
     log(f"brainscore (rsa, pearson) = {brsc_rsa}")

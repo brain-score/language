@@ -4,13 +4,13 @@ from mimetypes import init
 
 import numpy as np
 import xarray as xr
-from langbrainscore.mapping import Mapping
-from langbrainscore.metrics import Metric
+from langbrainscore.interface.mapping import _Mapping
+from langbrainscore.interface.metrics import _Metric
 
 
 class _BrainScore(ABC):
     def __init__(
-        self, X: xr.DataArray, Y: xr.DataArray, mapping: Mapping, metric: Metric
+        self, X: xr.DataArray, Y: xr.DataArray, mapping: _Mapping, metric: _Metric
     ):
         pass
 
