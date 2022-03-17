@@ -10,11 +10,11 @@ class _Metric(ABC):
     then applies that metric to those inputs and returns score(s)
 
     Args:
-        np.array: X
-        np.array: Y
+        np.ndarray: X
+        np.ndarray: Y
 
     Returns:
-        np.array: score(s)
+        Typing.Union[np.ndarray,np.float]: score(s)
 
     Raises:
         ValueError: X and Y must be 1D or 2D arrays.
@@ -27,10 +27,8 @@ class _Metric(ABC):
         pass
 
     def __call__(
-        self,
-        X: typing.Union[np.array, np.ndarray],
-        Y: typing.Union[np.array, np.ndarray],
-    ) -> typing.Union[np.float, np.array]:
+        self, X: np.ndarray, Y: np.ndarray,
+    ) -> typing.Union[np.float, np.ndarray]:
         if X.ndim == 1:
             X = X.reshape(-1, 1)
         if Y.ndim == 1:
@@ -47,7 +45,7 @@ class _Metric(ABC):
     @abstractmethod
     def _apply_metric(
         self, X: np.ndarray, Y: np.ndarray,
-    ) -> typing.Union[np.float, np.array]:
+    ) -> typing.Union[np.float, np.ndarray]:
         raise NotImplementedError
 
 
@@ -73,7 +71,7 @@ class _VectorMetric(_Metric):
 
     def _apply_metric(
         self, X: np.ndarray, Y: np.ndarray,
-    ) -> typing.Union[np.float, np.array]:
+    ) -> typing.Union[np.float, np.ndarray]:
         """
         internal function that applies scoring function along each array dimension
         and then optionally applies a reduction, e.g., np.mean
@@ -96,7 +94,7 @@ class _VectorMetric(_Metric):
         return scores
 
     @abstractmethod
-    def _score(self, X: np.array, Y: np.array) -> np.float:
+    def _score(self, X: np.ndarray, Y: np.ndarray) -> np.float:
         raise NotImplementedError
 
 

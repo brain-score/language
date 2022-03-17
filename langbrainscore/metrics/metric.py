@@ -18,7 +18,7 @@ class Metric:
         assert issubclass(metric, _Metric)
         self._metric = metric(**kwargs)
 
-    def __call__(self, X: xr.DataArray, Y: xr.DataArray) -> np.array:
+    def __call__(self, X: xr.DataArray, Y: xr.DataArray) -> np.ndarray:
         """
         args:
             xr.DataArray: X
@@ -35,35 +35,35 @@ class Metric:
 
 class PearsonR(_VectorMetric):
     @staticmethod
-    def _score(x: np.array, y: np.array) -> np.float:
+    def _score(x: np.ndarray, y: np.ndarray) -> np.float:
         r, p = pearsonr(x, y)
         return r
 
 
 class SpearmanRho(_VectorMetric):
     @staticmethod
-    def _score(x: np.array, y: np.array) -> np.float:
+    def _score(x: np.ndarray, y: np.ndarray) -> np.float:
         rho, p = spearmanr(x, y)
         return rho
 
 
 class KendallTau(_VectorMetric):
     @staticmethod
-    def _score(x: np.array, y: np.array) -> np.float:
+    def _score(x: np.ndarray, y: np.ndarray) -> np.float:
         tau, p = kendalltau(x, y)
         return tau
 
 
 class RMSE(_VectorMetric):
     @staticmethod
-    def _score(x: np.array, y: np.array) -> np.float:
+    def _score(x: np.ndarray, y: np.ndarray) -> np.float:
         loss = mean_squared_error(x, y, squared=False)
         return loss
 
 
 class ClassificationAccuracy(_VectorMetric):
     @staticmethod
-    def _score(x: np.array, y: np.array) -> np.float:
+    def _score(x: np.ndarray, y: np.ndarray) -> np.float:
         score = accuracy_score(x, y, normalize=True)
         return score
 
