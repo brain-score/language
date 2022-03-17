@@ -2,8 +2,7 @@ import typing
 
 import numpy as np
 import xarray as xr
-from langbrainscore.interface import _BrainScore
-from langbrainscore.mapping import Mapping
+from langbrainscore.interface import _BrainScore, _Mapping
 from langbrainscore.metrics import Metric
 from langbrainscore.utils import logging
 from langbrainscore.utils.xarray import copy_metadata
@@ -15,10 +14,11 @@ class BrainScore(_BrainScore):
         self,
         X: xr.DataArray,
         Y: xr.DataArray,
-        mapping: Mapping,
+        mapping: _Mapping,
         metric: Metric,
         run=True,
     ) -> "BrainScore":
+        assert X.sampleid.size == Y.sampleid.size
         self.X = X
         self.Y = Y
         self.mapping = mapping
@@ -51,12 +51,11 @@ class BrainScore(_BrainScore):
 
         y_pred, y_true = self.mapping.fit_transform(self.X, self.Y)
 
-        if y_pred.shape == y_true.shape:  # not IdentityMap
-            y_pred = copy_metadata(y_pred, self.Y, "sampleid")
-            y_pred = copy_metadata(y_pred, self.Y, "neuroid")
-            y_pred = copy_metadata(y_pred, self.Y, "timeid")
-
         self.Y_pred = y_pred
+        if y_pred.shape == y_true.shape:  # not IdentityMap
+            self.Y_pred = copy_metadata(self.Y_pred, self.Y, "sampleid")
+            self.Y_pred = copy_metadata(self.Y_pred, self.Y, "neuroid")
+            self.Y_pred = copy_metadata(self.Y_pred, self.Y, "timeid")
 
         scores_over_time = []
         for timeid in y_true.timeid.values:

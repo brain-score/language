@@ -22,23 +22,25 @@ class IdentityMap(_Mapping):
     Imputes NaNs for downstream metrics.
     """
 
-    def __init__(
-        self, impute_nans: bool = True, fill_value: typing.Union[int, float] = 0,
-    ) -> "IdentityMap":
-        self._impute_nans = impute_nans
-        self._fill_value = fill_value
+    def __init__(self, nan_strategy: str = "drop") -> "IdentityMap":
+        self._nan_strategy = nan_strategy
 
     def fit_transform(
         self, X: xr.DataArray, Y: xr.DataArray,
     ):
         # TODO: figure out how to handle NaNs better...
-        if self._impute_nans:
-            X = X.fillna(self._fill_value)
-            Y = Y.fillna(self._fill_value)
+        if self._nan_strategy == "drop":
+            X = X.dropna(dim="neuroid")
+            Y = Y.dropna(dim="neuroid")
+        elif self._nan_strategy == "impute":
+            X = X.fillna(0)
+            Y = Y.fillna(0)
+        else:
+            raise NotImplementedError("unsupported nan strategy.")
         return X, Y
 
 
-class Mapping(_Mapping):
+class LearnedMap(_Mapping):
     def __init__(
         self,
         mapping_class: typing.Union[str, typing.Any],
@@ -53,7 +55,7 @@ class Mapping(_Mapping):
         # we kind of already have this along the `sampleid` coordinate, but we
         # need to implement this in the neuroid coordinate
         **kwargs,
-    ) -> "Mapping":
+    ) -> "LearnedMap":
         """
         Initializes a Mapping object that describes a mapping between two encoder representations.
 
@@ -323,8 +325,8 @@ class Mapping(_Mapping):
                         .copy(deep=True)
                         .expand_dims("timeid", 1)
                     )
-                    y_pred.assign_coords(timeid=("timeid", [timeid]))
                     y_pred.data = self.model.predict(X_test.sel(timeid=0))  # y_pred
+                    y_pred = y_pred.assign_coords(timeid=("timeid", [timeid]))
                     y_pred = y_pred.assign_coords(alpha=("timeid", [alpha]))
                     y_pred = y_pred.assign_coords(cvfoldid=("timeid", [cvfoldid]))
                     y_pred_over_time.append(y_pred)

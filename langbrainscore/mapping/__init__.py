@@ -1,1 +1,1 @@
-from langbrainscore.mapping.mapping import IdentityMap, Mapping
+from langbrainscore.mapping.mapping import IdentityMap, LearnedMap
