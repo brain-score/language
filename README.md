@@ -2,7 +2,7 @@
 _release stage: "fuzzy-potato" (alpha)_
 
 
-### [**Documentation** ![CircleCI](https://circleci.com/gh/language-brainscore/lang-brainscore-fuzzy-potato/tree/main.svg?style=svg)](https://language-brainscore.github.io/lang-brainscore-fuzzy-potato/)
+### [**Documentation** ![CircleCI](https://circleci.com/gh/language-brainscore/langbrainscore/tree/main.svg?style=svg)](https://language-brainscore.github.io/langbrainscore/)
 ### development status indicators
 - [Unit Tests](https://language-brainscore.github.io/langbrainscore/test-results/tests.html): this report lists tests used for the module and their outcomes: success/failure (using [pytest](https://docs.pytest.org/en/7.0.x/))
 - [Code Coverage](https://language-brainscore.github.io/langbrainscore/test-results/codecov/): describes what parts of the code are tested down to individual lines (using [Coverage.py](https://coverage.readthedocs.io/en/6.3.1/))
@@ -41,7 +41,7 @@ measure of cognitive plausibility of ANN models, it provides a possible directio
 
 
 # Usage
-(make sure to install the package first: jump to the [install section](https://github.com/language-brainscore/lang-brainscore-fuzzy-potato/edit/main/README.md#option-a-preferred-method) of this README)
+(make sure to install the package first: jump to the [install section](https://github.com/language-brainscore/langbrainscore/edit/main/README.md#option-a-preferred-method) of this README)
 
 This project has examples hosted on binder. Simply click on the binder launch button to view a Jupyter notebook
 with example usage.
@@ -117,7 +117,7 @@ within this project). -->
 
 Use a Docker image with the package and all dependencies pre-installed! 
 -  `aloxatel/langbrainscore` (Debian-Ubuntu 20.04 derivative)
--  Click the badge to open the image on Docker hub: [![CircleCI](https://circleci.com/gh/language-brainscore/lang-brainscore-fuzzy-potato/tree/circle-ci.svg?style=svg)](https://hub.docker.com/r/aloxatel/langbrainscore)
+-  Click the badge to open the image on Docker hub: [![CircleCI](https://circleci.com/gh/language-brainscore/langbrainscore/tree/circle-ci.svg?style=svg)](https://hub.docker.com/r/aloxatel/langbrainscore)
 
 
 Alternatively, use the `pyproject.toml` file to create your own environment from scratch.
