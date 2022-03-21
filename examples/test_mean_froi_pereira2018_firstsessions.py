@@ -4,17 +4,19 @@ import langbrainscore as lbs
 import numpy as np
 import pandas as pd
 import xarray as xr
+from tqdm import tqdm
+
 from langbrainscore.utils.logging import log
 from langbrainscore.utils.xarray import collapse_multidim_coord
 
 
 def package_mean_froi_pereira2018_firstsess():
-    # mpf = pd.read_csv(f"{Path(__file__).parents[1] / 'data/Pereira_FirstSession_TrialEffectSizes_20220223.csv'}")
-    mpf = pd.read_csv(f"{'../data/Pereira_FirstSession_TrialEffectSizes_20220223.csv'}")
+    mpf = pd.read_csv(f"{Path(__file__).parents[1] / 'data/Pereira_FirstSession_TrialEffectSizes_20220223.csv'}")
+    # mpf = pd.read_csv(f"{'../data/Pereira_FirstSession_TrialEffectSizes_20220223.csv'}")
     mpf = mpf.sort_values(by=["UID", "Session", "Experiment", "Stim"])
     subj_xrs = []
     neuroidx = 0
-    for uid in mpf.UID.unique():
+    for uid in tqdm(mpf.UID.unique()):
         mpf_subj = mpf[mpf.UID == uid]
         sess_xrs = []
         for sess in mpf_subj.Session.unique():
