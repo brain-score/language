@@ -13,6 +13,6 @@ def collapse_multidim_coord(xr_obj, coord, keep_dim):
     try:
         stimuli = imputer.fit_transform(xr_obj[coord])[0]
         return xr_obj.assign_coords({coord: (keep_dim, stimuli)})
-    except:
+    except ValueError as e: # TODO which exception? what scenario does this cover?
         stimuli = imputer.fit_transform(xr_obj[coord]).transpose()[0]
         return xr_obj.assign_coords({coord: (keep_dim, stimuli)})
