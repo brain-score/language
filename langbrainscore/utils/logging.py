@@ -1,3 +1,13 @@
+
+################################################################
+# stuff for logging to W&B (https://wandb.ai) 
+################################################################
+import wandb
+
+
+################################################################
+# stuff for logging to the terminal 
+################################################################
 import textwrap
 from datetime import date
 from sys import stderr, stdout
@@ -5,6 +15,7 @@ from time import time
 
 from colorama import Back, Fore, Style, init
 from tqdm import tqdm
+
 
 init(autoreset=True)
 _START_TIME = time()
