@@ -1,17 +1,19 @@
 from pathlib import Path
 
-import langbrainscore as lbs
 import numpy as np
 import pandas as pd
 import xarray as xr
 from tqdm import tqdm
 
+import langbrainscore as lbs
 from langbrainscore.utils.logging import log
 from langbrainscore.utils.xarray import collapse_multidim_coord
 
 
 def package_mean_froi_pereira2018_firstsess():
-    mpf = pd.read_csv(f"{Path(__file__).parents[1] / 'data/Pereira_FirstSession_TrialEffectSizes_20220223.csv'}")
+    mpf = pd.read_csv(
+        f"{Path(__file__).parents[1] / 'data/Pereira_FirstSession_TrialEffectSizes_20220223.csv'}"
+    )
     # mpf = pd.read_csv(f"{'../data/Pereira_FirstSession_TrialEffectSizes_20220223.csv'}")
     mpf = mpf.sort_values(by=["UID", "Session", "Experiment", "Stim"])
     subj_xrs = []
@@ -83,12 +85,14 @@ def main():
     ridge_cv_kfold = lbs.mapping.LearnedMap("ridge_cv", k_fold=5)
     pearson = lbs.metrics.Metric(lbs.metrics.PearsonR)
     brsc_ridge_pearson = lbs.BrainScore(
-        ann_enc_mpf, brain_enc_mpf, ridge_cv_kfold, pearson, run=True
+        ann_enc_mpf, brain_enc_mpf, ridge_cv_kfold, pearson
     )
+    brsc_ridge_pearson.score(score_split_coord="experiment")
     log(f"brainscore (ridge, pearson) = {brsc_ridge_pearson}")
     i_map = lbs.mapping.IdentityMap(nan_strategy="drop")
     cka = lbs.metrics.Metric(lbs.metrics.CKA)
-    brsc_cka = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, i_map, cka, run=True)
+    brsc_cka = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, i_map, cka)
+    brsc_cka.score(score_split_coord="experiment")
     log(f"brainscore (cka) = {brsc_cka}")
 
 

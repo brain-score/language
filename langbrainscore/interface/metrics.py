@@ -29,7 +29,7 @@ class _Metric(ABC):
         pass
 
     def __call__(
-        self, X: np.ndarray, Y: np.ndarray,
+        self, X: np.ndarray, Y: np.ndarray
     ) -> typing.Union[np.float, np.ndarray]:
         if X.ndim == 1:
             X = X.reshape(-1, 1)
@@ -46,7 +46,7 @@ class _Metric(ABC):
 
     @abstractmethod
     def _apply_metric(
-        self, X: np.ndarray, Y: np.ndarray,
+        self, X: np.ndarray, Y: np.ndarray
     ) -> typing.Union[np.float, np.ndarray]:
         raise NotImplementedError
 
@@ -72,7 +72,7 @@ class _VectorMetric(_Metric):
         super().__init__()
 
     def _apply_metric(
-        self, X: np.ndarray, Y: np.ndarray,
+        self, X: np.ndarray, Y: np.ndarray
     ) -> typing.Union[np.float, np.ndarray]:
         """
         internal function that applies scoring function along each array dimension
@@ -88,7 +88,10 @@ class _VectorMetric(_Metric):
             x = X[:, i]
             y = Y[:, i]
             nan = np.isnan(x) | np.isnan(y)
-            scores[i] = self._score(x[~nan], y[~nan])
+            try:
+                scores[i] = self._score(x[~nan], y[~nan])
+            except:
+                scores[i] = np.nan
         if self._reduction:
             return self._reduction(scores)
         if len(scores) == 1:
