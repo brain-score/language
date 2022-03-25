@@ -76,6 +76,7 @@ class Dataset(_Dataset):
                          # the significance of the subject is that neuroids are not shared
                          # across subjects; a particular neuroid 'x' 
                          subject_index: str = None,
+                         stimuli_index: str = None,
                          # arguments related to non-dimension coordinates to track
                          # metadata
                          sampleid_metadata: typing.Union[typing.Iterable[str], typing.Mapping[str,str]] = None,
@@ -181,6 +182,8 @@ class Dataset(_Dataset):
                                 "sampleid": np.repeat(sampleid, 1),
                                 "neuroid": [f'{a}_{b}' for a, b in zip(timeid_view[subject_index], timeid_view[neuroid_index])],
                                 "timeid": np.repeat(timeid, 1),
+                                "subject": ('neuroid', timeid_view[subject_index]),
+                                "stimulus": ('sampleid', [collapse_same_value(timeid_view[stimuli_index])]),
                                 **{metadata_names[column]: (dimension, [collapse_same_value(timeid_view[column])])
                                    for dimension, metadata_names in (('sampleid', sampleid_metadata), 
                                                                      ('timeid', timeid_metadata))
@@ -202,9 +205,9 @@ class Dataset(_Dataset):
         unified_xr = xr.concat(sampleid_xrs, dim='sampleid')
         
         from langbrainscore.utils.xarray import collapse_multidim_coord
-        for dimension, metadata_names in (('sampleid', sampleid_metadata), 
+        for dimension, metadata_names in (('sampleid', sampleid_metadata + {'stimulus':'stimulus'}), 
                                           ('timeid', timeid_metadata),
-                                          ('neuroid', neuroid_metadata)):
+                                          ('neuroid', neuroid_metadata + {'subject': 'subject'})):
             for column in metadata_names:
                 try:
                     unified_xr = collapse_multidim_coord(unified_xr, metadata_names[column], dimension)
