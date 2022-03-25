@@ -6,9 +6,9 @@ from pathlib import Path
 from diskcache import Cache
 
 
-T = typing.TypeVar('T', 'Cacheable')
+T = typing.TypeVar('T')
 
-class Cacheable(ABC):
+class _Cacheable(ABC):
     '''
     A class used to define a common interface for Object caching in LangBrainscore
     '''
@@ -29,7 +29,8 @@ class Cacheable(ABC):
         '''
         NotImplemented
 
-    def from_cache(cls: T, filename) -> T:
+    # NB comment from Guido: https://github.com/python/typing/issues/58#issuecomment-194569410
+    def from_cache(cls: T, filename) -> typing.Callable[..., T]:
         '''
         construct an object from cache. subclasses must start with the
         object returned by a call to this method like so:

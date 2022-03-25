@@ -2,8 +2,10 @@ from abc import ABC, abstractmethod
 
 import xarray as xr
 from langbrainscore.dataset import Dataset
+from langbrainscore.interface.cacheable import _Cacheable
 
 
+# TODO: class _Encoder(_Cacheable, ABC):
 class _Encoder(ABC):
     """
     Interface for *Encoder classes.

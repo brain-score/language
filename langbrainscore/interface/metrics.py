@@ -2,8 +2,10 @@ import typing
 from abc import ABC, abstractmethod
 
 import numpy as np
+from langbrainscore.interface.cacheable import _Cacheable
 
 
+# TODO: class _Metric(_Cacheable, ABC):
 class _Metric(ABC):
     """
     checks that two arrays are comparable for a given similarity metric,

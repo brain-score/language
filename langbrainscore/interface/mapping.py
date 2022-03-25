@@ -2,8 +2,10 @@ from abc import ABC, abstractmethod
 from typing import Tuple
 
 import xarray as xr
+from langbrainscore.interface.cacheable import _Cacheable
 
 
+# TODO: class _Mapping(_Cacheable, ABC):
 class _Mapping(ABC):
     """
     object that defines and applies map between two xarrays with the same number of samples
