@@ -68,45 +68,70 @@ class Dataset(_Dataset):
     @classmethod
     def from_file_or_url(cls, 
                          file_path_or_url: typing.Union[str, Path], 
-                         # arguments related to constructing coordinates and coordinate
-                         # dimensions in the xarray
                          data_column: str, 
-                         # sampleid uniquely identifies a stimulus shown to a participant
-                         # neuroid uniquely identifies 
                          sampleid_index: str, neuroid_index: str, 
                          stimuli_index: str,
                          timeid_index: str = None,
-                         # column to use as the subject/participant identifier
-                         # if None, entire data is assumed to be a single subject
-                         # the significance of the subject is that neuroids are not shared
-                         # across subjects; a particular neuroid 'x' is still x_subj1 and x_subj2
-                         # in the packaged data 
                          subject_index: str = None,
-                         # arguments related to non-dimension coordinates to track
-                         # metadata
                          sampleid_metadata: typing.Union[typing.Iterable[str], typing.Mapping[str,str]] = None,
                          neuroid_metadata: typing.Union[typing.Iterable[str], typing.Mapping[str,str]] = None,
                          timeid_metadata: typing.Union[typing.Iterable[str], typing.Mapping[str,str]] = None,
-                         #
                          multidim_metadata: typing.Iterable[typing.Mapping[str, typing.Iterable[str]]] = None,
-                         #
                          sort_by: typing.Iterable[str] = (),
                          sep=',') -> _Dataset:
-        """Constructs and returns a Dataset object based on data provided in a csv file.
-            Constructs an xarray using specified columns to construct dimensions and 
-            metadata along those dimensions.
+        """Creates a Dataset object holding an `xr.DataArray` instance using a CSV file readable by pandas.
+            Constructs the `xr.DataArray` using specified columns to construct dimensions and 
+            metadata along those dimensions in the form of coordinates.
             Minimally requires `sampleid` and `neuroid` to be provided.
-            If `timeid` and `sampleid` is not provided:
-                - a singleton timeid dimension is created with the value "0" for each sample.
-                - a singleton subjectid dimension is created with value "0" that spans the entire data.
-            
-            For help on what these terms mean, please visit the
-            [xarray glossary page](https://xarray.pydata.org/en/stable/user-guide/terminology.html)
-
-            NOTE: Each row of the supplied file must have a single data point corresponding
+             
+            Note: Each row of the supplied file must have a single data point corresponding
             to a unique `sampleid`, `neuroid`, and `timeid` (unique dimension values). 
             I.e., each neuroid (which could be a voxel, an ROI, a reaction time RT value, etc.)
             must be on a new line for the same stimulus trial at a certain time. 
+            If `timeid` and `subjectid` is not provided:
+                - a singleton timeid dimension is created with the value "0" for each sample.
+                - a singleton subjectid dimension is created with value "0" that spans the entire data.
+            For help on what these terms mean, please visit the
+            [xarray glossary page](https://xarray.pydata.org/en/stable/user-guide/terminology.html)
+
+
+        Args:
+            file_path_or_url (typing.Union[str, Path]): a path or URL to a csv file 
+            data_column (str): title of the column that holds the datapoints per unit of measurement
+                (e.g., BOLD contrast effect size, reaction time, voltage amplitude, etc)
+            sampleid_index (str): title of the column that should be used to construct an index for sampleids. 
+                this should be unique for each stimulus in the dataset.
+            neuroid_index (str): title of the column that should be used to construct an index for neuroids.
+                this should be unique for each point of measurement within a subject. e.g., voxel1, voxel2, ...
+                neuroids in the packaged dataset are transformed to be a product of subject_index and neuroid_index. 
+            stimuli_index (str): title of the column that holds stimuli shown to participants
+            timeid_index (str, optional): title of the column that holds timepoints of stimulus presentation.
+                optional. if not provided, a singleton timepoint '0' is assigned to each datapoint. Defaults to None.
+            subject_index (str, optional): title of the column specifiying subject IDs. Defaults to None.
+            sampleid_metadata (typing.Union[typing.Iterable[str], typing.Mapping[str,str]], optional): 
+                names of columns (and optionally mapping of existing column names to new coordinate names)
+                that supply metadata along the sampleid dimension. Defaults to None.
+            neuroid_metadata (typing.Union[typing.Iterable[str], typing.Mapping[str,str]], optional): 
+                see `sampleid_metadata`. Defaults to None.
+            timeid_metadata (typing.Union[typing.Iterable[str], typing.Mapping[str,str]], optional): 
+                see `sampleid_metadata`. Defaults to None.
+            multidim_metadata (typing.Iterable[typing.Mapping[str, typing.Iterable[str]]], optional): 
+                metadata to go with more than one dimension. e.g., chunks of a stimulus that unfolds with time. 
+                currently `NotImplemented`. Defaults to None.
+            sort_by (typing.Iterable[str], optional): Sort data by these columns while repackaging it.
+                data is sorted by `sampleid_index`, `neuroid_index`, and `timeid_index` in addition to this
+                value. Defaults to ().
+            sep (str, optional): separator to read a value-delimited file. this argument is passed to pandas.
+                Defaults to ','.
+
+        Raises:
+            ValueError: _description_
+
+        Returns:
+            _Dataset: a subclass of the `_Dataset` interface with the packaged xarray.DataArray as a member.
+        """
+        """Constructs and returns a Dataset object based on data provided in a csv file.
+            
 
         Args:
             file_path_or_url (typing.Union[str, Path]): filepath or URL to file containing a CSV
@@ -162,7 +187,10 @@ class Dataset(_Dataset):
             df[subject_index] = subject_column
 
         subjects = list(set(df[subject_index]))
-        sampleids = list(set(df[sampleid_index]))
+        sampleids = list(set(df[sampleid_index])) # what happens when the same stimulus is shown multiple times? 
+                                                  # it will add entries with same sampleid that will have to 
+                                                  # then be differentiated on the basis of metadata only
+                                                  # https://i.imgur.com/4V2DsIo.png
         neuroids = list(set(df[neuroid_index]))
         timeids = list(set(df[timeid_index]))
 
@@ -173,11 +201,11 @@ class Dataset(_Dataset):
         if not isinstance(timeid_metadata, abc.Mapping):
             timeid_metadata = {k: k for k in timeid_metadata or ()}
 
-        df = df.sort_values([subject_index, sampleid_index, neuroid_index, timeid_index])
+        df = df.sort_values([*sort_by, subject_index, sampleid_index, neuroid_index, timeid_index])
 
         sampleid_xrs = []
         for sampleid in tqdm(sampleids, desc='reassembling data per sampleid'):
-            sample_view = df[df[sampleid_index] == sampleid]
+            sample_view = df[df[sampleid_index] == sampleid] # why not sampleid_view?
 
             neuroid_xrs = []
             for neuroid in neuroids:
