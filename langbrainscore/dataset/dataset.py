@@ -48,16 +48,19 @@ class Dataset(_Dataset):
 
     def to_netcdf(self, filename):
         '''
-        outputs member xarray object to a netCDF file
-        identified by `filename`. if it already exists,
-        silently overwrites it.
+        outputs the xarray.DataArray object to a netCDF file identified by
+        `filename`. if it already exists, overwrites it.
         '''
+        if Path(filename).expanduser().resolve().exists():
+            log(f'{filename} already exists. overwriting.', type='WARN')
         self._xr_obj.to_netcdf(filename)
 
+
     @classmethod
-    def read_netcdf(cls, filename):
+    def load_netcdf(cls, filename):
         '''
-        loads a netCDF object from a file identified by `filename`.
+        loads a netCDF object that contains a pre-packaged xarray instance from
+        a file at `filename`.
         '''
         return cls(xr.load_dataarray(filename))
 
