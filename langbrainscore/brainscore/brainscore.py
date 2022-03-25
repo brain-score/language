@@ -27,17 +27,36 @@ class BrainScore(_BrainScore):
         if run:
             self.score()
 
+    def __repr__(self) -> str:
+        return f"<{self.__class__} ({self.mapping}, {self.metric}, {str(self)})>"
+
     def __str__(self) -> str:
         return f"{self.scores.mean()}"
 
-    def to_dataset(self) -> xr.Dataset:
-        return xr.Dataset({"Y": self.Y, "Y_pred": self.Y_pred, "scores": self.scores})
+    def to_netcdf(self, filename):
+        """
+        outputs the xarray.DataArray object for 'scores' to a netCDF file
+        identified by `filename`. if it already exists, overwrites it.
+        """
+        if Path(filename).expanduser().resolve().exists():
+            logging.log(f"{filename} already exists. overwriting.", type="WARN")
+        self.scores.to_netcdf(filename)
 
-    def to_disk(self):
-        X = self.X
-        dataset = self.to_dataset()
-        # TODO
-        pass
+    def load_netcdf(self, filename):
+        """
+        loads a netCDF object that contains an xarray instance for 'scores' from
+        a file at `filename`.
+        """
+        self.scores = xr.load_dataarray(filename)
+
+    # TODO: marked for removal
+    # def to_dataset(self) -> xr.Dataset:
+    #     return xr.Dataset({"Y": self.Y, "Y_pred": self.Y_pred, "scores": self.scores})
+
+    # def to_disk(self):
+    #     X = self.X
+    #     dataset = self.to_dataset()
+    #     pass
 
     @staticmethod
     def _score(A, B, metric: Metric) -> np.ndarray:
@@ -120,9 +139,7 @@ class BrainScore(_BrainScore):
 
         if scores.neuroid.size > 1:  # not RSA
             scores = copy_metadata(scores, self.Y, "neuroid")
-
         scores = copy_metadata(scores, self.Y, "timeid")
 
         self.scores = scores
-
         return self.scores

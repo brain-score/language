@@ -65,6 +65,20 @@ def aggregate_layers(hidden_states: dict, **kwargs):
     return states_layers
 
 
+def get_torch_device():
+    '''
+    get torch device based on whether cuda is available or not
+    '''
+    import torch
+    # Set device to GPU if cuda is available.
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        torch.set_default_tensor_type(torch.cuda.FloatTensor)
+    else:
+        device = torch.device("cpu")
+    return device
+
+
 def set_case(sample: str = None, emb_case: typing.Union[str, None] = None):
     if emb_case == "lower":
         sample = sample.lower()

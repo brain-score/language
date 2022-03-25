@@ -5,21 +5,36 @@ import numpy as np
 import xarray as xr
 from langbrainscore.dataset import Dataset
 from langbrainscore.interface import _ModelEncoder
-from langbrainscore.utils.encoder import *
+from langbrainscore.utils.encoder import (
+        set_case, aggregate_layers, 
+        flatten_activations_per_sample,
+        repackage_flattened_activations,
+        get_context_groups, get_torch_device
+    )
 from langbrainscore.utils.xarray import copy_metadata
 from tqdm import tqdm
 
 
+
+
+
+
 class HuggingFaceEncoder(_ModelEncoder):
-    def __init__(self, model_id) -> "HuggingFaceEncoder":
+    def __init__(self, model_id, device=None) -> "HuggingFaceEncoder":
         super().__init__(model_id)
 
         from transformers import AutoConfig, AutoModel, AutoTokenizer
 
+        self.device = device or get_torch_device()
         self.config = AutoConfig.from_pretrained(self._model_id)
         self.tokenizer = AutoTokenizer.from_pretrained(self._model_id)
-        self.model = AutoModel.from_pretrained(self._model_id, config=self.config)
+        try:
+            self.model = AutoModel.from_pretrained(self._model_id, config=self.config).to(self.device)
+        except RuntimeError:
+            self.device = 'cpu'
+            self.model = AutoModel.from_pretrained(self._model_id, config=self.config)
 
+    
     def encode(
         self,
         dataset: Dataset,
@@ -56,18 +71,14 @@ class HuggingFaceEncoder(_ModelEncoder):
             [type]: [description]
         """
         self.model.eval()
-        
-        with_special_tokens = self.tokenizer("brainscore")['input_ids']
-        first_token_id, *_ = self.tokenizer("brainscore", add_special_tokens=False)['input_ids']
-        special_token_offset = with_special_tokens.index(first_token_id)
-
+        special_token_offset = self.get_special_token_offset()
         stimuli = dataset.stimuli.values
-
         # Initialize the context group coordinate (obtain embeddings with context)
         context_groups = get_context_groups(dataset, context_dimension)
 
-        # Initialize list for storing activations for each stimulus with all layers flattened: flattened_activations
-        # Initialize list for storing a list with layer ids ([0 0 0 0 ... 1 1 1 ...]) indicating which layers each neuroid came from
+        # list for storing activations for each stimulus with all layers flattened 
+        # list for storing layer ids ([0 0 0 0 ... 1 1 1 ...]) indicating which layer each 
+        # neuroid (representation dimension) came from
         flattened_activations, layer_ids = [], []
 
         ###############################################################################
@@ -80,14 +91,12 @@ class HuggingFaceEncoder(_ModelEncoder):
             stimuli_in_context = stimuli[mask_context]
             # Mask based on the context group
 
-            
-            # We want to tokenize all stimuli of this context group individually first in order to keep track of
-            # which tokenized subunit belongs to what stimulus
-            # Store the index at which current stimulus starts (the past context ENDS) in the tokenized sequence
-            tokenized_stim_start_index = special_token_offset 
+            # to store the index at which current stimulus starts (the past context ENDS) in the tokenized sequence
+            # so that we can extract each subsequent stimulus representations without the context representations
+            tokenized_stim_start_index = special_token_offset
 
+            # store model states for each stimulus in this context group
             states_sentences_across_stimuli = []
-            # Store states for each sample in this context group
 
             ###############################################################################
             # CONTEXT LOOP
@@ -95,36 +104,26 @@ class HuggingFaceEncoder(_ModelEncoder):
             for i, stimulus in enumerate(stimuli_in_context):
                 stimulus = set_case(sample=stimulus, emb_case=emb_case)
 
-                # Mask based on the uni/bi-directional nature of models
+                # extract stim to encode based on the uni/bi-directional nature of models
                 if not bidirectional:
                     stimuli_directional = stimuli_in_context[: i + 1]
                 else:
                     stimuli_directional = stimuli_in_context
 
                 stimuli_directional = " ".join(stimuli_directional)
-                stimuli_directional = set_case(
-                    sample=stimuli_directional, emb_case=emb_case
-                )
-
-                special_token_ids = self.tokenizer(
-                    " ".join(self.tokenizer.special_tokens_map.values())
-                )["input_ids"]
-                special_token_ids = set(special_token_ids)
+                stimuli_directional = set_case(sample=stimuli_directional, emb_case=emb_case)
 
                 # Tokenize the current stimulus only to get its length, and disable adding special tokens
                 tokenized_current_stim = self.tokenizer(
                     stimulus,
-                    padding=False,
-                    return_tensors="pt",
-                    add_special_tokens=False,
-                )  # todo double check this!
-                tokenized_current_stim_length = tokenized_current_stim.input_ids.shape[
-                    1
-                ]
+                    padding=False, return_tensors="pt", add_special_tokens=False,
+                ) 
+                tokenized_current_stim_length = tokenized_current_stim.input_ids.shape[1]
+
                 tokenized_directional_context = self.tokenizer(
                     stimuli_directional, 
                     padding=False, return_tensors="pt", add_special_tokens=True,
-                )
+                ).to(self.device)
 
                 # Get the hidden states
                 result_model = self.model(
@@ -132,34 +131,35 @@ class HuggingFaceEncoder(_ModelEncoder):
                     output_hidden_states=True,
                     return_dict=True,
                 )
-                hidden_states = result_model[
-                    "hidden_states"
-                ]  # dict with key=layer, value=3D tensor of dims: [batch, tokens, emb size]
+
+                # dict with key=layer, value=3D tensor of dims: [batch, tokens, emb size]
+                hidden_states = result_model["hidden_states"]  
 
                 layer_wise_activations = dict()
-
-                # Cut the 'irrelevant' context from the hidden states
+                # Cut the "irrelevant" context from the hidden states
                 for idx_layer, layer in enumerate(hidden_states):  # Iterate over layers
                     layer_wise_activations[idx_layer] = layer[
                         # batch (singleton)
                         :,
                         # n_tokens
                         tokenized_stim_start_index: 
-                            tokenized_stim_start_index + tokenized_current_stim_length,
+                          tokenized_stim_start_index + tokenized_current_stim_length,
                         # emb_dim (e.g., 768)
                         :,
                     ].squeeze()  # collapse batch dim to obtain shape (n_tokens, emb_dim)
+                    # ^ do we have to .detach() tensors here?
 
+                # keep tracking lengths so we know where each next stimulus begins
                 tokenized_stim_start_index += tokenized_current_stim_length
 
                 # Aggregate hidden states within a sample
+                # states_sentences_agg is a dict with key = layer, value = array of emb dimension
                 states_sentences_agg = aggregate_layers(
                     layer_wise_activations, **{"emb_aggregation": emb_aggregation}
                 )
-                # states_sentences is a dict with key = layer, value = array of emb dimension
 
-                states_sentences_across_stimuli.append(states_sentences_agg)
                 # states_sentences_across_stimuli store all the hidden states for the current context group across all stimuli
+                states_sentences_across_stimuli.append(states_sentences_agg)
 
             ###############################################################################
             # END CONTEXT LOOP
@@ -187,6 +187,19 @@ class HuggingFaceEncoder(_ModelEncoder):
         )
 
         return encoded_dataset
+
+
+    def get_special_token_offset(self) -> int:
+        '''
+        the offset (no. of tokens in tokenized text) from the start to exclude
+        when extracting the representation of a particular stimulus. this is
+        needed when the stimulus is evaluated in a context group to achieve
+        correct boundaries (otherwise we get off-by-context errors)
+        '''
+        with_special_tokens = self.tokenizer("brainscore")['input_ids']
+        first_token_id, *_ = self.tokenizer("brainscore", add_special_tokens=False)['input_ids']
+        special_token_offset = with_special_tokens.index(first_token_id)
+        return special_token_offset
 
 
 class PTEncoder(_ModelEncoder):
