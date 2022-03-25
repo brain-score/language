@@ -56,6 +56,10 @@ class HuggingFaceEncoder(_ModelEncoder):
             [type]: [description]
         """
         self.model.eval()
+        
+        with_special_tokens = self.tokenizer("brainscore")['input_ids']
+        first_token_id, *_ = self.tokenizer("brainscore", add_special_tokens=False)['input_ids']
+        special_token_offset = with_special_tokens.index(first_token_id)
 
         stimuli = dataset.stimuli.values
 
@@ -76,9 +80,11 @@ class HuggingFaceEncoder(_ModelEncoder):
             stimuli_in_context = stimuli[mask_context]
             # Mask based on the context group
 
+            
             # We want to tokenize all stimuli of this context group individually first in order to keep track of
             # which tokenized subunit belongs to what stimulus
-            tokenized_stim_start_index = 0  # Store the index at which current stimulus starts (the past context ENDS) in the tokenized sequence
+            # Store the index at which current stimulus starts (the past context ENDS) in the tokenized sequence
+            tokenized_stim_start_index = special_token_offset 
 
             states_sentences_across_stimuli = []
             # Store states for each sample in this context group
@@ -116,7 +122,8 @@ class HuggingFaceEncoder(_ModelEncoder):
                     1
                 ]
                 tokenized_directional_context = self.tokenizer(
-                    stimuli_directional, padding=False, return_tensors="pt"
+                    stimuli_directional, 
+                    padding=False, return_tensors="pt", add_special_tokens=True,
                 )
 
                 # Get the hidden states
@@ -137,8 +144,8 @@ class HuggingFaceEncoder(_ModelEncoder):
                         # batch (singleton)
                         :,
                         # n_tokens
-                        tokenized_stim_start_index : tokenized_stim_start_index
-                        + tokenized_current_stim_length,
+                        tokenized_stim_start_index: 
+                            tokenized_stim_start_index + tokenized_current_stim_length,
                         # emb_dim (e.g., 768)
                         :,
                     ].squeeze()  # collapse batch dim to obtain shape (n_tokens, emb_dim)
