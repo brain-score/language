@@ -205,9 +205,9 @@ class Dataset(_Dataset):
         unified_xr = xr.concat(sampleid_xrs, dim='sampleid')
         
         from langbrainscore.utils.xarray import collapse_multidim_coord
-        for dimension, metadata_names in (('sampleid', sampleid_metadata + {'stimulus':'stimulus'}), 
+        for dimension, metadata_names in (('sampleid', {**sampleid_metadata, 'stimulus':'stimulus'}), 
                                           ('timeid', timeid_metadata),
-                                          ('neuroid', neuroid_metadata + {'subject': 'subject'})):
+                                          ('neuroid', {**neuroid_metadata, 'subject': 'subject'})):
             for column in metadata_names:
                 try:
                     unified_xr = collapse_multidim_coord(unified_xr, metadata_names[column], dimension)
