@@ -70,13 +70,15 @@ class Dataset(_Dataset):
                          data_column: str, 
                          # sampleid uniquely identifies a stimulus shown to a participant
                          # neuroid uniquely identifies 
-                         sampleid_index: str, neuroid_index: str, timeid_index: str = None,
+                         sampleid_index: str, neuroid_index: str, 
+                         stimuli_index: str,
+                         timeid_index: str = None,
                          # column to use as the subject/participant identifier
                          # if None, entire data is assumed to be a single subject
                          # the significance of the subject is that neuroids are not shared
-                         # across subjects; a particular neuroid 'x' 
+                         # across subjects; a particular neuroid 'x' is still x_subj1 and x_subj2
+                         # in the packaged data 
                          subject_index: str = None,
-                         stimuli_index: str = None,
                          # arguments related to non-dimension coordinates to track
                          # metadata
                          sampleid_metadata: typing.Union[typing.Iterable[str], typing.Mapping[str,str]] = None,
@@ -148,6 +150,13 @@ class Dataset(_Dataset):
             # correspond to timeid == 0 per sample
             timeid_column = [0] * len(df)
             df[timeid_index] = timeid_column
+        if subject_index is None:
+            subject_index = 'subject'
+            # create singleton subjectID
+            # we don't need to inflate data since each datapoint will just 
+            # correspond to subject == 0 per sample
+            subject_column = ['subject0'] * len(df)
+            df[subject_index] = subject_column
 
         subjects = list(set(df[subject_index]))
         sampleids = list(set(df[sampleid_index]))
