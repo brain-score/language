@@ -5,20 +5,27 @@ import numpy as np
 import xarray as xr
 from langbrainscore.dataset import Dataset
 from langbrainscore.interface import _ModelEncoder
-from langbrainscore.utils.encoder import *
+from langbrainscore.utils.encoder import (
+        get_context_groups, get_torch_device
+    )
 from langbrainscore.utils.xarray import copy_metadata
 from tqdm import tqdm
 
 
 class HuggingFaceEncoder(_ModelEncoder):
-    def __init__(self, model_id) -> "HuggingFaceEncoder":
+    def __init__(self, model_id, device=None) -> "HuggingFaceEncoder":
         super().__init__(model_id)
 
         from transformers import AutoConfig, AutoModel, AutoTokenizer
 
+        self.device = device or get_torch_device()
         self.config = AutoConfig.from_pretrained(self._model_id)
         self.tokenizer = AutoTokenizer.from_pretrained(self._model_id)
-        self.model = AutoModel.from_pretrained(self._model_id, config=self.config)
+        try:
+            self.model = AutoModel.from_pretrained(self._model_id, config=self.config).to(self.device)
+        except RuntimeError:
+            self.device = 'cpu'
+            self.model = AutoModel.from_pretrained(self._model_id, config=self.config)
 
     def encode(
         self,
@@ -124,7 +131,7 @@ class HuggingFaceEncoder(_ModelEncoder):
                 tokenized_directional_context = self.tokenizer(
                     stimuli_directional, 
                     padding=False, return_tensors="pt", add_special_tokens=True,
-                )
+                ).to(self.device)
 
                 # Get the hidden states
                 result_model = self.model(
@@ -149,6 +156,7 @@ class HuggingFaceEncoder(_ModelEncoder):
                         # emb_dim (e.g., 768)
                         :,
                     ].squeeze()  # collapse batch dim to obtain shape (n_tokens, emb_dim)
+                    # ^ do we have to .detach() tensors here?
 
                 tokenized_stim_start_index += tokenized_current_stim_length
 
