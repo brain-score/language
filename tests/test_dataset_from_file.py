@@ -18,7 +18,7 @@ def test_load_pereira_data():
     id_columns = df.columns[:9]
     neuroid_columns = df.columns[9:]
     df = df.melt(id_vars=id_columns, value_name='effect_size', value_vars=neuroid_columns)
-    df.rename(columns={'variable': 'neuroid'}, inplace=True)
+    df.rename(columns={'variable': 'ROI'}, inplace=True)
     df.to_csv(Path(__file__).parents[1] / 'data/molten_Pereira_FirstSession_TrialEffectSizes_20220223.csv')
 
     # next, use this transformed data to construct the dataset
@@ -29,17 +29,19 @@ def test_load_pereira_data():
     dataset = Dataset.from_file_or_url(filepath, 
                                        data_column='effect_size',
                                        sampleid_index='Stim', 
-                                       neuroid_index='neuroid',
+                                       neuroid_index='ROI',
                                        subject_index='UID',
+                                       stimuli_index='Sentence',
                                        
                                        sampleid_metadata={'Stim': 'stim_identifier',
-                                                          'Sentence': 'sentence',
+                                                        #   'Sentence': 'sentence',
                                                          },
-                                       neuroid_metadata={'neuroid': 'roi',
+                                       neuroid_metadata={'ROI': 'roi',
                                                          'Session': 'session',
                                                          'DurationTR': 'tr',
                                                          'Experiment': 'experiment',
-                                                         'UID': 'subject'},
+                                                        #  'UID': 'subject',
+                                                         },
                                        timeid_metadata=None,
 
                                        multidim_metadata=None, # if we had, 
