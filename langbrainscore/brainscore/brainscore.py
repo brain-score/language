@@ -2,11 +2,12 @@ import typing
 
 import numpy as np
 import xarray as xr
+from methodtools import lru_cache
+
 from langbrainscore.interface import _BrainScore, _Mapping
 from langbrainscore.metrics import Metric
 from langbrainscore.utils import logging
-from langbrainscore.utils.xarray import copy_metadata
-from methodtools import lru_cache
+from langbrainscore.utils.xarray import collapse_multidim_coord, copy_metadata
 
 
 class BrainScore(_BrainScore):
@@ -16,7 +17,7 @@ class BrainScore(_BrainScore):
         Y: xr.DataArray,
         mapping: _Mapping,
         metric: Metric,
-        run=True,
+        run=False,
     ) -> "BrainScore":
         assert X.sampleid.size == Y.sampleid.size
         self.X = X
@@ -43,11 +44,14 @@ class BrainScore(_BrainScore):
         return metric(A, B)
 
     @lru_cache(maxsize=None)
-    def score(self):
+    def score(self, score_split_coord=None):
         """
         Computes The BrainScore™ (/s) using predictions/outputs returned by a
         Mapping instance which is a member attribute of a BrainScore instance
         """
+
+        if score_split_coord:
+            assert score_split_coord in self.Y.coords
 
         y_pred, y_true = self.mapping.fit_transform(self.X, self.Y)
 
@@ -63,23 +67,54 @@ class BrainScore(_BrainScore):
             y_pred_time = y_pred.sel(timeid=timeid).transpose("sampleid", "neuroid")
             y_true_time = y_true.sel(timeid=timeid).transpose("sampleid", "neuroid")
 
-            score_per_timeid = self._score(y_pred_time, y_true_time, self.metric)
-
-            if len(score_per_timeid) == 1:  # e.g., RSA, CKA
-                neuroids = [np.nan]
+            if score_split_coord:
+                if score_split_coord not in y_true_time.sampleid.coords:
+                    y_pred_time = collapse_multidim_coord(
+                        y_pred_time, score_split_coord, "sampleid"
+                    )
+                    y_true_time = collapse_multidim_coord(
+                        y_true_time, score_split_coord, "sampleid"
+                    )
+                score_splits = y_pred_time.sampleid.groupby(score_split_coord).groups
             else:
-                neuroids = y_true_time.neuroid.data
+                score_splits = [0]
 
-            scores_over_time.append(
-                xr.DataArray(
-                    score_per_timeid.reshape(-1, 1),
-                    dims=("neuroid", "timeid"),
-                    coords={
-                        "neuroid": ("neuroid", neuroids),
-                        "timeid": ("timeid", [timeid]),
-                    },
+            scores_over_time_group = []
+            for scoreid in score_splits:
+
+                if score_split_coord:
+                    y_pred_time_group = y_pred_time.isel(
+                        sampleid=y_pred_time[score_split_coord] == scoreid
+                    )
+                    y_true_time_group = y_true_time.isel(
+                        sampleid=y_true_time[score_split_coord] == scoreid
+                    )
+                else:
+                    y_pred_time_group = y_pred_time
+                    y_true_time_group = y_true_time
+
+                score_per_time_group = self._score(
+                    y_pred_time_group, y_true_time_group, self.metric
                 )
-            )
+
+                if len(score_per_time_group) == 1:  # e.g., RSA, CKA
+                    neuroids = [np.nan]
+                else:
+                    neuroids = y_true_time_group.neuroid.data
+
+                scores_over_time_group.append(
+                    xr.DataArray(
+                        score_per_time_group.reshape(1, -1, 1),
+                        dims=("scoreid", "neuroid", "timeid"),
+                        coords={
+                            "scoreid": ("scoreid", [scoreid]),
+                            "neuroid": ("neuroid", neuroids),
+                            "timeid": ("timeid", [timeid]),
+                        },
+                    )
+                )
+
+            scores_over_time.append(xr.concat(scores_over_time_group, dim="scoreid"))
 
         scores = xr.concat(scores_over_time, dim="timeid")
 
