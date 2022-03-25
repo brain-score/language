@@ -29,13 +29,21 @@ class _ModelEncoder(_Encoder):
     def __init__(self, model_id: str) -> "_ModelEncoder":
         self._model_id = model_id
 
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__} {self._model_id}>"
+    def __str__(self) -> str:
+        return repr(self)
+
+
     @abstractmethod
     def encode(self, dataset: Dataset) -> xr.DataArray:
         """
-        returns embeddings of stimuli (passed in as a Dataset)
+        returns computed representations for stimuli passed in as a `Dataset` object
 
         Args:
-            langbrainscore.dataset.Dataset: brain dataset object
+            langbrainscore.dataset.Dataset: a Dataset object with a member `xarray.DataArray` 
+                instance containing stimuli
 
         Returns:
             xr.DataArray: Model representations of each stimulus in brain dataset
