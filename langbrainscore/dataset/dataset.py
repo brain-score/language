@@ -1,16 +1,14 @@
 # stdlib imports 
 import typing
-from pathlib import Path
 from collections import abc
+from pathlib import Path
 
-# installed package imports
-import xarray as xr
 import numpy as np
-from tqdm import tqdm
-
-# local imports
+import xarray as xr
 from langbrainscore.interface import _Dataset
 from langbrainscore.utils.logging import log
+from langbrainscore.utils.xarray import collapse_multidim_coord
+from tqdm import tqdm
 
 
 class Dataset(_Dataset):
@@ -244,7 +242,6 @@ class Dataset(_Dataset):
 
         unified_xr = xr.concat(sampleid_xrs, dim='sampleid')
         
-        from langbrainscore.utils.xarray import collapse_multidim_coord
         for dimension, metadata_names in (('sampleid', {**sampleid_metadata, 'stimulus':'stimulus'}), 
                                           ('timeid', timeid_metadata),
                                           ('neuroid', {**neuroid_metadata, 'subject': 'subject'})):
