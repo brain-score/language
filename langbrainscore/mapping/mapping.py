@@ -5,13 +5,19 @@ from typing import Tuple
 
 import numpy as np
 import xarray as xr
+from sklearn.cross_decomposition import PLSRegression
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LinearRegression, RidgeCV
+from sklearn.model_selection import (
+    GroupKFold,
+    KFold,
+    StratifiedGroupKFold,
+    StratifiedKFold,
+)
+
 from langbrainscore.interface import _Mapping
 from langbrainscore.utils import logging
 from langbrainscore.utils.xarray import collapse_multidim_coord
-from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LinearRegression, Ridge, RidgeCV
-from sklearn.model_selection import (GroupKFold, KFold, StratifiedGroupKFold,
-                                     StratifiedKFold)
 
 
 class IdentityMap(_Mapping):
@@ -26,7 +32,9 @@ class IdentityMap(_Mapping):
         self._nan_strategy = nan_strategy
 
     def fit_transform(
-        self, X: xr.DataArray, Y: xr.DataArray,
+        self,
+        X: xr.DataArray,
+        Y: xr.DataArray,
     ):
         # TODO: figure out how to handle NaNs better...
         if self._nan_strategy == "drop":
@@ -76,12 +84,9 @@ class LearnedMap(_Mapping):
         self.split_coord = split_coord
         self.mapping_class = mapping_class
         mapping_classes = {
-            "ridge": (Ridge, {"alpha": 1.0}),
-            "ridge_cv": (
-                RidgeCV,
-                {"alphas": np.logspace(-3, 3, 13), "alpha_per_target": True},
-            ),
-            "linear": (LinearRegression, {}),
+            "linreg": (LinearRegression, {}),
+            "linridge": (RidgeCV, {"alphas": np.logspace(-3, 3, 13)}),
+            "linpls": (PLSRegression, {"n_components": 20}),
         }
 
         if type(mapping_class) == str:
@@ -149,7 +154,9 @@ class LearnedMap(_Mapping):
         raise NotImplemented
 
     def _check_sampleids(
-        self, X: xr.DataArray, Y: xr.DataArray,
+        self,
+        X: xr.DataArray,
+        Y: xr.DataArray,
     ):
         """
         checks that the sampleids in X and Y are the same
@@ -185,27 +192,30 @@ class LearnedMap(_Mapping):
         return X_slice, Y_slice
 
     def _permute_X(
-        self, X: xr.DataArray, method: str = "shuffle_X_rows", random_state: int = 42,
+        self,
+        X: xr.DataArray,
+        method: str = "shuffle_X_rows",
+        random_state: int = 42,
     ):
         """Permute the features of X.
 
-		Parameters
-		----------
-		X : xr.DataArray
-			The embeddings to be permuted
-		method : str
-			The method to use for permutation.
-			'shuffle_X_rows' : Shuffle the rows of X (=shuffle the sentences and create a mismatch between the sentence embeddings and target)
-			'shuffle_each_X_col': For each column (=feature/unit) of X, permute that feature's values across all sentences.
-								  Retains the statistics of the original features (e.g., mean per feature) but the values of the features are shuffled for each sentence.
-		random_state : int
-			The seed for the random number generator.
+        Parameters
+        ----------
+        X : xr.DataArray
+                The embeddings to be permuted
+        method : str
+                The method to use for permutation.
+                'shuffle_X_rows' : Shuffle the rows of X (=shuffle the sentences and create a mismatch between the sentence embeddings and target)
+                'shuffle_each_X_col': For each column (=feature/unit) of X, permute that feature's values across all sentences.
+                                                          Retains the statistics of the original features (e.g., mean per feature) but the values of the features are shuffled for each sentence.
+        random_state : int
+                The seed for the random number generator.
 
-		Returns
-		-------
-		xr.DataArray
-			The permuted dataarray
-		"""
+        Returns
+        -------
+        xr.DataArray
+                The permuted dataarray
+        """
 
         X_orig = X.copy(deep=True)
 

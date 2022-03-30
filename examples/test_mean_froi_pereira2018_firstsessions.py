@@ -82,13 +82,11 @@ def main():
     ann_enc_mpf = ann_enc_mpf.isel(neuroid=(ann_enc_mpf.layer == 4))
     log(f"created brain-encoded data of shape: {brain_enc_mpf.dims}")
     log(f"created ann-encoded data of shape: {ann_enc_mpf.dims}")
-    ridge_cv_kfold = lbs.mapping.LearnedMap("ridge_cv", k_fold=5)
+    pls_cv_kfold = lbs.mapping.LearnedMap("linpls", k_fold=5)
     pearson = lbs.metrics.Metric(lbs.metrics.PearsonR)
-    brsc_ridge_pearson = lbs.BrainScore(
-        ann_enc_mpf, brain_enc_mpf, ridge_cv_kfold, pearson
-    )
-    brsc_ridge_pearson.score(score_split_coord="experiment")
-    log(f"brainscore (ridge, pearson) = {brsc_ridge_pearson}")
+    brsc_pls_pearson = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, pls_cv_kfold, pearson)
+    brsc_pls_pearson.score(score_split_coord="experiment")
+    log(f"brainscore (pls, pearson) = {brsc_pls_pearson}")
     i_map = lbs.mapping.IdentityMap(nan_strategy="drop")
     cka = lbs.metrics.Metric(lbs.metrics.CKA)
     brsc_cka = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, i_map, cka)
