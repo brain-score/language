@@ -227,3 +227,47 @@ class PTEncoder(_ModelEncoder):
     def encode(self, dataset: "langbrainscore.dataset.Dataset") -> xr.DataArray:
         # TODO
         pass
+
+
+class EncoderCheck:
+    """
+    Class for checking whether obtained embeddings from the Encoder class are correct and similar to other encoder objects.
+    """
+
+    def __init__(self, ):
+        pass
+    
+    
+    def _load_cached_activations(self, encoded_ann_identifier: str):
+        raise NotImplementedError
+        
+
+    def check_embedding_similarity(self,
+                              identifier1: str = None,
+                              identifier2: str = None):
+        """Given two stimsetids, check for similarity between activations (using all layers)"""
+        
+        ann1 = self._load_cached_activations(encoded_ann_identifier=identifier1)
+        ann2 = self._load_cached_activations(encoded_ann_identifier=identifier2)
+        
+        # n_layers1 = len(actv1.columns.levels[0]) # todo
+        
+        # Run assertions: First test that shapes match
+        # assert (actv1.shape == actv2.shape)
+        # assert (n_layers1 == n_layers2)
+        
+        # Use different tolerance level to check whether the activations are similar
+        
+        # Iterate across layers
+        for layer in range(n_layers1):
+            tol = 1e-12
+            actv1_layer = actv1[layer].values
+            actv2_layer = actv2[layer].values
+            
+            # Check whether values match. If not, iteratively increase tolerance until values match
+            while not np.allclose(actv1_layer, actv2_layer, atol=tol):
+                tol *= 10
+            
+            print(f'Layer {layer}: Similarity at tolerance: {tol}')
+        
+    
