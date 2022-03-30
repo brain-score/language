@@ -85,7 +85,7 @@ class LearnedMap(_Mapping):
         self.mapping_class = mapping_class
         mapping_classes = {
             "linreg": (LinearRegression, {}),
-            "linridge": (RidgeCV, {"alphas": np.logspace(-3, 3, 13)}),
+            "linridge_cv": (RidgeCV, {"alphas": np.logspace(-3, 3, 13)}),
             "linpls": (PLSRegression, {"n_components": 20}),
         }
 

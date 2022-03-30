@@ -110,25 +110,24 @@ def get_context_groups(dataset, context_dimension):
 
 def preprocess_activations(activations_2d: np.ndarray = None,
                            layer_ids_1d: np.ndarray = None,
-                           emb_preproc: typing.Union[list, np.ndarray] = ['demean'],):
+                           emb_preproc_mode: str = 'demean',):
     
     activations_processed = []
     layer_ids_processed = []
     
-    for p_id in emb_preproc:  # For each preprocessing setting
-        # log(f"Preprocessing activations with {p_id}")
-        for l_id in np.sort(np.unique(layer_ids_1d)):  # For each layer
-            preprocessor = preprocessor_classes[p_id]
-            
-            # Get the activations for this layer and retain 2d shape: [n_samples, emb_dim]
-            activations_2d_layer = activations_2d[:, layer_ids_1d == l_id]
-            
-            preprocessor.fit(activations_2d_layer)  # obtain a scaling per unit (in emb space)
-            
-            # Apply the scaling to the activations and reassamble the activations (might have different shape than original)
-            activations_2d_layer_processed = preprocessor.transform(activations_2d_layer)
-            activations_processed += [activations_2d_layer_processed]
-            layer_ids_processed += [np.full(activations_2d_layer_processed.shape[1], l_id)]
+    # log(f"Preprocessing activations with {p_id}")
+    for l_id in np.sort(np.unique(layer_ids_1d)):  # For each layer
+        preprocessor = preprocessor_classes[emb_preproc_mode]
+        
+        # Get the activations for this layer and retain 2d shape: [n_samples, emb_dim]
+        activations_2d_layer = activations_2d[:, layer_ids_1d == l_id]
+        
+        preprocessor.fit(activations_2d_layer)  # obtain a scaling per unit (in emb space)
+        
+        # Apply the scaling to the activations and reassamble the activations (might have different shape than original)
+        activations_2d_layer_processed = preprocessor.transform(activations_2d_layer)
+        activations_processed += [activations_2d_layer_processed]
+        layer_ids_processed += [np.full(activations_2d_layer_processed.shape[1], l_id)]
     
     # Concatenate to obtain [n_samples, emb_dim across layers], i.e., flattened activations
     activations_2d_layer_processed = np.hstack(activations_processed)
