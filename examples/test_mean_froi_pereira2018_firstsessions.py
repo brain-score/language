@@ -74,6 +74,11 @@ def main():
     mpf_dataset = lbs.dataset.Dataset(
         mpf_xr.isel(neuroid=mpf_xr.roi == "Lang_LH_AntTemp")
     )
+
+    log(f"stimuli: {mpf_dataset.stimuli.values}")
+    mpf_dataset.to_cache('test_mpf_dataset_cache', cache_dir='./cache')
+    mpf_dataset = lbs.dataset.Dataset.from_cache('test_mpf_dataset_cache', cache_dir='./cache')
+    
     log(f"stimuli: {mpf_dataset.stimuli.values}")
     brain_enc = lbs.encoder.BrainEncoder()
     ann_enc = lbs.encoder.HuggingFaceEncoder("distilgpt2")
