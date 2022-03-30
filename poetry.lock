@@ -7,6 +7,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "asciitree"
+version = "0.3.3"
+description = "Draws ASCII trees."
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "asttokens"
 version = "2.0.5"
 description = "Annotate AST trees with source code positions"
@@ -144,6 +152,14 @@ description = "Get the currently executing AST node of a frame, and other inform
 category = "dev"
 optional = false
 python-versions = "*"
+
+[[package]]
+name = "fasteners"
+version = "0.17.3"
+description = "A python package that provides useful locks"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
 
 [[package]]
 name = "filelock"
@@ -443,6 +459,20 @@ description = "Experimental type system extensions for programs checked with the
 category = "dev"
 optional = false
 python-versions = "*"
+
+[[package]]
+name = "numcodecs"
+version = "0.9.1"
+description = "A Python package providing buffer compression and transformation codecs for use in data storage and communication applications."
+category = "dev"
+optional = false
+python-versions = ">=3.6, <4"
+
+[package.dependencies]
+numpy = ">=1.7"
+
+[package.extras]
+msgpack = ["msgpack"]
 
 [[package]]
 name = "numpy"
@@ -1151,6 +1181,23 @@ python-versions = ">=3.6.2,<4.0.0"
 termcolor = ">=1.1.0,<2.0.0"
 
 [[package]]
+name = "zarr"
+version = "2.11.1"
+description = "An implementation of chunked, compressed, N-dimensional arrays for Python."
+category = "dev"
+optional = false
+python-versions = ">=3.7, <4"
+
+[package.dependencies]
+asciitree = "*"
+fasteners = "*"
+numcodecs = ">=0.6.4"
+numpy = ">=1.7"
+
+[package.extras]
+jupyter = ["notebook", "ipytree"]
+
+[[package]]
 name = "zipp"
 version = "3.7.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
@@ -1165,12 +1212,15 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "3.8.*"
-content-hash = "384491ffaba4d71b1713c2279c1bf3f2ef18e6f3ea552c8e36743aa52095cf86"
+content-hash = "8438b0c4ad9ec98754fd6056d1868c99b5c99a0d0b814af1329cb453dd337e94"
 
 [metadata.files]
 appnope = [
     {file = "appnope-0.1.2-py2.py3-none-any.whl", hash = "sha256:93aa393e9d6c54c5cd570ccadd8edad61ea0c4b9ea7a01409020c9aa019eb442"},
     {file = "appnope-0.1.2.tar.gz", hash = "sha256:dd83cd4b5b460958838f6eb3000c660b1f9caf2a5b1de4264e941512f603258a"},
+]
+asciitree = [
+    {file = "asciitree-0.3.3.tar.gz", hash = "sha256:4aa4b9b649f85e3fcb343363d97564aa1fb62e249677f2e18a96765145cc0f6e"},
 ]
 asttokens = [
     {file = "asttokens-2.0.5-py2.py3-none-any.whl", hash = "sha256:0844691e88552595a6f4a4281a9f7f79b8dd45ca4ccea82e5e05b4bbdb76705c"},
@@ -1266,6 +1316,10 @@ docker-pycreds = [
 executing = [
     {file = "executing-0.8.3-py2.py3-none-any.whl", hash = "sha256:d1eef132db1b83649a3905ca6dd8897f71ac6f8cac79a7e58a1a09cf137546c9"},
     {file = "executing-0.8.3.tar.gz", hash = "sha256:c6554e21c6b060590a6d3be4b82fb78f8f0194d809de5ea7df1c093763311501"},
+]
+fasteners = [
+    {file = "fasteners-0.17.3-py3-none-any.whl", hash = "sha256:cae0772df265923e71435cc5057840138f4e8b6302f888a567d06ed8e1cbca03"},
+    {file = "fasteners-0.17.3.tar.gz", hash = "sha256:a9a42a208573d4074c77d041447336cf4e3c1389a256fd3e113ef59cf29b7980"},
 ]
 filelock = [
     {file = "filelock-3.6.0-py3-none-any.whl", hash = "sha256:f8314284bfffbdcfa0ff3d7992b023d4c628ced6feb957351d4c48d059f56bc0"},
@@ -1538,6 +1592,37 @@ mypy = [
 mypy-extensions = [
     {file = "mypy_extensions-0.4.3-py2.py3-none-any.whl", hash = "sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d"},
     {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
+]
+numcodecs = [
+    {file = "numcodecs-0.9.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:2cf6f57cced28ee4590e451b89d9b6c5b2ac2a8251dcc27b7448c11976732944"},
+    {file = "numcodecs-0.9.1-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:69b1247999a2057542d52532db8ad54bedeb4c9d9c764a68a6908d33dab96e47"},
+    {file = "numcodecs-0.9.1-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:4dec71b95c99a4c5c6ead93741684652ac27723044daad9ee567c2e5569f5514"},
+    {file = "numcodecs-0.9.1-cp36-cp36m-manylinux2010_i686.whl", hash = "sha256:0d5f7bb538727baf6bd8ff142bdbee8babd0be1d7fecbdd9a9cda18614979c1b"},
+    {file = "numcodecs-0.9.1-cp36-cp36m-manylinux2010_x86_64.whl", hash = "sha256:ec5e9eb6f3572c5f24674cc43716f7757b4502db6fb577798380930ecf54f83b"},
+    {file = "numcodecs-0.9.1-cp36-cp36m-win32.whl", hash = "sha256:2e8dbe2da7f9578331d02cd9b010ea446dc45c225f79b6d12b11f17a1106c89a"},
+    {file = "numcodecs-0.9.1-cp36-cp36m-win_amd64.whl", hash = "sha256:96ae1068868762580dbf4596ab82731215524054e99ab0d6f135c49266dd2b40"},
+    {file = "numcodecs-0.9.1-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:cc7b3c526e866404e7555588f61b358728701637f3d02af1e79b80af7fcd99b7"},
+    {file = "numcodecs-0.9.1-cp37-cp37m-manylinux1_i686.whl", hash = "sha256:3e5b6690910e642e506b47838a3440680eb03291626c5b19b6295e985d4c144b"},
+    {file = "numcodecs-0.9.1-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:f3e831385dd68bbca338b284631cb94076579150744d15f4ca1bfb40e7acb1b8"},
+    {file = "numcodecs-0.9.1-cp37-cp37m-manylinux2010_i686.whl", hash = "sha256:aa5445c236e5e2879be16f0c65dc9a0275f089ed4fc1cb23aae366dbbd7d06f8"},
+    {file = "numcodecs-0.9.1-cp37-cp37m-manylinux2010_x86_64.whl", hash = "sha256:13968843c19bf611c0091f158cc3f9e39a2eca7c2fb378a53703e7f2c4d57e49"},
+    {file = "numcodecs-0.9.1-cp37-cp37m-win32.whl", hash = "sha256:2ac9ff3f77948226fa3943581a822fa4ad83a21ffe6cce203ee9fe1ee781ed6d"},
+    {file = "numcodecs-0.9.1-cp37-cp37m-win_amd64.whl", hash = "sha256:28e37d461a01176055dcc3fbba57feb78914b84462d5609a3bbfec547da7350a"},
+    {file = "numcodecs-0.9.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:e2c57c7803b2d0ace06c3108a36fc6831bc55da8d3614a753ec3ec610c76b771"},
+    {file = "numcodecs-0.9.1-cp38-cp38-manylinux1_i686.whl", hash = "sha256:39ff239648cf3fa6aa815d8c46cd2e2eed389a438ea78e57cf13dddc64d575c0"},
+    {file = "numcodecs-0.9.1-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:20eb92fdc127e4aca6032bcc516ae96aff1e4f1d3ee8caec5989b66f9232cc43"},
+    {file = "numcodecs-0.9.1-cp38-cp38-manylinux2010_i686.whl", hash = "sha256:b5d0f6d2bae464b65e138037ab971125eec7305ce6e43d88b35c62e8c12f8386"},
+    {file = "numcodecs-0.9.1-cp38-cp38-manylinux2010_x86_64.whl", hash = "sha256:3fdb7b43984d77f7fa7e7fb0776ad552d1bd7c078bc08564b439202235f52cbe"},
+    {file = "numcodecs-0.9.1-cp38-cp38-win32.whl", hash = "sha256:40f486f8f2d37048ea626e69ec0a08a01c58086bd262d8c2c0f8957122d87af2"},
+    {file = "numcodecs-0.9.1-cp38-cp38-win_amd64.whl", hash = "sha256:b0071925a56d6a32c97ebfaf9ee1e6f2e0c9df3239ccdda1f69306d4f44f0f5a"},
+    {file = "numcodecs-0.9.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:041cf29232b72ef9e0de92b0b182d9eb35819d84c0144b261c911a8c83840596"},
+    {file = "numcodecs-0.9.1-cp39-cp39-manylinux1_i686.whl", hash = "sha256:368274b49c80c1fb99481d0afb3a660c069a165b34cc2d1878e9d43058648dcc"},
+    {file = "numcodecs-0.9.1-cp39-cp39-manylinux1_x86_64.whl", hash = "sha256:3978aabf5967d69802becd38508f865d057020a0fdbfa355d736090e6e983d3e"},
+    {file = "numcodecs-0.9.1-cp39-cp39-manylinux2010_i686.whl", hash = "sha256:ad12f1af033b4c36587d923abfabe90a81043912a3f94df790172e1d837b6238"},
+    {file = "numcodecs-0.9.1-cp39-cp39-manylinux2010_x86_64.whl", hash = "sha256:c16e28c7907f96e097c74be47490c88e0b5040f862a754892c96e78e7b8aea1b"},
+    {file = "numcodecs-0.9.1-cp39-cp39-win32.whl", hash = "sha256:0bb491c53718b9e7dce8719208c1b0021f31d2544add63014f65304efd140cb8"},
+    {file = "numcodecs-0.9.1-cp39-cp39-win_amd64.whl", hash = "sha256:334110d78cb56d2281cce570f8434a4ed1080b3fb288df9594d82e5bfa42d16f"},
+    {file = "numcodecs-0.9.1.tar.gz", hash = "sha256:35adbcc746b95e3ac92e949a161811f5aa2602b9eb1ef241b5ea6f09bb220997"},
 ]
 numpy = [
     {file = "numpy-1.22.3-cp310-cp310-macosx_10_14_x86_64.whl", hash = "sha256:92bfa69cfbdf7dfc3040978ad09a48091143cffb778ec3b03fa170c494118d75"},
@@ -2091,6 +2176,10 @@ xarray = [
 yaspin = [
     {file = "yaspin-2.1.0-py3-none-any.whl", hash = "sha256:d574cbfaf0a349df466c91f7f81b22460ae5ebb15ecb8bf9411d6049923aee8d"},
     {file = "yaspin-2.1.0.tar.gz", hash = "sha256:c8d34eca9fda3f4dfbe59f57f3cf0f3641af3eefbf1544fbeb9b3bacf82c580a"},
+]
+zarr = [
+    {file = "zarr-2.11.1-py3-none-any.whl", hash = "sha256:126cf3fe6d0276f64a1590eb6e18edf5e7c903cc4a879829b3ebdc85238b7894"},
+    {file = "zarr-2.11.1.tar.gz", hash = "sha256:11b628f42dec36e0147879e8bd471524b59b238094b9b21e3c35be78399c115e"},
 ]
 zipp = [
     {file = "zipp-3.7.0-py3-none-any.whl", hash = "sha256:b47250dd24f92b7dd6a0a8fc5244da14608f3ca90a5efcd37a3b1642fac9a375"},
