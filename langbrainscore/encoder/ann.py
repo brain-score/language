@@ -40,7 +40,7 @@ class HuggingFaceEncoder(_ModelEncoder):
         bidirectional: bool = False,
         emb_case: typing.Union[str, None] = "lower",
         emb_aggregation: typing.Union[str, None, typing.Callable] = "last",
-        emb_preproc: typing.Union[list, np.ndarray] = ['demean'],
+        emb_preproc: typing.Union[list, np.ndarray] = ['demean', 'demean_std'],
     ) -> xr.DataArray:
         """
         Input a langbrainscore Dataset and return a xarray DataArray of sentence embeddings given the specified
@@ -183,11 +183,12 @@ class HuggingFaceEncoder(_ModelEncoder):
         # PREPROCESS ACTIVATIONS
         ###############################################################################
         if len(emb_preproc) > 0: # Preprocess activations
-            activations_2d, layer_ids_1d = preprocess_activations(
-                activations_2d=activations_2d,
-                layer_ids_1d=layer_ids_1d,
-                emb_preproc=emb_preproc,
-            )
+            for p_id in emb_preproc:
+                activations_2d, layer_ids_1d = preprocess_activations(
+                    activations_2d=activations_2d,
+                    layer_ids_1d=layer_ids_1d,
+                    emb_preproc_mode=p_id,
+                )
         
         assert(activations_2d.shape[1] == len(layer_ids_1d))
         assert(activations_2d.shape[0] == len(stimuli))
