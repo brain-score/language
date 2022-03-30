@@ -9,13 +9,11 @@ from langbrainscore.utils.encoder import (
         set_case, aggregate_layers, 
         flatten_activations_per_sample,
         repackage_flattened_activations,
-        get_context_groups, get_torch_device
+        get_context_groups, get_torch_device,
+        preprocess_activations
     )
 from langbrainscore.utils.xarray import copy_metadata
 from tqdm import tqdm
-
-
-
 
 
 
@@ -42,8 +40,7 @@ class HuggingFaceEncoder(_ModelEncoder):
         bidirectional: bool = False,
         emb_case: typing.Union[str, None] = "lower",
         emb_aggregation: typing.Union[str, None, typing.Callable] = "last",
-        emb_norm: typing.Union[str, None] = None,
-        emb_outlier: typing.Union[str, None] = None,
+        emb_preproc: typing.Union[list, np.ndarray] = ['demean'],
     ) -> xr.DataArray:
         """
         Input a langbrainscore Dataset and return a xarray DataArray of sentence embeddings given the specified
@@ -60,8 +57,8 @@ class HuggingFaceEncoder(_ModelEncoder):
                                             gives you a more biologically plausibly analysis downstream (: [default: False]
             emb_case (str, optional): which casing to provide to the textual input that is fed into the encoder model. Defaults to 'lower'.
             emb_aggregation (typing.Union[str, None, typing.Callable], optional): how to aggregate the hidden states of the encoder
-            emb_norm (typing.Union[str, None], optional): how to normalize the hidden states of the encoder. Defaults to None.
-            emb_outlier (typing.Union[str, None], optional): how to remove outliers from the hidden states of the encoder. Defaults to None.
+            emb_preproc (typing.Union[list, np.ndarray, None], optional): a list of preprocessing functions to apply to the embeddings.
+                        Processing is done layer-wise.
 
         Raises:
             NotImplementedError: [description]
@@ -177,10 +174,30 @@ class HuggingFaceEncoder(_ModelEncoder):
         ###############################################################################
         # END ALL SAMPLES LOOP
         ###############################################################################
-
+        
+        # Stack flattened activations and layer ids to obtain [n_samples, emb_din * n_layers]
+        activations_2d = np.vstack(flattened_activations)
+        layer_ids_1d = np.squeeze(np.unique(np.vstack(layer_ids), axis=0))
+        
+        ###############################################################################
+        # PREPROCESS ACTIVATIONS
+        ###############################################################################
+        if len(emb_preproc) > 0: # Preprocess activations
+            activations_2d, layer_ids_1d = preprocess_activations(
+                activations_2d=activations_2d,
+                layer_ids_1d=layer_ids_1d,
+                emb_preproc=emb_preproc,
+            )
+        
+        assert(activations_2d.shape[1] == len(layer_ids_1d))
+        assert(activations_2d.shape[0] == len(stimuli))
+        
+        # Package activations as xarray and reapply metadata
         encoded_dataset = copy_metadata(
             repackage_flattened_activations(
-                flattened_activations, states_sentences_agg, layer_ids, dataset
+                activations_2d=activations_2d,
+                layer_ids_1d=layer_ids_1d,
+                dataset=dataset,
             ),
             dataset.contents,
             "sampleid",

@@ -4,6 +4,17 @@ import numpy as np
 import torch
 import xarray as xr
 
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, KBinsDiscretizer, RobustScaler
+from sklearn.decomposition import PCA
+
+preprocessor_classes = {
+    'demean': StandardScaler(with_std=False),
+    'demean_std': StandardScaler(with_std=True),
+    'minmax': MinMaxScaler,
+    'discretize': KBinsDiscretizer(n_bins=10, encode='ordinal', strategy='uniform'),
+    'robust_scaler': RobustScaler(),
+    'pca': PCA(n_components=10),
+}
 
 def flatten_activations_per_sample(activations: dict):
     """
@@ -97,19 +108,44 @@ def get_context_groups(dataset, context_dimension):
         context_groups = dataset.stimuli.coords[context_dimension].values
     return context_groups
 
+def preprocess_activations(activations_2d: np.ndarray = None,
+                           layer_ids_1d: np.ndarray = None,
+                           emb_preproc: typing.Union[list, np.ndarray] = ['demean'],):
+    
+    activations_processed = []
+    layer_ids_processed = []
+    
+    for p_id in emb_preproc:  # For each preprocessing setting
+        # log(f"Preprocessing activations with {p_id}")
+        for l_id in np.sort(np.unique(layer_ids_1d)):  # For each layer
+            preprocessor = preprocessor_classes[p_id]
+            
+            # Get the activations for this layer and retain 2d shape: [n_samples, emb_dim]
+            activations_2d_layer = activations_2d[:, layer_ids_1d == l_id]
+            
+            preprocessor.fit(activations_2d_layer)  # obtain a scaling per unit (in emb space)
+            
+            # Apply the scaling to the activations and reassamble the activations (might have different shape than original)
+            activations_2d_layer_processed = preprocessor.transform(activations_2d_layer)
+            activations_processed += [activations_2d_layer_processed]
+            layer_ids_processed += [np.full(activations_2d_layer_processed.shape[1], l_id)]
+    
+    # Concatenate to obtain [n_samples, emb_dim across layers], i.e., flattened activations
+    activations_2d_layer_processed = np.hstack(activations_processed)
+    layer_ids_1d_processed = np.hstack(layer_ids_processed)
+    
+    return activations_2d_layer_processed, layer_ids_1d_processed
 
 def repackage_flattened_activations(
-    flattened_activations, states_sentences_agg, layer_ids, dataset
-):
+    activations_2d: np.ndarray = None,
+    layer_ids_1d: np.ndarray = None,
+    dataset: xr.Dataset = None):
     return xr.DataArray(
-        np.expand_dims(np.vstack(flattened_activations), axis=2),
+        np.expand_dims(activations_2d, axis=2), # add in time dimension
         dims=("sampleid", "neuroid", "timeid"),
         coords={
             "sampleid": dataset.contents.sampleid.values,
-            "neuroid": np.arange(
-                np.sum([len(states_sentences_agg[x]) for x in states_sentences_agg])
-            ),
+            "neuroid": np.arange(len(layer_ids_1d)),
             "timeid": np.arange(1),
-            "layer": ("neuroid", np.array(layer_ids[0], dtype="int64")),
-        },
-    )
+            "layer": ("neuroid", np.array(layer_ids_1d, dtype="int64")),})
+
