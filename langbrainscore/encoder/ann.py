@@ -40,7 +40,7 @@ class HuggingFaceEncoder(_ModelEncoder):
         bidirectional: bool = False,
         emb_case: typing.Union[str, None] = "lower",
         emb_aggregation: typing.Union[str, None, typing.Callable] = "last",
-        emb_preproc: typing.Union[list, np.ndarray] = ['demean', 'demean_std'],
+        emb_preproc: typing.Union[list, np.ndarray] = ['demean', 'pca'],
     ) -> xr.DataArray:
         """
         Input a langbrainscore Dataset and return a xarray DataArray of sentence embeddings given the specified
