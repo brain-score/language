@@ -1,12 +1,12 @@
 import xarray as xr
 from langbrainscore.interface.cacheable import _Cacheable
+from abc import ABC
 
-
-# TODO: class _Dataset(_Cacheable, ABC)
-class _Dataset:
+class _Dataset(_Cacheable, ABC):
     """
     wrapper class for xarray DataArray that confirms format adheres to interface.
     """
+
 
     def __init__(self, xr_obj: xr.DataArray) -> "_Dataset":
         """
