@@ -138,3 +138,8 @@ html
 .vscode
 *.code-workspace
 *.nc
+*.zarr
+*.xarray
+*.xr
+cache
+.cache
