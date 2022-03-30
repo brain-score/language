@@ -139,6 +139,7 @@ html
 *.code-workspace
 *.nc
 *.zarr
+*.zr
 *.xarray
 *.xr
 cache
