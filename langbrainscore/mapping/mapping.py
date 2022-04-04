@@ -35,7 +35,10 @@ class IdentityMap(_Mapping):
         self,
         X: xr.DataArray,
         Y: xr.DataArray,
+        ceiling: bool = False,
     ):
+        if ceiling:
+            logging.log("ceiling not supported for IdentityMap yet")
         # TODO: figure out how to handle NaNs better...
         if self._nan_strategy == "drop":
             X_clean = X.copy(deep=True).dropna(dim="neuroid")
@@ -244,6 +247,8 @@ class LearnedMap(_Mapping):
         X: xr.DataArray,
         Y: xr.DataArray,
         permute_X: typing.Union[bool, str] = False,
+        ceiling: bool = False,
+        ceiling_coord: str = "subject",
     ) -> Tuple[xr.DataArray, xr.DataArray]:
         """creates a mapping model using k-fold cross-validation
             -> uses params from the class initialization, uses strat_coord
@@ -252,6 +257,8 @@ class LearnedMap(_Mapping):
         Returns:
             [type]: [description]
         """
+        if ceiling:
+            X = Y.copy()
         logging.log(f"X shape: {X.data.shape}")
         logging.log(f"Y shape: {Y.data.shape}")
         if self.strat_coord:
@@ -280,6 +287,12 @@ class LearnedMap(_Mapping):
 
             # Assert that X and Y have the same sampleids
             self._check_sampleids(X_slice, Y_slice)
+
+            # select relevant ceiling split
+            if ceiling:
+                X_slice = X_slice.isel(
+                    neuroid=X_slice[ceiling_coord] != Y_slice[ceiling_coord]
+                ).dropna(dim="neuroid")
 
             # We can perform various checks by 'permuting' the source, X
             # TODO this is a test! do not use under normal workflow!

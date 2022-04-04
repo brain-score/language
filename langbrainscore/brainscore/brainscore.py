@@ -25,7 +25,7 @@ class BrainScore(_BrainScore):
         self.mapping = mapping
         self.metric = metric
         if run:
-            self.score()
+            self.run()
 
     def __repr__(self) -> str:
         return f"<{self.__class__} ({self.mapping}, {self.metric}, {str(self)})>"
@@ -63,22 +63,23 @@ class BrainScore(_BrainScore):
         return metric(A, B)
 
     @lru_cache(maxsize=None)
-    def score(self, score_split_coord=None):
+    def score(self, split_coord=None, ceiling=False):
         """
         Computes The BrainScore™ (/s) using predictions/outputs returned by a
         Mapping instance which is a member attribute of a BrainScore instance
         """
 
-        if score_split_coord:
-            assert score_split_coord in self.Y.coords
+        if split_coord:
+            assert split_coord in self.Y.coords
 
-        y_pred, y_true = self.mapping.fit_transform(self.X, self.Y)
+        y_pred, y_true = self.mapping.fit_transform(self.X, self.Y, ceiling=ceiling)
 
-        self.Y_pred = y_pred
-        if y_pred.shape == y_true.shape:  # not IdentityMap
-            self.Y_pred = copy_metadata(self.Y_pred, self.Y, "sampleid")
-            self.Y_pred = copy_metadata(self.Y_pred, self.Y, "neuroid")
-            self.Y_pred = copy_metadata(self.Y_pred, self.Y, "timeid")
+        if not ceiling:
+            self.Y_pred = y_pred
+            if y_pred.shape == y_true.shape:  # not IdentityMap
+                self.Y_pred = copy_metadata(self.Y_pred, self.Y, "sampleid")
+                self.Y_pred = copy_metadata(self.Y_pred, self.Y, "neuroid")
+                self.Y_pred = copy_metadata(self.Y_pred, self.Y, "timeid")
 
         scores_over_time = []
         for timeid in y_true.timeid.values:
@@ -86,27 +87,27 @@ class BrainScore(_BrainScore):
             y_pred_time = y_pred.sel(timeid=timeid).transpose("sampleid", "neuroid")
             y_true_time = y_true.sel(timeid=timeid).transpose("sampleid", "neuroid")
 
-            if score_split_coord:
-                if score_split_coord not in y_true_time.sampleid.coords:
+            if split_coord:
+                if split_coord not in y_true_time.sampleid.coords:
                     y_pred_time = collapse_multidim_coord(
-                        y_pred_time, score_split_coord, "sampleid"
+                        y_pred_time, split_coord, "sampleid"
                     )
                     y_true_time = collapse_multidim_coord(
-                        y_true_time, score_split_coord, "sampleid"
+                        y_true_time, split_coord, "sampleid"
                     )
-                score_splits = y_pred_time.sampleid.groupby(score_split_coord).groups
+                score_splits = y_pred_time.sampleid.groupby(split_coord).groups
             else:
                 score_splits = [0]
 
             scores_over_time_group = []
             for scoreid in score_splits:
 
-                if score_split_coord:
+                if split_coord:
                     y_pred_time_group = y_pred_time.isel(
-                        sampleid=y_pred_time[score_split_coord] == scoreid
+                        sampleid=y_pred_time[split_coord] == scoreid
                     )
                     y_true_time_group = y_true_time.isel(
-                        sampleid=y_true_time[score_split_coord] == scoreid
+                        sampleid=y_true_time[split_coord] == scoreid
                     )
                 else:
                     y_pred_time_group = y_pred_time
@@ -141,5 +142,16 @@ class BrainScore(_BrainScore):
             scores = copy_metadata(scores, self.Y, "neuroid")
         scores = copy_metadata(scores, self.Y, "timeid")
 
-        self.scores = scores
-        return self.scores
+        if not ceiling:
+            self.scores = scores
+        else:
+            self.ceilings = scores
+        return scores
+
+    def ceiling(self, split_coord=None):
+        return self.score(split_coord=split_coord, ceiling=True)
+
+    def run(self, split_coord=None):
+        scores = self.score(split_coord=split_coord)
+        ceilings = self.ceiling(split_coord=split_coord)
+        return {"scores": scores, "ceilings": ceilings}

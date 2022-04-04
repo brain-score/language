@@ -72,30 +72,33 @@ def package_mean_froi_pereira2018_firstsess():
 def main():
     mpf_xr = package_mean_froi_pereira2018_firstsess()
     mpf_dataset = lbs.dataset.Dataset(
-        mpf_xr.isel(neuroid=mpf_xr.roi == "Lang_LH_AntTemp")
+        mpf_xr.isel(neuroid=mpf_xr.roi.str.contains("Lang"))
     )
 
     log(f"stimuli: {mpf_dataset.stimuli.values}")
-    mpf_dataset.to_cache('test_mpf_dataset_cache', cache_dir='./cache')
-    mpf_dataset = lbs.dataset.Dataset.from_cache('test_mpf_dataset_cache', cache_dir='./cache')
-    
+    mpf_dataset.to_cache("test_mpf_dataset_cache", cache_dir="./cache")
+    mpf_dataset = lbs.dataset.Dataset.from_cache(
+        "test_mpf_dataset_cache", cache_dir="./cache"
+    )
+
     log(f"stimuli: {mpf_dataset.stimuli.values}")
     brain_enc = lbs.encoder.BrainEncoder()
     ann_enc = lbs.encoder.HuggingFaceEncoder("distilgpt2")
     brain_enc_mpf = brain_enc.encode(mpf_dataset)
-    ann_enc_mpf = ann_enc.encode(mpf_dataset, context_dimension="passage")
+    ann_enc_mpf = ann_enc.encode(mpf_dataset, emb_preproc=[])
     ann_enc_mpf = ann_enc_mpf.isel(neuroid=(ann_enc_mpf.layer == 4))
-    log(f"created brain-encoded data of shape: {brain_enc_mpf.dims}")
-    log(f"created ann-encoded data of shape: {ann_enc_mpf.dims}")
-    pls_cv_kfold = lbs.mapping.LearnedMap("linpls", k_fold=5)
+    log(f"created brain-encoded data of shape: {brain_enc_mpf.shape}")
+    log(f"created ann-encoded data of shape: {ann_enc_mpf.shape}")
+    rdg_cv_kfold = lbs.mapping.LearnedMap("linridge_cv", k_fold=5)
     pearson = lbs.metrics.Metric(lbs.metrics.PearsonR)
-    brsc_pls_pearson = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, pls_cv_kfold, pearson)
-    brsc_pls_pearson.score(score_split_coord="experiment")
-    log(f"brainscore (pls, pearson) = {brsc_pls_pearson}")
+    brsc_rdg_pearson = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, rdg_cv_kfold, pearson)
+    brsc_rdg_pearson.run(split_coord="experiment")
+    log(f"brainscore (rdg, pearson) = {brsc_rdg_pearson.scores.mean()}")
+    log(f"ceiling (rdg, pearson) = {brsc_rdg_pearson.ceilings.mean()}")
     i_map = lbs.mapping.IdentityMap(nan_strategy="drop")
     cka = lbs.metrics.Metric(lbs.metrics.CKA)
     brsc_cka = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, i_map, cka)
-    brsc_cka.score(score_split_coord="experiment")
+    brsc_cka.score(split_coord="experiment")
     log(f"brainscore (cka) = {brsc_cka}")
 
 
