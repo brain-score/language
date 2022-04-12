@@ -4,8 +4,7 @@ import numpy as np
 import xarray as xr
 from langbrainscore.interface import _MatrixMetric, _Metric, _VectorMetric
 from scipy.stats import kendalltau, pearsonr, spearmanr
-from sklearn.metrics import (accuracy_score, mean_squared_error,
-                             pairwise_distances)
+from sklearn.metrics import accuracy_score, mean_squared_error, pairwise_distances
 
 
 class Metric:
@@ -52,6 +51,14 @@ class KendallTau(_VectorMetric):
     def _score(x: np.ndarray, y: np.ndarray) -> np.float:
         tau, p = kendalltau(x, y)
         return tau
+
+
+class FisherCorr(_VectorMetric):
+    @staticmethod
+    def _score(x: np.ndarray, y: np.ndarray) -> np.float:
+        r, p = pearsonr(x, y)
+        corr = np.arctanh(r)
+        return corr
 
 
 class RMSE(_VectorMetric):
