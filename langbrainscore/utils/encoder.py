@@ -7,7 +7,7 @@ import xarray as xr
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, KBinsDiscretizer, RobustScaler
 from sklearn.decomposition import PCA
 
-preprocessor_classes = {
+preprocessor_classes = { # todo migrate these resources at some point
     'demean': StandardScaler(with_std=False),
     'demean_std': StandardScaler(with_std=True),
     'minmax': MinMaxScaler,
@@ -15,6 +15,12 @@ preprocessor_classes = {
     'robust_scaler': RobustScaler(),
     'pca': PCA(n_components=10),
 }
+
+def count_zero_threshold_values(A: np.ndarray,
+                                zero_threshold: float = 0.001, ):
+    """Given matrix A, count how many values are below the zero_threshold"""
+    return np.sum(A < zero_threshold)
+
 
 def flatten_activations_per_sample(activations: dict):
     """
