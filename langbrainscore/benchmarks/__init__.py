@@ -1,0 +1,2 @@
+
+from langbrainscore.benchmarks.pereira2018 import pereira2018_nat_stories
