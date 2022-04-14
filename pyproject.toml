@@ -34,6 +34,7 @@ methodtools = "^0.4.5"
 diskcache = "^5.4.0"
 zarr = "^2.11.1"
 wandb = "^0.12.11"
+randomname = "^0.1.5"
 
 [tool.poetry.dev-dependencies]
 pdoc3 = "^0.10.0"
