@@ -14,6 +14,7 @@ from sklearn.model_selection import (
     StratifiedGroupKFold,
     StratifiedKFold,
 )
+from sklearn.random_projection import GaussianRandomProjection
 
 from langbrainscore.interface import _Mapping
 from langbrainscore.utils import logging
@@ -258,6 +259,7 @@ class LearnedMap(_Mapping):
             [type]: [description]
         """
         if ceiling:
+            n_neuroids = X.neuroid.values.size
             X = Y.copy()
         logging.log(f"X shape: {X.data.shape}")
         logging.log(f"Y shape: {Y.data.shape}")
@@ -333,9 +335,17 @@ class LearnedMap(_Mapping):
 
                     # TODO: change this code for models that also have a non-singleton timeid
                     # i.e., output evolves in time (RNN?)
+
+                    x_model_train = X_train.sel(timeid=0).values
+                    y_model_train = y_train.sel(timeid=timeid).values.reshape(-1, 1)
+
+                    if ceiling:
+                        projection = GaussianRandomProjection(n_components=n_neuroids)
+                        x_model_train = projection.fit_transform(x_model_train)
+
                     self.model.fit(
-                        X_train.sel(timeid=0),
-                        y_train.sel(timeid=timeid).values.reshape(-1, 1),
+                        x_model_train,
+                        y_model_train,
                     )
 
                     # store the hparam values related to the fitted models
@@ -348,7 +358,10 @@ class LearnedMap(_Mapping):
                         .copy(deep=True)
                         .expand_dims("timeid", 1)
                     )
-                    y_pred.data = self.model.predict(X_test.sel(timeid=0))  # y_pred
+                    x_model_test = X_test.sel(timeid=0)
+                    if ceiling:
+                        x_model_test = projection.transform(x_model_test)
+                    y_pred.data = self.model.predict(x_model_test)  # y_pred
                     y_pred = y_pred.assign_coords(timeid=("timeid", [timeid]))
                     y_pred = y_pred.assign_coords(alpha=("timeid", [alpha]))
                     y_pred = y_pred.assign_coords(cvfoldid=("timeid", [cvfoldid]))

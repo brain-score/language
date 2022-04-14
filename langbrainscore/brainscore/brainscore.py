@@ -54,7 +54,7 @@ class BrainScore(_BrainScore):
         return metric(A, B)
 
     # @lru_cache(maxsize=None)
-    def score(self, split_coord=None, ceiling=False):
+    def score(self, ceiling=False, sample_split_coord=None, neuroid_split_coord=None):
         """
         Computes The BrainScore™ (/s) using predictions/outputs returned by a
         Mapping instance which is a member attribute of a BrainScore instance
@@ -66,8 +66,11 @@ class BrainScore(_BrainScore):
             if self.ceilings is not None:
                 return self.scores
 
-        if split_coord:
-            assert split_coord in self.Y.coords
+        if sample_split_coord:
+            assert sample_split_coord in self.Y.coords
+
+        if neuroid_split_coord:
+            assert neuroid_split_coord in self.Y.coords
 
         y_pred, y_true = self.mapping.fit_transform(self.X, self.Y, ceiling=ceiling)
 
@@ -84,37 +87,64 @@ class BrainScore(_BrainScore):
             y_pred_time = y_pred.sel(timeid=timeid).transpose("sampleid", "neuroid")
             y_true_time = y_true.sel(timeid=timeid).transpose("sampleid", "neuroid")
 
-            if split_coord:
-                if split_coord not in y_true_time.sampleid.coords:
+            if sample_split_coord:
+                if sample_split_coord not in y_true_time.sampleid.coords:
                     y_pred_time = collapse_multidim_coord(
-                        y_pred_time, split_coord, "sampleid"
+                        y_pred_time, sample_split_coord, "sampleid"
                     )
                     y_true_time = collapse_multidim_coord(
-                        y_true_time, split_coord, "sampleid"
+                        y_true_time, sample_split_coord, "sampleid"
                     )
-                score_splits = y_pred_time.sampleid.groupby(split_coord).groups
+                score_splits = y_pred_time.sampleid.groupby(sample_split_coord).groups
             else:
                 score_splits = [0]
 
             scores_over_time_group = []
             for scoreid in score_splits:
 
-                if split_coord:
+                if sample_split_coord:
                     y_pred_time_group = y_pred_time.isel(
-                        sampleid=y_pred_time[split_coord] == scoreid
+                        sampleid=y_pred_time[sample_split_coord] == scoreid
                     )
                     y_true_time_group = y_true_time.isel(
-                        sampleid=y_true_time[split_coord] == scoreid
+                        sampleid=y_true_time[sample_split_coord] == scoreid
                     )
                 else:
                     y_pred_time_group = y_pred_time
                     y_true_time_group = y_true_time
 
-                score_per_time_group = self._score(
-                    y_pred_time_group, y_true_time_group, self.metric
-                )
+                neuroids = []
+                if y_pred.shape != y_true.shape and neuroid_split_coord:  # IdentityMap
+                    if neuroid_split_coord:
+                        if neuroid_split_coord not in y_true_time_group.neuroid.coords:
+                            y_true_time_group = collapse_multidim_coord(
+                                y_true_time_group, neuroid_split_coord, "neuroid"
+                            )
+                        neuroid_splits = y_true_time_group.neuroid.groupby(
+                            neuroid_split_coord
+                        ).groups
+                        score_per_time_group = []
+                        for neuroid in neuroid_splits:
+                            score_per_time_group.append(
+                                self._score(
+                                    y_pred_time_group,
+                                    y_true_time_group.isel(
+                                        neuroid=y_true_time_group[neuroid_split_coord]
+                                        == neuroid
+                                    ),
+                                    self.metric,
+                                )
+                            )
+                            neuroids.append(neuroid)
+                        score_per_time_group = np.array(score_per_time_group)
+                else:
+                    score_per_time_group = self._score(
+                        y_pred_time_group, y_true_time_group, self.metric
+                    )
 
-                if len(score_per_time_group) == 1:  # e.g., RSA, CKA
+                if neuroids:
+                    pass
+                elif len(score_per_time_group) == 1:  # e.g., RSA, CKA, w/o split
                     neuroids = [np.nan]
                 else:
                     neuroids = y_true_time_group.neuroid.data
@@ -135,7 +165,7 @@ class BrainScore(_BrainScore):
 
         scores = xr.concat(scores_over_time, dim="timeid")
 
-        if scores.neuroid.size > 1:  # not RSA
+        if scores.neuroid.size == self.Y.neuroid.size:  # not RSA, CKA, etc.
             scores = copy_metadata(scores, self.Y, "neuroid")
         scores = copy_metadata(scores, self.Y, "timeid")
 
@@ -145,11 +175,20 @@ class BrainScore(_BrainScore):
             self.ceilings = scores
 
 
-    def ceiling(self, split_coord=None):
-        return self.score(split_coord=split_coord, ceiling=True)
+    def ceiling(self, sample_split_coord=None, neuroid_split_coord=None):
+        return self.score(
+            ceiling=True,
+            sample_split_coord=sample_split_coord,
+            neuroid_split_coord=neuroid_split_coord,
+        )
 
-
-    def run(self, split_coord=None):
-        scores = self.score(split_coord=split_coord)
-        ceilings = self.ceiling(split_coord=split_coord)
+    def run(self, sample_split_coord=None, neuroid_split_coord=None):
+        scores = self.score(
+            sample_split_coord=sample_split_coord,
+            neuroid_split_coord=neuroid_split_coord,
+        )
+        ceilings = self.ceiling(
+            sample_split_coord=sample_split_coord,
+            neuroid_split_coord=neuroid_split_coord,
+        )
         return {"scores": scores, "ceilings": ceilings}

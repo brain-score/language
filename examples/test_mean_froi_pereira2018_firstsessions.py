@@ -1,3 +1,4 @@
+import IPython
 from pathlib import Path
 
 import numpy as np
@@ -90,16 +91,17 @@ def main():
     log(f"created brain-encoded data of shape: {brain_enc_mpf.shape}")
     log(f"created ann-encoded data of shape: {ann_enc_mpf.shape}")
     rdg_cv_kfold = lbs.mapping.LearnedMap("linridge_cv", k_fold=5)
-    pearson = lbs.metrics.Metric(lbs.metrics.PearsonR)
-    brsc_rdg_pearson = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, rdg_cv_kfold, pearson)
-    brsc_rdg_pearson.run(split_coord="experiment")
-    log(f"brainscore (rdg, pearson) = {brsc_rdg_pearson.scores.mean()}")
-    log(f"ceiling (rdg, pearson) = {brsc_rdg_pearson.ceilings.mean()}")
+    fisher = lbs.metrics.Metric(lbs.metrics.FisherCorr)
+    brsc_rdg_corr = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, rdg_cv_kfold, fisher)
+    brsc_rdg_corr.run(sample_split_coord="experiment")
+    log(f"brainscore (rdg, fisher) = {brsc_rdg_corr.scores.mean()}")
+    log(f"ceiling (rdg, fisher) = {brsc_rdg_corr.ceilings.mean()}")
     i_map = lbs.mapping.IdentityMap(nan_strategy="drop")
     cka = lbs.metrics.Metric(lbs.metrics.CKA)
     brsc_cka = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, i_map, cka)
-    brsc_cka.score(split_coord="experiment")
+    brsc_cka.score(sample_split_coord="experiment", neuroid_split_coord="subject")
     log(f"brainscore (cka) = {brsc_cka}")
+    IPython.embed()
 
 
 if __name__ == "__main__":

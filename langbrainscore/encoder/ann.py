@@ -10,11 +10,11 @@ from langbrainscore.utils.encoder import (
         flatten_activations_per_sample,
         repackage_flattened_activations,
         get_context_groups, get_torch_device,
-        preprocess_activations
+        preprocess_activations, count_zero_threshold_values,
     )
 from langbrainscore.utils.xarray import copy_metadata
 from tqdm import tqdm
-
+import copy
 
 
 class HuggingFaceEncoder(_ModelEncoder):
@@ -40,7 +40,7 @@ class HuggingFaceEncoder(_ModelEncoder):
         bidirectional: bool = False,
         emb_case: typing.Union[str, None] = "lower",
         emb_aggregation: typing.Union[str, None, typing.Callable] = "last",
-        emb_preproc: typing.Union[list, np.ndarray] = ['demean', 'pca'],
+        emb_preproc: typing.Union[list, np.ndarray] = [],
     ) -> xr.DataArray:
         """
         Input a langbrainscore Dataset and return a xarray DataArray of sentence embeddings given the specified
@@ -218,6 +218,99 @@ class HuggingFaceEncoder(_ModelEncoder):
         first_token_id, *_ = self.tokenizer("brainscore", add_special_tokens=False)['input_ids']
         special_token_offset = with_special_tokens.index(first_token_id)
         return special_token_offset
+    
+    def get_modelcard(self):
+        """
+        Returns the model card of the model
+        NOT DONE!!!
+        """
+        
+        # Obtain number of layers
+        d_config = self.config.to_dict()
+        
+        config_specs_of_interest = ['n_layer', 'n_ctx', 'n_embd', 'n_head',
+                                    'vocab_size', ]
+        
+        config_specs = {k: d_config[k] for k in config_specs_of_interest}
+        
+        # Evaluate each layer
+    
+    
+    def get_explainable_variance(self, ann_encoded_dataset,
+                                       method: str = 'pca',
+                                       variance_threshold: float = 0.80,
+                                       **kwargs) -> xr.Dataset:
+        """
+        Returns how many PCs are needed to explain the variance threshold (default 80%) per layer.
+        
+        
+        """
+        n_embd = self.config.n_embd
+    
+        # Get the PCA explained variance per layer
+        layer_ids = ann_encoded_dataset.layer.values
+        _, unique_ixs = np.unique(layer_ids, return_index=True)
+        # Make sure context group order is preserved
+        for layer_id in tqdm(layer_ids[np.sort(unique_ixs)]):
+            layer_dataset = ann_encoded_dataset.isel(neuroid=(ann_encoded_dataset.layer == layer_id)).drop('timeid').squeeze()
+            assert(layer_dataset.shape[1] == n_embd)
+            
+            # Figure out how many PCs we attempt to fit
+            n_comp = np.min([layer_dataset.shape[1], layer_dataset.shape[0]])
+
+            # Get explained variance
+            if method == 'pca':
+                from sklearn.decomposition import PCA
+                decomp = PCA(n_components=n_comp)
+            elif method == 'mds':
+                from sklearn.manifold import MDS
+                decomp = MDS(n_components=n_comp)
+            elif method == 'tsne':
+                from sklearn.manifold import TSNE
+                decomp = TSNE(n_components=n_comp)
+            else:
+                raise ValueError(f"Unknown method: {method}")
+            
+            decomp.fit(layer_dataset.values)
+            explained_variance = decomp.explained_variance_ratio_
+            
+            # Get the number of PCs needed to explain the variance threshold
+            explained_variance_cum = np.cumsum(explained_variance)
+            n_pc_needed = np.argmax(explained_variance_cum >= variance_threshold) + 1
+            
+            # Store per layer
+            layer_id = str(layer_id)
+            print(f'Layer {layer_id}: {n_pc_needed} PCs needed to explain {variance_threshold} variance')
+            
+    def get_layer_sparsity(self, ann_encoded_dataset,
+                           zero_threshold: float = 0.0001,
+                           **kwargs) -> xr.Dataset:
+        """
+        Check how sparse activations within a given layer are.
+        
+        Sparsity is defined as 1 - values below the zero_threshold / total number of values.
+        
+        """
+        n_embd = self.config.n_embd
+
+        # Get the PCA explained variance per layer
+        layer_ids = ann_encoded_dataset.layer.values
+        _, unique_ixs = np.unique(layer_ids, return_index=True)
+        # Make sure context group order is preserved
+        for layer_id in tqdm(layer_ids[np.sort(unique_ixs)]):
+            layer_dataset = ann_encoded_dataset.isel(neuroid=(ann_encoded_dataset.layer == layer_id)).drop('timeid').squeeze()
+            assert(layer_dataset.shape[1] == n_embd)
+            
+            # Get sparsity
+            zero_values = count_zero_threshold_values(layer_dataset.values, zero_threshold)
+            sparsity = 1 - (zero_values / layer_dataset.size)
+            
+            # Store per layer
+            layer_id = str(layer_id)
+            print(f'Layer {layer_id}: {sparsity} sparsity')
+
+
+        
 
 
 class PTEncoder(_ModelEncoder):
