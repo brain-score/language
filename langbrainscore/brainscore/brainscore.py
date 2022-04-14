@@ -2,9 +2,10 @@ import typing
 
 import numpy as np
 import xarray as xr
-from methodtools import lru_cache
+# from methodtools import lru_cache
+from pathlib import Path
 
-from langbrainscore.interface import _BrainScore, _Mapping
+from langbrainscore.interface import _BrainScore, _Mapping, _Metric
 from langbrainscore.metrics import Metric
 from langbrainscore.utils import logging
 from langbrainscore.utils.xarray import collapse_multidim_coord, copy_metadata
@@ -16,7 +17,7 @@ class BrainScore(_BrainScore):
         X: xr.DataArray,
         Y: xr.DataArray,
         mapping: _Mapping,
-        metric: Metric,
+        metric: _Metric,
         run=False,
     ) -> "BrainScore":
         assert X.sampleid.size == Y.sampleid.size
@@ -27,8 +28,6 @@ class BrainScore(_BrainScore):
         if run:
             self.run()
 
-    def __repr__(self) -> str:
-        return f"<{self.__class__} ({self.mapping}, {self.metric}, {str(self)})>"
 
     def __str__(self) -> str:
         return f"{self.scores.mean()}"
@@ -49,25 +48,23 @@ class BrainScore(_BrainScore):
         """
         self.scores = xr.load_dataarray(filename)
 
-    # TODO: marked for removal
-    # def to_dataset(self) -> xr.Dataset:
-    #     return xr.Dataset({"Y": self.Y, "Y_pred": self.Y_pred, "scores": self.scores})
-
-    # def to_disk(self):
-    #     X = self.X
-    #     dataset = self.to_dataset()
-    #     pass
 
     @staticmethod
     def _score(A, B, metric: Metric) -> np.ndarray:
         return metric(A, B)
 
-    @lru_cache(maxsize=None)
+    # @lru_cache(maxsize=None)
     def score(self, split_coord=None, ceiling=False):
         """
         Computes The BrainScore™ (/s) using predictions/outputs returned by a
         Mapping instance which is a member attribute of a BrainScore instance
         """
+        if ceiling:
+            if self.scores is not None:
+                return self.scores
+        else:
+            if self.ceilings is not None:
+                return self.scores
 
         if split_coord:
             assert split_coord in self.Y.coords
@@ -146,10 +143,11 @@ class BrainScore(_BrainScore):
             self.scores = scores
         else:
             self.ceilings = scores
-        return scores
+
 
     def ceiling(self, split_coord=None):
         return self.score(split_coord=split_coord, ceiling=True)
+
 
     def run(self, split_coord=None):
         scores = self.score(split_coord=split_coord)
