@@ -12,9 +12,6 @@ from tqdm import tqdm
 
 
 class Dataset(_Dataset):
-    def __init__(self, xr_obj: xr.DataArray) -> "Dataset":
-        super().__init__(xr_obj)
-   
 
     @property
     def contents(self) -> xr.DataArray:
@@ -128,30 +125,7 @@ class Dataset(_Dataset):
         Returns:
             _Dataset: a subclass of the `_Dataset` interface with the packaged xarray.DataArray as a member.
         """
-        """Constructs and returns a Dataset object based on data provided in a csv file.
-            
 
-        Args:
-            file_path_or_url (typing.Union[str, Path]): filepath or URL to file containing a CSV
-            
-            sampleid_column (str): Title of the column to be used as `sampleid` dimension coordinate.
-            neuroid_column (str): Title of the column to be used as `neuroid` dimension coordinate. 
-            timeid_column (str, optional): Title of the column to be used as `timeid` dimension coordinate. 
-                If None is provided, a singleton timeid column with data at the 0th index will be created. 
-                Defaults to None.
-                
-            sampleid_metadata (typing.Union[typing.Iterable, typing.Mapping][str], optional): 
-                Column names (and optionally a corresponding name to rename the coordinate to) 
-                that should be used as metadata along the `sampleid` dimension. 
-            neuroid_metadata (typing.Union[typing.Iterable, typing.Mapping][str], optional)
-                See description for `sampleid_metadata`, but with `neuroid`.
-            timeid_metadata (typing.Union[typing.Iterable, typing.Mapping][str], optional)
-                See description for `sampleid_metadata` but with `timeid`.
-
-            multidim_metadata (typing.Iterable[typing.Mapping[str, typing.Iterable[str]]])
-
-            sep (str, optional): separator string in the CSV/TSV file. Defaults to ','.
-        """
 
         T = typing.TypeVar("T")
         def collapse_same_value(arr: typing.Iterable[T]) -> T:
