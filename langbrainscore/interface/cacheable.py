@@ -7,6 +7,7 @@ from numbers import Number
 from pathlib import Path
 
 import xarray as xr
+import numpy as np
 import yaml
 from langbrainscore.utils.cache import get_cache_directory, pathify
 from langbrainscore.utils.logging import log
@@ -19,22 +20,33 @@ class _Cacheable(typing.Protocol):
     A class used to define a common interface for Object caching in LangBrainscore
     '''
 
-    def __eq__(self: T, __o: typing.Union[T, '_Cacheable']) -> bool:
+    # @classmethod
+    def __eq__(o1: '_Cacheable', o2: '_Cacheable') -> bool:
         
         def checkattr(key) -> bool:
             try:
-                if getattr(self, key) != getattr(__o, key):
+                if getattr(o1, key) != getattr(o2, key):
+                    # log(f'{o1} and {o2} differ on {key}', type='ERR')
                     return False
             except AttributeError:
+                # log(f'one of {o1} and {o2} do not have attribute "{key}"', type='ERR')
                 return False
+            return True
 
-        for key, ob in vars(self).items():
-            if isinstance(ob, (str, Number, bool, _Cacheable, type(None), xr.DataArray)):
+        for key, ob in vars(o1).items():
+            if isinstance(ob, (str, Number, bool, _Cacheable, type(None))):
                 if not checkattr(key): 
+                    log(f'{o1} and {o2} differ on {key}', cmap='ERR')
+                    return False
+            elif isinstance(ob, xr.DataArray):
+                x1 = getattr(o1, key)
+                x2 = getattr(o2, key)
+                if (not np.allclose(x1.data, x2.data, equal_nan=True)) or (x1.attrs != x2.attrs):
+                    log(f'{o1} and {o2} differ on {key}', cmap='ERR')
                     return False
         else:
             return True
-
+    
 
     # @abstractclassmethod
     # @classmethod
@@ -53,10 +65,6 @@ class _Cacheable(typing.Protocol):
                 keys += [key]
         return keys
 
-    # @abstractclassmethod
-    # def _get_meta_attributes(cls) -> typing.Iterable[str]:
-    #     return ()
-
 
     def __repr__(self) -> str:
         '''
@@ -68,7 +76,8 @@ class _Cacheable(typing.Protocol):
 
         sep = '#'
         rep = f'<{self.__class__.__name__}'
-        for key, ob in vars(self).items():
+        for key in sorted(vars(self)):
+            ob = getattr(self, key)
             if isinstance(ob, (str, Number, bool, _Cacheable, type(None))):
                 if isinstance(ob, _Cacheable):
                     rep += f'{sep}{key}={ob.identifier_string}'
