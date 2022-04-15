@@ -13,15 +13,22 @@ dataset = lbs.dataset.Dataset(pereira_xr)
 
 
 def test_cache_dataset() -> bool:
+    '''
+    test the behavior of caching dataset objects
 
+    - first, initializes a dataset using the pereira2018_nat_stories() data
+    - next, dumps it to cache
+    - finally, compares the loaded `dataset2` object from cache with the existing dataset object
+    '''
     p = Path('./.cache').expanduser().resolve()
     log(f'caching initialized dataset {dataset} to {p}')
     dataset.to_cache(cache_dir=p)
 
     dataset2 = lbs.dataset.Dataset.from_cache(identifier_string='<Dataset#dataset_name=Pereira2018NatStories>',
                                               cache_dir=p)
-
     return dataset == dataset2
+
+
 
 if __name__ == '__main__':
     result = test_cache_dataset()

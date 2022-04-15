@@ -20,16 +20,17 @@ class _Cacheable(typing.Protocol):
     A class used to define a common interface for Object caching in LangBrainscore
     '''
 
-    # @classmethod
     def __eq__(o1: '_Cacheable', o2: '_Cacheable') -> bool:
         
         def checkattr(key) -> bool:
+            ''' helper function to check if an attribute is the same between two objects
+                and handles AttributeError while at it. if the attributes differ (or does
+                not exist on one or the other object), returns False. 
+            '''
             try:
                 if getattr(o1, key) != getattr(o2, key):
-                    # log(f'{o1} and {o2} differ on {key}', type='ERR')
                     return False
             except AttributeError:
-                # log(f'one of {o1} and {o2} do not have attribute "{key}"', type='ERR')
                 return False
             return True
 
