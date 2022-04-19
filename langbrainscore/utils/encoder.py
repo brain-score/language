@@ -96,14 +96,11 @@ def get_torch_device():
     return device
 
 
-def set_case(sample: str = None, emb_case: typing.Union[str, None] = None):
+def set_case(sample: str, emb_case: typing.Union[str, None] = None):
     if emb_case == "lower":
-        sample = sample.lower()
+        return sample.lower()
     elif emb_case == "upper":
-        sample = sample.upper()
-    else:
-        sample = sample
-
+        return sample.upper()
     return sample
 
 
