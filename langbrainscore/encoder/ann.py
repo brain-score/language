@@ -1,10 +1,10 @@
 import typing
 from enum import unique
-
+from enforce import runtime_validation
 import numpy as np
 import xarray as xr
 from langbrainscore.dataset import Dataset
-from langbrainscore.interface import _ModelEncoder
+from langbrainscore.interface import _ModelEncoder, EncodedRepresentations
 from langbrainscore.utils.encoder import (
         set_case, aggregate_layers, 
         flatten_activations_per_sample,
@@ -14,34 +14,45 @@ from langbrainscore.utils.encoder import (
     )
 from langbrainscore.utils.xarray import copy_metadata
 from tqdm import tqdm
-import copy
 
 
 class HuggingFaceEncoder(_ModelEncoder):
-    def __init__(self, model_id, device=None) -> "HuggingFaceEncoder":
-        super().__init__(model_id)
+
+    @runtime_validation
+    def __init__(self, model_id, device=None,
+                 context_dimension: str = None,
+                 bidirectional: bool = False,
+                 emb_case: typing.Union[str, None] = "lower",
+                 emb_aggregation: typing.Union[str, None, typing.Callable] = "last",
+                 emb_preproc: typing.Tuple[str] = (),
+                ) -> "HuggingFaceEncoder":
+
+        super().__init__(model_id, 
+                         _context_dimension=context_dimension, 
+                         _bidirectional=bidirectional,
+                         _emb_case=emb_case,
+                         _emb_aggregation=emb_aggregation,
+                         _emb_preproc=emb_preproc,
+                        )
 
         from transformers import AutoConfig, AutoModel, AutoTokenizer
 
         self.device = device or get_torch_device()
         self.config = AutoConfig.from_pretrained(self._model_id)
         self.tokenizer = AutoTokenizer.from_pretrained(self._model_id)
+        self.model = AutoModel.from_pretrained(self._model_id, config=self.config)
         try:
-            self.model = AutoModel.from_pretrained(self._model_id, config=self.config).to(self.device)
+            self.model = self.model.to(self.device)
         except RuntimeError:
             self.device = 'cpu'
-            self.model = AutoModel.from_pretrained(self._model_id, config=self.config)
+            self.model = self.model.to(self.device)
 
     
     def encode(
         self,
-        dataset: Dataset,
-        context_dimension: str = None,
-        bidirectional: bool = False,
-        emb_case: typing.Union[str, None] = "lower",
-        emb_aggregation: typing.Union[str, None, typing.Callable] = "last",
-        emb_preproc: typing.Union[list, np.ndarray] = [],
-    ) -> xr.DataArray:
+        dataset: Dataset, 
+        cache: bool = False,
+    ) -> EncodedRepresentations:
         """
         Input a langbrainscore Dataset and return a xarray DataArray of sentence embeddings given the specified
         parameters (in ANNEmbeddingConfig).
@@ -71,7 +82,7 @@ class HuggingFaceEncoder(_ModelEncoder):
         special_token_offset = self.get_special_token_offset()
         stimuli = dataset.stimuli.values
         # Initialize the context group coordinate (obtain embeddings with context)
-        context_groups = get_context_groups(dataset, context_dimension)
+        context_groups = get_context_groups(dataset, self._context_dimension)
 
         # list for storing activations for each stimulus with all layers flattened 
         # list for storing layer ids ([0 0 0 0 ... 1 1 1 ...]) indicating which layer each 
@@ -99,16 +110,16 @@ class HuggingFaceEncoder(_ModelEncoder):
             # CONTEXT LOOP
             ###############################################################################
             for i, stimulus in enumerate(stimuli_in_context):
-                stimulus = set_case(sample=stimulus, emb_case=emb_case)
+                stimulus = set_case(stimulus, emb_case=self._emb_case)
 
                 # extract stim to encode based on the uni/bi-directional nature of models
-                if not bidirectional:
+                if not self._bidirectional:
                     stimuli_directional = stimuli_in_context[: i + 1]
                 else:
                     stimuli_directional = stimuli_in_context
 
                 stimuli_directional = " ".join(stimuli_directional)
-                stimuli_directional = set_case(sample=stimuli_directional, emb_case=emb_case)
+                stimuli_directional = set_case(sample=stimuli_directional, emb_case=self._emb_case)
 
                 # Tokenize the current stimulus only to get its length, and disable adding special tokens
                 tokenized_current_stim = self.tokenizer(
@@ -152,7 +163,7 @@ class HuggingFaceEncoder(_ModelEncoder):
                 # Aggregate hidden states within a sample
                 # states_sentences_agg is a dict with key = layer, value = array of emb dimension
                 states_sentences_agg = aggregate_layers(
-                    layer_wise_activations, **{"emb_aggregation": emb_aggregation}
+                    layer_wise_activations, **{"emb_aggregation": self._emb_aggregation}
                 )
 
                 # states_sentences_across_stimuli store all the hidden states for the current context group across all stimuli
@@ -180,10 +191,10 @@ class HuggingFaceEncoder(_ModelEncoder):
         layer_ids_1d = np.squeeze(np.unique(np.vstack(layer_ids), axis=0))
         
         ###############################################################################
-        # PREPROCESS ACTIVATIONS
+        # PRE/(POST?)PROCESS ACTIVATIONS
         ###############################################################################
-        if len(emb_preproc) > 0: # Preprocess activations
-            for p_id in emb_preproc:
+        if len(self._emb_preproc) > 0: # Preprocess activations
+            for p_id in self._emb_preproc:
                 activations_2d, layer_ids_1d = preprocess_activations(
                     activations_2d=activations_2d,
                     layer_ids_1d=layer_ids_1d,
@@ -204,7 +215,14 @@ class HuggingFaceEncoder(_ModelEncoder):
             "sampleid",
         )
 
-        return encoded_dataset
+        return EncodedRepresentations(dataset=dataset, 
+                                      representations=encoded_dataset,
+                                      context_dimension=self._context_dimension,
+                                      bidirectional=self._bidirectional,
+                                      emb_case=self._emb_case,
+                                      emb_aggregation=self._emb_aggregation,
+                                      emb_preproc=self._emb_preproc,
+                                     )
 
 
     def get_special_token_offset(self) -> int:
@@ -243,7 +261,8 @@ class HuggingFaceEncoder(_ModelEncoder):
         """
         Returns how many PCs are needed to explain the variance threshold (default 80%) per layer.
         
-        
+        TODO: move to `langbrainscore.analysis.?` or make @classmethod
+
         """
         n_embd = self.config.n_embd
     
@@ -290,6 +309,7 @@ class HuggingFaceEncoder(_ModelEncoder):
         
         Sparsity is defined as 1 - values below the zero_threshold / total number of values.
         
+        TODO: move to `langbrainscore.analysis.?` or make @classmethod
         """
         n_embd = self.config.n_embd
 
