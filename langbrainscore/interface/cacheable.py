@@ -35,14 +35,14 @@ class _Cacheable(typing.Protocol):
             return True
 
         for key, ob in vars(o1).items():
-            if isinstance(ob, (str, Number, bool, _Cacheable, type(None))):
+            if isinstance(ob, (str, Number, bool, _Cacheable, tuple, type(None))):
                 if not checkattr(key): 
                     log(f'{o1} and {o2} differ on {key}', cmap='ERR')
                     return False
             elif isinstance(ob, xr.DataArray):
                 x1 = getattr(o1, key)
                 x2 = getattr(o2, key)
-                if (not np.allclose(x1.data, x2.data, equal_nan=True)) or (x1.attrs != x2.attrs):
+                if (not np.allclose(x1.data, x2.data, equal_nan=True, atol=1e-4)) or (x1.attrs != x2.attrs):
                     log(f'{o1} and {o2} differ on {key}', cmap='ERR')
                     return False
         else:
@@ -79,7 +79,7 @@ class _Cacheable(typing.Protocol):
         rep = f'<{self.__class__.__name__}'
         for key in sorted(vars(self)):
             ob = getattr(self, key)
-            if isinstance(ob, (str, Number, bool, _Cacheable, type(None))):
+            if isinstance(ob, (str, Number, bool, _Cacheable, tuple, type(None))):
                 if isinstance(ob, _Cacheable):
                     rep += f'{sep}{key}={ob.identifier_string}'
                 else:
