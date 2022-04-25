@@ -142,3 +142,8 @@ def repackage_flattened_activations(
             "timeid": np.arange(1),
             "layer": ("neuroid", np.array(layer_ids_1d, dtype="int64")),})
 
+
+def cos_sim_matrix(A, B):
+	"""Compute the cosine similarity matrix between two matrices A and B.
+	1 means the two vectors are identical. 0 means they are orthogonal. -1 means they are opposite."""
+	return (A * B).sum(axis=1) / (A * A).sum(axis=1) ** .5 / (B * B).sum(axis=1) ** .5
