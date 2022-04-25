@@ -91,7 +91,7 @@ def main():
     
     # Encode
     brain_enc_mpf = brain_enc.encode(mpf_dataset)
-    ann_enc_mpf = ann_enc.encode(mpf_dataset)
+    ann_enc_mpf = ann_enc.encode(mpf_dataset).representations
     ann_enc_mpf = ann_enc_mpf.isel(neuroid=(ann_enc_mpf.layer == 4))
     log(f"created brain-encoded data of shape: {brain_enc_mpf.shape}")
     log(f"created ann-encoded data of shape: {ann_enc_mpf.shape}")
