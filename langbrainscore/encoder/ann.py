@@ -1,6 +1,5 @@
 import typing
 from enum import unique
-from enforce import runtime_validation
 import numpy as np
 import xarray as xr
 from langbrainscore.dataset import Dataset
@@ -18,7 +17,6 @@ from tqdm import tqdm
 
 class HuggingFaceEncoder(_ModelEncoder):
 
-    @runtime_validation
     def __init__(self, model_id, device=None,
                  context_dimension: str = None,
                  bidirectional: bool = False,
@@ -51,7 +49,7 @@ class HuggingFaceEncoder(_ModelEncoder):
     def encode(
         self,
         dataset: Dataset, 
-        cache: bool = False,
+        cache: bool = False, # TODO: avoid recomputing if cached `EncodedRepresentations` exists
     ) -> EncodedRepresentations:
         """
         Input a langbrainscore Dataset and return a xarray DataArray of sentence embeddings given the specified
