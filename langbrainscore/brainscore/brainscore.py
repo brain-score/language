@@ -12,6 +12,9 @@ from langbrainscore.utils.xarray import collapse_multidim_coord, copy_metadata
 
 
 class BrainScore(_BrainScore):
+    scores = None
+    ceilings = None
+
     def __init__(
         self,
         X: xr.DataArray,
@@ -59,12 +62,12 @@ class BrainScore(_BrainScore):
         Computes The BrainScore™ (/s) using predictions/outputs returned by a
         Mapping instance which is a member attribute of a BrainScore instance
         """
-        if ceiling:
+        if not ceiling:
             if self.scores is not None:
                 return self.scores
         else:
             if self.ceilings is not None:
-                return self.scores
+                return self.ceilings
 
         if sample_split_coord:
             assert sample_split_coord in self.Y.coords
