@@ -65,7 +65,7 @@ class _ModelEncoder(_Encoder):
         raise NotImplementedError
 
 
-@dataclass(repr=False, eq=False, frozen=True, kw_only=True)
+@dataclass(repr=False, eq=False, frozen=True)
 class EncoderRepresentations(_Cacheable):
     '''
     a class to hold the encoded representations output from an `_Encoder.encode` method
