@@ -75,27 +75,35 @@ def main():
     mpf_dataset = lbs.dataset.Dataset(
         mpf_xr.isel(neuroid=mpf_xr.roi.str.contains("Lang"))
     )
-
+    
     log(f"stimuli: {mpf_dataset.stimuli.values}")
     mpf_dataset.to_cache("test_mpf_dataset_cache", cache_dir="./cache")
     mpf_dataset = lbs.dataset.Dataset.from_cache(
         "test_mpf_dataset_cache", cache_dir="./cache"
     )
-
     log(f"stimuli: {mpf_dataset.stimuli.values}")
+    
+    # Initialize brain and ANN encoders
     brain_enc = lbs.encoder.BrainEncoder()
-    ann_enc = lbs.encoder.HuggingFaceEncoder("distilgpt2")
+    ann_enc = lbs.encoder.HuggingFaceEncoder(model_id="distilgpt2",
+                                             emb_case="lower",
+                                             emb_preproc=[])
+    
+    # Encode
     brain_enc_mpf = brain_enc.encode(mpf_dataset)
-    ann_enc_mpf = ann_enc.encode(mpf_dataset, emb_preproc=[])
+    ann_enc_mpf = ann_enc.encode(mpf_dataset)
     ann_enc_mpf = ann_enc_mpf.isel(neuroid=(ann_enc_mpf.layer == 4))
     log(f"created brain-encoded data of shape: {brain_enc_mpf.shape}")
     log(f"created ann-encoded data of shape: {ann_enc_mpf.shape}")
+    
+    # Initialize mapping and metric
     rdg_cv_kfold = lbs.mapping.LearnedMap("linridge_cv", k_fold=5)
     fisher = lbs.metrics.Metric(lbs.metrics.FisherCorr)
     brsc_rdg_corr = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, rdg_cv_kfold, fisher)
     brsc_rdg_corr.run(sample_split_coord="experiment")
     log(f"brainscore (rdg, fisher) = {brsc_rdg_corr.scores.mean()}")
     log(f"ceiling (rdg, fisher) = {brsc_rdg_corr.ceilings.mean()}")
+    
     i_map = lbs.mapping.IdentityMap(nan_strategy="drop")
     cka = lbs.metrics.Metric(lbs.metrics.CKA)
     brsc_cka = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, i_map, cka)
