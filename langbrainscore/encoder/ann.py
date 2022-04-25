@@ -10,6 +10,7 @@ from langbrainscore.utils.encoder import (
         repackage_flattened_activations,
         get_context_groups, get_torch_device,
         preprocess_activations, count_zero_threshold_values,
+        cos_sim_matrix,
     )
 from langbrainscore.utils.xarray import copy_metadata
 from tqdm import tqdm
@@ -351,34 +352,71 @@ class EncoderCheck:
     
     def _load_cached_activations(self, encoded_ann_identifier: str):
         raise NotImplementedError
-        
 
-    def check_embedding_similarity(self,
-                              identifier1: str = None,
-                              identifier2: str = None):
-        """Given two stimsetids, check for similarity between activations (using all layers)"""
-        
-        ann1 = self._load_cached_activations(encoded_ann_identifier=identifier1)
-        ann2 = self._load_cached_activations(encoded_ann_identifier=identifier2)
-        
-        # n_layers1 = len(actv1.columns.levels[0]) # todo
-        
-        # Run assertions: First test that shapes match
-        # assert (actv1.shape == actv2.shape)
-        # assert (n_layers1 == n_layers2)
-        
-        # Use different tolerance level to check whether the activations are similar
-        
+    def similiarity_metric_across_layers(self,
+                                         sim_metric: str = 'tol',
+                                         enc1: xr.DataArray = None,
+                                         enc2: xr.DataArray = None,
+                                         tol: float = 1e-8) -> bool:
+        """Given two activations, iterate across layers and check np.allclose using different tolerance levels.
+
+		Parameters:
+            sim_metric: str
+                Similarity metric to use.
+            enc1: xr.DataArray
+                First encoder activations.
+            enc2: xr.DataArray
+                Second encoder activations.
+            tol: float
+                Tolerance level to start at (we will iterate up to the tolerance level). Default is 1e-8.
+
+			Returns:
+				bool: whether the tolerance level was met (True) or not (False)
+				bad_stim: set of stimuli indices that did not meet tolerance level 1e-4 (if any)
+
+		"""
+        # First check is whether number of layers / shapes match
+        assert (enc1.shape == enc2.shape)
+        assert(enc1.sampleid.values == enc2.sampleid.values).all() # ensure that we are looking at the same stimuli
+        layers = np.unique(enc1.layer)
+
+        print(f'\n\nChecking similarity across layers using sim_metric: {sim_metric}')
+
+        all_good = True
+        bad_stim = set()  # store indices of stimuli that are not similar
+    
         # Iterate across layers
-        for layer in range(n_layers1):
-            tol = 1e-12
-            actv1_layer = actv1[layer].values
-            actv2_layer = actv2[layer].values
+        for layer in tqdm(layers):
+            enc1_layer = enc1.isel(neuroid=(enc1.layer == layer)).squeeze()
+            enc2_layer = enc2.isel(neuroid=(enc2.layer == layer)).squeeze()
             
             # Check whether values match. If not, iteratively increase tolerance until values match
-            while not np.allclose(actv1_layer, actv2_layer, atol=tol):
-                tol *= 10
-            
-            print(f'Layer {layer}: Similarity at tolerance: {tol}')
+            if sim_metric == 'tol':
+                abs_diff = np.abs(enc1_layer - enc2_layer)
+                abs_diff_per_stim = np.max(abs_diff, axis=1) # Obtain the biggest difference aross neuroids (units)
+                while (abs_diff_per_stim > tol).all():
+                    tol *= 10
         
+            elif sim_metric == 'cos_dist':
+                # Check cosine distance between each row, e.g., sentence vector
+                cos_sim = cos_sim_matrix(enc1_layer, enc2_layer)
+                cos_dist = 1 - cos_sim  # 0 means identical, 1 means orthogonal, 2 means opposite
+                # We still want this as close to zero as possible for similar vectors.
+                cos_dist_abs = np.abs(cos_dist)
+                abs_diff_per_stim = cos_dist_abs
+            
+                # Check how close the cosine distance is to 0
+                while (cos_dist_abs > tol).all():
+                    tol *= 10
+            else:
+                raise NotImplementedError(f'Invalid sim_metric: {sim_metric}')
+        
+            print(f'Layer {layer}: Similarity at tolerance: {tol:.3e}')
+            if tol > 1e-04:
+                print(f'WARNING: Low tolerance level')
+                all_good = False
+                bad_stim.update(enc1.sampleid[np.where(abs_diff_per_stim > tol)[0]])  # get sampleids of stimuli that are not similar
+    
+        return all_good, bad_stim
+
     
