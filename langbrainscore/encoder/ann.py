@@ -3,7 +3,7 @@ from enum import unique
 import numpy as np
 import xarray as xr
 from langbrainscore.dataset import Dataset
-from langbrainscore.interface import _ModelEncoder, EncodedRepresentations
+from langbrainscore.interface import _ModelEncoder, EncoderRepresentations
 from langbrainscore.utils.encoder import (
         set_case, aggregate_layers, 
         flatten_activations_per_sample,
@@ -50,7 +50,7 @@ class HuggingFaceEncoder(_ModelEncoder):
         self,
         dataset: Dataset, 
         cache: bool = False, # TODO: avoid recomputing if cached `EncodedRepresentations` exists
-    ) -> EncodedRepresentations:
+    ) -> EncoderRepresentations:
         """
         Input a langbrainscore Dataset and return a xarray DataArray of sentence embeddings given the specified
         parameters (in ANNEmbeddingConfig).
@@ -213,7 +213,7 @@ class HuggingFaceEncoder(_ModelEncoder):
             "sampleid",
         )
 
-        return EncodedRepresentations(dataset=dataset, 
+        return EncoderRepresentations(dataset=dataset, 
                                       representations=encoded_dataset,
                                       context_dimension=self._context_dimension,
                                       bidirectional=self._bidirectional,
