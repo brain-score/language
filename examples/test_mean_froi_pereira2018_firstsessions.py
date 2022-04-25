@@ -88,22 +88,36 @@ def main():
     ann_enc = lbs.encoder.HuggingFaceEncoder(model_id="distilgpt2",
                                              emb_case="lower",
                                              emb_preproc=tuple())
-    
+
     # Encode
     brain_enc_mpf = brain_enc.encode(mpf_dataset)
     ann_enc_mpf = ann_enc.encode(mpf_dataset).representations
-    ann_enc_mpf = ann_enc_mpf.isel(neuroid=(ann_enc_mpf.layer == 4))
     log(f"created brain-encoded data of shape: {brain_enc_mpf.shape}")
     log(f"created ann-encoded data of shape: {ann_enc_mpf.shape}")
-    
+
+    # ANN encoder checks
+    ann_enc_check = lbs.encoder.EncoderCheck()
+    ann_enc_check.similiarity_metric_across_layers(
+        sim_metric="tol",
+        enc1=ann_enc_mpf,
+        enc2=ann_enc_mpf)
+
+    # Model card
+    ann_modelcard = ann_enc.get_modelcard()
+    ann_enc.get_layer_sparsity(ann_encoded_dataset=ann_enc_mpf)
+    ann_enc.get_explainable_variance(ann_encoded_dataset=ann_enc_mpf)
+
     # Initialize mapping and metric
+    ann_enc_mpf = ann_enc_mpf.isel(neuroid=(
+                ann_enc_mpf.layer == 4))  # Select a layer # TODO: loop over layers unless it is a brain model with commitment
+
     rdg_cv_kfold = lbs.mapping.LearnedMap("linridge_cv", k_fold=5)
     fisher = lbs.metrics.Metric(lbs.metrics.FisherCorr)
     brsc_rdg_corr = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, rdg_cv_kfold, fisher)
     brsc_rdg_corr.run(sample_split_coord="experiment")
     log(f"brainscore (rdg, fisher) = {brsc_rdg_corr.scores.mean()}")
     log(f"ceiling (rdg, fisher) = {brsc_rdg_corr.ceilings.mean()}")
-    
+
     i_map = lbs.mapping.IdentityMap(nan_strategy="drop")
     cka = lbs.metrics.Metric(lbs.metrics.CKA)
     brsc_cka = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, i_map, cka)

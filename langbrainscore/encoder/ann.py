@@ -326,7 +326,7 @@ class HuggingFaceEncoder(_ModelEncoder):
             
             # Store per layer
             layer_id = str(layer_id)
-            print(f'Layer {layer_id}: {sparsity} sparsity')
+            print(f'Layer {layer_id}: {sparsity:.3f} sparsity')
 
 
         
@@ -378,17 +378,17 @@ class EncoderCheck:
         # First check is whether number of layers / shapes match
         assert (enc1.shape == enc2.shape)
         assert(enc1.sampleid.values == enc2.sampleid.values).all() # ensure that we are looking at the same stimuli
-        layers = np.unique(enc1.layer)
-
+        layer_ids = enc1.layer.values
+        _, unique_ixs = np.unique(layer_ids, return_index=True)
         print(f'\n\nChecking similarity across layers using sim_metric: {sim_metric}')
 
         all_good = True
         bad_stim = set()  # store indices of stimuli that are not similar
     
         # Iterate across layers
-        for layer in tqdm(layers):
-            enc1_layer = enc1.isel(neuroid=(enc1.layer == layer)).squeeze()
-            enc2_layer = enc2.isel(neuroid=(enc2.layer == layer)).squeeze()
+        for layer_id in tqdm(layer_ids[np.sort(unique_ixs)]):
+            enc1_layer = enc1.isel(neuroid=(enc1.layer == layer_id)).squeeze()
+            enc2_layer = enc2.isel(neuroid=(enc2.layer == layer_id)).squeeze()
             
             # Check whether values match. If not, iteratively increase tolerance until values match
             if sim_metric == 'tol':
