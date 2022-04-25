@@ -87,7 +87,7 @@ def main():
     brain_enc = lbs.encoder.BrainEncoder()
     ann_enc = lbs.encoder.HuggingFaceEncoder(model_id="distilgpt2",
                                              emb_case="lower",
-                                             emb_preproc=[])
+                                             emb_preproc=tuple())
     
     # Encode
     brain_enc_mpf = brain_enc.encode(mpf_dataset)
