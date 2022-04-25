@@ -4,17 +4,8 @@ import numpy as np
 import torch
 import xarray as xr
 
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, KBinsDiscretizer, RobustScaler
-from sklearn.decomposition import PCA
+from langbrainscore.utils.resources import (preprocessor_classes)
 
-preprocessor_classes = { # todo migrate these resources at some point
-    'demean': StandardScaler(with_std=False),
-    'demean_std': StandardScaler(with_std=True),
-    'minmax': MinMaxScaler,
-    'discretize': KBinsDiscretizer(n_bins=10, encode='ordinal', strategy='uniform'),
-    'robust_scaler': RobustScaler(),
-    'pca': PCA(n_components=10),
-}
 
 def count_zero_threshold_values(A: np.ndarray,
                                 zero_threshold: float = 0.001, ):
