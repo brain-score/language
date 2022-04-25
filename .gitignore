@@ -144,3 +144,4 @@ html
 *.xr
 cache
 .cache
+.idea/
