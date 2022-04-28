@@ -411,7 +411,7 @@ class EncoderCheck:
             else:
                 raise NotImplementedError(f'Invalid sim_metric: {sim_metric}')
         
-            print(f'Layer {layer}: Similarity at tolerance: {tol:.3e}')
+            print(f'Layer {layer_id}: Similarity at tolerance: {tol:.3e}')
             if tol > 1e-04:
                 print(f'WARNING: Low tolerance level')
                 all_good = False
