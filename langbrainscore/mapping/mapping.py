@@ -339,8 +339,10 @@ class LearnedMap(_Mapping):
                     x_model_train = X_train.sel(timeid=0).values
                     y_model_train = y_train.sel(timeid=timeid).values.reshape(-1, 1)
 
-                    if ceiling:
-                        projection = GaussianRandomProjection(n_components=n_neuroids)
+                    if ceiling and x_model_train.shape[1] > n_neuroids:
+                        projection = GaussianRandomProjection(
+                            n_components=n_neuroids, random_state=0
+                        )
                         x_model_train = projection.fit_transform(x_model_train)
 
                     self.model.fit(
@@ -359,7 +361,7 @@ class LearnedMap(_Mapping):
                         .expand_dims("timeid", 1)
                     )
                     x_model_test = X_test.sel(timeid=0)
-                    if ceiling:
+                    if ceiling and x_model_train.shape[1] > n_neuroids:
                         x_model_test = projection.transform(x_model_test)
                     y_pred.data = self.model.predict(x_model_test)  # y_pred
                     y_pred = y_pred.assign_coords(timeid=("timeid", [timeid]))
