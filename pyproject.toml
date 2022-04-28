@@ -20,7 +20,7 @@ exclude = ["langbrainscore/data/"]
 [tool.poetry.dependencies]
 python = "3.8.*"
 tqdm = "^4.62.3"
-transformers = "4.10.0"
+transformers = "4.11.3"
 torch = "^1.9.1"
 torchvision = "^0.10.1"
 torchaudio = "^0.9.1"
