@@ -357,8 +357,10 @@ class EncoderCheck:
                                          sim_metric: str = 'tol',
                                          enc1: xr.DataArray = None,
                                          enc2: xr.DataArray = None,
-                                         tol: float = 1e-8) -> bool:
-        """Given two activations, iterate across layers and check np.allclose using different tolerance levels.
+                                         tol: float = 1e-8,
+                                         threshold: float = 1e-4) -> bool:
+        """
+        Given two activations, iterate across layers and check np.allclose using different tolerance levels.
 
 		Parameters:
             sim_metric: str
@@ -368,16 +370,16 @@ class EncoderCheck:
             enc2: xr.DataArray
                 Second encoder activations.
             tol: float
-                Tolerance level to start at (we will iterate up to the tolerance level). Default is 1e-8.
+                Tolerance level to start at (we will iterate upwards the tolerance level). Default is 1e-8.
 
 			Returns:
 				bool: whether the tolerance level was met (True) or not (False)
-				bad_stim: set of stimuli indices that did not meet tolerance level 1e-4 (if any)
+				bad_stim: set of stimuli indices that did not meet tolerance level `threshold` (if any)
 
 		"""
         # First check is whether number of layers / shapes match
-        assert (enc1.shape == enc2.shape)
-        assert(enc1.sampleid.values == enc2.sampleid.values).all() # ensure that we are looking at the same stimuli
+        assert enc1.shape == enc2.shape
+        assert (enc1.sampleid.values == enc2.sampleid.values).all() # ensure that we are looking at the same stimuli
         layer_ids = enc1.layer.values
         _, unique_ixs = np.unique(layer_ids, return_index=True)
         print(f'\n\nChecking similarity across layers using sim_metric: {sim_metric}')
@@ -387,17 +389,17 @@ class EncoderCheck:
     
         # Iterate across layers
         for layer_id in tqdm(layer_ids[np.sort(unique_ixs)]):
-            enc1_layer = enc1.isel(neuroid=(enc1.layer == layer_id)).squeeze()
-            enc2_layer = enc2.isel(neuroid=(enc2.layer == layer_id)).squeeze()
+            enc1_layer = enc1.isel(neuroid=(enc1.layer == layer_id))#.squeeze()
+            enc2_layer = enc2.isel(neuroid=(enc2.layer == layer_id))#.squeeze()
             
             # Check whether values match. If not, iteratively increase tolerance until values match
-            if sim_metric == 'tol':
+            if sim_metric in ('tol', 'diff'):
                 abs_diff = np.abs(enc1_layer - enc2_layer)
                 abs_diff_per_stim = np.max(abs_diff, axis=1) # Obtain the biggest difference aross neuroids (units)
                 while (abs_diff_per_stim > tol).all():
                     tol *= 10
         
-            elif sim_metric == 'cos_dist':
+            elif 'cos' in sim_metric:
                 # Check cosine distance between each row, e.g., sentence vector
                 cos_sim = cos_sim_matrix(enc1_layer, enc2_layer)
                 cos_dist = 1 - cos_sim  # 0 means identical, 1 means orthogonal, 2 means opposite
@@ -409,10 +411,10 @@ class EncoderCheck:
                 while (cos_dist_abs > tol).all():
                     tol *= 10
             else:
-                raise NotImplementedError(f'Invalid sim_metric: {sim_metric}')
+                raise NotImplementedError(f'Invalid `sim_metric`: {sim_metric}')
         
             print(f'Layer {layer_id}: Similarity at tolerance: {tol:.3e}')
-            if tol > 1e-04:
+            if tol > threshold:
                 print(f'WARNING: Low tolerance level')
                 all_good = False
                 bad_stim.update(enc1.sampleid[np.where(abs_diff_per_stim > tol)[0]])  # get sampleids of stimuli that are not similar
