@@ -1,4 +1,5 @@
 import langbrainscore.brainscore
+import langbrainscore.benchmarks
 import langbrainscore.dataset
 import langbrainscore.encoder
 import langbrainscore.interface
