@@ -82,4 +82,8 @@ class EncoderRepresentations(_Cacheable):
     def __getattr__(self, __name: str) -> typing.Any:
         '''falls back on the xarray object in case of a NameError using __getattribute__
             on this object'''
-        return getattr(self.representations, __name)
+        try:
+            return getattr(self.representations, __name)
+        except AttributeError:
+            raise AttributeError(f'no attribute called `{__name}`')
+        
