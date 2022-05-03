@@ -50,7 +50,7 @@ class HuggingFaceEncoder(_ModelEncoder):
     def encode(
         self,
         dataset: Dataset, 
-        cache: bool = False, # TODO: avoid recomputing if cached `EncodedRepresentations` exists
+        override_cache: bool = False, # TODO: avoid recomputing if cached `EncodedRepresentations` exists
     ) -> EncoderRepresentations:
         """
         Input a langbrainscore Dataset and return a xarray DataArray of sentence embeddings given the specified
@@ -81,14 +81,15 @@ class HuggingFaceEncoder(_ModelEncoder):
         # before computing the representations from scratch, we will first see if any
         # cached representations exist already.
 
-        to_check_in_cache = EncoderRepresentations(dataset=dataset, 
-                                                   representations=None, # we don't have these yet
-                                                   context_dimension=self._context_dimension,
-                                                   bidirectional=self._bidirectional,
-                                                   emb_case=self._emb_case,
-                                                   emb_aggregation=self._emb_aggregation,
-                                                   emb_preproc=self._emb_preproc,
-                                                  )
+        if not override_cache:
+            to_check_in_cache = EncoderRepresentations(dataset=dataset, 
+                                                       representations=None, # we don't have these yet
+                                                       context_dimension=self._context_dimension,
+                                                       bidirectional=self._bidirectional,
+                                                       emb_case=self._emb_case,
+                                                       emb_aggregation=self._emb_aggregation,
+                                                       emb_preproc=self._emb_preproc,
+                                                      )
 
         self.model.eval()
         special_token_offset = self.get_special_token_offset()
