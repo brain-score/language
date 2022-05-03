@@ -77,6 +77,19 @@ class HuggingFaceEncoder(_ModelEncoder):
         Returns:
             [type]: [description]
         """
+        
+        # before computing the representations from scratch, we will first see if any
+        # cached representations exist already.
+
+        to_check_in_cache = EncoderRepresentations(dataset=dataset, 
+                                                   representations=None, # we don't have these yet
+                                                   context_dimension=self._context_dimension,
+                                                   bidirectional=self._bidirectional,
+                                                   emb_case=self._emb_case,
+                                                   emb_aggregation=self._emb_aggregation,
+                                                   emb_preproc=self._emb_preproc,
+                                                  )
+
         self.model.eval()
         special_token_offset = self.get_special_token_offset()
         stimuli = dataset.stimuli.values
@@ -329,6 +342,8 @@ class HuggingFaceEncoder(_ModelEncoder):
             print(f'Layer {layer_id}: {sparsity:.3f} sparsity')
 
 
+    def get_anisotropy(self, ann_encoded_dataset: EncoderRepresentations):
+        raise NotImplementedError
         
 
 
