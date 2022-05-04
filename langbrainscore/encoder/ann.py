@@ -174,7 +174,7 @@ class HuggingFaceEncoder(_ModelEncoder):
                             ),
                         )
                         if context_groups is not None
-                        else slice(),
+                        else slice(None),
                         # emb_dim (e.g., 768)
                         :,
                     ].squeeze()  # collapse batch dim to obtain shape (n_tokens, emb_dim)
