@@ -21,7 +21,7 @@ class HuggingFaceEncoder(_ModelEncoder):
     def __init__(self, model_id, device=None,
                  context_dimension: str = None,
                  bidirectional: bool = False,
-                 emb_case: typing.Union[str, None] = "lower",
+                 emb_case: typing.Union[str, None] = None, # TODO: marked for deletion
                  emb_aggregation: typing.Union[str, None, typing.Callable] = "last",
                  emb_preproc: typing.Tuple[str] = (),
                 ) -> "HuggingFaceEncoder":
@@ -50,7 +50,8 @@ class HuggingFaceEncoder(_ModelEncoder):
     def encode(
         self,
         dataset: Dataset, 
-        override_cache: bool = False, # TODO: avoid recomputing if cached `EncodedRepresentations` exists
+        read_cache: bool = True, # avoid recomputing if cached `EncoderRepresentations` exists, recompute if not
+        write_cache: bool = True, # dump the result of this computation to cache?
     ) -> EncoderRepresentations:
         """
         Input a langbrainscore Dataset and return a xarray DataArray of sentence embeddings given the specified
@@ -81,7 +82,7 @@ class HuggingFaceEncoder(_ModelEncoder):
         # before computing the representations from scratch, we will first see if any
         # cached representations exist already.
 
-        if not override_cache:
+        if read_cache:
             to_check_in_cache = EncoderRepresentations(dataset=dataset, 
                                                        representations=None, # we don't have these yet
                                                        context_dimension=self._context_dimension,
@@ -137,6 +138,8 @@ class HuggingFaceEncoder(_ModelEncoder):
                 # Tokenize the current stimulus only to get its length, and disable adding special tokens
                 tokenized_current_stim = self.tokenizer(
                     stimulus,
+                    # TODO DEBUG should we add space before "current_stim" here? cf. chicken vs Gch icken issue
+                    # add_prefix_space=True,
                     padding=False, return_tensors="pt", add_special_tokens=False,
                 ) 
                 tokenized_current_stim_length = tokenized_current_stim.input_ids.shape[1]
