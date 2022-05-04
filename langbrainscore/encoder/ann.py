@@ -28,7 +28,6 @@ class HuggingFaceEncoder(_ModelEncoder):
         device=None,
         context_dimension: str = None,
         bidirectional: bool = False,
-        emb_case: typing.Union[str, None] = None,  # TODO: marked for deletion
         emb_aggregation: typing.Union[str, None, typing.Callable] = "last",
         emb_preproc: typing.Tuple[str] = (),
     ) -> "HuggingFaceEncoder":
@@ -37,7 +36,6 @@ class HuggingFaceEncoder(_ModelEncoder):
             model_id,
             _context_dimension=context_dimension,
             _bidirectional=bidirectional,
-            _emb_case=emb_case,
             _emb_aggregation=emb_aggregation,
             _emb_preproc=emb_preproc,
         )
@@ -73,7 +71,6 @@ class HuggingFaceEncoder(_ModelEncoder):
             bidirectional (bool, optional): if True, allows using "future" context to generate the representation for a current token
                                             otherwise, only uses what occurs in the "past". some might say, setting this to False
                                             gives you a more biologically plausibly analysis downstream (: [default: False]
-            emb_case (str, optional): which casing to provide to the textual input that is fed into the encoder model. Defaults to 'lower'.
             emb_aggregation (typing.Union[str, None, typing.Callable], optional): how to aggregate the hidden states of the encoder
             emb_preproc (typing.Union[list, np.ndarray, None], optional): a list of preprocessing functions to apply to the embeddings.
                         Processing is done layer-wise.
@@ -95,13 +92,13 @@ class HuggingFaceEncoder(_ModelEncoder):
                 representations=None,  # we don't have these yet
                 context_dimension=self._context_dimension,
                 bidirectional=self._bidirectional,
-                emb_case=self._emb_case,
                 emb_aggregation=self._emb_aggregation,
                 emb_preproc=self._emb_preproc,
             )
 
         self.model.eval()
         stimuli = dataset.stimuli.values
+        
         # Initialize the context group coordinate (obtain embeddings with context)
         context_groups = get_context_groups(dataset, self._context_dimension)
 
@@ -134,8 +131,8 @@ class HuggingFaceEncoder(_ModelEncoder):
                 else:
                     stimuli_directional = stimuli_in_context
 
-                stimuli_directional = " ".join(
-                    map(lambda x: x.strip(), stimuli_directional)
+                stimuli_directional = " ".join( # join the stimuli together within a context group
+                    map(lambda x: x.strip(), stimuli_directional) # Strip out odd spaces between stimuli (but *not* within the stimuli).
                 )
 
                 tokenized_directional_context = self.tokenizer(
@@ -214,7 +211,7 @@ class HuggingFaceEncoder(_ModelEncoder):
         layer_ids_1d = np.squeeze(np.unique(np.vstack(layer_ids), axis=0))
 
         ###############################################################################
-        # PRE/(POST?)PROCESS ACTIVATIONS
+        # POST-PROCESS ACTIVATIONS
         ###############################################################################
         if len(self._emb_preproc) > 0:  # Preprocess activations
             for p_id in self._emb_preproc:
@@ -243,7 +240,6 @@ class HuggingFaceEncoder(_ModelEncoder):
             representations=encoded_dataset,
             context_dimension=self._context_dimension,
             bidirectional=self._bidirectional,
-            emb_case=self._emb_case,
             emb_aggregation=self._emb_aggregation,
             emb_preproc=self._emb_preproc,
         )
