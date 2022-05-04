@@ -173,7 +173,7 @@ class HuggingFaceEncoder(_ModelEncoder):
                                 mode="stop",
                             ),
                         )
-                        if context_groups is not None
+                        if self._context_dimension is not None
                         else slice(None),
                         # emb_dim (e.g., 768)
                         :,
