@@ -3,12 +3,15 @@ import typing
 import numpy as np
 import torch
 import xarray as xr
+from nltk import edit_distance
 
-from langbrainscore.utils.resources import (preprocessor_classes)
+from langbrainscore.utils.resources import preprocessor_classes
 
 
-def count_zero_threshold_values(A: np.ndarray,
-                                zero_threshold: float = 0.001, ):
+def count_zero_threshold_values(
+    A: np.ndarray,
+    zero_threshold: float = 0.001,
+):
     """Given matrix A, count how many values are below the zero_threshold"""
     return np.sum(A < zero_threshold)
 
@@ -74,10 +77,11 @@ def aggregate_layers(hidden_states: dict, **kwargs):
 
 
 def get_torch_device():
-    '''
+    """
     get torch device based on whether cuda is available or not
-    '''
+    """
     import torch
+
     # Set device to GPU if cuda is available.
     if torch.cuda.is_available():
         device = torch.device("cuda")
@@ -102,48 +106,75 @@ def get_context_groups(dataset, context_dimension):
         context_groups = dataset.stimuli.coords[context_dimension].values
     return context_groups
 
-def preprocess_activations(activations_2d: np.ndarray = None,
-                           layer_ids_1d: np.ndarray = None,
-                           emb_preproc_mode: str = 'demean',):
-    
+
+def preprocess_activations(
+    activations_2d: np.ndarray = None,
+    layer_ids_1d: np.ndarray = None,
+    emb_preproc_mode: str = "demean",
+):
+
     activations_processed = []
     layer_ids_processed = []
-    
+
     # log(f"Preprocessing activations with {p_id}")
     for l_id in np.sort(np.unique(layer_ids_1d)):  # For each layer
         preprocessor = preprocessor_classes[emb_preproc_mode]
-        
+
         # Get the activations for this layer and retain 2d shape: [n_samples, emb_dim]
         activations_2d_layer = activations_2d[:, layer_ids_1d == l_id]
-        
-        preprocessor.fit(activations_2d_layer)  # obtain a scaling per unit (in emb space)
-        
+
+        preprocessor.fit(
+            activations_2d_layer
+        )  # obtain a scaling per unit (in emb space)
+
         # Apply the scaling to the activations and reassamble the activations (might have different shape than original)
         activations_2d_layer_processed = preprocessor.transform(activations_2d_layer)
         activations_processed += [activations_2d_layer_processed]
         layer_ids_processed += [np.full(activations_2d_layer_processed.shape[1], l_id)]
-    
+
     # Concatenate to obtain [n_samples, emb_dim across layers], i.e., flattened activations
     activations_2d_layer_processed = np.hstack(activations_processed)
     layer_ids_1d_processed = np.hstack(layer_ids_processed)
-    
+
     return activations_2d_layer_processed, layer_ids_1d_processed
+
 
 def repackage_flattened_activations(
     activations_2d: np.ndarray = None,
     layer_ids_1d: np.ndarray = None,
-    dataset: xr.Dataset = None):
+    dataset: xr.Dataset = None,
+):
     return xr.DataArray(
-        np.expand_dims(activations_2d, axis=2), # add in time dimension
+        np.expand_dims(activations_2d, axis=2),  # add in time dimension
         dims=("sampleid", "neuroid", "timeid"),
         coords={
             "sampleid": dataset.contents.sampleid.values,
             "neuroid": np.arange(len(layer_ids_1d)),
             "timeid": np.arange(1),
-            "layer": ("neuroid", np.array(layer_ids_1d, dtype="int64")),})
+            "layer": ("neuroid", np.array(layer_ids_1d, dtype="int64")),
+        },
+    )
 
 
 def cos_sim_matrix(A, B):
-	"""Compute the cosine similarity matrix between two matrices A and B.
-	1 means the two vectors are identical. 0 means they are orthogonal. -1 means they are opposite."""
-	return (A * B).sum(axis=1) / (A * A).sum(axis=1) ** .5 / (B * B).sum(axis=1) ** .5
+    """Compute the cosine similarity matrix between two matrices A and B.
+    1 means the two vectors are identical. 0 means they are orthogonal. -1 means they are opposite."""
+    return (A * B).sum(axis=1) / (A * A).sum(axis=1) ** 0.5 / (B * B).sum(axis=1) ** 0.5
+
+
+def get_index(tokenizer, supstr_tokens, substr, mode):
+    supstr_tokens = list(supstr_tokens.squeeze())
+    assert mode in ["start", "stop"]
+    edit_distances = []
+    for idx in range(len(supstr_tokens) + 1):
+        if mode == "start":
+            candidate_tokens = supstr_tokens[idx:]
+        else:
+            candidate_tokens = supstr_tokens[:idx]
+        candidate = tokenizer.decode(candidate_tokens)
+        if mode == "start":
+            comp = candidate[: len(substr)]
+        else:
+            comp = candidate[-len(substr) :]
+        edit_distances.append(edit_distance(comp, substr))
+    return np.argmin(edit_distances)

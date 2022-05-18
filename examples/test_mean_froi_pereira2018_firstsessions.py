@@ -75,19 +75,19 @@ def main():
     mpf_dataset = lbs.dataset.Dataset(
         mpf_xr.isel(neuroid=mpf_xr.roi.str.contains("Lang"))
     )
-    
+
     log(f"stimuli: {mpf_dataset.stimuli.values}")
     mpf_dataset.to_cache("test_mpf_dataset_cache", cache_dir="./cache")
     mpf_dataset = lbs.dataset.Dataset.from_cache(
         "test_mpf_dataset_cache", cache_dir="./cache"
     )
     log(f"stimuli: {mpf_dataset.stimuli.values}")
-    
+
     # Initialize brain and ANN encoders
     brain_enc = lbs.encoder.BrainEncoder()
-    ann_enc = lbs.encoder.HuggingFaceEncoder(model_id="distilgpt2",
-                                             emb_preproc=tuple(),
-                                             context_dimension='passage')
+    ann_enc = lbs.encoder.HuggingFaceEncoder(
+        model_id="distilgpt2", emb_preproc=tuple(), context_dimension="passage"
+    )
 
     # Encode
     brain_enc_mpf = brain_enc.encode(mpf_dataset)
@@ -98,9 +98,8 @@ def main():
     # ANN encoder checks
     ann_enc_check = lbs.encoder.EncoderCheck()
     ann_enc_check.similiarity_metric_across_layers(
-        sim_metric="tol",
-        enc1=ann_enc_mpf,
-        enc2=ann_enc_mpf)
+        sim_metric="tol", enc1=ann_enc_mpf, enc2=ann_enc_mpf
+    )
 
     # Model card
     ann_modelcard = ann_enc.get_modelcard()
@@ -108,8 +107,9 @@ def main():
     ann_enc.get_explainable_variance(ann_encoded_dataset=ann_enc_mpf)
 
     # Initialize mapping and metric
-    ann_enc_mpf = ann_enc_mpf.isel(neuroid=(
-                ann_enc_mpf.layer == 4))  # Select a layer # TODO: loop over layers unless it is a brain model with commitment
+    ann_enc_mpf = ann_enc_mpf.isel(
+        neuroid=(ann_enc_mpf.layer == 4)
+    )  # Select a layer # TODO: loop over layers unless it is a brain model with commitment
 
     rdg_cv_kfold = lbs.mapping.LearnedMap("linridge_cv", k_fold=5)
     fisher = lbs.metrics.Metric(lbs.metrics.FisherCorr)
