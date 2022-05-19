@@ -17,6 +17,7 @@ from langbrainscore.utils.encoder import (
     # get_index,
     pick_best_token_ixs,
 )
+from langbrainscore.utils.logging import log
 from langbrainscore.utils.xarray import copy_metadata
 from tqdm import tqdm
 
@@ -155,16 +156,21 @@ class HuggingFaceEncoder(_ModelEncoder):
                 layer_wise_activations = dict()
                 # Cut the "irrelevant" context from the hidden states
 
-                start_of_interest = stimuli_directional.find(stimulus) 
-                char_span_of_interest = slice(start_of_interest, start_of_interest + len(stimulus))
+                start_of_interest = stimuli_directional.find(stimulus.strip()) 
+                char_span_of_interest = slice(start_of_interest, start_of_interest + len(stimulus.strip()))
                 slice_to_extract = pick_best_token_ixs(tokenized_directional_context, char_span_of_interest)
                 
+                # log(f'context = {stimuli_directional}; {tokenized_directional_context}')
+                # log(f'stimulus = {stimulus}')
+                # log(f'char_span_of_interest = {char_span_of_interest}; {stimuli_directional[char_span_of_interest]}')
+                # log(f'slice_to_extract = {slice_to_extract}')
+
                 for idx_layer, layer in enumerate(hidden_states):  # Iterate over layers
                     layer_wise_activations[idx_layer] = layer[
                         :, # batch (singleton)
                         slice_to_extract if self._context_dimension is not None else slice(None), # n_tokens
                         :, # emb_dim (e.g., 768, 1024, etc)
-                    ].squeeze()  # collapse batch dim to obtain shape (n_tokens, emb_dim)
+                    ].squeeze(0)  # collapse batch dim to obtain shape (n_tokens, emb_dim)
                     # ^ do we have to .detach() tensors here?
 
                 # Aggregate hidden states within a sample

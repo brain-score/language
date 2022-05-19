@@ -181,8 +181,8 @@ def pick_best_token_ixs(batchencoding: 'transformers.tokenization_utils_base.Bat
     """
     from transformers import tokenization_utils_base
     start_token = 0
-    end_token = len(batchencoding.input_ids)
-    for i, _ in enumerate(batchencoding.input_ids):
+    end_token = batchencoding.input_ids.shape[-1]
+    for i, _ in enumerate(batchencoding.input_ids.reshape(-1)):
         span = batchencoding[0].token_to_chars(i)
         if span is None: continue
         else: span = tokenization_utils_base.CharSpan(*span)
