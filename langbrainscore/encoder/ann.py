@@ -2,11 +2,10 @@ import typing
 from enum import unique
 import numpy as np
 import xarray as xr
-from nltk import edit_distance
 from langbrainscore.dataset import Dataset
 from langbrainscore.interface import _ModelEncoder, EncoderRepresentations
 from langbrainscore.utils.encoder import (
-    set_case,
+    # set_case,
     aggregate_layers,
     flatten_activations_per_sample,
     repackage_flattened_activations,
@@ -15,7 +14,8 @@ from langbrainscore.utils.encoder import (
     preprocess_activations,
     count_zero_threshold_values,
     cos_sim_matrix,
-    get_index,
+    # get_index,
+    pick_best_token_ixs,
 )
 from langbrainscore.utils.xarray import copy_metadata
 from tqdm import tqdm
@@ -154,29 +154,16 @@ class HuggingFaceEncoder(_ModelEncoder):
 
                 layer_wise_activations = dict()
                 # Cut the "irrelevant" context from the hidden states
+
+                start_of_interest = stimuli_directional.find(stimulus) 
+                char_span_of_interest = slice(start_of_interest, start_of_interest + len(stimulus))
+                slice_to_extract = pick_best_token_ixs(tokenized_directional_context, char_span_of_interest)
+                
                 for idx_layer, layer in enumerate(hidden_states):  # Iterate over layers
                     layer_wise_activations[idx_layer] = layer[
-                        # batch (singleton)
-                        :,
-                        # n_tokens
-                        slice(
-                            get_index(
-                                self.tokenizer,
-                                tokenized_directional_context.input_ids,
-                                stimulus,
-                                mode="start",
-                            ),
-                            get_index(
-                                self.tokenizer,
-                                tokenized_directional_context.input_ids,
-                                stimulus,
-                                mode="stop",
-                            ),
-                        )
-                        if self._context_dimension is not None
-                        else slice(None),
-                        # emb_dim (e.g., 768)
-                        :,
+                        :, # batch (singleton)
+                        slice_to_extract if self._context_dimension is not None else slice(None), # n_tokens
+                        :, # emb_dim (e.g., 768, 1024, etc)
                     ].squeeze()  # collapse batch dim to obtain shape (n_tokens, emb_dim)
                     # ^ do we have to .detach() tensors here?
 
