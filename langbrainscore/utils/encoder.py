@@ -187,7 +187,7 @@ def pick_matching_token_ixs(batchencoding: 'transformers.tokenization_utils_base
     start_token = 0
     end_token = batchencoding.input_ids.shape[-1]
     for i, _ in enumerate(batchencoding.input_ids.reshape(-1)):
-        span = batchencoding[0].token_to_chars(i)
+        span = batchencoding[0].token_to_chars(i) # batchencoding 0 gives access to the encoded string
 
         if span is None: # for [CLS], no span is returned
             if get_verbosity():

@@ -19,7 +19,7 @@ from langbrainscore.utils.encoder import (
     preprocess_activations,
     repackage_flattened_activations,
 )
-from langbrainscore.utils.logging import log
+from langbrainscore.utils.logging import log, get_verbosity
 from langbrainscore.utils.xarray import copy_metadata
 
 
@@ -34,6 +34,25 @@ class HuggingFaceEncoder(_ModelEncoder):
         emb_preproc: typing.Tuple[str] = (),
         include_special_tokens: bool = True,
     ) -> "HuggingFaceEncoder":
+        """
+        
+        Args:
+            model_id (str): the model id
+            device (None, ?): the device to use
+            context_dimension (str, optional): the dimension to use for extracting strings using context.
+                if None, each sampleid (stimuli) will be treated as a single context group.
+                if a string is specified, the string must refer to the name of a dimension in the xarray-like dataset
+                object (langbrainscore.dataset.Dataset) that provides groupings of sampleids (stimuli) that should be
+                used as context when generating encoder representations [default: None].
+            bidirectional (bool): whether to use bidirectional encoder (i.e., access both forward and backward context)
+                [default: False]
+            emb_aggregation (typing.Union[str, None, typing.Callable], optional): how to aggregate the hidden states of
+                the encoder representations for each sampleid (stimuli). [default: "last"]
+            emb_preproc (tuple): a list of strings specifying preprocessing functions to apply to the aggregated embeddings.
+                Processing is performed layer-wise.
+            include_special_tokens (bool): whether to include special tokens in the encoder representations.
+
+        """
 
         super().__init__(
             model_id,
@@ -63,21 +82,13 @@ class HuggingFaceEncoder(_ModelEncoder):
         write_cache: bool = True,  # dump the result of this computation to cache?
     ) -> EncoderRepresentations:
         """
-        Input a langbrainscore Dataset and return a xarray DataArray of sentence embeddings given the specified
-        parameters (in ANNEmbeddingConfig).
+        Input a langbrainscore Dataset, encode the stimuli according to the parameters specified in init, and return
+            the an xarray DataArray of aggregated representations for each stimulus.
 
         Args:
             dataset (langbrainscore.dataset.DataSet): [description]
-            context_dimension (str, optional): the name of a dimension in our xarray-like dataset objcet that provides
-                                                groupings of sampleids (stimuli) that should be used
-                                                as context when generating encoder representations. for instance, in a word-by-word
-                                                presentation paradigm we (may) still want the full sentence as context. [default: None].
-            bidirectional (bool, optional): if True, allows using "future" context to generate the representation for a current token
-                                            otherwise, only uses what occurs in the "past". some might say, setting this to False
-                                            gives you a more biologically plausibly analysis downstream (: [default: False]
-            emb_aggregation (typing.Union[str, None, typing.Callable], optional): how to aggregate the hidden states of the encoder
-            emb_preproc (typing.Union[list, np.ndarray, None], optional): a list of preprocessing functions to apply to the embeddings.
-                        Processing is done layer-wise.
+            read_cache (bool): Avoid recomputing if cached `EncoderRepresentations` exists, recompute if not
+            write_cache (bool): Dump and write the result of the computed encoder representations to cache
 
         Raises:
             NotImplementedError: [description]
@@ -145,13 +156,9 @@ class HuggingFaceEncoder(_ModelEncoder):
                 else:
                     stimuli_directional = stimuli_in_context
 
-                # join the stimuli together within a context group
-                stimuli_directional = " ".join(
-                    map(
-                        lambda x: x.strip(), stimuli_directional
-                    )  # Strip out odd spaces between stimuli (but *not* within the stimuli).
-                )
-
+                # join the stimuli together within a context group using just a single space
+                stimuli_directional = " ".join(stimuli_directional)
+                
                 tokenized_directional_context = self.tokenizer(
                     stimuli_directional,
                     padding=False,
@@ -170,8 +177,9 @@ class HuggingFaceEncoder(_ModelEncoder):
                 hidden_states = result_model["hidden_states"]
 
                 layer_wise_activations = dict()
-
-                start_of_interest = stimuli_directional.find(stimulus.strip())
+                
+                # Find which indices match the current stimulus in the given context group
+                start_of_interest = stimuli_directional.find(stimulus.strip()) # todo check whether strip is ok
                 char_span_of_interest = slice(
                     start_of_interest, start_of_interest + len(stimulus.strip())
                 )
@@ -179,10 +187,20 @@ class HuggingFaceEncoder(_ModelEncoder):
                     tokenized_directional_context, char_span_of_interest
                 )
 
+                if get_verbosity():
+                    log(
+                        f"Interested in the following stimulus: {stimuli_directional[char_span_of_interest]}\n"
+                        f"Recovered {tokenized_directional_context.tokens()[token_span_of_interest]}",
+                        cmap="INFO",
+                        type="INFO",
+                    )
+
                 all_special_ids = set(self.tokenizer.all_special_ids)
+                
+                # Look for special tokens in the beginning and end of the sequence
                 insert_first_upto = 0
-                insert_last_from = tokenized_directional_context.input_ids.shape[-1]
-                for i, tid in enumerate(tokenized_directional_context.input_ids[0, :]):
+                insert_last_from = tokenized_directional_context.input_ids.shape[-1] # length of the input ids
+                for i, tid in enumerate(tokenized_directional_context.input_ids[0, :]): # loop through input ids
                     if tid.item() in all_special_ids:
                         insert_first_upto = i + 1
                     else:
@@ -199,7 +217,7 @@ class HuggingFaceEncoder(_ModelEncoder):
                 for idx_layer, layer in enumerate(hidden_states):  # Iterate over layers
                     this_extracted = layer[
                         :,  # batch (singleton)
-                        token_span_of_interest,  # if self._context_dimension is not None else slice(None), # n_tokens
+                        token_span_of_interest,  # tokens of the current stimulus of interest
                         :,  # emb_dim (e.g., 768, 1024, etc)
                     ].squeeze(
                         0
@@ -208,7 +226,7 @@ class HuggingFaceEncoder(_ModelEncoder):
                     if self._include_special_tokens:
                         this_extracted = torch.cat(
                             [
-                                layer[:, :insert_first_upto, :].squeeze(0),
+                                layer[:, :insert_first_upto, :].squeeze(0), # get the embeddings for the first special tokens
                                 this_extracted,
                             ],
                             axis=0,
@@ -216,7 +234,7 @@ class HuggingFaceEncoder(_ModelEncoder):
                         this_extracted = torch.cat(
                             [
                                 this_extracted,
-                                layer[:, insert_last_from:, :].squeeze(0),
+                                layer[:, insert_last_from:, :].squeeze(0), # get the embeddings for the last special tokens
                             ],
                             axis=0,
                         )
