@@ -73,9 +73,10 @@ class EncoderRepresentations(_Cacheable):
     dataset: Dataset # pointer to the dataset these are the EncodedRepresentations of
     representations: xr.DataArray # the xarray holding representations
 
+    model_id: str = None
     context_dimension: str = None
     bidirectional: bool = False
-    emb_case: typing.Union[str, None] = "lower"
+    # emb_case: typing.Union[str, None] = "lower"
     emb_aggregation: typing.Union[str, None, typing.Callable] = "last"
     emb_preproc: typing.Tuple[str] = ()
 

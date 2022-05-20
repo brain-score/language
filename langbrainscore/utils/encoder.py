@@ -6,6 +6,7 @@ import xarray as xr
 # from nltk import edit_distance
 
 from langbrainscore.utils.resources import preprocessor_classes
+from langbrainscore.utils.logging import log, get_verbosity
 
 
 def count_zero_threshold_values(
@@ -60,6 +61,8 @@ def aggregate_layers(hidden_states: dict, **kwargs):
     for i in hidden_states.keys():
         if emb_aggregation == "last":
             state = hidden_states[i][-1, :]  # get last token
+        elif emb_aggregation == "first":
+            state = hidden_states[i][0, :]  # get first token
         elif emb_aggregation == "mean":
             state = torch.mean(hidden_states[i], dim=0)  # mean over tokens
         elif emb_aggregation == "median":
@@ -164,7 +167,7 @@ def cos_sim_matrix(A, B):
 
 
 
-def pick_best_token_ixs(batchencoding: 'transformers.tokenization_utils_base.BatchEncoding',
+def pick_matching_token_ixs(batchencoding: 'transformers.tokenization_utils_base.BatchEncoding',
                         char_span_of_interest: slice) -> slice:
     """Picks token indices in a tokenized encoded sequence that best correspond to
         a substring of interest in the original sequence, given by a char span (slice)    
@@ -180,17 +183,28 @@ def pick_best_token_ixs(batchencoding: 'transformers.tokenization_utils_base.Bat
             best match the `char_span_of_interest`
     """
     from transformers import tokenization_utils_base
+
     start_token = 0
     end_token = batchencoding.input_ids.shape[-1]
     for i, _ in enumerate(batchencoding.input_ids.reshape(-1)):
         span = batchencoding[0].token_to_chars(i)
-        if span is None: continue
-        else: span = tokenization_utils_base.CharSpan(*span)
+
+        if span is None: # for [CLS], no span is returned
+            if get_verbosity():
+                log(f'No span returned for token at {i}: "{batchencoding.tokens()[i]}"',
+                    type='WARN', cmap='WARN')
+            continue
+        else: 
+            span = tokenization_utils_base.CharSpan(*span)
+
         if span.start <= char_span_of_interest.start:
             start_token = i
         if span.end >= char_span_of_interest.stop:
             end_token = i+1
             break
+
+    assert end_token-start_token <= batchencoding.input_ids.shape[-1], f'Extracted span is larger than original span'
+
     return slice(start_token, end_token)
 
 
