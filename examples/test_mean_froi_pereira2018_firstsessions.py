@@ -86,7 +86,9 @@ def main():
     # Initialize brain and ANN encoders
     brain_enc = lbs.encoder.BrainEncoder()
     ann_enc = lbs.encoder.HuggingFaceEncoder(
-        model_id="distilgpt2", emb_preproc=tuple(), context_dimension="passage"
+        model_id="bert-base-uncased", emb_preproc=tuple(), context_dimension="passage",
+        bidirectional=True,
+        # model_id="distilgpt2", emb_preproc=tuple(), context_dimension="passage"
     )
 
     # Encode

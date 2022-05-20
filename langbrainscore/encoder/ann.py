@@ -1,24 +1,26 @@
 import typing
 from enum import unique
+
 import numpy as np
+import torch
+from tqdm import tqdm
 import xarray as xr
-from nltk import edit_distance
+
 from langbrainscore.dataset import Dataset
-from langbrainscore.interface import _ModelEncoder, EncoderRepresentations
+from langbrainscore.interface import EncoderRepresentations, _ModelEncoder
 from langbrainscore.utils.encoder import (
-    set_case,
     aggregate_layers,
+    cos_sim_matrix,
+    count_zero_threshold_values,
     flatten_activations_per_sample,
-    repackage_flattened_activations,
     get_context_groups,
     get_torch_device,
+    pick_matching_token_ixs,
     preprocess_activations,
-    count_zero_threshold_values,
-    cos_sim_matrix,
-    get_index,
+    repackage_flattened_activations,
 )
+from langbrainscore.utils.logging import log
 from langbrainscore.utils.xarray import copy_metadata
-from tqdm import tqdm
 
 
 class HuggingFaceEncoder(_ModelEncoder):
@@ -30,6 +32,7 @@ class HuggingFaceEncoder(_ModelEncoder):
         bidirectional: bool = False,
         emb_aggregation: typing.Union[str, None, typing.Callable] = "last",
         emb_preproc: typing.Tuple[str] = (),
+        include_special_tokens: bool = True,
     ) -> "HuggingFaceEncoder":
 
         super().__init__(
@@ -38,6 +41,7 @@ class HuggingFaceEncoder(_ModelEncoder):
             _bidirectional=bidirectional,
             _emb_aggregation=emb_aggregation,
             _emb_preproc=emb_preproc,
+            _include_special_tokens=include_special_tokens,
         )
 
         from transformers import AutoConfig, AutoModel, AutoTokenizer
@@ -90,15 +94,25 @@ class HuggingFaceEncoder(_ModelEncoder):
             to_check_in_cache = EncoderRepresentations(
                 dataset=dataset,
                 representations=None,  # we don't have these yet
+                model_id=self._model_id,
                 context_dimension=self._context_dimension,
                 bidirectional=self._bidirectional,
                 emb_aggregation=self._emb_aggregation,
                 emb_preproc=self._emb_preproc,
             )
+            try:
+                to_check_in_cache.load_cache()
+                return to_check_in_cache
+            except FileNotFoundError:
+                log(
+                    f'unable to load cached representations for "{to_check_in_cache.identifier_string}"',
+                    cmap="WARN",
+                    type="WARN",
+                )
 
         self.model.eval()
         stimuli = dataset.stimuli.values
-        
+
         # Initialize the context group coordinate (obtain embeddings with context)
         context_groups = get_context_groups(dataset, self._context_dimension)
 
@@ -113,9 +127,9 @@ class HuggingFaceEncoder(_ModelEncoder):
         _, unique_ixs = np.unique(context_groups, return_index=True)
         # Make sure context group order is preserved
         for group in tqdm(context_groups[np.sort(unique_ixs)]):
+            # Mask based on the context group
             mask_context = context_groups == group
             stimuli_in_context = stimuli[mask_context]
-            # Mask based on the context group
 
             # store model states for each stimulus in this context group
             states_sentences_across_stimuli = []
@@ -131,8 +145,11 @@ class HuggingFaceEncoder(_ModelEncoder):
                 else:
                     stimuli_directional = stimuli_in_context
 
-                stimuli_directional = " ".join( # join the stimuli together within a context group
-                    map(lambda x: x.strip(), stimuli_directional) # Strip out odd spaces between stimuli (but *not* within the stimuli).
+                # join the stimuli together within a context group
+                stimuli_directional = " ".join(
+                    map(
+                        lambda x: x.strip(), stimuli_directional
+                    )  # Strip out odd spaces between stimuli (but *not* within the stimuli).
                 )
 
                 tokenized_directional_context = self.tokenizer(
@@ -153,32 +170,58 @@ class HuggingFaceEncoder(_ModelEncoder):
                 hidden_states = result_model["hidden_states"]
 
                 layer_wise_activations = dict()
-                # Cut the "irrelevant" context from the hidden states
+
+                start_of_interest = stimuli_directional.find(stimulus.strip())
+                char_span_of_interest = slice(
+                    start_of_interest, start_of_interest + len(stimulus.strip())
+                )
+                token_span_of_interest = pick_matching_token_ixs(
+                    tokenized_directional_context, char_span_of_interest
+                )
+
+                all_special_ids = set(self.tokenizer.all_special_ids)
+                insert_first_upto = 0
+                insert_last_from = tokenized_directional_context.input_ids.shape[-1]
+                for i, tid in enumerate(tokenized_directional_context.input_ids[0, :]):
+                    if tid.item() in all_special_ids:
+                        insert_first_upto = i + 1
+                    else:
+                        break
+                for i in range(
+                    1, tokenized_directional_context.input_ids.shape[-1] + 1
+                ):
+                    tid = tokenized_directional_context.input_ids[0, -i]
+                    if tid.item() in all_special_ids:
+                        insert_last_from -= 1
+                    else:
+                        break
+
                 for idx_layer, layer in enumerate(hidden_states):  # Iterate over layers
-                    layer_wise_activations[idx_layer] = layer[
-                        # batch (singleton)
-                        :,
-                        # n_tokens
-                        slice(
-                            get_index(
-                                self.tokenizer,
-                                tokenized_directional_context.input_ids,
-                                stimulus,
-                                mode="start",
-                            ),
-                            get_index(
-                                self.tokenizer,
-                                tokenized_directional_context.input_ids,
-                                stimulus,
-                                mode="stop",
-                            ),
+                    this_extracted = layer[
+                        :,  # batch (singleton)
+                        token_span_of_interest,  # if self._context_dimension is not None else slice(None), # n_tokens
+                        :,  # emb_dim (e.g., 768, 1024, etc)
+                    ].squeeze(
+                        0
+                    )  # collapse batch dim to obtain shape (n_tokens, emb_dim)
+
+                    if self._include_special_tokens:
+                        this_extracted = torch.cat(
+                            [
+                                layer[:, :insert_first_upto, :].squeeze(0),
+                                this_extracted,
+                            ],
+                            axis=0,
                         )
-                        if self._context_dimension is not None
-                        else slice(None),
-                        # emb_dim (e.g., 768)
-                        :,
-                    ].squeeze()  # collapse batch dim to obtain shape (n_tokens, emb_dim)
-                    # ^ do we have to .detach() tensors here?
+                        this_extracted = torch.cat(
+                            [
+                                this_extracted,
+                                layer[:, insert_last_from:, :].squeeze(0),
+                            ],
+                            axis=0,
+                        )
+
+                    layer_wise_activations[idx_layer] = this_extracted.detach()
 
                 # Aggregate hidden states within a sample
                 # states_sentences_agg is a dict with key = layer, value = array of emb dimension
@@ -235,7 +278,7 @@ class HuggingFaceEncoder(_ModelEncoder):
             "sampleid",
         )
 
-        return EncoderRepresentations(
+        to_return = EncoderRepresentations(
             dataset=dataset,
             representations=encoded_dataset,
             context_dimension=self._context_dimension,
@@ -243,6 +286,11 @@ class HuggingFaceEncoder(_ModelEncoder):
             emb_aggregation=self._emb_aggregation,
             emb_preproc=self._emb_preproc,
         )
+
+        # if write_cache:
+        #     to_return.to_cache(overwrite=True)
+
+        return to_return
 
     def get_special_token_offset(self) -> int:
         """
@@ -275,7 +323,7 @@ class HuggingFaceEncoder(_ModelEncoder):
             "vocab_size",
         ]
 
-        config_specs = {k: d_config[k] for k in config_specs_of_interest}
+        config_specs = {k: d_config.get(k, None) for k in config_specs_of_interest}
 
         # Evaluate each layer
 
@@ -292,7 +340,7 @@ class HuggingFaceEncoder(_ModelEncoder):
         TODO: move to `langbrainscore.analysis.?` or make @classmethod
 
         """
-        n_embd = self.config.n_embd
+        # n_embd = self.config.n_embd
 
         # Get the PCA explained variance per layer
         layer_ids = ann_encoded_dataset.layer.values
@@ -306,7 +354,7 @@ class HuggingFaceEncoder(_ModelEncoder):
                 .drop("timeid")
                 .squeeze()
             )
-            assert layer_dataset.shape[1] == n_embd
+            # assert layer_dataset.shape[1] == n_embd
 
             # Figure out how many PCs we attempt to fit
             n_comp = np.min([layer_dataset.shape[1], layer_dataset.shape[0]])
@@ -350,7 +398,7 @@ class HuggingFaceEncoder(_ModelEncoder):
 
         TODO: move to `langbrainscore.analysis.?` or make @classmethod
         """
-        n_embd = self.config.n_embd
+        # n_embd = self.config.n_embd
 
         # Get the PCA explained variance per layer
         layer_ids = ann_encoded_dataset.layer.values
@@ -364,7 +412,7 @@ class HuggingFaceEncoder(_ModelEncoder):
                 .drop("timeid")
                 .squeeze()
             )
-            assert layer_dataset.shape[1] == n_embd
+            # assert layer_dataset.shape[1] == n_embd
 
             # Get sparsity
             zero_values = count_zero_threshold_values(

@@ -3,9 +3,10 @@ import typing
 import numpy as np
 import torch
 import xarray as xr
-from nltk import edit_distance
+# from nltk import edit_distance
 
 from langbrainscore.utils.resources import preprocessor_classes
+from langbrainscore.utils.logging import log, get_verbosity
 
 
 def count_zero_threshold_values(
@@ -60,6 +61,8 @@ def aggregate_layers(hidden_states: dict, **kwargs):
     for i in hidden_states.keys():
         if emb_aggregation == "last":
             state = hidden_states[i][-1, :]  # get last token
+        elif emb_aggregation == "first":
+            state = hidden_states[i][0, :]  # get first token
         elif emb_aggregation == "mean":
             state = torch.mean(hidden_states[i], dim=0)  # mean over tokens
         elif emb_aggregation == "median":
@@ -158,23 +161,67 @@ def repackage_flattened_activations(
 
 def cos_sim_matrix(A, B):
     """Compute the cosine similarity matrix between two matrices A and B.
-    1 means the two vectors are identical. 0 means they are orthogonal. -1 means they are opposite."""
+        1 means the two vectors are identical. 0 means they are orthogonal.
+        -1 means they are opposite."""
     return (A * B).sum(axis=1) / (A * A).sum(axis=1) ** 0.5 / (B * B).sum(axis=1) ** 0.5
 
 
-def get_index(tokenizer, supstr_tokens, substr, mode):
-    supstr_tokens = list(supstr_tokens.squeeze())
-    assert mode in ["start", "stop"]
-    edit_distances = []
-    for idx in range(len(supstr_tokens) + 1):
-        if mode == "start":
-            candidate_tokens = supstr_tokens[idx:]
-        else:
-            candidate_tokens = supstr_tokens[:idx]
-        candidate = tokenizer.decode(candidate_tokens)
-        if mode == "start":
-            comp = candidate[: len(substr)]
-        else:
-            comp = candidate[-len(substr) :]
-        edit_distances.append(edit_distance(comp, substr))
-    return np.argmin(edit_distances)
+
+def pick_matching_token_ixs(batchencoding: 'transformers.tokenization_utils_base.BatchEncoding',
+                        char_span_of_interest: slice) -> slice:
+    """Picks token indices in a tokenized encoded sequence that best correspond to
+        a substring of interest in the original sequence, given by a char span (slice)    
+
+    Args:
+        batchencoding (transformers.tokenization_utils_base.BatchEncoding): the output of a
+            `tokenizer(text)` call on a single text instance (not a batch, i.e. `tokenizer([text])`).
+        char_span_of_interest (slice): a `slice` object denoting the character indices in the 
+            original `text` string we want to extract the corresponding tokens for
+
+    Returns:
+        slice: the start and stop indices within an encoded sequence that 
+            best match the `char_span_of_interest`
+    """
+    from transformers import tokenization_utils_base
+
+    start_token = 0
+    end_token = batchencoding.input_ids.shape[-1]
+    for i, _ in enumerate(batchencoding.input_ids.reshape(-1)):
+        span = batchencoding[0].token_to_chars(i)
+
+        if span is None: # for [CLS], no span is returned
+            if get_verbosity():
+                log(f'No span returned for token at {i}: "{batchencoding.tokens()[i]}"',
+                    type='WARN', cmap='WARN')
+            continue
+        else: 
+            span = tokenization_utils_base.CharSpan(*span)
+
+        if span.start <= char_span_of_interest.start:
+            start_token = i
+        if span.end >= char_span_of_interest.stop:
+            end_token = i+1
+            break
+
+    assert end_token-start_token <= batchencoding.input_ids.shape[-1], f'Extracted span is larger than original span'
+
+    return slice(start_token, end_token)
+
+
+
+# def get_index(tokenizer, supstr_tokens, substr, mode):
+#     supstr_tokens = list(supstr_tokens.squeeze())
+#     assert mode in ["start", "stop"]
+#     edit_distances = []
+#     for idx in range(len(supstr_tokens) + 1):
+#         if mode == "start":
+#             candidate_tokens = supstr_tokens[idx:]
+#         else:
+#             candidate_tokens = supstr_tokens[:idx]
+#         candidate = tokenizer.decode(candidate_tokens)
+#         if mode == "start":
+#             comp = candidate[: len(substr)]
+#         else:
+#             comp = candidate[-len(substr) :]
+#         edit_distances.append(edit_distance(comp, substr))
+#     return np.argmin(edit_distances)

@@ -58,3 +58,9 @@ def log(message, cmap="INFO", type=None, **kwargs):
     )
     tqdm.write("\n".join(lines), file=stderr)
     # print(*lines, sep='\n', file=stderr)
+
+
+def get_verbosity():
+    '''returns True if env variable "VERBOSE" is set to 1'''
+    import os
+    return os.environ.get('VERBOSE', None) == '1'
