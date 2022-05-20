@@ -179,9 +179,9 @@ class HuggingFaceEncoder(_ModelEncoder):
                 layer_wise_activations = dict()
                 
                 # Find which indices match the current stimulus in the given context group
-                start_of_interest = stimuli_directional.find(stimulus.strip()) # todo check whether strip is ok
+                start_of_interest = stimuli_directional.find(stimulus)
                 char_span_of_interest = slice(
-                    start_of_interest, start_of_interest + len(stimulus.strip())
+                    start_of_interest, start_of_interest + len(stimulus)
                 )
                 token_span_of_interest = pick_matching_token_ixs(
                     tokenized_directional_context, char_span_of_interest
@@ -189,8 +189,8 @@ class HuggingFaceEncoder(_ModelEncoder):
 
                 if get_verbosity():
                     log(
-                        f"Interested in the following stimulus: {stimuli_directional[char_span_of_interest]}\n"
-                        f"Recovered {tokenized_directional_context.tokens()[token_span_of_interest]}",
+                        f"Interested in the following stimulus:\n{stimuli_directional[char_span_of_interest]}\n"
+                        f"Recovered:\n{tokenized_directional_context.tokens()[token_span_of_interest]}",
                         cmap="INFO",
                         type="INFO",
                     )
