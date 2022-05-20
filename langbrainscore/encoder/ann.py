@@ -268,7 +268,7 @@ class HuggingFaceEncoder(_ModelEncoder):
             "vocab_size",
         ]
 
-        config_specs = {k: d_config[k] for k in config_specs_of_interest}
+        config_specs = {k: d_config.get(k, None) for k in config_specs_of_interest}
 
         # Evaluate each layer
 
@@ -285,7 +285,7 @@ class HuggingFaceEncoder(_ModelEncoder):
         TODO: move to `langbrainscore.analysis.?` or make @classmethod
 
         """
-        n_embd = self.config.n_embd
+        # n_embd = self.config.n_embd
 
         # Get the PCA explained variance per layer
         layer_ids = ann_encoded_dataset.layer.values
@@ -299,7 +299,7 @@ class HuggingFaceEncoder(_ModelEncoder):
                 .drop("timeid")
                 .squeeze()
             )
-            assert layer_dataset.shape[1] == n_embd
+            # assert layer_dataset.shape[1] == n_embd
 
             # Figure out how many PCs we attempt to fit
             n_comp = np.min([layer_dataset.shape[1], layer_dataset.shape[0]])
@@ -343,7 +343,7 @@ class HuggingFaceEncoder(_ModelEncoder):
 
         TODO: move to `langbrainscore.analysis.?` or make @classmethod
         """
-        n_embd = self.config.n_embd
+        # n_embd = self.config.n_embd
 
         # Get the PCA explained variance per layer
         layer_ids = ann_encoded_dataset.layer.values
@@ -357,7 +357,7 @@ class HuggingFaceEncoder(_ModelEncoder):
                 .drop("timeid")
                 .squeeze()
             )
-            assert layer_dataset.shape[1] == n_embd
+            # assert layer_dataset.shape[1] == n_embd
 
             # Get sparsity
             zero_values = count_zero_threshold_values(
