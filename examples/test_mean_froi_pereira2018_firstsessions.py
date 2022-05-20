@@ -1,6 +1,7 @@
 import IPython
 from pathlib import Path
 
+import os
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -10,6 +11,7 @@ import langbrainscore as lbs
 from langbrainscore.utils.logging import log
 from langbrainscore.utils.xarray import collapse_multidim_coord
 
+os.environ['VERBOSE'] = '1'
 
 def package_mean_froi_pereira2018_firstsess():
     mpf = pd.read_csv(
