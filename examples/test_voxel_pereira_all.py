@@ -1,6 +1,8 @@
 from pathlib import Path
 
 import langbrainscore as lbs
+from langbrainscore.utils.logging import log
+
 
 if __name__ == "__main__":
     dataset = lbs.dataset.Dataset.from_file_or_url(
