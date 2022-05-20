@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 from langbrainscore.interface import _Dataset
-from langbrainscore.utils.logging import log
+from langbrainscore.utils.logging import log, get_verbosity
 from langbrainscore.utils.xarray import collapse_multidim_coord
 from tqdm import tqdm
 
@@ -141,7 +141,12 @@ class Dataset(_Dataset):
             to every other element by value and returns (any) one of the elements.
             if a non-identical element (!=) is found, raises ValueError
             """
-            first_thing = next(iter(arr))
+            try:
+                first_thing = next(iter(arr))
+            except StopIteration:
+                if get_verbosity():
+                    log(f'failed to obtain value from {arr}')
+                return np.nan
             for each_thing in arr:
                 if first_thing != each_thing:
                     raise ValueError(f"{first_thing} != {each_thing}")
@@ -274,6 +279,4 @@ class Dataset(_Dataset):
 
         return cls(unified_xr)  # NOTE: we use `cls` rather than `Dataset` so any
         # subclasses will use the subclass rather than parent
-        # ^ the above method addresses the below TODO.
-        # TODO: we should adapt the above to package an xarray object automatically if a path to files is passed.
-        # This functionality can be wrapped in a utility that we simply import and utilize here.
+    
