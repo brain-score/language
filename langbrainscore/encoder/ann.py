@@ -56,6 +56,25 @@ class HuggingFaceEncoder(_ModelEncoder):
             self.device = "cpu"
             self.model = self.model.to(self.device)
 
+    def get_encoder_representations_template(
+        self,
+    ) -> EncoderRepresentations:
+        """
+        returns an empty `EncoderRepresentations` object with all the appropriate
+        attributes but the `dataset` and `representations` missing and to be filled in
+        later.
+        """
+        return EncoderRepresentations(
+            dataset=None,
+            representations=None,  # we don't have these yet
+            model_id=self._model_id,
+            context_dimension=self._context_dimension,
+            bidirectional=self._bidirectional,
+            emb_aggregation=self._emb_aggregation,
+            emb_preproc=self._emb_preproc,
+            include_special_tokens=self._include_special_tokens,
+        )
+
     def encode(
         self,
         dataset: Dataset,
@@ -91,15 +110,11 @@ class HuggingFaceEncoder(_ModelEncoder):
         # cached representations exist already.
 
         if read_cache:
-            to_check_in_cache = EncoderRepresentations(
-                dataset=dataset,
-                representations=None,  # we don't have these yet
-                model_id=self._model_id,
-                context_dimension=self._context_dimension,
-                bidirectional=self._bidirectional,
-                emb_aggregation=self._emb_aggregation,
-                emb_preproc=self._emb_preproc,
+            to_check_in_cache: EncoderRepresentations = (
+                self.get_encoder_representations_template()
             )
+            to_check_in_cache.dataset = dataset
+
             try:
                 to_check_in_cache.load_cache()
                 return to_check_in_cache
@@ -278,17 +293,12 @@ class HuggingFaceEncoder(_ModelEncoder):
             "sampleid",
         )
 
-        to_return = EncoderRepresentations(
-            dataset=dataset,
-            representations=encoded_dataset,
-            context_dimension=self._context_dimension,
-            bidirectional=self._bidirectional,
-            emb_aggregation=self._emb_aggregation,
-            emb_preproc=self._emb_preproc,
-        )
+        to_return: EncoderRepresentations = self.get_encoder_representations_template()
+        to_return.dataset = dataset
+        to_return.representations = encoded_dataset
 
-        # if write_cache:
-        #     to_return.to_cache(overwrite=True)
+        if write_cache:
+            to_return.to_cache(overwrite=True)
 
         return to_return
 
