@@ -303,6 +303,7 @@ class HuggingFaceEncoder(_ModelEncoder):
             bidirectional=self._bidirectional,
             emb_aggregation=self._emb_aggregation,
             emb_preproc=self._emb_preproc,
+            include_special_tokens=self._include_special_tokens,
         )
 
         # if write_cache:

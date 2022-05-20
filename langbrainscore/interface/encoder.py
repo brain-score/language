@@ -76,9 +76,9 @@ class EncoderRepresentations(_Cacheable):
     model_id: str = None
     context_dimension: str = None
     bidirectional: bool = False
-    # emb_case: typing.Union[str, None] = "lower"
     emb_aggregation: typing.Union[str, None, typing.Callable] = "last"
     emb_preproc: typing.Tuple[str] = ()
+    include_special_tokens: bool = False
 
     def __getattr__(self, __name: str) -> typing.Any:
         '''falls back on the xarray object in case of a NameError using __getattribute__
