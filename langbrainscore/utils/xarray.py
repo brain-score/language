@@ -6,7 +6,7 @@ def copy_metadata(target: xr.DataArray, source: xr.DataArray, dim: str) -> xr.Da
     """copies the metadata coordinates of a source xarray on dimension `dim` over to target xarray
         for this to work, the two `xr.DataArray` objects must have the same dimensions and
         dimensionality of data, minimally in the `dim` dimension.
-        
+
     Args:
         target (xr.DataArray): target xarray to copy the metadata coordinates onto
             (a copy is made, this does not happen inplace)
@@ -38,6 +38,18 @@ def collapse_multidim_coord(xr_obj, coord, keep_dim):
     try:
         stimuli = imputer.fit_transform(xr_obj[coord])[0]
         return xr_obj.assign_coords({coord: (keep_dim, stimuli)})
-    except ValueError as e: # TODO which exception? what scenario does this cover?
+    except ValueError as e:  # TODO which exception? what scenario does this cover?
         stimuli = imputer.fit_transform(xr_obj[coord]).transpose()[0]
         return xr_obj.assign_coords({coord: (keep_dim, stimuli)})
+
+
+def fix_xr_dtypes(xr_obj):
+    """
+    sometimes xarrays end up having dtype='O' (object) instead of the
+    expected dtypes, which is usually 'str'
+    """
+    for c in xr_obj.coords:
+        if xr_obj[c].dtype == "O":
+            xr_obj[c] = xr_obj[c].astype(str)
+    # this is likely not necessary --- the xr_obj should be modified in-place
+    return xr_obj

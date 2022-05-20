@@ -75,7 +75,8 @@ def package_mean_froi_pereira2018_firstsess():
 def main():
     mpf_xr = package_mean_froi_pereira2018_firstsess()
     mpf_dataset = lbs.dataset.Dataset(
-        mpf_xr.isel(neuroid=mpf_xr.roi.str.contains("Lang"))
+        mpf_xr.isel(neuroid=mpf_xr.roi.str.contains("Lang")),
+        dataset_name="Pereira2018LangfROIs",
     )
 
     log(f"stimuli: {mpf_dataset.stimuli.values}")
@@ -88,7 +89,9 @@ def main():
     # Initialize brain and ANN encoders
     brain_enc = lbs.encoder.BrainEncoder()
     ann_enc = lbs.encoder.HuggingFaceEncoder(
-        model_id="bert-base-uncased", emb_preproc=tuple(), context_dimension="passage",
+        model_id="bert-base-uncased",
+        emb_preproc=tuple(),
+        context_dimension="passage",
         bidirectional=True,
         # model_id="distilgpt2", emb_preproc=tuple(), context_dimension="passage"
     )

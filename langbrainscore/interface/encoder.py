@@ -1,6 +1,6 @@
-'''
+"""
 Interface and (partial) base implementation classes for Encoders and EncodedRepresentations
-'''
+"""
 
 import typing
 from abc import ABC, abstractmethod
@@ -49,14 +49,13 @@ class _ModelEncoder(_Encoder):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-
     @abstractmethod
     def encode(self, dataset: Dataset) -> xr.DataArray:
         """
         returns computed representations for stimuli passed in as a `Dataset` object
 
         Args:
-            langbrainscore.dataset.Dataset: a Dataset object with a member `xarray.DataArray` 
+            langbrainscore.dataset.Dataset: a Dataset object with a member `xarray.DataArray`
                 instance (`Dataset._xr_obj`) containing stimuli
 
         Returns:
@@ -65,26 +64,27 @@ class _ModelEncoder(_Encoder):
         raise NotImplementedError
 
 
-@dataclass(repr=False, eq=False, frozen=True)
+@dataclass(repr=False, eq=False, frozen=False)
 class EncoderRepresentations(_Cacheable):
-    '''
+    """
     a class to hold the encoded representations output from an `_Encoder.encode` method
-    '''
-    dataset: Dataset # pointer to the dataset these are the EncodedRepresentations of
-    representations: xr.DataArray # the xarray holding representations
+    """
+
+    dataset: Dataset  # pointer to the dataset these are the EncodedRepresentations of
+    representations: xr.DataArray  # the xarray holding representations
 
     model_id: str = None
     context_dimension: str = None
     bidirectional: bool = False
     emb_aggregation: typing.Union[str, None, typing.Callable] = "last"
     emb_preproc: typing.Tuple[str] = ()
-    include_special_tokens: bool = False
+    include_special_tokens: bool = True
+
 
     def __getattr__(self, __name: str) -> typing.Any:
-        '''falls back on the xarray object in case of a NameError using __getattribute__
-            on this object'''
+        """falls back on the xarray object in case of a NameError using __getattribute__
+        on this object"""
         try:
             return getattr(self.representations, __name)
         except AttributeError:
-            raise AttributeError(f'no attribute called `{__name}`')
-        
+            raise AttributeError(f"no attribute called `{__name}`")

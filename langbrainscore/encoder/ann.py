@@ -19,8 +19,9 @@ from langbrainscore.utils.encoder import (
     preprocess_activations,
     repackage_flattened_activations,
 )
+
 from langbrainscore.utils.logging import log, get_verbosity
-from langbrainscore.utils.xarray import copy_metadata
+from langbrainscore.utils.xarray import copy_metadata, fix_xr_dtypes
 
 
 class HuggingFaceEncoder(_ModelEncoder):
@@ -75,6 +76,25 @@ class HuggingFaceEncoder(_ModelEncoder):
             self.device = "cpu"
             self.model = self.model.to(self.device)
 
+    def get_encoder_representations_template(
+        self,
+    ) -> EncoderRepresentations:
+        """
+        returns an empty `EncoderRepresentations` object with all the appropriate
+        attributes but the `dataset` and `representations` missing and to be filled in
+        later.
+        """
+        return EncoderRepresentations(
+            dataset=None,
+            representations=xr.DataArray(),  # we don't have these yet
+            model_id=self._model_id,
+            context_dimension=self._context_dimension,
+            bidirectional=self._bidirectional,
+            emb_aggregation=self._emb_aggregation,
+            emb_preproc=self._emb_preproc,
+            include_special_tokens=self._include_special_tokens,
+        )
+
     def encode(
         self,
         dataset: Dataset,
@@ -102,15 +122,11 @@ class HuggingFaceEncoder(_ModelEncoder):
         # cached representations exist already.
 
         if read_cache:
-            to_check_in_cache = EncoderRepresentations(
-                dataset=dataset,
-                representations=None,  # we don't have these yet
-                model_id=self._model_id,
-                context_dimension=self._context_dimension,
-                bidirectional=self._bidirectional,
-                emb_aggregation=self._emb_aggregation,
-                emb_preproc=self._emb_preproc,
+            to_check_in_cache: EncoderRepresentations = (
+                self.get_encoder_representations_template()
             )
+            to_check_in_cache.dataset = dataset
+
             try:
                 to_check_in_cache.load_cache()
                 return to_check_in_cache
@@ -296,18 +312,12 @@ class HuggingFaceEncoder(_ModelEncoder):
             "sampleid",
         )
 
-        to_return = EncoderRepresentations(
-            dataset=dataset,
-            representations=encoded_dataset,
-            context_dimension=self._context_dimension,
-            bidirectional=self._bidirectional,
-            emb_aggregation=self._emb_aggregation,
-            emb_preproc=self._emb_preproc,
-            include_special_tokens=self._include_special_tokens,
-        )
+        to_return: EncoderRepresentations = self.get_encoder_representations_template()
+        to_return.dataset = dataset
+        to_return.representations = fix_xr_dtypes(encoded_dataset)
 
-        # if write_cache:
-        #     to_return.to_cache(overwrite=True)
+        if write_cache:
+            to_return.to_cache(overwrite=True)
 
         return to_return
 
