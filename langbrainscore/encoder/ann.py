@@ -20,7 +20,7 @@ from langbrainscore.utils.encoder import (
     repackage_flattened_activations,
 )
 from langbrainscore.utils.logging import log
-from langbrainscore.utils.xarray import copy_metadata
+from langbrainscore.utils.xarray import copy_metadata, fix_xr_dtypes
 
 
 class HuggingFaceEncoder(_ModelEncoder):
@@ -66,7 +66,7 @@ class HuggingFaceEncoder(_ModelEncoder):
         """
         return EncoderRepresentations(
             dataset=None,
-            representations=None,  # we don't have these yet
+            representations=xr.DataArray(),  # we don't have these yet
             model_id=self._model_id,
             context_dimension=self._context_dimension,
             bidirectional=self._bidirectional,
@@ -295,7 +295,7 @@ class HuggingFaceEncoder(_ModelEncoder):
 
         to_return: EncoderRepresentations = self.get_encoder_representations_template()
         to_return.dataset = dataset
-        to_return.representations = encoded_dataset
+        to_return.representations = fix_xr_dtypes(encoded_dataset)
 
         if write_cache:
             to_return.to_cache(overwrite=True)
