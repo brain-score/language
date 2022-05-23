@@ -16,8 +16,9 @@ from langbrainscore.utils.encoder import (
     get_context_groups,
     get_torch_device,
     pick_matching_token_ixs,
-    preprocess_activations,
+    postprocess_activations,
     repackage_flattened_activations,
+    encode_stimuli_in_context,
 )
 
 from langbrainscore.utils.logging import log, get_verbosity
@@ -28,15 +29,14 @@ class HuggingFaceEncoder(_ModelEncoder):
     def __init__(
         self,
         model_id,
-        device=None,
+        emb_aggregation: typing.Union[str, None, typing.Callable],
+        device=get_torch_device(),
         context_dimension: str = None,
         bidirectional: bool = False,
-        emb_aggregation: typing.Union[str, None, typing.Callable] = "last",
         emb_preproc: typing.Tuple[str] = (),
         include_special_tokens: bool = True,
-    ) -> "HuggingFaceEncoder":
+    ):
         """
-        
         Args:
             model_id (str): the model id
             device (None, ?): the device to use
@@ -52,7 +52,6 @@ class HuggingFaceEncoder(_ModelEncoder):
             emb_preproc (tuple): a list of strings specifying preprocessing functions to apply to the aggregated embeddings.
                 Processing is performed layer-wise.
             include_special_tokens (bool): whether to include special tokens in the encoder representations.
-
         """
 
         super().__init__(
@@ -77,7 +76,7 @@ class HuggingFaceEncoder(_ModelEncoder):
             self.model = self.model.to(self.device)
 
     def get_encoder_representations_template(
-        self,
+        self, dataset=None, representations=xr.DataArray()
     ) -> EncoderRepresentations:
         """
         returns an empty `EncoderRepresentations` object with all the appropriate
@@ -85,8 +84,8 @@ class HuggingFaceEncoder(_ModelEncoder):
         later.
         """
         return EncoderRepresentations(
-            dataset=None,
-            representations=xr.DataArray(),  # we don't have these yet
+            dataset=dataset,
+            representations=representations,
             model_id=self._model_id,
             context_dimension=self._context_dimension,
             bidirectional=self._bidirectional,
@@ -125,14 +124,13 @@ class HuggingFaceEncoder(_ModelEncoder):
             to_check_in_cache: EncoderRepresentations = (
                 self.get_encoder_representations_template()
             )
-            to_check_in_cache.dataset = dataset
 
             try:
                 to_check_in_cache.load_cache()
                 return to_check_in_cache
             except FileNotFoundError:
                 log(
-                    f'unable to load cached representations for "{to_check_in_cache.identifier_string}"',
+                    f"couldn't load cached reprs for [{to_check_in_cache.identifier_string}]",
                     cmap="WARN",
                     type="WARN",
                 )
@@ -159,120 +157,28 @@ class HuggingFaceEncoder(_ModelEncoder):
             stimuli_in_context = stimuli[mask_context]
 
             # store model states for each stimulus in this context group
-            states_sentences_across_stimuli = []
+            encoded_stimuli = []
 
             ###############################################################################
             # CONTEXT LOOP
             ###############################################################################
-            for i, stimulus in enumerate(stimuli_in_context):
-
-                # extract stim to encode based on the uni/bi-directional nature of models
-                if not self._bidirectional:
-                    stimuli_directional = stimuli_in_context[: i + 1]
-                else:
-                    stimuli_directional = stimuli_in_context
-
-                # join the stimuli together within a context group using just a single space
-                stimuli_directional = " ".join(stimuli_directional)
-                
-                tokenized_directional_context = self.tokenizer(
-                    stimuli_directional,
-                    padding=False,
-                    return_tensors="pt",
-                    add_special_tokens=True,
-                ).to(self.device)
-
-                # Get the hidden states
-                result_model = self.model(
-                    tokenized_directional_context.input_ids,
-                    output_hidden_states=True,
-                    return_dict=True,
-                )
-
-                # dict with key=layer, value=3D tensor of dims: [batch, tokens, emb size]
-                hidden_states = result_model["hidden_states"]
-
-                layer_wise_activations = dict()
-                
-                # Find which indices match the current stimulus in the given context group
-                start_of_interest = stimuli_directional.find(stimulus)
-                char_span_of_interest = slice(
-                    start_of_interest, start_of_interest + len(stimulus)
-                )
-                token_span_of_interest = pick_matching_token_ixs(
-                    tokenized_directional_context, char_span_of_interest
-                )
-
-                if get_verbosity():
-                    log(
-                        f"Interested in the following stimulus:\n{stimuli_directional[char_span_of_interest]}\n"
-                        f"Recovered:\n{tokenized_directional_context.tokens()[token_span_of_interest]}",
-                        cmap="INFO",
-                        type="INFO",
-                    )
-
-                all_special_ids = set(self.tokenizer.all_special_ids)
-                
-                # Look for special tokens in the beginning and end of the sequence
-                insert_first_upto = 0
-                insert_last_from = tokenized_directional_context.input_ids.shape[-1] # length of the input ids
-                for i, tid in enumerate(tokenized_directional_context.input_ids[0, :]): # loop through input ids
-                    if tid.item() in all_special_ids:
-                        insert_first_upto = i + 1
-                    else:
-                        break
-                for i in range(
-                    1, tokenized_directional_context.input_ids.shape[-1] + 1
-                ):
-                    tid = tokenized_directional_context.input_ids[0, -i]
-                    if tid.item() in all_special_ids:
-                        insert_last_from -= 1
-                    else:
-                        break
-
-                for idx_layer, layer in enumerate(hidden_states):  # Iterate over layers
-                    this_extracted = layer[
-                        :,  # batch (singleton)
-                        token_span_of_interest,  # tokens of the current stimulus of interest
-                        :,  # emb_dim (e.g., 768, 1024, etc)
-                    ].squeeze(
-                        0
-                    )  # collapse batch dim to obtain shape (n_tokens, emb_dim)
-
-                    if self._include_special_tokens:
-                        this_extracted = torch.cat(
-                            [
-                                layer[:, :insert_first_upto, :].squeeze(0), # get the embeddings for the first special tokens
-                                this_extracted,
-                            ],
-                            axis=0,
-                        )
-                        this_extracted = torch.cat(
-                            [
-                                this_extracted,
-                                layer[:, insert_last_from:, :].squeeze(0), # get the embeddings for the last special tokens
-                            ],
-                            axis=0,
-                        )
-
-                    layer_wise_activations[idx_layer] = this_extracted.detach()
-
-                # Aggregate hidden states within a sample
-                # states_sentences_agg is a dict with key = layer, value = array of emb dimension
-                states_sentences_agg = aggregate_layers(
-                    layer_wise_activations, **{"emb_aggregation": self._emb_aggregation}
-                )
-
-                # states_sentences_across_stimuli store all the hidden states for the current context group across all stimuli
-                states_sentences_across_stimuli.append(states_sentences_agg)
-
+            for encoded_stim in encode_stimuli_in_context(
+                stimuli_in_context=stimuli_in_context,
+                tokenizer=self.tokenizer,
+                model=self.model,
+                bidirectional=self._bidirectional,
+                include_special_tokens=self._include_special_tokens,
+                emb_aggregation=self._emb_aggregation,
+                device=self.device,
+            ):
+                encoded_stimuli += [encoded_stim]
             ###############################################################################
             # END CONTEXT LOOP
             ###############################################################################
 
             # Flatten activations across layers and package as xarray
             flattened_activations_and_layer_ids = [
-                *map(flatten_activations_per_sample, states_sentences_across_stimuli)
+                *map(flatten_activations_per_sample, encoded_stimuli)
             ]
             for f_as, l_ids in flattened_activations_and_layer_ids:
                 flattened_activations += [f_as]
@@ -287,27 +193,26 @@ class HuggingFaceEncoder(_ModelEncoder):
         activations_2d = np.vstack(flattened_activations)
         layer_ids_1d = np.squeeze(np.unique(np.vstack(layer_ids), axis=0))
 
-        ###############################################################################
-        # POST-PROCESS ACTIVATIONS
-        ###############################################################################
-        if len(self._emb_preproc) > 0:  # Preprocess activations
-            for p_id in self._emb_preproc:
-                activations_2d, layer_ids_1d = preprocess_activations(
+        # Post-process activations
+        if len(self._emb_preproc) > 0:
+            for mode in self._emb_preproc:
+                activations_2d, layer_ids_1d = postprocess_activations(
                     activations_2d=activations_2d,
                     layer_ids_1d=layer_ids_1d,
-                    emb_preproc_mode=p_id,
+                    emb_preproc_mode=mode,
                 )
 
         assert activations_2d.shape[1] == len(layer_ids_1d)
         assert activations_2d.shape[0] == len(stimuli)
 
         # Package activations as xarray and reapply metadata
-        encoded_dataset = copy_metadata(
-            repackage_flattened_activations(
-                activations_2d=activations_2d,
-                layer_ids_1d=layer_ids_1d,
-                dataset=dataset,
-            ),
+        encoded_dataset: xr.DataArray = repackage_flattened_activations(
+            activations_2d=activations_2d,
+            layer_ids_1d=layer_ids_1d,
+            dataset=dataset,
+        )
+        encoded_dataset: xr.DataArray = copy_metadata(
+            encoded_dataset,
             dataset.contents,
             "sampleid",
         )
@@ -463,7 +368,7 @@ class PTEncoder(_ModelEncoder):
 
     def encode(self, dataset: "langbrainscore.dataset.Dataset") -> xr.DataArray:
         # TODO
-        pass
+        ...
 
 
 class EncoderCheck:

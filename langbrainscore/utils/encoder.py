@@ -3,6 +3,7 @@ import typing
 import numpy as np
 import torch
 import xarray as xr
+
 # from nltk import edit_distance
 
 from langbrainscore.utils.resources import preprocessor_classes
@@ -42,7 +43,9 @@ def flatten_activations_per_sample(activations: dict):
     return arr_flat, np.array(layers_arr)
 
 
-def aggregate_layers(hidden_states: dict, **kwargs):
+def aggregate_layers(
+    hidden_states: dict, mode: typing.Union[str, typing.Callable]
+) -> np.ndarray:
     """Input a hidden states dictionary (key = layer, value = 2D array of n_tokens x emb_dim)
 
     Args:
@@ -54,10 +57,10 @@ def aggregate_layers(hidden_states: dict, **kwargs):
     Returns:
         dict: key = layer, value = array of emb_dim
     """
-    emb_aggregation = kwargs.get("emb_aggregation")
     states_layers = dict()
 
-    # Iterate over layers
+    emb_aggregation = mode
+    # iterate over layers
     for i in hidden_states.keys():
         if emb_aggregation == "last":
             state = hidden_states[i][-1, :]  # get last token
@@ -71,6 +74,8 @@ def aggregate_layers(hidden_states: dict, **kwargs):
             state = torch.sum(hidden_states[i], dim=0)  # sum over tokens
         elif emb_aggregation == "all" or emb_aggregation == None:
             state = hidden_states
+        elif callable(emb_aggregation):
+            state = emb_aggregation(hidden_states[i])
         else:
             raise NotImplementedError("Sentence embedding method not implemented")
 
@@ -110,7 +115,7 @@ def get_context_groups(dataset, context_dimension):
     return context_groups
 
 
-def preprocess_activations(
+def postprocess_activations(
     activations_2d: np.ndarray = None,
     layer_ids_1d: np.ndarray = None,
     emb_preproc_mode: str = "demean",
@@ -161,25 +166,26 @@ def repackage_flattened_activations(
 
 def cos_sim_matrix(A, B):
     """Compute the cosine similarity matrix between two matrices A and B.
-        1 means the two vectors are identical. 0 means they are orthogonal.
-        -1 means they are opposite."""
+    1 means the two vectors are identical. 0 means they are orthogonal.
+    -1 means they are opposite."""
     return (A * B).sum(axis=1) / (A * A).sum(axis=1) ** 0.5 / (B * B).sum(axis=1) ** 0.5
 
 
-
-def pick_matching_token_ixs(batchencoding: 'transformers.tokenization_utils_base.BatchEncoding',
-                        char_span_of_interest: slice) -> slice:
+def pick_matching_token_ixs(
+    batchencoding: "transformers.tokenization_utils_base.BatchEncoding",
+    char_span_of_interest: slice,
+) -> slice:
     """Picks token indices in a tokenized encoded sequence that best correspond to
-        a substring of interest in the original sequence, given by a char span (slice)    
+        a substring of interest in the original sequence, given by a char span (slice)
 
     Args:
         batchencoding (transformers.tokenization_utils_base.BatchEncoding): the output of a
             `tokenizer(text)` call on a single text instance (not a batch, i.e. `tokenizer([text])`).
-        char_span_of_interest (slice): a `slice` object denoting the character indices in the 
+        char_span_of_interest (slice): a `slice` object denoting the character indices in the
             original `text` string we want to extract the corresponding tokens for
 
     Returns:
-        slice: the start and stop indices within an encoded sequence that 
+        slice: the start and stop indices within an encoded sequence that
             best match the `char_span_of_interest`
     """
     from transformers import tokenization_utils_base
@@ -187,26 +193,151 @@ def pick_matching_token_ixs(batchencoding: 'transformers.tokenization_utils_base
     start_token = 0
     end_token = batchencoding.input_ids.shape[-1]
     for i, _ in enumerate(batchencoding.input_ids.reshape(-1)):
-        span = batchencoding[0].token_to_chars(i) # batchencoding 0 gives access to the encoded string
+        span = batchencoding[0].token_to_chars(
+            i
+        )  # batchencoding 0 gives access to the encoded string
 
-        if span is None: # for [CLS], no span is returned
+        if span is None:  # for [CLS], no span is returned
             if get_verbosity():
-                log(f'No span returned for token at {i}: "{batchencoding.tokens()[i]}"',
-                    type='WARN', cmap='WARN')
+                log(
+                    f'No span returned for token at {i}: "{batchencoding.tokens()[i]}"',
+                    type="WARN",
+                    cmap="WARN",
+                )
             continue
-        else: 
+        else:
             span = tokenization_utils_base.CharSpan(*span)
 
         if span.start <= char_span_of_interest.start:
             start_token = i
         if span.end >= char_span_of_interest.stop:
-            end_token = i+1
+            end_token = i + 1
             break
 
-    assert end_token-start_token <= batchencoding.input_ids.shape[-1], f'Extracted span is larger than original span'
+    assert (
+        end_token - start_token <= batchencoding.input_ids.shape[-1]
+    ), f"Extracted span is larger than original span"
 
     return slice(start_token, end_token)
 
+
+def encode_stimuli_in_context(
+    stimuli_in_context,
+    tokenizer: "transformers.AutoTokenizer",
+    model: "transformers.AutoModel",
+    bidirectional: bool,
+    include_special_tokens: bool,
+    emb_aggregation,
+    device=get_torch_device(),
+):
+    """ """
+    ###############################################################################
+    # CONTEXT LOOP
+    ###############################################################################
+    for i, stimulus in enumerate(stimuli_in_context):
+
+        # extract stim to encode based on the uni/bi-directional nature of models
+        if not bidirectional:
+            stimuli_directional = stimuli_in_context[: i + 1]
+        else:
+            stimuli_directional = stimuli_in_context
+
+        # join the stimuli together within a context group using just a single space
+        stimuli_directional = " ".join(stimuli_directional)
+
+        tokenized_directional_context = tokenizer(
+            stimuli_directional,
+            padding=False,
+            return_tensors="pt",
+            add_special_tokens=True,
+        ).to(device)
+
+        # Get the hidden states
+        result_model = model(
+            tokenized_directional_context.input_ids,
+            output_hidden_states=True,
+            return_dict=True,
+        )
+
+        # dict with key=layer, value=3D tensor of dims: [batch, tokens, emb size]
+        hidden_states = result_model["hidden_states"]
+
+        layer_wise_activations = dict()
+
+        # Find which indices match the current stimulus in the given context group
+        start_of_interest = stimuli_directional.find(stimulus)
+        char_span_of_interest = slice(
+            start_of_interest, start_of_interest + len(stimulus)
+        )
+        token_span_of_interest = pick_matching_token_ixs(
+            tokenized_directional_context, char_span_of_interest
+        )
+
+        if get_verbosity():
+            log(
+                f"Interested in the following stimulus:\n{stimuli_directional[char_span_of_interest]}\n"
+                f"Recovered:\n{tokenized_directional_context.tokens()[token_span_of_interest]}",
+                cmap="INFO",
+                type="INFO",
+            )
+
+        all_special_ids = set(tokenizer.all_special_ids)
+
+        # Look for special tokens in the beginning and end of the sequence
+        insert_first_upto = 0
+        insert_last_from = tokenized_directional_context.input_ids.shape[-1]
+        # loop through input ids
+        for i, tid in enumerate(tokenized_directional_context.input_ids[0, :]):
+            if tid.item() in all_special_ids:
+                insert_first_upto = i + 1
+            else:
+                break
+        for i in range(1, tokenized_directional_context.input_ids.shape[-1] + 1):
+            tid = tokenized_directional_context.input_ids[0, -i]
+            if tid.item() in all_special_ids:
+                insert_last_from -= 1
+            else:
+                break
+
+        for idx_layer, layer in enumerate(hidden_states):  # Iterate over layers
+            # b (1), n (tokens), h (768, ...)
+            # collapse batch dim to obtain shape (n_tokens, emb_dim)
+            this_extracted = layer[
+                :,
+                token_span_of_interest,
+                :,
+            ].squeeze(0)
+
+            if include_special_tokens:
+                # get the embeddings for the first special tokens
+                this_extracted = torch.cat(
+                    [
+                        layer[:, :insert_first_upto, :].squeeze(0),
+                        this_extracted,
+                    ],
+                    axis=0,
+                )
+                # get the embeddings for the last special tokens
+                this_extracted = torch.cat(
+                    [
+                        this_extracted,
+                        layer[:, insert_last_from:, :].squeeze(0),
+                    ],
+                    axis=0,
+                )
+
+            layer_wise_activations[idx_layer] = this_extracted.detach()
+
+        # Aggregate hidden states within a sample
+        # aggregated_layerwise_sentence_encodings is a dict with key = layer, value = array of emb dimension
+        aggregated_layerwise_sentence_encodings = aggregate_layers(
+            layer_wise_activations, mode=emb_aggregation
+        )
+        yield aggregated_layerwise_sentence_encodings
+
+    ###############################################################################
+    # END CONTEXT LOOP
+    ###############################################################################
 
 
 # def get_index(tokenizer, supstr_tokens, substr, mode):
