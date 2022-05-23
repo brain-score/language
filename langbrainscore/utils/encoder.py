@@ -338,97 +338,169 @@ def encode_stimuli_in_context(
 # ANALYSIS UTILS: these act upon encoded data, rather than encoders
 ###############################################################################
 
+def get_decomposition_method(method: str = "pca",
+                             n_comp: int = 10,
+                             **kwargs):
+    """
+	Return the sklearn method to use for decomposition.
+
+	Args:
+		method (str): Method to use for decomposition (default: "pca", other options: "mds", "tsne")
+		n_comp (int): Number of components to keep (default: 10)
+
+	Returns:
+		sklearn method
+	"""
+    
+    if method == "pca":
+        from sklearn.decomposition import PCA
+        decomp_method = PCA(n_components=n_comp)
+    
+    elif method == "mds":
+        from sklearn.manifold import MDS
+        decomp_method = MDS(n_components=n_comp)
+    
+    elif method == "tsne":
+        from sklearn.manifold import TSNE
+        decomp_method = TSNE(n_components=n_comp)
+    
+    else:
+        raise ValueError(f"Unknown method: {method}")
+    
+    return decomp_method
 
 def get_explainable_variance(
-    ann_encoded_dataset,
-    method: str = "pca",
-    variance_threshold: float = 0.80,
-    **kwargs,
+        ann_encoded_dataset,
+        method: str = "pca",
+        variance_threshold: float = 0.80,
+        **kwargs,
 ) -> xr.Dataset:
     """
-    Returns how many PCs are needed to explain the variance threshold (default 80%) per layer.
+	Returns how many components are needed to explain the variance threshold (default 80%) per layer.
 
-    TODO: move to `langbrainscore.analysis.?` or make @classmethod
+	Args:
+		ann_encoded_dataset (xr.Dataset): ANN encoded dataset
+		method (str): Method to use for decomposition (default: "pca", other options: "mds", "tsne")
+		variance_threshold (float): Variance threshold to use for determining how many components are needed to
+			explain explained a certain threshold of variance (default: 0.80)
+		**kwargs: Additional keyword arguments to pass to the underlying method
 
-    """
-    # n_embd = self.config.n_embd
+	Returns:
+		variance_across_layers (dict): Nested dict with value of interest as key (e.g., explained variance) and
+			layer id as key (e.g., 0, 1, 2, ...) with corresponding values.
 
+	"""
+    
+    
+    ks = [f'n_comp-{method}_needed-{variance_threshold}', f'first_comp-{method}_explained_variance']
+    variance_across_layers = {k: {} for k in ks}
+    
     # Get the PCA explained variance per layer
     layer_ids = ann_encoded_dataset.layer.values
     _, unique_ixs = np.unique(layer_ids, return_index=True)
-    # Make sure context group order is preserved
+    
+    # Make sure that layer order is preserved
     for layer_id in tqdm(layer_ids[np.sort(unique_ixs)]):
         layer_dataset = (
-            ann_encoded_dataset.isel(neuroid=(ann_encoded_dataset.layer == layer_id))
-            .drop("timeid")
-            .squeeze()
+            ann_encoded_dataset.isel(
+                neuroid=(ann_encoded_dataset.layer == layer_id)
+            )
+                .drop("timeid")
+                .squeeze()
         )
-        # assert layer_dataset.shape[1] == n_embd
-
+        
         # Figure out how many PCs we attempt to fit
         n_comp = np.min([layer_dataset.shape[1], layer_dataset.shape[0]])
-
+        
         # Get explained variance
-        if method == "pca":
-            from sklearn.decomposition import PCA
-
-            decomp = PCA(n_components=n_comp)
-        elif method == "mds":
-            from sklearn.manifold import MDS
-
-            decomp = MDS(n_components=n_comp)
-        elif method == "tsne":
-            from sklearn.manifold import TSNE
-
-            decomp = TSNE(n_components=n_comp)
-        else:
-            raise ValueError(f"Unknown dimensionality reduction method: {method}")
-
-        decomp.fit(layer_dataset.values)
-        explained_variance = decomp.explained_variance_ratio_
-
+        decomp_method = get_decomposition_method(method=method, n_comp=n_comp, **kwargs)
+        
+        decomp_method.fit(layer_dataset.values)
+        explained_variance = decomp_method.explained_variance_ratio_
+        
         # Get the number of PCs needed to explain the variance threshold
         explained_variance_cum = np.cumsum(explained_variance)
         n_pc_needed = np.argmax(explained_variance_cum >= variance_threshold) + 1
-
+        
         # Store per layer
         layer_id = str(layer_id)
         print(
-            f"Layer {layer_id}: {n_pc_needed} PCs needed to explain {variance_threshold} variance"
+            f"Layer {layer_id}: {n_pc_needed} PCs needed to explain {variance_threshold} variance "
+            f"with the 1st PC explaining {explained_variance[0]:.2f}% of the total variance"
         )
+        
+        variance_across_layers[f'n_comp-{method}_needed-{variance_threshold}'][layer_id] = n_pc_needed
+        variance_across_layers[f'first_comp-{method}_explained_variance'][layer_id] = explained_variance[0]
+    
+    return variance_across_layers
 
 
 def get_layer_sparsity(
-    ann_encoded_dataset, zero_threshold: float = 0.0001, **kwargs
+        ann_encoded_dataset,
+        zero_threshold: float = 0.0001, **kwargs
 ) -> xr.Dataset:
     """
-    Check how sparse activations within a given layer are.
+	Check how sparse activations within a given layer are.
 
-    Sparsity is defined as 1 - values below the zero_threshold / total number of values.
+	Sparsity is defined as 1 - values below the zero_threshold / total number of values.
 
-    TODO: move to `langbrainscore.analysis.?` or make @classmethod
-    """
-    # n_embd = self.config.n_embd
+	Args:
+		ann_encoded_dataset (xr.Dataset): ANN encoded dataset
+		zero_threshold (float): Threshold to use for determining sparsity (default: 0.0001)
+		**kwargs: Additional keyword arguments to pass to the underlying method
 
+	Returns:
+		sparsity_across_layers (dict): Nested dict with value of interest as key (e.g., sparsity) and
+			layer id as key (e.g., 0, 1, 2, ...) with corresponding values.
+
+	TODO: move to `langbrainscore.analysis.?` or make @classmethod
+	"""
+    # Obtain embedding dimension (for sanity checks)
+    # if self.model_specs["hidden_emb_dim"]:
+    #     hidden_emb_dim = self.model_specs["hidden_emb_dim"]
+    # else:
+    #     hidden_emb_dim = None
+    #     log(
+    #         f"Hidden embedding dimension not specified yet",
+    #         cmap="WARN",
+    #         type="WARN",
+    #     )
+    
+    ks = [f'sparsity-{zero_threshold}']
+    sparsity_across_layers = {k: {} for k in ks}
+    
     # Get the PCA explained variance per layer
     layer_ids = ann_encoded_dataset.layer.values
     _, unique_ixs = np.unique(layer_ids, return_index=True)
-    # Make sure context group order is preserved
+    
+    # Make sure that layer order is preserved
     for layer_id in tqdm(layer_ids[np.sort(unique_ixs)]):
         layer_dataset = (
-            ann_encoded_dataset.isel(neuroid=(ann_encoded_dataset.layer == layer_id))
-            .drop("timeid")
-            .squeeze()
+            ann_encoded_dataset.isel(
+                neuroid=(ann_encoded_dataset.layer == layer_id)
+            )
+                .drop("timeid")
+                .squeeze()
         )
-        # assert layer_dataset.shape[1] == n_embd
-
+        
+        # if hidden_emb_dim is not None:
+        #     assert layer_dataset.shape[1] == hidden_emb_dim
+        #
         # Get sparsity
-        zero_values = count_zero_threshold_values(layer_dataset.values, zero_threshold)
+        zero_values = count_zero_threshold_values(
+            layer_dataset.values, zero_threshold
+        )
         sparsity = 1 - (zero_values / layer_dataset.size)
-
+        
         # Store per layer
         layer_id = str(layer_id)
         print(f"Layer {layer_id}: {sparsity:.3f} sparsity")
+        
+        sparsity_across_layers[f'sparsity-{zero_threshold}'][layer_id] = sparsity
+    
+    return sparsity_across_layers
+
+
 
 
 def get_anisotropy(ann_encoded_dataset: "EncoderRepresentations"):
