@@ -3,8 +3,7 @@ import typing
 import numpy as np
 import torch
 import xarray as xr
-
-# from nltk import edit_distance
+from tqdm.auto import tqdm
 
 from langbrainscore.utils.resources import preprocessor_classes
 from langbrainscore.utils.logging import log, get_verbosity
@@ -231,9 +230,7 @@ def encode_stimuli_in_context(
     device=get_torch_device(),
 ):
     """ """
-    ###############################################################################
     # CONTEXT LOOP
-    ###############################################################################
     for i, stimulus in enumerate(stimuli_in_context):
 
         # extract stim to encode based on the uni/bi-directional nature of models
@@ -334,25 +331,108 @@ def encode_stimuli_in_context(
             layer_wise_activations, mode=emb_aggregation
         )
         yield aggregated_layerwise_sentence_encodings
-
-    ###############################################################################
     # END CONTEXT LOOP
-    ###############################################################################
 
 
-# def get_index(tokenizer, supstr_tokens, substr, mode):
-#     supstr_tokens = list(supstr_tokens.squeeze())
-#     assert mode in ["start", "stop"]
-#     edit_distances = []
-#     for idx in range(len(supstr_tokens) + 1):
-#         if mode == "start":
-#             candidate_tokens = supstr_tokens[idx:]
-#         else:
-#             candidate_tokens = supstr_tokens[:idx]
-#         candidate = tokenizer.decode(candidate_tokens)
-#         if mode == "start":
-#             comp = candidate[: len(substr)]
-#         else:
-#             comp = candidate[-len(substr) :]
-#         edit_distances.append(edit_distance(comp, substr))
-#     return np.argmin(edit_distances)
+###############################################################################
+# ANALYSIS UTILS: these act upon encoded data, rather than encoders
+###############################################################################
+
+
+def get_explainable_variance(
+    self,
+    ann_encoded_dataset,
+    method: str = "pca",
+    variance_threshold: float = 0.80,
+    **kwargs,
+) -> xr.Dataset:
+    """
+    Returns how many PCs are needed to explain the variance threshold (default 80%) per layer.
+
+    TODO: move to `langbrainscore.analysis.?` or make @classmethod
+
+    """
+    # n_embd = self.config.n_embd
+
+    # Get the PCA explained variance per layer
+    layer_ids = ann_encoded_dataset.layer.values
+    _, unique_ixs = np.unique(layer_ids, return_index=True)
+    # Make sure context group order is preserved
+    for layer_id in tqdm(layer_ids[np.sort(unique_ixs)]):
+        layer_dataset = (
+            ann_encoded_dataset.isel(neuroid=(ann_encoded_dataset.layer == layer_id))
+            .drop("timeid")
+            .squeeze()
+        )
+        # assert layer_dataset.shape[1] == n_embd
+
+        # Figure out how many PCs we attempt to fit
+        n_comp = np.min([layer_dataset.shape[1], layer_dataset.shape[0]])
+
+        # Get explained variance
+        if method == "pca":
+            from sklearn.decomposition import PCA
+
+            method = PCA(n_components=n_comp)
+        elif method == "mds":
+            from sklearn.manifold import MDS
+
+            method = MDS(n_components=n_comp)
+        elif method == "tsne":
+            from sklearn.manifold import TSNE
+
+            method = TSNE(n_components=n_comp)
+        else:
+            raise ValueError(f"Unknown dimensionality reduction method: {method}")
+
+        decomp = method(n_components=n_comp)
+
+        decomp.fit(layer_dataset.values)
+        explained_variance = decomp.explained_variance_ratio_
+
+        # Get the number of PCs needed to explain the variance threshold
+        explained_variance_cum = np.cumsum(explained_variance)
+        n_pc_needed = np.argmax(explained_variance_cum >= variance_threshold) + 1
+
+        # Store per layer
+        layer_id = str(layer_id)
+        print(
+            f"Layer {layer_id}: {n_pc_needed} PCs needed to explain {variance_threshold} variance"
+        )
+
+
+def get_layer_sparsity(
+    self, ann_encoded_dataset, zero_threshold: float = 0.0001, **kwargs
+) -> xr.Dataset:
+    """
+    Check how sparse activations within a given layer are.
+
+    Sparsity is defined as 1 - values below the zero_threshold / total number of values.
+
+    TODO: move to `langbrainscore.analysis.?` or make @classmethod
+    """
+    # n_embd = self.config.n_embd
+
+    # Get the PCA explained variance per layer
+    layer_ids = ann_encoded_dataset.layer.values
+    _, unique_ixs = np.unique(layer_ids, return_index=True)
+    # Make sure context group order is preserved
+    for layer_id in tqdm(layer_ids[np.sort(unique_ixs)]):
+        layer_dataset = (
+            ann_encoded_dataset.isel(neuroid=(ann_encoded_dataset.layer == layer_id))
+            .drop("timeid")
+            .squeeze()
+        )
+        # assert layer_dataset.shape[1] == n_embd
+
+        # Get sparsity
+        zero_values = count_zero_threshold_values(layer_dataset.values, zero_threshold)
+        sparsity = 1 - (zero_values / layer_dataset.size)
+
+        # Store per layer
+        layer_id = str(layer_id)
+        print(f"Layer {layer_id}: {sparsity:.3f} sparsity")
+
+
+def get_anisotropy(ann_encoded_dataset: EncoderRepresentations):
+    raise NotImplementedError
