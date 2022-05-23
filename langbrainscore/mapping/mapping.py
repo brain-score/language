@@ -171,7 +171,8 @@ class LearnedMap(_Mapping):
         if not np.all(X.sampleid.values == Y.sampleid.values):
             raise ValueError("X and Y sampleids do not match!")
 
-        logging.log(f"Passed sampleid check for neuroid {Y.neuroid.values}")
+        if logging.get_verbosity():
+            logging.log(f"Passed sampleid check for neuroid {Y.neuroid.values}")
 
     def _drop_na(
         self, X: xr.DataArray, Y: xr.DataArray, dim: str = "sampleid", **kwargs
@@ -186,9 +187,10 @@ class LearnedMap(_Mapping):
 
         assert set(Y_filtered_ids).issubset(set(X[dim].values))
 
-        logging.log(
-            f"for neuroid {Y_slice.neuroid.values}, we used {(num_retained := len(Y_filtered_ids))} samples; dropped {len(Y[dim]) - num_retained}"
-        )
+        if logging.get_verbosity():
+            logging.log(
+                f"for neuroid {Y_slice.neuroid.values}, we used {(num_retained := len(Y_filtered_ids))} samples; dropped {len(Y[dim]) - num_retained}"
+            )
 
         # use only the samples that are in Y
         X_slice = X.sel(sampleid=Y_filtered_ids)
@@ -223,7 +225,8 @@ class LearnedMap(_Mapping):
 
         X_orig = X.copy(deep=True)
 
-        logging.log(f"OBS: permuting X with method {method}")
+        if logging.get_verbosity():
+            logging.log(f"OBS: permuting X with method {method}")
 
         if method == "shuffle_X_rows":
             X = X.sample(
@@ -261,8 +264,11 @@ class LearnedMap(_Mapping):
         if ceiling:
             n_neuroids = X.neuroid.values.size
             X = Y.copy()
-        logging.log(f"X shape: {X.data.shape}")
-        logging.log(f"Y shape: {Y.data.shape}")
+
+        if logging.get_verbosity():
+            logging.log(f"X shape: {X.data.shape}")
+            logging.log(f"Y shape: {Y.data.shape}")
+
         if self.strat_coord:
             try:
                 assert (X[self.strat_coord].values == Y[self.strat_coord].values).all()
@@ -296,8 +302,8 @@ class LearnedMap(_Mapping):
                     neuroid=X_slice[ceiling_coord] != Y_slice[ceiling_coord]
                 ).dropna(dim="neuroid")
 
-            # We can perform various checks by 'permuting' the source, X
-            # TODO this is a test! do not use under normal workflow!
+            # We can perform various sanity checks by 'permuting' the source, X
+            # NOTE this is a test! do not use under normal workflow!
             if permute_X:
                 X_slice = self._permute_X(X_slice, method=permute_X)
 

@@ -85,7 +85,6 @@ class _Cacheable(typing.Protocol):
                     rep += f"{sep}{key}={ob}"
         return rep + ">"
 
-    # @abstractmethod
     @property
     def identifier_string(self):
         """
@@ -96,7 +95,6 @@ class _Cacheable(typing.Protocol):
         Unless overridden, makes a call to `repr`
         """
         return repr(self)
-        return " ".join(repr(self).split())
 
     def to_cache(
         self,

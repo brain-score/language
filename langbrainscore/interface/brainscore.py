@@ -9,8 +9,8 @@ from langbrainscore.interface.metrics import _Metric
 from langbrainscore.interface.cacheable import _Cacheable
 
 
-# TODO: class _BrainScore(_Cacheable, ABC):
-class _BrainScore(ABC):
+class _BrainScore(_Cacheable, ABC):
+    # class _BrainScore(ABC):
     """
     evaluates a `Mapping` of `X` and `Y` using `Metric`
     """
