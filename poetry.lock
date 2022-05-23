@@ -1347,7 +1347,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "3.8.*"
-content-hash = "56f86ad558b6c58fb52174f89acaf0f04bf37c18bb857ebc96a4fc459b5f1c7b"
+content-hash = "965610be4c4c4104833aa13a22126662d0a922ced09098310cd0b122cc0bca49"
 
 [metadata.files]
 appnope = [

@@ -37,6 +37,7 @@ randomname = "^0.1.5"
 pyarrow = "^8.0.0"
 fastparquet = "^0.8.1"
 black = "^22.3.0"
+joblib = "^1.1.0"
 
 [tool.poetry.dev-dependencies]
 pdoc3 = "^0.10.0"
