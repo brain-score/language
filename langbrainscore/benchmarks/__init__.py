@@ -1,2 +1,1 @@
-
-from langbrainscore.benchmarks.pereira2018 import pereira2018_nat_stories
+from langbrainscore.benchmarks.pereira2018 import pereira2018_mean_froi_nat_stories
