@@ -7,10 +7,13 @@ from langbrainscore.utils.logging import log
 from langbrainscore.utils.xarray import collapse_multidim_coord
 
 
-def pereira2018_nat_stories():
-    
-    source = Path(__file__).parents[2] / 'data/Pereira_FirstSession_TrialEffectSizes_20220223.csv'
-    mpf = pd.read_csv(source) 
+def pereira2018_mean_froi_nat_stories():
+
+    source = (
+        Path(__file__).parents[2]
+        / "data/Pereira_FirstSession_TrialEffectSizes_20220223.csv"
+    )
+    mpf = pd.read_csv(source)
     mpf = mpf.sort_values(by=["UID", "Session", "Experiment", "Stim"])
     subj_xrs = []
     neuroidx = 0
@@ -65,7 +68,7 @@ def pereira2018_nat_stories():
     mpf_xr = collapse_multidim_coord(mpf_xr, "experiment", "sampleid")
     mpf_xr = collapse_multidim_coord(mpf_xr, "session", "neuroid")
 
-    mpf_xr.attrs['source'] = str(source)
-    mpf_xr.attrs['name'] = f'Pereira2018NatStories'
+    mpf_xr.attrs["source"] = str(source)
+    mpf_xr.attrs["name"] = f"Pereira2018NatStories"
 
     return mpf_xr
