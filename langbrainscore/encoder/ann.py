@@ -23,6 +23,7 @@ from langbrainscore.utils.encoder import (
 
 from langbrainscore.utils.logging import log, get_verbosity
 from langbrainscore.utils.xarray import copy_metadata, fix_xr_dtypes
+from langbrainscore.utils.resources import model_classes, config_name_mappings
 
 
 class HuggingFaceEncoder(_ModelEncoder):
@@ -228,23 +229,28 @@ class HuggingFaceEncoder(_ModelEncoder):
 
     def get_modelcard(self):
         """
-        Returns the model card of the model
-        NOT DONE!!!
-        """
-
-        # Obtain number of layers
-        d_config = self.config.to_dict()
-
-        config_specs_of_interest = [
-            "n_layer",
-            "n_ctx",
-            "n_embd",
-            "n_head",
-            "vocab_size",
-        ]
-
-        config_specs = {k: d_config.get(k, None) for k in config_specs_of_interest}
-        # Evaluate each layer
+		Returns the model card of the model (model-wise, and not layer-wise)
+		"""
+    
+        model_classes = ['gpt', 'bert']  # continuously update based on new model classes supported
+    
+        # based on the model_id, figure out which model class it is
+        model_class = [x for x in model_classes if x in self._model_id][0]
+        assert model_class is not None, f"model_id {self._model_id} not supported"
+    
+        config_specs_of_interest = config_name_mappings[model_class]
+    
+        model_specs = {}
+        for k_spec, v_spec in config_specs_of_interest.items():  # key is the name we want to use in the model card,
+            # value is the name in the config
+            if v_spec is not None:
+                model_specs[k_spec] = getattr(self.config, v_spec)
+            else:
+                model_specs[k_spec] = None
+    
+        self.model_specs = model_specs
+    
+        return model_specs
 
 
 class PTEncoder(_ModelEncoder):
