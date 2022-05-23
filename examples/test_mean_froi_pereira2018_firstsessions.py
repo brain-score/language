@@ -77,18 +77,22 @@ def main():
     # mpf_xr = pereira2018.pereira2018_mean_froi_nat_stories()
     mpf_xr = package_mean_froi_pereira2018_firstsess()
 
-    try:
-        mpf_dataset = lbs.dataset.Dataset(
-            xr.DataArray(),
-            dataset_name="Pereira2018LangfROIs",
-            _skip_checks=True,
-        )
-        mpf_dataset.load_cache()
-    except FileNotFoundError:
-        mpf_dataset = lbs.dataset.Dataset(
-            mpf_xr.isel(neuroid=mpf_xr.roi.str.contains("Lang")),
-            dataset_name="Pereira2018LangfROIs",
-        )
+    # try:
+    #     mpf_dataset = lbs.dataset.Dataset(
+    #         xr.DataArray(),
+    #         dataset_name="Pereira2018LangfROIs",
+    #         _skip_checks=True,
+    #     )
+    #     mpf_dataset.load_cache()
+    # except FileNotFoundError:
+    #     mpf_dataset = lbs.dataset.Dataset(
+    #         mpf_xr.isel(neuroid=mpf_xr.roi.str.contains("Lang")),
+    #         dataset_name="Pereira2018LangfROIs",
+    #     )
+    mpf_dataset = lbs.dataset.Dataset(
+        mpf_xr.isel(neuroid=mpf_xr.roi.str.contains("Lang")),
+        dataset_name="Pereira2018LangfROIs",
+    )
 
     log(f"stimuli: {mpf_dataset.stimuli.values}")
     # mpf_dataset.to_cache("test_mpf_dataset_cache", cache_dir="./cache")
@@ -133,9 +137,10 @@ def main():
     rdg_cv_kfold = lbs.mapping.LearnedMap("linridge_cv", k_fold=5)
     fisher = lbs.metrics.Metric(lbs.metrics.FisherCorr)
     brsc_rdg_corr = lbs.BrainScore(ann_enc_mpf, brain_enc_mpf, rdg_cv_kfold, fisher)
-    brsc_rdg_corr.run(sample_split_coord="experiment")
+    brsc_rdg_corr.run(sample_split_coord="experiment", calc_nulls=True, iters=5)
     log(f"brainscore (rdg, fisher) = {brsc_rdg_corr.scores.mean()}")
     log(f"ceiling (rdg, fisher) = {brsc_rdg_corr.ceilings.mean()}")
+    log(f"null (rdg, fisher) = {brsc_rdg_corr.nulls.mean()}")
 
     i_map = lbs.mapping.IdentityMap(nan_strategy="drop")
     cka = lbs.metrics.Metric(lbs.metrics.CKA)
