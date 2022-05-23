@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import xarray as xr
 from tqdm.auto import tqdm
+import random
 
 from langbrainscore.utils.resources import preprocessor_classes
 from langbrainscore.utils.logging import log, get_verbosity
@@ -453,7 +454,6 @@ def get_layer_sparsity(
 		sparsity_across_layers (dict): Nested dict with value of interest as key (e.g., sparsity) and
 			layer id as key (e.g., 0, 1, 2, ...) with corresponding values.
 
-	TODO: move to `langbrainscore.analysis.?` or make @classmethod
 	"""
     # Obtain embedding dimension (for sanity checks)
     # if self.model_specs["hidden_emb_dim"]:
@@ -501,7 +501,74 @@ def get_layer_sparsity(
     return sparsity_across_layers
 
 
+def cos_contrib(emb1: np.ndarray,
+                emb2: np.ndarray,):
+    """
+    Cosine contribution function defined in eq. 3 by Timkey & van Schijndel (2021): https://arxiv.org/abs/2109.04404
+
+    Args:
+        emb1 (np.ndarray): Embedding vector 1
+        emb2 (np.ndarray): Embedding vector 2
+        
+    Returns:
+        cos_contrib (float): Cosine contribution
+        
+    """
+    
+    numerator_terms = emb1 * emb2
+    denom = np.linalg.norm(emb1) * np.linalg.norm(emb2)
+    return numerator_terms / denom
 
 
-def get_anisotropy(ann_encoded_dataset: "EncoderRepresentations"):
-    raise NotImplementedError
+def get_anisotropy(ann_encoded_dataset: "EncoderRepresentations",
+                   num_random_samples: int = 1000):
+    """
+    Calculate the anisotropy of the embedding vectors as Timkey & van Schijndel (2021): https://arxiv.org/abs/2109.04404
+    (base function from their GitHub repo: https://github.com/wtimkey/rogue-dimensions/blob/main/replication.ipynb,
+    but modified to work within the Language Brain-Score project)
+    
+
+    """
+    rogue_dist = []
+    num_toks = len(ann_encoded_dataset.sampleid) # Number of stimuli
+
+    # randomly sample embedding pairs to compute avg. cosine similiarity contribution
+    random_pairs = [random.sample(range(num_toks), 2) for i in range(num_random_samples)]
+    
+    cos_contribs_by_layer = []
+
+    layer_ids = ann_encoded_dataset.layer.values
+    _, unique_ixs = np.unique(layer_ids, return_index=True)
+
+    for layer_id in tqdm(layer_ids[np.sort(unique_ixs)]):
+        layer_dataset = (
+            ann_encoded_dataset.isel(
+                neuroid=(ann_encoded_dataset.layer == layer_id)
+            )
+                .drop("timeid")
+                .squeeze()
+        )
+    
+        layer_cosine_contribs = []
+        layer_rogue_cos_contribs = []
+        for pair in random_pairs:
+            emb1 = sample_data[layer, pair[0], :] # fix
+            emb2 = sample_data[layer, pair[1], :]
+            layer_cosine_contribs.append(cos_contrib(emb1, emb2))
+        
+        layer_cosine_contribs = np.array(layer_cosine_contribs)
+        layer_cosine_sims = layer_cosine_contribs.sum(axis=1)
+        layer_cosine_contribs_mean = layer_cosine_contribs.mean(axis=0)
+        cos_contribs_by_layer.append(layer_cosine_contribs_mean)
+    cos_contribs_by_layer = np.array(cos_contribs_by_layer)
+    
+    aniso = cos_contribs_by_layer.sum(axis=1)  # total anisotropy, measured as avg. cosine sim between random emb. pairs
+    
+    
+    
+    for layer in range(num_layers[model_name]):
+        top_3_dims = np.argsort(cos_contribs_by_layer[layer])[-3:]
+        top = cos_contribs_by_layer[layer, top_3_dims[2]] / aniso[layer]
+        second = cos_contribs_by_layer[layer, top_3_dims[1]] / aniso[layer]
+        third = cos_contribs_by_layer[layer, top_3_dims[0]] / aniso[layer]
+        print("& {} & {:.3f} & {:.3f} & {:.3f} & {:.3f} \\\\".format(layer, top, second, third, aniso[layer]))
