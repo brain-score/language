@@ -122,7 +122,7 @@ class HuggingFaceEncoder(_ModelEncoder):
 
         if read_cache:
             to_check_in_cache: EncoderRepresentations = (
-                self.get_encoder_representations_template()
+                self.get_encoder_representations_template(dataset=dataset)
             )
 
             try:
