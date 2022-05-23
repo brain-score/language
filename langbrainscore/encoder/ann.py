@@ -226,20 +226,6 @@ class HuggingFaceEncoder(_ModelEncoder):
 
         return to_return
 
-    def get_special_token_offset(self) -> int:
-        """
-        the offset (no. of tokens in tokenized text) from the start to exclude
-        when extracting the representation of a particular stimulus. this is
-        needed when the stimulus is evaluated in a context group to achieve
-        correct boundaries (otherwise we get off-by-context errors)
-        """
-        with_special_tokens = self.tokenizer("brainscore")["input_ids"]
-        first_token_id, *_ = self.tokenizer("brainscore", add_special_tokens=False)[
-            "input_ids"
-        ]
-        special_token_offset = with_special_tokens.index(first_token_id)
-        return special_token_offset
-
     def get_modelcard(self):
         """
         Returns the model card of the model
@@ -258,7 +244,6 @@ class HuggingFaceEncoder(_ModelEncoder):
         ]
 
         config_specs = {k: d_config.get(k, None) for k in config_specs_of_interest}
-
         # Evaluate each layer
 
     def get_explainable_variance(
