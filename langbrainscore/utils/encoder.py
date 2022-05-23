@@ -434,5 +434,5 @@ def get_layer_sparsity(
         print(f"Layer {layer_id}: {sparsity:.3f} sparsity")
 
 
-def get_anisotropy(ann_encoded_dataset: EncoderRepresentations):
+def get_anisotropy(ann_encoded_dataset: "EncoderRepresentations"):
     raise NotImplementedError
