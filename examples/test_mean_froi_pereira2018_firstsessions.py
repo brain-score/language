@@ -122,8 +122,9 @@ def main():
 
     # Model card
     ann_modelcard = ann_enc.get_modelcard()
-    lbs.utils.encoder.get_layer_sparsity(ann_encoded_dataset=ann_enc_mpf)
-    lbs.utils.encoder.get_explainable_variance(ann_encoded_dataset=ann_enc_mpf)
+    modelcard_layers_variance = lbs.utils.encoder.get_layer_sparsity(ann_encoded_dataset=ann_enc_mpf)
+    modelcard_layers_sparsity = lbs.utils.encoder.get_explainable_variance(ann_encoded_dataset=ann_enc_mpf)
+
 
     # Initialize mapping and metric
     ann_enc_mpf = ann_enc_mpf.isel(
