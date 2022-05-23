@@ -154,7 +154,7 @@ class Dataset(_Dataset):
 
         import pandas as pd
 
-        if file_path_or_url.endswith(".parquet.gzip"):
+        if str(file_path_or_url).endswith(".parquet.gzip"):
             try:
                 df = pd.read_parquet(file_path_or_url)
             except Exception as invalid_file:
