@@ -16,7 +16,7 @@ from langbrainscore.utils.xarray import collapse_multidim_coord
 
 def package_mean_froi_pereira2018_firstsess():
     mpf = pd.read_csv(
-        f"{Path(__file__).parents[1] / 'data/Pereira_FirstSession_TrialEffectSizes_20220223.csv'}"
+        f"{Path(__file__).resolve().parents[1] / 'data/Pereira_FirstSession_TrialEffectSizes_20220223.csv'}"
     )
     # mpf = pd.read_csv(f"{'../data/Pereira_FirstSession_TrialEffectSizes_20220223.csv'}")
     mpf = mpf.sort_values(by=["UID", "Session", "Experiment", "Stim"])
