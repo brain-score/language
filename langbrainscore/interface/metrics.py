@@ -5,8 +5,8 @@ import numpy as np
 from langbrainscore.interface.cacheable import _Cacheable
 
 
-# TODO: class _Metric(_Cacheable, ABC):
-class _Metric(ABC):
+class _Metric(_Cacheable, ABC):
+    # class _Metric(ABC):
     """
     checks that two arrays are comparable for a given similarity metric,
     then applies that metric to those inputs and returns score(s)
