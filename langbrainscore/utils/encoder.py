@@ -340,7 +340,6 @@ def encode_stimuli_in_context(
 
 
 def get_explainable_variance(
-    self,
     ann_encoded_dataset,
     method: str = "pca",
     variance_threshold: float = 0.80,
@@ -373,19 +372,17 @@ def get_explainable_variance(
         if method == "pca":
             from sklearn.decomposition import PCA
 
-            method = PCA(n_components=n_comp)
+            decomp = PCA(n_components=n_comp)
         elif method == "mds":
             from sklearn.manifold import MDS
 
-            method = MDS(n_components=n_comp)
+            decomp = MDS(n_components=n_comp)
         elif method == "tsne":
             from sklearn.manifold import TSNE
 
-            method = TSNE(n_components=n_comp)
+            decomp = TSNE(n_components=n_comp)
         else:
             raise ValueError(f"Unknown dimensionality reduction method: {method}")
-
-        decomp = method(n_components=n_comp)
 
         decomp.fit(layer_dataset.values)
         explained_variance = decomp.explained_variance_ratio_
@@ -402,7 +399,7 @@ def get_explainable_variance(
 
 
 def get_layer_sparsity(
-    self, ann_encoded_dataset, zero_threshold: float = 0.0001, **kwargs
+    ann_encoded_dataset, zero_threshold: float = 0.0001, **kwargs
 ) -> xr.Dataset:
     """
     Check how sparse activations within a given layer are.
