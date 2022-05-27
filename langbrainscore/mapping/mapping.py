@@ -97,9 +97,10 @@ class LearnedMap(_Mapping):
         #     assert hasattr(mapping_class(), "fit")
         #     assert hasattr(mapping_class(), "predict")
 
-        # TODO: what is the difference between these two? make this less confusing
+        # TODO: what is the difference between these two (model; full_model)? let's make this less
+        # confusing
         self.full_model = _mapping_class(**self.mapping_params)
-        self.model = mapping_class(**self.mapping_params)
+        self.model = _mapping_class(**self.mapping_params)
         logging.log(f"initialized Mapping with {type(self.model)}!")
 
     @staticmethod
