@@ -5,8 +5,8 @@ import torch
 import xarray as xr
 from tqdm.auto import tqdm
 
-from langbrainscore.utils.resources import preprocessor_classes
-from langbrainscore.utils.logging import log, get_verbosity
+from langbrainscore.utils.preprocessing import preprocessor_classes
+from langbrainscore.utils.logging import log
 
 
 def count_zero_threshold_values(
@@ -114,10 +114,14 @@ def get_context_groups(dataset, context_dimension):
     return context_groups
 
 
+def preprocess_activations(*args, **kwargs):
+    return postprocess_activations(*args, **kwargs)
+
+
 def postprocess_activations(
     activations_2d: np.ndarray = None,
     layer_ids_1d: np.ndarray = None,
-    emb_preproc_mode: str = "demean",
+    emb_preproc_mode: str = None,  # "demean",
 ):
 
     activations_processed = []
@@ -197,12 +201,12 @@ def pick_matching_token_ixs(
         )  # batchencoding 0 gives access to the encoded string
 
         if span is None:  # for [CLS], no span is returned
-            if get_verbosity():
-                log(
-                    f'No span returned for token at {i}: "{batchencoding.tokens()[i]}"',
-                    type="WARN",
-                    cmap="WARN",
-                )
+            log(
+                f'No span returned for token at {i}: "{batchencoding.tokens()[i]}"',
+                type="WARN",
+                cmap="WARN",
+                verbosity_check=True,
+            )
             continue
         else:
             span = tokenization_utils_base.CharSpan(*span)
@@ -270,13 +274,13 @@ def encode_stimuli_in_context(
             tokenized_directional_context, char_span_of_interest
         )
 
-        if get_verbosity():
-            log(
-                f"Interested in the following stimulus:\n{stimuli_directional[char_span_of_interest]}\n"
-                f"Recovered:\n{tokenized_directional_context.tokens()[token_span_of_interest]}",
-                cmap="INFO",
-                type="INFO",
-            )
+        log(
+            f"Interested in the following stimulus:\n{stimuli_directional[char_span_of_interest]}\n"
+            f"Recovered:\n{tokenized_directional_context.tokens()[token_span_of_interest]}",
+            cmap="INFO",
+            type="INFO",
+            verbosity_check=True,
+        )
 
         all_special_ids = set(tokenizer.all_special_ids)
 
