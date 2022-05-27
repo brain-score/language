@@ -1,6 +1,7 @@
 import typing
 from functools import partial
 
+from tqdm.auto import tqdm
 import numpy as np
 import xarray as xr
 from sklearn.cross_decomposition import PLSRegression
@@ -294,7 +295,8 @@ class LearnedMap(_Mapping):
         # Loop across each Y neuroid (target)
         test = []
         pred = []
-        for neuroid in Y.neuroid.values:
+        # TODO: parallelize using order-preserving joblib-mapping
+        for neuroid in tqdm(Y.neuroid.values, desc="fitting a model per neuroid"):
 
             Y_neuroid = Y.sel(neuroid=neuroid)
 
