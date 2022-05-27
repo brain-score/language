@@ -1,6 +1,6 @@
 import langbrainscore
 import xarray as xr
-from langbrainscore.interface.encoder import _Encoder
+from langbrainscore.interface.encoder import _Encoder, EncoderRepresentations
 
 
 class BrainEncoder(_Encoder):
@@ -9,12 +9,26 @@ class BrainEncoder(_Encoder):
     `langbrainscore.dataset.Dataset` object and maintains the Encoder interface.
     """
 
-    def __init__(self) -> "BrainEncoder":
-        pass
+    def __init__(
+        self, modality: str = None, aggregate_time: bool = False
+    ) -> "BrainEncoder":
+        """Initialize a BrainEncoder
+
+        Args:
+            modality (str, optional): The modality/type of human data. Defaults to None.
+            aggregate_time (bool, optional): Whether we should aggregate timeid dimension of the
+                data during encoding. Defaults to False.
+
+        Returns:
+            BrainEncoder: _description_
+        """
+        self._modality = modality
+        self._aggregate_time = aggregate_time
 
     def encode(
-        self, dataset: langbrainscore.dataset.Dataset, average_time: bool = False,
-    ) -> xr.DataArray:
+        self,
+        dataset: langbrainscore.dataset.Dataset,
+    ) -> EncoderRepresentations:
         """
         returns human measurements related to stimuli (passed in as a Dataset)
 
@@ -25,11 +39,14 @@ class BrainEncoder(_Encoder):
             xr.DataArray: contents of brain dataset
         """
         self._check_dataset_interface(dataset)
-        if average_time:
+        if self._aggregate_time:
             dim = "timeid"
             return (
                 dataset.contents.mean(dim)
                 .expand_dims(dim, 2)
                 .assign_coords({dim: (dim, [0])})
             )
-        return dataset.contents
+        # return dataset.contents
+        return EncoderRepresentations(
+            dataset=dataset, representations=dataset.contents, model_id=self._modality
+        )
