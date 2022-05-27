@@ -15,6 +15,7 @@ from langbrainscore.utils.xarray import collapse_multidim_coord, copy_metadata
 class BrainScore(_BrainScore):
     scores = None
     ceilings = None
+    nulls = []
 
     def __init__(
         self,
@@ -56,17 +57,19 @@ class BrainScore(_BrainScore):
         return metric(A, B)
 
     # @lru_cache(maxsize=None)
-    def score(self, ceiling=False, sample_split_coord=None, neuroid_split_coord=None):
+    def score(
+        self,
+        ceiling=False,
+        null=False,
+        sample_split_coord=None,
+        neuroid_split_coord=None,
+        seed=0,
+    ):
         """
         Computes The BrainScore™ (/s) using predictions/outputs returned by a
         Mapping instance which is a member attribute of a BrainScore instance
         """
-        if not ceiling:
-            if self.scores is not None:
-                return self.scores
-        else:
-            if self.ceilings is not None:
-                return self.ceilings
+        assert not (ceiling and null)
 
         if sample_split_coord:
             assert sample_split_coord in self.Y.coords
@@ -74,9 +77,18 @@ class BrainScore(_BrainScore):
         if neuroid_split_coord:
             assert neuroid_split_coord in self.Y.coords
 
-        y_pred, y_true = self.mapping.fit_transform(self.X, self.Y, ceiling=ceiling)
+        X = self.X
+        if null:
+            y_shuffle = self.Y.copy()
+            y_shuffle.data = np.random.default_rng(seed=seed).permutation(
+                y_shuffle.data, axis=0
+            )
+            Y = y_shuffle
+        else:
+            Y = self.Y
+        y_pred, y_true = self.mapping.fit_transform(X, Y, ceiling=ceiling)
 
-        if not ceiling:
+        if not (ceiling or null):
             self.Y_pred = y_pred
             if y_pred.shape == y_true.shape:  # not IdentityMap
                 self.Y_pred = copy_metadata(self.Y_pred, self.Y, "sampleid")
@@ -171,25 +183,60 @@ class BrainScore(_BrainScore):
             scores = copy_metadata(scores, self.Y, "neuroid")
         scores = copy_metadata(scores, self.Y, "timeid")
 
-        if not ceiling:
+        if not (ceiling or null):
             self.scores = scores
-        else:
+        elif ceiling:
             self.ceilings = scores
+        else:
+            self.nulls.append(
+                scores.expand_dims(dim={"iter": [seed]}, axis=-1).assign_coords(
+                    iter=[seed]
+                )
+            )
 
     def ceiling(self, sample_split_coord=None, neuroid_split_coord=None):
-        return self.score(
+        logging.log("Calculating ceiling.", type="INFO")
+        self.score(
             ceiling=True,
             sample_split_coord=sample_split_coord,
             neuroid_split_coord=neuroid_split_coord,
         )
 
-    def run(self, sample_split_coord=None, neuroid_split_coord=None):
-        scores = self.score(
+    def null(self, sample_split_coord=None, neuroid_split_coord=None, iters=100):
+        for i in range(iters):
+            logging.log(f"Running null permutations: {i+1} of {iters}", type="INFO")
+            self.score(
+                null=True,
+                sample_split_coord=sample_split_coord,
+                neuroid_split_coord=neuroid_split_coord,
+                seed=i,
+            )
+        self.nulls = xr.concat(self.nulls, dim="iter")
+
+    def run(
+        self,
+        sample_split_coord=None,
+        neuroid_split_coord=None,
+        calc_nulls=False,
+        iters=100,
+    ):
+        self.score(
             sample_split_coord=sample_split_coord,
             neuroid_split_coord=neuroid_split_coord,
         )
-        ceilings = self.ceiling(
+        self.ceiling(
             sample_split_coord=sample_split_coord,
             neuroid_split_coord=neuroid_split_coord,
         )
-        return {"scores": scores, "ceilings": ceilings}
+        if calc_nulls:
+            self.null(
+                sample_split_coord=sample_split_coord,
+                neuroid_split_coord=neuroid_split_coord,
+                iters=iters,
+            )
+            return {
+                "scores": self.scores,
+                "ceilings": self.ceilings,
+                "nulls": self.nulls,
+            }
+        return {"scores": self.scores, "ceilings": self.ceilings}

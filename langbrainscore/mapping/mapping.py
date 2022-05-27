@@ -203,60 +203,60 @@ class LearnedMap(_Mapping):
 
         return X_slice, Y_slice
 
-    def _permute_X(
-        self,
-        X: xr.DataArray,
-        method: str = "shuffle_X_rows",
-        random_state: int = 42,
-    ):
-        """Permute the features of X.
-
-        Parameters
-        ----------
-        X : xr.DataArray
-                The embeddings to be permuted
-        method : str
-                The method to use for permutation.
-                'shuffle_X_rows' : Shuffle the rows of X (=shuffle the sentences and create a mismatch between the sentence embeddings and target)
-                'shuffle_each_X_col': For each column (=feature/unit) of X, permute that feature's values across all sentences.
-                                                          Retains the statistics of the original features (e.g., mean per feature) but the values of the features are shuffled for each sentence.
-        random_state : int
-                The seed for the random number generator.
-
-        Returns
-        -------
-        xr.DataArray
-                The permuted dataarray
-        """
-
-        X_orig = X.copy(deep=True)
-
-        if logging.get_verbosity():
-            logging.log(f"OBS: permuting X with method {method}")
-
-        if method == "shuffle_X_rows":
-            X = X.sample(
-                n=X.shape[1], random_state=random_state
-            )  # check whether X_shape is correct
-
-        elif method == "shuffle_each_X_col":
-            np.random.seed(random_state)
-            for feat in X.data.shape[0]:  # per neuroid
-                np.random.shuffle(X.data[feat, :])
-
-        else:
-            raise ValueError(f"Invalid method: {method}")
-
-        assert X.shape == X_orig.shape
-        assert np.all(X.data != X_orig.data)
-
-        return X
+    # def _permute_X(
+    #     self,
+    #     X: xr.DataArray,
+    #     method: str = "shuffle_X_rows",
+    #     random_state: int = 42,
+    # ):
+    #     """Permute the features of X.
+    #
+    #     Parameters
+    #     ----------
+    #     X : xr.DataArray
+    #             The embeddings to be permuted
+    #     method : str
+    #             The method to use for permutation.
+    #             'shuffle_X_rows' : Shuffle the rows of X (=shuffle the sentences and create a mismatch between the sentence embeddings and target)
+    #             'shuffle_each_X_col': For each column (=feature/unit) of X, permute that feature's values across all sentences.
+    #                                                       Retains the statistics of the original features (e.g., mean per feature) but the values of the features are shuffled for each sentence.
+    #     random_state : int
+    #             The seed for the random number generator.
+    #
+    #     Returns
+    #     -------
+    #     xr.DataArray
+    #             The permuted dataarray
+    #     """
+    #
+    #     X_orig = X.copy(deep=True)
+    #
+    #     if logging.get_verbosity():
+    #         logging.log(f"OBS: permuting X with method {method}")
+    #
+    #     if method == "shuffle_X_rows":
+    #         X = X.sample(
+    #             n=X.shape[1], random_state=random_state
+    #         )  # check whether X_shape is correct
+    #
+    #     elif method == "shuffle_each_X_col":
+    #         np.random.seed(random_state)
+    #         for feat in X.data.shape[0]:  # per neuroid
+    #             np.random.shuffle(X.data[feat, :])
+    #
+    #     else:
+    #         raise ValueError(f"Invalid method: {method}")
+    #
+    #     assert X.shape == X_orig.shape
+    #     assert np.all(X.data != X_orig.data)
+    #
+    #     return X
 
     def fit_transform(
         self,
         X: xr.DataArray,
         Y: xr.DataArray,
-        permute_X: typing.Union[bool, str] = False,
+        # permute_X: typing.Union[bool, str] = False,
         ceiling: bool = False,
         ceiling_coord: str = "subject",
     ) -> typing.Tuple[xr.DataArray, xr.DataArray]:
@@ -311,14 +311,14 @@ class LearnedMap(_Mapping):
 
             # We can perform various sanity checks by 'permuting' the source, X
             # NOTE this is a test! do not use under normal workflow!
-            if permute_X:
-                logging.log(
-                    f"`permute_X` flag is enabled. only do this in an adversarial setting.",
-                    cmap="WARN",
-                    type="WARN",
-                    verbosity_check=True,
-                )
-                X_slice = self._permute_X(X_slice, method=permute_X)
+            # if permute_X:
+            #     logging.log(
+            #         f"`permute_X` flag is enabled. only do this in an adversarial setting.",
+            #         cmap="WARN",
+            #         type="WARN",
+            #         verbosity_check=True,
+            #     )
+            #     X_slice = self._permute_X(X_slice, method=permute_X)
 
             # these collections store each split for our records later
             # TODO we aren't saving this to the object instance yet
