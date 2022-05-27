@@ -94,7 +94,6 @@ def main():
         dataset_name="Pereira2018LangfROIs",
     )
 
-    log(f"stimuli: {mpf_dataset.stimuli.values}")
     # mpf_dataset.to_cache("test_mpf_dataset_cache", cache_dir="./cache")
     # mpf_dataset = lbs.dataset.Dataset.from_cache(
     #     "test_mpf_dataset_cache", cache_dir="./cache"
@@ -126,9 +125,12 @@ def main():
 
     # Model card
     ann_modelcard = ann_enc.get_modelcard()
-    modelcard_layers_variance = lbs.utils.encoder.get_layer_sparsity(ann_encoded_dataset=ann_enc_mpf)
-    modelcard_layers_sparsity = lbs.utils.encoder.get_explainable_variance(ann_encoded_dataset=ann_enc_mpf)
-
+    modelcard_layers_variance = lbs.utils.encoder.get_layer_sparsity(
+        ann_encoded_dataset=ann_enc_mpf
+    )
+    modelcard_layers_sparsity = lbs.utils.encoder.get_explainable_variance(
+        ann_encoded_dataset=ann_enc_mpf
+    )
 
     # Initialize mapping and metric
     ann_enc_mpf = ann_enc_mpf.isel(
