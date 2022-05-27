@@ -5,8 +5,9 @@ from pathlib import Path
 
 import numpy as np
 import xarray as xr
+from joblib import Parallel, delayed
 from langbrainscore.interface import _Dataset
-from langbrainscore.utils.logging import log, get_verbosity
+from langbrainscore.utils.logging import log
 from langbrainscore.utils.xarray import collapse_multidim_coord
 from tqdm import tqdm
 
@@ -80,6 +81,7 @@ class Dataset(_Dataset):
         ] = None,
         sort_by: typing.Iterable[str] = (),
         sep=",",
+        parallel: int = -2,
     ) -> _Dataset:
         """Creates a Dataset object holding an `xr.DataArray` instance using a CSV file readable by pandas.
             Constructs the `xr.DataArray` using specified columns to construct dimensions and
@@ -144,8 +146,7 @@ class Dataset(_Dataset):
             try:
                 first_thing = next(iter(arr))
             except StopIteration:
-                if get_verbosity():
-                    log(f'failed to obtain value from {arr}')
+                log(f"failed to obtain value from {arr}", verbosity_check=True)
                 return np.nan
             for each_thing in arr:
                 if first_thing != each_thing:
@@ -179,6 +180,8 @@ class Dataset(_Dataset):
             # correspond to subject == 0 per sample
             subject_column = ["subject0"] * len(df)
             df[subject_index] = subject_column
+        if not parallel:
+            parallel = 1
 
         subjects = list(set(df[subject_index]))
         sampleids = list(
@@ -201,8 +204,7 @@ class Dataset(_Dataset):
             [*sort_by, subject_index, sampleid_index, neuroid_index, timeid_index]
         )
 
-        sampleid_xrs = []
-        for sampleid in tqdm(sampleids, desc="reassembling data per sampleid"):
+        def get_sampleid_xr(sampleid):
             sample_view = df[df[sampleid_index] == sampleid]  # why not sampleid_view?
 
             neuroid_xrs = []
@@ -257,7 +259,12 @@ class Dataset(_Dataset):
                 neuroid_xrs += [neuroid_xr]
 
             sampleid_xr = xr.concat(neuroid_xrs, dim="neuroid")
-            sampleid_xrs += [sampleid_xr]
+            return sampleid_xr
+
+        sampleid_xrs = Parallel(n_jobs=parallel)(
+            delayed(get_sampleid_xr)(sampleid)
+            for sampleid in tqdm(sampleids, desc="reassembling data per sampleid")
+        )
 
         unified_xr = xr.concat(sampleid_xrs, dim="sampleid")
 
@@ -279,4 +286,3 @@ class Dataset(_Dataset):
 
         return cls(unified_xr)  # NOTE: we use `cls` rather than `Dataset` so any
         # subclasses will use the subclass rather than parent
-    

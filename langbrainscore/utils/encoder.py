@@ -4,9 +4,10 @@ import numpy as np
 import torch
 import xarray as xr
 from tqdm.auto import tqdm
+import random
 
-from langbrainscore.utils.resources import preprocessor_classes
-from langbrainscore.utils.logging import log, get_verbosity
+from langbrainscore.utils.preprocessing import preprocessor_classes
+from langbrainscore.utils.logging import log
 
 
 def count_zero_threshold_values(
@@ -114,10 +115,14 @@ def get_context_groups(dataset, context_dimension):
     return context_groups
 
 
+def preprocess_activations(*args, **kwargs):
+    return postprocess_activations(*args, **kwargs)
+
+
 def postprocess_activations(
     activations_2d: np.ndarray = None,
     layer_ids_1d: np.ndarray = None,
-    emb_preproc_mode: str = "demean",
+    emb_preproc_mode: str = None,  # "demean",
 ):
 
     activations_processed = []
@@ -197,12 +202,12 @@ def pick_matching_token_ixs(
         )  # batchencoding 0 gives access to the encoded string
 
         if span is None:  # for [CLS], no span is returned
-            if get_verbosity():
-                log(
-                    f'No span returned for token at {i}: "{batchencoding.tokens()[i]}"',
-                    type="WARN",
-                    cmap="WARN",
-                )
+            log(
+                f'No span returned for token at {i}: "{batchencoding.tokens()[i]}"',
+                type="WARN",
+                cmap="WARN",
+                verbosity_check=True,
+            )
             continue
         else:
             span = tokenization_utils_base.CharSpan(*span)
@@ -270,13 +275,13 @@ def encode_stimuli_in_context(
             tokenized_directional_context, char_span_of_interest
         )
 
-        if get_verbosity():
-            log(
-                f"Interested in the following stimulus:\n{stimuli_directional[char_span_of_interest]}\n"
-                f"Recovered:\n{tokenized_directional_context.tokens()[token_span_of_interest]}",
-                cmap="INFO",
-                type="INFO",
-            )
+        log(
+            f"Interested in the following stimulus:\n{stimuli_directional[char_span_of_interest]}\n"
+            f"Recovered:\n{tokenized_directional_context.tokens()[token_span_of_interest]}",
+            cmap="INFO",
+            type="INFO",
+            verbosity_check=True,
+        )
 
         all_special_ids = set(tokenizer.all_special_ids)
 
@@ -338,98 +343,236 @@ def encode_stimuli_in_context(
 # ANALYSIS UTILS: these act upon encoded data, rather than encoders
 ###############################################################################
 
+def get_decomposition_method(method: str = "pca",
+                             n_comp: int = 10,
+                             **kwargs):
+    """
+	Return the sklearn method to use for decomposition.
+
+	Args:
+		method (str): Method to use for decomposition (default: "pca", other options: "mds", "tsne")
+		n_comp (int): Number of components to keep (default: 10)
+
+	Returns:
+		sklearn method
+	"""
+    
+    if method == "pca":
+        from sklearn.decomposition import PCA
+        decomp_method = PCA(n_components=n_comp)
+    
+    elif method == "mds":
+        from sklearn.manifold import MDS
+        decomp_method = MDS(n_components=n_comp)
+    
+    elif method == "tsne":
+        from sklearn.manifold import TSNE
+        decomp_method = TSNE(n_components=n_comp)
+    
+    else:
+        raise ValueError(f"Unknown method: {method}")
+    
+    return decomp_method
 
 def get_explainable_variance(
-    ann_encoded_dataset,
-    method: str = "pca",
-    variance_threshold: float = 0.80,
-    **kwargs,
+        ann_encoded_dataset,
+        method: str = "pca",
+        variance_threshold: float = 0.80,
+        **kwargs,
 ) -> xr.Dataset:
     """
-    Returns how many PCs are needed to explain the variance threshold (default 80%) per layer.
+	Returns how many components are needed to explain the variance threshold (default 80%) per layer.
 
-    TODO: move to `langbrainscore.analysis.?` or make @classmethod
+	Args:
+		ann_encoded_dataset (xr.Dataset): ANN encoded dataset
+		method (str): Method to use for decomposition (default: "pca", other options: "mds", "tsne")
+		variance_threshold (float): Variance threshold to use for determining how many components are needed to
+			explain explained a certain threshold of variance (default: 0.80)
+		**kwargs: Additional keyword arguments to pass to the underlying method
 
-    """
-    # n_embd = self.config.n_embd
+	Returns:
+		variance_across_layers (dict): Nested dict with value of interest as key (e.g., explained variance) and
+			layer id as key (e.g., 0, 1, 2, ...) with corresponding values.
 
+	"""
+    
+    
+    ks = [f'n_comp-{method}_needed-{variance_threshold}', f'first_comp-{method}_explained_variance']
+    variance_across_layers = {k: {} for k in ks}
+    
     # Get the PCA explained variance per layer
     layer_ids = ann_encoded_dataset.layer.values
     _, unique_ixs = np.unique(layer_ids, return_index=True)
-    # Make sure context group order is preserved
+    
+    # Make sure that layer order is preserved
     for layer_id in tqdm(layer_ids[np.sort(unique_ixs)]):
         layer_dataset = (
-            ann_encoded_dataset.isel(neuroid=(ann_encoded_dataset.layer == layer_id))
-            .drop("timeid")
-            .squeeze()
+            ann_encoded_dataset.isel(
+                neuroid=(ann_encoded_dataset.layer == layer_id)
+            )
+                .drop("timeid")
+                .squeeze()
         )
-        # assert layer_dataset.shape[1] == n_embd
-
+        
         # Figure out how many PCs we attempt to fit
         n_comp = np.min([layer_dataset.shape[1], layer_dataset.shape[0]])
-
+        
         # Get explained variance
-        if method == "pca":
-            from sklearn.decomposition import PCA
-
-            decomp = PCA(n_components=n_comp)
-        elif method == "mds":
-            from sklearn.manifold import MDS
-
-            decomp = MDS(n_components=n_comp)
-        elif method == "tsne":
-            from sklearn.manifold import TSNE
-
-            decomp = TSNE(n_components=n_comp)
-        else:
-            raise ValueError(f"Unknown dimensionality reduction method: {method}")
-
-        decomp.fit(layer_dataset.values)
-        explained_variance = decomp.explained_variance_ratio_
-
+        decomp_method = get_decomposition_method(method=method, n_comp=n_comp, **kwargs)
+        
+        decomp_method.fit(layer_dataset.values)
+        explained_variance = decomp_method.explained_variance_ratio_
+        
         # Get the number of PCs needed to explain the variance threshold
         explained_variance_cum = np.cumsum(explained_variance)
         n_pc_needed = np.argmax(explained_variance_cum >= variance_threshold) + 1
-
+        
         # Store per layer
         layer_id = str(layer_id)
         print(
-            f"Layer {layer_id}: {n_pc_needed} PCs needed to explain {variance_threshold} variance"
+            f"Layer {layer_id}: {n_pc_needed} PCs needed to explain {variance_threshold} variance "
+            f"with the 1st PC explaining {explained_variance[0]:.2f}% of the total variance"
         )
+        
+        variance_across_layers[f'n_comp-{method}_needed-{variance_threshold}'][layer_id] = n_pc_needed
+        variance_across_layers[f'first_comp-{method}_explained_variance'][layer_id] = explained_variance[0]
+    
+    return variance_across_layers
 
 
 def get_layer_sparsity(
-    ann_encoded_dataset, zero_threshold: float = 0.0001, **kwargs
+        ann_encoded_dataset,
+        zero_threshold: float = 0.0001, **kwargs
 ) -> xr.Dataset:
     """
-    Check how sparse activations within a given layer are.
+	Check how sparse activations within a given layer are.
 
-    Sparsity is defined as 1 - values below the zero_threshold / total number of values.
+	Sparsity is defined as 1 - values below the zero_threshold / total number of values.
 
-    TODO: move to `langbrainscore.analysis.?` or make @classmethod
-    """
-    # n_embd = self.config.n_embd
+	Args:
+		ann_encoded_dataset (xr.Dataset): ANN encoded dataset
+		zero_threshold (float): Threshold to use for determining sparsity (default: 0.0001)
+		**kwargs: Additional keyword arguments to pass to the underlying method
 
+	Returns:
+		sparsity_across_layers (dict): Nested dict with value of interest as key (e.g., sparsity) and
+			layer id as key (e.g., 0, 1, 2, ...) with corresponding values.
+
+	"""
+    # Obtain embedding dimension (for sanity checks)
+    # if self.model_specs["hidden_emb_dim"]:
+    #     hidden_emb_dim = self.model_specs["hidden_emb_dim"]
+    # else:
+    #     hidden_emb_dim = None
+    #     log(
+    #         f"Hidden embedding dimension not specified yet",
+    #         cmap="WARN",
+    #         type="WARN",
+    #     )
+    
+    ks = [f'sparsity-{zero_threshold}']
+    sparsity_across_layers = {k: {} for k in ks}
+    
     # Get the PCA explained variance per layer
     layer_ids = ann_encoded_dataset.layer.values
     _, unique_ixs = np.unique(layer_ids, return_index=True)
-    # Make sure context group order is preserved
+    
+    # Make sure that layer order is preserved
     for layer_id in tqdm(layer_ids[np.sort(unique_ixs)]):
         layer_dataset = (
-            ann_encoded_dataset.isel(neuroid=(ann_encoded_dataset.layer == layer_id))
-            .drop("timeid")
-            .squeeze()
+            ann_encoded_dataset.isel(
+                neuroid=(ann_encoded_dataset.layer == layer_id)
+            )
+                .drop("timeid")
+                .squeeze()
         )
-        # assert layer_dataset.shape[1] == n_embd
-
+        
+        # if hidden_emb_dim is not None:
+        #     assert layer_dataset.shape[1] == hidden_emb_dim
+        #
         # Get sparsity
-        zero_values = count_zero_threshold_values(layer_dataset.values, zero_threshold)
+        zero_values = count_zero_threshold_values(
+            layer_dataset.values, zero_threshold
+        )
         sparsity = 1 - (zero_values / layer_dataset.size)
-
+        
         # Store per layer
         layer_id = str(layer_id)
         print(f"Layer {layer_id}: {sparsity:.3f} sparsity")
+        
+        sparsity_across_layers[f'sparsity-{zero_threshold}'][layer_id] = sparsity
+    
+    return sparsity_across_layers
 
 
-def get_anisotropy(ann_encoded_dataset: "EncoderRepresentations"):
-    raise NotImplementedError
+def cos_contrib(emb1: np.ndarray,
+                emb2: np.ndarray,):
+    """
+    Cosine contribution function defined in eq. 3 by Timkey & van Schijndel (2021): https://arxiv.org/abs/2109.04404
+
+    Args:
+        emb1 (np.ndarray): Embedding vector 1
+        emb2 (np.ndarray): Embedding vector 2
+        
+    Returns:
+        cos_contrib (float): Cosine contribution
+        
+    """
+    
+    numerator_terms = emb1 * emb2
+    denom = np.linalg.norm(emb1) * np.linalg.norm(emb2)
+    return numerator_terms / denom
+
+
+def get_anisotropy(ann_encoded_dataset: "EncoderRepresentations",
+                   num_random_samples: int = 1000):
+    """
+    Calculate the anisotropy of the embedding vectors as Timkey & van Schijndel (2021): https://arxiv.org/abs/2109.04404
+    (base function from their GitHub repo: https://github.com/wtimkey/rogue-dimensions/blob/main/replication.ipynb,
+    but modified to work within the Language Brain-Score project)
+    
+
+    """
+    rogue_dist = []
+    num_toks = len(ann_encoded_dataset.sampleid) # Number of stimuli
+
+    # randomly sample embedding pairs to compute avg. cosine similiarity contribution
+    random_pairs = [random.sample(range(num_toks), 2) for i in range(num_random_samples)]
+    
+    cos_contribs_by_layer = []
+
+    layer_ids = ann_encoded_dataset.layer.values
+    _, unique_ixs = np.unique(layer_ids, return_index=True)
+
+    for layer_id in tqdm(layer_ids[np.sort(unique_ixs)]):
+        layer_dataset = (
+            ann_encoded_dataset.isel(
+                neuroid=(ann_encoded_dataset.layer == layer_id)
+            )
+                .drop("timeid")
+                .squeeze()
+        )
+    
+        layer_cosine_contribs = []
+        layer_rogue_cos_contribs = []
+        for pair in random_pairs:
+            emb1 = sample_data[layer, pair[0], :] # fix
+            emb2 = sample_data[layer, pair[1], :]
+            layer_cosine_contribs.append(cos_contrib(emb1, emb2))
+        
+        layer_cosine_contribs = np.array(layer_cosine_contribs)
+        layer_cosine_sims = layer_cosine_contribs.sum(axis=1)
+        layer_cosine_contribs_mean = layer_cosine_contribs.mean(axis=0)
+        cos_contribs_by_layer.append(layer_cosine_contribs_mean)
+    cos_contribs_by_layer = np.array(cos_contribs_by_layer)
+    
+    aniso = cos_contribs_by_layer.sum(axis=1)  # total anisotropy, measured as avg. cosine sim between random emb. pairs
+    
+    
+    
+    for layer in range(num_layers[model_name]):
+        top_3_dims = np.argsort(cos_contribs_by_layer[layer])[-3:]
+        top = cos_contribs_by_layer[layer, top_3_dims[2]] / aniso[layer]
+        second = cos_contribs_by_layer[layer, top_3_dims[1]] / aniso[layer]
+        third = cos_contribs_by_layer[layer, top_3_dims[0]] / aniso[layer]
+        print("& {} & {:.3f} & {:.3f} & {:.3f} & {:.3f} \\\\".format(layer, top, second, third, aniso[layer]))

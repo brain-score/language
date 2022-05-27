@@ -15,4 +15,5 @@ if __name__ == "__main__":
         sampleid_metadata=["Experiment"],
         neuroid_metadata=["Network", "ROI"],
     )
+    dataset.to_cache("pereira_all", cache_dir="./cache")
     log(f"stimuli: {dataset.stimuli.values}")
