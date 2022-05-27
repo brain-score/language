@@ -55,7 +55,12 @@ class BrainScore(_BrainScore):
             self.run()
 
     def __str__(self) -> str:
-        return f"{self.scores.mean()}"
+        try:
+            return f"{self.scores.mean()}"
+        except AttributeError as e:
+            raise ValueError(
+                "missing scores. did you make a call to `score()` or `run()` yet?"
+            )
 
     def to_netcdf(self, filename):
         """
