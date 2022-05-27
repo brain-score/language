@@ -12,10 +12,15 @@ def main(args):
         os.environ["LBS_DRY_RUN"] = "TRUE"
         return
 
-    if args.mapping_class == "learned" and args.learned_mapping_class is None:
-        parser.error(
-            "selected 'learned' `mapping_class` but no `learned_mapping_class` value provided"
-        )
+    if args.model_type is None:
+        if "bert" in args.model_name_or_path:
+            args.model_type = "bert"
+        elif "gpt2" in args.model_name_or_path:
+            args.model_type = "gpt"
+        else:
+            raise argparse.ArgumentError(
+                f"could not infer model_type based on {args.model_name_or_path}"
+            )
 
     # what should wandb log?
     # - workflow of testing/run (e.g., alpha)
@@ -29,6 +34,8 @@ def main(args):
             entity="langbrainscore",
             group="pereira2018_firstsessions_mean_froi",
         )
+        raise NotImplementedError("wandb support coming soon.")
+
     os.environ["LBS_CACHE"] = args.cache_dir
 
     #### step 1: load benchmark/dataset
@@ -44,22 +51,24 @@ def main(args):
         except FileNotFoundError:
             dataset = lbs.benchmarks.load_benchmark(args.benchmark_name_or_path)
     else:
-        dataset = lbs.benchmarks.load_benchmark(args.benchmark_name_or_path)
-    if args.cache:
-        dataset.to_cache()
+        dataset = lbs.benchmarks.load_benchmark(
+            args.benchmark_name_or_path, load_cache=False
+        )
 
     #### step 2: set up encoders
     ann_enc = lbs.encoder.HuggingFaceEncoder(
         model_id=args.model_name_or_path,
         emb_preproc=args.emb_preproc,
-        context_dimension="passage",
-        bidirectional=True,
-        emb_aggregation="first",
+        context_dimension=args.context_dimension,
+        bidirectional=args.bidirectional,
+        emb_aggregation=args.emb_agg,
     )
     brain_enc = lbs.encoder.BrainEncoder()
 
     #### step 3: encode
-    ann_enc_out = ann_enc.encode(dataset)
+    ann_enc_out = ann_enc.encode(
+        dataset, read_cache=not args.recompute, write_cache=args.cache
+    )
     brain_enc_out = brain_enc.encode(dataset)
     lbs.utils.logging.log(f"Obtained ann-encoded data of shape: {ann_enc_out.shape}")
     lbs.utils.logging.log(
@@ -70,16 +79,57 @@ def main(args):
     if args.mapping_class == "identity":
         mapping = lbs.mapping.IdentityMap()
     else:
-        mapping = lbs.mapping.LearnedMap(args.learned_mapping_class)
+        # TODO work out whether/how we want to pass additional kwargs for the
+        # specific mapping class during instantiation; e.g., alpha for ridge regression
+        mapping = lbs.mapping.LearnedMap(args.mapping_class)
+
+    #### step 5: define metric
+    metric_class = lbs.metrics.metric_classes[args.metric_class]
+    metric = metric_class()
+
+    #### step 6: compute brainscore
+    encoded_reprs_order = [ann_enc_out, brain_enc_out]
+    brainscore = lbs.BrainScore(
+        *(
+            encoded_reprs_order
+            if args.mode == "encoding"
+            else reversed(encoded_reprs_order)
+        ),
+        mapping=mapping,
+        metric=metric,
+    )
+    if args.compute_brainscore:
+        brainscore.score(
+            sample_split_coord=args.sample_split_coord,
+            neuroid_split_coord=args.neuroid_split_coord,
+        )
+        lbs.utils.logging.log(f"brainscore = {brainscore.scores.mean()}")
+    if args.compute_ceiling:
+        brainscore.ceiling(
+            sample_split_coord=args.sample_split_coord,
+            neuroid_split_coord=args.neuroid_split_coord,
+        )
+        lbs.utils.logging.log(f"ceiling = {brainscore.ceilings.mean()}")
+    if args.compute_null_permutation:
+        brainscore.null(
+            sample_split_coord=args.sample_split_coord,
+            neuroid_split_coord=args.neuroid_split_coord,
+        )
+        lbs.utils.logging.log(f"null = {brainscore.nulls.mean()}")
+
+    lbs.utils.logging.log(f"Finished.")
+
+    if args.cache:
+        dataset.to_cache()
+        brainscore.to_cache()  # also caches mapping, metric automatically
 
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser("LangBrainScore (alpha)")
+    parser = score_parser = argparse.ArgumentParser("LangBrainScore (alpha)")
 
-    subparsers = parser.add_subparsers(help="commands", required=True)
-
-    score_parser = subparsers.add_parser("score")
+    # subparsers = parser.add_subparsers(help="commands", required=True)
+    # score_parser = subparsers.add_parser("score")
 
     ################################################################
     # basic info
@@ -132,6 +182,9 @@ if __name__ == "__main__":
     score_parser_metric = score_parser.add_argument_group(
         "Metric (Similarity evaluation) options"
     )
+    score_parser_brainscore = score_parser.add_argument_group(
+        "BrainScore computation options"
+    )
 
     #### benchmark arguments
     score_parser_benchmark.add_argument(
@@ -162,8 +215,10 @@ if __name__ == "__main__":
         "--model_type",
         type=str,
         choices=("bert", "gpt"),
-        required=True,
-        help="Model type (must be one of gpt and bert; support for more types will be added based on requirement)",
+        required=False,
+        help="""Model type (must be one of gpt and bert; support for more types will be added based
+                on requirement).  If not provided, will be inferred automatically if possible, else, an
+                error will be raised.""",
     )
     score_parser_encoder.add_argument(
         "--bidirectional",
@@ -184,6 +239,7 @@ if __name__ == "__main__":
         "-emb_preproc",
         # "--preprocess_representations",
         dest="emb_preproc",
+        default=(),
         help="Preprocessing steps to apply to encoder representations obtained from the ANN LM before using them for BrainScore.",
         choices=lbs.utils.preprocessing.preprocessor_classes.keys(),
         nargs="*",
@@ -194,27 +250,71 @@ if __name__ == "__main__":
         dest="emb_agg",
         help="How should encoder representations obtained from the ANN LM be aggregated (`all` = no aggregation).",
         choices=("all", "last", "first", "mean", "median", "sum"),
-        default="all",
+        default="mean",
         nargs=1,
     )
 
+    #### mapping arguments
     score_parser_mapping.add_argument(
-        "-map",
+        "-mapping",
         "--mapping_class",
+        help=f"""What mapping class should be used to construct a mapping between ANN encoder
+                 representations and Brain encoder representations. Must be either `identity`
+                 (no transformation; used in conjunction with RSA, CKA, etc.) or the name of a
+                 learned mapping class, i.e., one of:
+                 {lbs.mapping.mapping.mapping_classes_params.keys()}""",
+        choices=("identity",)
+        + tuple(lbs.mapping.mapping.mapping_classes_params.keys()),
+        type=str,
+        required=True,
+    )
+
+    #### metric arguments
+    score_parser_metric.add_argument(
+        "-metric",
+        "--metric_class",
         help="""What mapping class should be used to construct a mapping between ANN encoder
                 representations and Brain encoder representations""",
-        choices=("identity", "learned"),
-        default="all",
+        choices=lbs.metrics.metric_classes.keys(),
+        type=str,
+        required=True,
     )
 
-    score_parser_mapping.add_argument(
-        "--learned_mapping_class",
-        choices=lbs.mapping.mapping.mapping_classes_params.keys(),
-        help=f"""The specific implementation to learn a mapping between representations; must be one
-                 of: {lbs.mapping.mapping.mapping_classes_params.keys()}. Required only if "-map learned" is used.""",
+    #### brainscore arguments
+    score_parser_brainscore.add_argument(
+        "--sample_split_coord",
+        help="""Coordinate (in dataset/benchmark) along the sample/stimulus dimension to use for
+                grouping data during cross-validation to prevent bleeding out of information and
+                inflation of BrainScore. E.g. passage,paragraph, etc.""",
+        type=str,
+        required=False,
     )
-
-    score_parser_metric
+    score_parser_brainscore.add_argument(
+        "--neuroid_split_coord",
+        help="""Coordinate (in dataset/benchmark) along the neuroid (human behavioral/neural)
+                dimension to use for grouping data during cross-validation to prevent bleeding out
+                of information and inflation of BrainScore. E.g. subjectid""",
+        type=str,
+        required=False,
+    )
+    score_parser_brainscore.add_argument(
+        "-brainscore",
+        "--compute_brainscore",
+        action="store_true",
+        help="Should we compute the brainscore?",
+    )
+    score_parser_brainscore.add_argument(
+        "-ceiling",
+        "--compute_ceiling",
+        action="store_true",
+        help="Should we compute the ceiling?",
+    )
+    score_parser_brainscore.add_argument(
+        "-null",
+        "--compute_null_permutation",
+        action="store_true",
+        help="Should we compute the null permutation score with 100 iterations?",
+    )
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
