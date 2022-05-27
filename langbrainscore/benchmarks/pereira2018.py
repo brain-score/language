@@ -71,25 +71,38 @@ def _pereira2018_mean_froi_nat_stories() -> xr.DataArray:
     mpf_xr = collapse_multidim_coord(mpf_xr, "session", "neuroid")
 
     mpf_xr.attrs["source"] = str(source)
-    mpf_xr.attrs["name"] = f"Pereira2018NatStories"
+    # mpf_xr.attrs["name"] = f"Pereira2018NatStories"
 
     return mpf_xr
 
 
-def pereira2018_mean_froi_nat_stories(network=None) -> Dataset:
+def pereira2018_mean_froi_nat_stories(network=None, load_cache=True) -> Dataset:
     """ """
-    mpf_dataset = Dataset(
-        xr.DataArray(),
-        dataset_name="pereira2018_mean_froi_nat_stories",
-        _skip_checks=True,
+    dataset_name = (
+        "pereira2018_mean_froi_nat_stories_{network}"
+        if network
+        else "pereira2018_mean_froi_nat_stories"
     )
-    try:
-        mpf_dataset.load_cache()
-    except FileNotFoundError:
+
+    def package() -> Dataset:
         mpf_xr = _pereira2018_mean_froi_nat_stories()
         if network:
             mpf_xr = (mpf_xr.isel(neuroid=mpf_xr.roi.str.contains(network)),)
-        mpf_dataset = Dataset(mpf_xr, dataset_name="pereira2018_mean_froi_nat_stories")
+        mpf_dataset = Dataset(mpf_xr, dataset_name=dataset_name)
+        return mpf_dataset
+
+    if load_cache:
+        try:
+            mpf_dataset = Dataset(
+                xr.DataArray(),
+                dataset_name=dataset_name,
+                _skip_checks=True,
+            )
+            mpf_dataset.load_cache()
+        except FileNotFoundError:
+            mpf_dataset = package()
+    else:
+        mpf_dataset = package()
         mpf_dataset.to_cache()
 
     return mpf_dataset
