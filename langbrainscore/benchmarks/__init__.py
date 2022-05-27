@@ -10,7 +10,9 @@ supported_benchmarks: typing.Mapping[str, typing.Callable] = {
 
 
 def load_benchmark(
-    benchmark_name_or_path: typing.Union[str, Path], *loading_args, **loading_kwargs
+    benchmark_name_or_path: typing.Union[str, Path],
+    *loading_args,
+    **loading_kwargs,
 ) -> "langbrainscore.dataset.Dataset":
     """A method that, given a name or a path to a benchmark, loads it and returns
         a dataset object.
