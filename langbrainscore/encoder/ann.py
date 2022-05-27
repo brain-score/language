@@ -21,7 +21,7 @@ from langbrainscore.utils.encoder import (
     encode_stimuli_in_context,
 )
 
-from langbrainscore.utils.logging import log, get_verbosity
+from langbrainscore.utils.logging import log
 from langbrainscore.utils.xarray import copy_metadata, fix_xr_dtypes
 
 
@@ -193,7 +193,7 @@ class HuggingFaceEncoder(_ModelEncoder):
         activations_2d = np.vstack(flattened_activations)
         layer_ids_1d = np.squeeze(np.unique(np.vstack(layer_ids), axis=0))
 
-        # Post-process activations
+        # Post-process activations after obtaining them (or "pre-process" them before computing brainscore)
         if len(self._emb_preproc) > 0:
             for mode in self._emb_preproc:
                 activations_2d, layer_ids_1d = postprocess_activations(

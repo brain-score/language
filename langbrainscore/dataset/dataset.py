@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 from langbrainscore.interface import _Dataset
-from langbrainscore.utils.logging import log, get_verbosity
+from langbrainscore.utils.logging import log
 from langbrainscore.utils.xarray import collapse_multidim_coord
 from tqdm import tqdm
 
@@ -144,8 +144,7 @@ class Dataset(_Dataset):
             try:
                 first_thing = next(iter(arr))
             except StopIteration:
-                if get_verbosity():
-                    log(f'failed to obtain value from {arr}')
+                log(f'failed to obtain value from {arr}', verbosity_check=True)
                 return np.nan
             for each_thing in arr:
                 if first_thing != each_thing:
