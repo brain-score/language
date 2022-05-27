@@ -2,6 +2,7 @@ import typing
 
 import numpy as np
 import xarray as xr
+
 # from methodtools import lru_cache
 from pathlib import Path
 
@@ -31,7 +32,6 @@ class BrainScore(_BrainScore):
         if run:
             self.run()
 
-
     def __str__(self) -> str:
         return f"{self.scores.mean()}"
 
@@ -50,7 +50,6 @@ class BrainScore(_BrainScore):
         a file at `filename`.
         """
         self.scores = xr.load_dataarray(filename)
-
 
     @staticmethod
     def _score(A, B, metric: Metric) -> np.ndarray:
@@ -176,7 +175,6 @@ class BrainScore(_BrainScore):
             self.scores = scores
         else:
             self.ceilings = scores
-
 
     def ceiling(self, sample_split_coord=None, neuroid_split_coord=None):
         return self.score(
