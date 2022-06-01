@@ -1,11 +1,11 @@
 import typing
 from pathlib import Path
-from langbrainscore.benchmarks.pereira2018 import pereira2018_mean_froi_nat_stories
+from langbrainscore.benchmarks.pereira2018 import pereira2018_mean_froi
 
 
 supported_benchmarks: typing.Mapping[str, typing.Callable] = {
-    "pereira2018_mean_froi_nat_stories": pereira2018_mean_froi_nat_stories,
-    "pereira2018_ind_voxels_nat_stories": NotImplemented,
+    "pereira2018_mean_froi": pereira2018_mean_froi,
+    "pereira2018_ind_voxels": NotImplemented,
 }
 
 
