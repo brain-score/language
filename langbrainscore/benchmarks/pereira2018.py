@@ -8,7 +8,7 @@ from langbrainscore.utils.xarray import collapse_multidim_coord
 from langbrainscore.dataset import Dataset
 
 
-def _pereira2018_mean_froi_nat_stories() -> xr.DataArray:
+def _pereira2018_mean_froi() -> xr.DataArray:
     """ """
 
     source = (
@@ -76,16 +76,14 @@ def _pereira2018_mean_froi_nat_stories() -> xr.DataArray:
     return mpf_xr
 
 
-def pereira2018_mean_froi_nat_stories(network=None, load_cache=True) -> Dataset:
+def pereira2018_mean_froi(network=None, load_cache=True) -> Dataset:
     """ """
     dataset_name = (
-        "pereira2018_mean_froi_nat_stories_{network}"
-        if network
-        else "pereira2018_mean_froi_nat_stories"
+        "pereira2018_mean_froi_{network}" if network else "pereira2018_mean_froi"
     )
 
     def package() -> Dataset:
-        mpf_xr = _pereira2018_mean_froi_nat_stories()
+        mpf_xr = _pereira2018_mean_froi()
         if network:
             mpf_xr = (mpf_xr.isel(neuroid=mpf_xr.roi.str.contains(network)),)
         mpf_dataset = Dataset(mpf_xr, dataset_name=dataset_name)
