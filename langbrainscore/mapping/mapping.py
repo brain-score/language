@@ -1,6 +1,7 @@
 import typing
 from functools import partial
 
+from tqdm.auto import tqdm
 import numpy as np
 import xarray as xr
 from sklearn.cross_decomposition import PLSRegression
@@ -97,9 +98,10 @@ class LearnedMap(_Mapping):
         #     assert hasattr(mapping_class(), "fit")
         #     assert hasattr(mapping_class(), "predict")
 
-        # TODO: what is the difference between these two? make this less confusing
+        # TODO: what is the difference between these two (model; full_model)? let's make this less
+        # confusing
         self.full_model = _mapping_class(**self.mapping_params)
-        self.model = mapping_class(**self.mapping_params)
+        self.model = _mapping_class(**self.mapping_params)
         logging.log(f"initialized Mapping with {type(self.model)}!")
 
     @staticmethod
@@ -293,7 +295,8 @@ class LearnedMap(_Mapping):
         # Loop across each Y neuroid (target)
         test = []
         pred = []
-        for neuroid in Y.neuroid.values:
+        # TODO: parallelize using order-preserving joblib-mapping
+        for neuroid in tqdm(Y.neuroid.values, desc="fitting a model per neuroid"):
 
             Y_neuroid = Y.sel(neuroid=neuroid)
 

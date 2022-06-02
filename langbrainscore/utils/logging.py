@@ -86,6 +86,8 @@ def log(message, cmap="INFO", type=None, verbosity_check=False, **kwargs):
         c = T.OKBLUE
     elif cmap == "WARN":
         c = T.BOLD + T.WARNING
+    elif cmap == "ANNOUNCE":
+        c = T.BOLD + T.OKGREEN
     elif cmap == "ERR":
         c = "\n" + T.BOLD + T.FAIL
     else:

@@ -10,7 +10,7 @@ class BrainEncoder(_Encoder):
     """
 
     def __init__(
-        self, modality: str = None, aggregate_time: bool = False
+        self, measurement: str = "unknown", aggregate_time: bool = False
     ) -> "BrainEncoder":
         """Initialize a BrainEncoder
 
@@ -22,7 +22,7 @@ class BrainEncoder(_Encoder):
         Returns:
             BrainEncoder: _description_
         """
-        self._modality = modality
+        self._measurement = measurement
         self._aggregate_time = aggregate_time
 
     def encode(
@@ -46,7 +46,18 @@ class BrainEncoder(_Encoder):
                 .expand_dims(dim, 2)
                 .assign_coords({dim: (dim, [0])})
             )
+
+        if "measurement" in dataset.contents.attrs:
+            self._measurement = dataset.contents.attrs["measurement"]
+
         # return dataset.contents
         return EncoderRepresentations(
-            dataset=dataset, representations=dataset.contents, model_id=self._modality
+            dataset=dataset,
+            representations=dataset.contents,
+            model_id=self._measurement,
+            emb_aggregation=None,
+            emb_preproc=(),
+            include_special_tokens=None,
+            context_dimension=None,
+            bidirectional=False,
         )

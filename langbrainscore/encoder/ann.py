@@ -131,7 +131,7 @@ class HuggingFaceEncoder(_ModelEncoder):
                 return to_check_in_cache
             except FileNotFoundError:
                 log(
-                    f"couldn't load cached reprs for [{to_check_in_cache.identifier_string}]",
+                    f"couldn't load cached reprs for {to_check_in_cache.identifier_string}; recomputing.",
                     cmap="WARN",
                     type="WARN",
                 )
@@ -229,27 +229,35 @@ class HuggingFaceEncoder(_ModelEncoder):
 
     def get_modelcard(self):
         """
-		Returns the model card of the model (model-wise, and not layer-wise)
-		"""
-    
-        model_classes = ['gpt', 'bert']  # continuously update based on new model classes supported
-    
+        Returns the model card of the model (model-wise, and not layer-wise)
+        """
+
+        model_classes = [
+            "gpt",
+            "bert",
+        ]  # continuously update based on new model classes supported
+
         # based on the model_id, figure out which model class it is
         model_class = [x for x in model_classes if x in self._model_id][0]
         assert model_class is not None, f"model_id {self._model_id} not supported"
-    
+
         config_specs_of_interest = config_name_mappings[model_class]
-    
+
         model_specs = {}
-        for k_spec, v_spec in config_specs_of_interest.items():  # key is the name we want to use in the model card,
+        for (
+            k_spec,
+            v_spec,
+        ) in (
+            config_specs_of_interest.items()
+        ):  # key is the name we want to use in the model card,
             # value is the name in the config
             if v_spec is not None:
                 model_specs[k_spec] = getattr(self.config, v_spec)
             else:
                 model_specs[k_spec] = None
-    
+
         self.model_specs = model_specs
-    
+
         return model_specs
 
 

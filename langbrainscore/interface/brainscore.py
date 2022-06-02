@@ -5,7 +5,7 @@ from mimetypes import init
 import numpy as np
 import xarray as xr
 from langbrainscore.interface.mapping import _Mapping
-from langbrainscore.interface.metrics import _Metric
+from langbrainscore.interface.metric import _Metric
 from langbrainscore.interface.cacheable import _Cacheable
 
 

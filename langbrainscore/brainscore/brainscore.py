@@ -6,8 +6,14 @@ import xarray as xr
 # from methodtools import lru_cache
 from pathlib import Path
 
-from langbrainscore.interface import _BrainScore, _Mapping, _Metric
-from langbrainscore.metrics import Metric
+from langbrainscore.interface import (
+    _BrainScore,
+    _Mapping,
+    _Metric,
+    EncoderRepresentations,
+)
+
+# from langbrainscore.metrics import Metric
 from langbrainscore.utils import logging
 from langbrainscore.utils.xarray import collapse_multidim_coord, copy_metadata
 
@@ -19,22 +25,42 @@ class BrainScore(_BrainScore):
 
     def __init__(
         self,
-        X: xr.DataArray,
-        Y: xr.DataArray,
+        X: typing.Union[xr.DataArray, EncoderRepresentations],
+        Y: typing.Union[xr.DataArray, EncoderRepresentations],
         mapping: _Mapping,
         metric: _Metric,
         run=False,
     ) -> "BrainScore":
-        assert X.sampleid.size == Y.sampleid.size
-        self.X = X
-        self.Y = Y
+        """Initializes the [lang]BrainScore object using two encoded representations and a mapping
+           class, and a metric for evaluation
+
+        Args:
+            X (typing.Union[xr.DataArray, EncoderRepresentations]): Either an xarray DataArray
+                instance, or a wrapper object with a `.representations` attribute that stores the xarray
+                DataArray
+            Y (typing.Union[xr.DataArray, EncoderRepresentations]): see `X`
+            mapping (_Mapping): _description_
+            metric (_Metric): _description_
+            run (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            BrainScore: _description_
+        """
+        self.X = X.representations if hasattr(X, "representations") else X
+        self.Y = Y.representations if hasattr(Y, "representations") else Y
+        assert self.X.sampleid.size == self.Y.sampleid.size
         self.mapping = mapping
         self.metric = metric
         if run:
             self.run()
 
     def __str__(self) -> str:
-        return f"{self.scores.mean()}"
+        try:
+            return f"{self.scores.mean()}"
+        except AttributeError as e:
+            raise ValueError(
+                "missing scores. did you make a call to `score()` or `run()` yet?"
+            )
 
     def to_netcdf(self, filename):
         """
@@ -53,7 +79,7 @@ class BrainScore(_BrainScore):
         self.scores = xr.load_dataarray(filename)
 
     @staticmethod
-    def _score(A, B, metric: Metric) -> np.ndarray:
+    def _score(A, B, metric: _Metric) -> np.ndarray:
         return metric(A, B)
 
     # @lru_cache(maxsize=None)

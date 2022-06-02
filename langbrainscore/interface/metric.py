@@ -39,10 +39,14 @@ class _Metric(_Cacheable, ABC):
             raise ValueError("X and Y must be 1D or 2D arrays.")
         if X.shape[0] != Y.shape[0]:
             raise ValueError("X and Y must have the same number of samples.")
-        if self.__class__.__name__ not in ["RSA", "CKA"]:
+        if self.__class__.__name__ not in ("RSA", "CKA"):
             if X.shape[1] != Y.shape[1]:
                 raise ValueError("X and Y must have the same number of dimensions.")
-        return self._apply_metric(X, Y)
+
+        score = self._apply_metric(X, Y)
+        if not isinstance(score, np.ndarray):
+            return np.array(score).reshape(-1)
+        return score
 
     @abstractmethod
     def _apply_metric(
