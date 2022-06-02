@@ -51,5 +51,4 @@ def fix_xr_dtypes(xr_obj):
     for c in xr_obj.coords:
         if xr_obj[c].dtype == "O":
             xr_obj[c] = xr_obj[c].astype(str)
-    # this is likely not necessary --- the xr_obj should be modified in-place
-    return xr_obj
+    return xr_obj  # this is likely not necessary --- the xr_obj should be modified in-place
