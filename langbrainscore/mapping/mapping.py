@@ -3,6 +3,7 @@ from functools import partial
 
 from tqdm.auto import tqdm
 import numpy as np
+from joblib import Parallel, delayed
 import xarray as xr
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.linear_model import LinearRegression, RidgeCV
@@ -292,12 +293,8 @@ class LearnedMap(_Mapping):
                 raise ValueError(
                     f"{self.split_coord} coordinate does not align across X and Y"
                 )
-        # Loop across each Y neuroid (target)
-        test = []
-        pred = []
-        # TODO: parallelize using order-preserving joblib-mapping
-        for neuroid in tqdm(Y.neuroid.values, desc="fitting a model per neuroid"):
 
+        def fit_per_neuroid(neuroid):
             Y_neuroid = Y.sel(neuroid=neuroid)
 
             # limit data to current neuroid, and then drop the samples that are missing data for this neuroid
@@ -398,8 +395,21 @@ class LearnedMap(_Mapping):
             Y_test = xr.concat(Y_test_collection, dim="sampleid").sortby("sampleid")
             Y_pred = xr.concat(Y_pred_collection, dim="sampleid").sortby("sampleid")
 
-            test.append(Y_test)
-            pred.append(Y_pred)
+            # test.append(Y_test)
+            # pred.append(Y_pred)
+            return Y_test, Y_pred
+
+        # Loop across each Y neuroid (target)
+        test = []
+        pred = []
+        # TODO: parallelize using order-preserving joblib-mapping
+        # for neuroid in tqdm(Y.neuroid.values, desc="fitting a model per neuroid"):
+        for t, p in Parallel(n_jobs=-2)(
+            delayed(fit_per_neuroid)(neuroid)
+            for neuroid in tqdm(Y.neuroid.values, desc="fitting a model per neuroid")
+        ):
+            test += [t]
+            pred += [p]
 
         test_xr = xr.concat(test, dim="neuroid").transpose(
             "sampleid", "neuroid", "timeid"
