@@ -29,18 +29,17 @@ def main(args):
     # - params otherwise used for caching (which are used to uniquely identify a cacheable object)
     # - resultant brainscore
     if args.use_wandb:
-        wandb.init(
-            project="langbrainscore-{args.project}",
-            entity="langbrainscore",
-            group="pereira2018_firstsessions_mean_froi",
+        lbs.utils.logging.init_wandb(
+            project=f"langbrainscore_{args.project}",
+            group=args.benchmark_name_or_path,
         )
-        raise NotImplementedError("wandb support coming soon.")
 
     os.environ["LBS_CACHE"] = args.cache_prefix
     args.cache = not args.no_write_cache
 
     #### step 1: load benchmark/dataset
-    if not args.recompute:
+    # TODO: dataset caching behavior is stochastically failing; let's disable it for now
+    if False and not args.recompute:
         try:
             dataset = lbs.dataset.Dataset(
                 xr.DataArray(),
@@ -104,24 +103,46 @@ def main(args):
             sample_split_coord=args.sample_split_coord,
             neuroid_split_coord=args.neuroid_split_coord,
         )
-        lbs.utils.logging.log(
-            f"brainscore = {brainscore.scores.mean()}", cmap="ANNOUNCE", type="INFO"
-        )
+        s = brainscore.scores.mean()
+        lbs.utils.logging.log(f"brainscore = {s}", cmap="ANNOUNCE", type="INFO")
+        if args.use_wandb:
+            lbs.utils.logging.log_to_wandb({"brainscore": s.item()}, commit=False)
     if args.compute_ceiling:
         brainscore.ceiling(
             sample_split_coord=args.sample_split_coord,
             neuroid_split_coord=args.neuroid_split_coord,
         )
-        lbs.utils.logging.log(
-            f"ceiling = {brainscore.ceilings.mean()}", cmap="ANNOUNCE", type="INFO"
-        )
+        c = brainscore.ceilings.mean()
+        lbs.utils.logging.log(f"ceiling = {c}", cmap="ANNOUNCE", type="INFO")
+        if args.use_wandb:
+            lbs.utils.logging.log_to_wandb({"ceiling": c.item()}, commit=False)
     if args.compute_null_permutation:
         brainscore.null(
             sample_split_coord=args.sample_split_coord,
             neuroid_split_coord=args.neuroid_split_coord,
         )
-        lbs.utils.logging.log(
-            f"null = {brainscore.nulls.mean()}", cmap="ANNOUNCE", type="INFO"
+        n = brainscore.nulls.mean()
+        lbs.utils.logging.log(f"null = {n}", cmap="ANNOUNCE", type="INFO")
+        if args.use_wandb:
+            lbs.utils.logging.log_to_wandb({"null": n.item()}, commit=False)
+
+    if args.use_wandb:
+        lbs.utils.logging.log_to_wandb(
+            dict(
+                metric=args.metric_class,
+                mapping=args.mapping_class,
+                model_id=args.model_name_or_path,
+                model_type=args.model_type,
+                benchmark=args.benchmark_name_or_path,
+            ),
+            dataset,
+            ann_enc,
+            brain_enc,
+            ann_enc_out,  # brain_enc_out,
+            mapping,
+            metric,
+            brainscore,
+            commit=True,
         )
 
     lbs.utils.logging.log(f"Finished.")
@@ -143,6 +164,7 @@ if __name__ == "__main__":
     ################################################################
 
     score_parser.add_argument(
+        "-wandb",
         "--use_wandb",
         action="store_true",
         help="Use `wandb` (weights and biases) to log the current experiment?",
@@ -150,7 +172,7 @@ if __name__ == "__main__":
     score_parser.add_argument(
         "--project",
         type=str,
-        default="alpha",
+        default="alpha-fuzzy-potato",
         help="A short identifier of the project this run is intended for, e.g., `alpha` (testing), ...",
     )
     score_parser.add_argument(
@@ -260,7 +282,6 @@ if __name__ == "__main__":
         help="How should encoder representations obtained from the ANN LM be aggregated (`all` = no aggregation).",
         choices=("all", "last", "first", "mean", "median", "sum"),
         default="mean",
-        nargs=1,
     )
 
     #### mapping arguments
