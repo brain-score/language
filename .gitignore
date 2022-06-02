@@ -145,3 +145,4 @@ html
 cache
 .cache
 .idea/
+wandb/
