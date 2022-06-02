@@ -88,13 +88,15 @@ class _Cacheable(typing.Protocol):
         attributes of self, as well as all the representations of Cacheable
         instances that are attributes of self.
         """
-        sep = "#"
-        rep = f"<{self.__class__.__name__}"
+        left = "("
+        right = ")"
+        sep = "?"
+        rep = f"{left}{self.__class__.__name__}"
         params = self.params
         for key in sorted([*params.keys()]):
             val = params[key]
             rep += f"{sep}{key}={val}"
-        return rep + ">"
+        return rep + f"{right}"
 
     @property
     def identifier_string(self):
@@ -193,7 +195,7 @@ class _Cacheable(typing.Protocol):
         root, subdir = cache.root, cache.subdir
         # now we use "subdir" as our working directory to dump this cache object
         subdir /= identifier_string or self.identifier_string
-        log(f"loading attributes of {self} from {subdir}")
+        log(f"attempt loading attributes of {self} from {subdir.parent}")
 
         with (subdir / "xarray_object_names.yml").open("r") as f:
             self_xarray_objects = yaml.load(f, yaml.SafeLoader)
