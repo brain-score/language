@@ -1,6 +1,7 @@
 import typing
 from enum import unique
 
+import os
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -24,6 +25,8 @@ from langbrainscore.utils.encoder import (
 from langbrainscore.utils.logging import log
 from langbrainscore.utils.xarray import copy_metadata, fix_xr_dtypes
 from langbrainscore.utils.resources import model_classes, config_name_mappings
+
+os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
 
 class HuggingFaceEncoder(_ModelEncoder):
@@ -65,10 +68,15 @@ class HuggingFaceEncoder(_ModelEncoder):
         )
 
         from transformers import AutoConfig, AutoModel, AutoTokenizer
+        from transformers import logging as transformers_logging
+
+        transformers_logging.set_verbosity_error()
 
         self.device = device or get_torch_device()
         self.config = AutoConfig.from_pretrained(self._model_id)
-        self.tokenizer = AutoTokenizer.from_pretrained(self._model_id)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self._model_id, multiprocessing=True
+        )
         self.model = AutoModel.from_pretrained(self._model_id, config=self.config)
         try:
             self.model = self.model.to(self.device)
