@@ -77,9 +77,11 @@ def aggregate_layers(
         elif callable(emb_aggregation):
             state = emb_aggregation(hidden_states[i])
         else:
-            raise NotImplementedError("Sentence embedding method not implemented")
+            raise NotImplementedError(
+                f"Sentence embedding method [{emb_aggregation}] not implemented"
+            )
 
-        states_layers[i] = state.detach().numpy()
+        states_layers[i] = state.detach().cpu().numpy()
 
     return states_layers
 
