@@ -5,25 +5,63 @@
 ################################################################
 import typing
 
+# from langbrainscore.interface.cacheable import _Cacheable
+
 ################################################################
 # stuff for logging to W&B (https://wandb.ai)
 ################################################################
 
 
-def init_wandb():
+def init_wandb(project: str, group: str, use_wandb=True):
+    """Initializes an instance of Weights & Biases for logging
 
-    import wandb
+    Args:
+        project (str): a broad grouping of what project this wandb instance
+            should be under, e.g., alpha testing, or human-predictive-processing-1
+        group (str): a more immediate grouping, recommended: by benchmark
+        use_wandb (bool, optional): if False, we will not initialize W&B.
+            Mainly for compatibility with CLI. Defaults to True.
+    """
+    if use_wandb:
+        import wandb
 
-    ...
+        wandb.init(
+            project=project,
+            entity="langbrainscore",
+            # group=group,
+        )
 
 
 def log_to_wandb(
-    obj: typing.Union["langbrainscore.interface.cacheable._Cacheable", typing.Mapping]
+    *obs: typing.Collection[typing.Union["_Cacheable", dict]],
+    use_wandb=True,
+    commit=False,
 ):
+    """Given a `_Cacheable` object, logs its salient parameters to W&B by
+        prefixing them with class name.
 
-    import wandb
+    Args:
+        ob (typing.Union[_Cacheable, typing.Mapping]): Object to log
+        use_wandb (bool, optional): if False, we will not log anything. For compatibility with CLI.
+            Defaults to True.
+    """
+    if use_wandb:
+        import wandb
 
-    ...
+        # if a singleton object is passed, we convert it to a collection
+        try:
+            iter(obs)
+        except TypeError:
+            obs = [obs]
+
+        for ob in obs:
+            if hasattr(ob, "params"):
+                d = {f"{ob.__class__.__name__}/{k}": v for k, v in ob.params.items()}
+            else:
+                d = ob
+            wandb.log(d, commit=False)
+
+        wandb.log({}, commit=commit)
 
 
 ################################################################
