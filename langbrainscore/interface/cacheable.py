@@ -77,6 +77,10 @@ class _Cacheable(typing.Protocol):
                 # if isinstance(ob, (str, Number, bool, _Cacheable, tuple)):
                 if isinstance(ob, _Cacheable):
                     params[key] = ob.identifier_string
+                elif isinstance(ob, dict):
+                    for k in ob:
+                        params[f"{key}_{k}"] = ob[k]
+                    pass  # TODO!!
                 else:
                     params[key] = ob
         return params
