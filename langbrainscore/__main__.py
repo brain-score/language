@@ -109,10 +109,7 @@ def main(args):
         if args.use_wandb:
             lbs.utils.logging.log_to_wandb({"brainscore": s.item()}, commit=False)
     if args.compute_ceiling:
-        brainscore.ceiling(
-            sample_split_coord=args.sample_split_coord,
-            neuroid_split_coord=args.neuroid_split_coord,
-        )
+        brainscore.ceiling()
         c = brainscore.ceilings.mean()
         lbs.utils.logging.log(f"ceiling = {c}", cmap="ANNOUNCE", type="INFO")
         if args.use_wandb:

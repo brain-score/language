@@ -236,12 +236,16 @@ class BrainScore(_BrainScore):
             # neuroid_split_coord=neuroid_split_coord,
         )
 
-    def null(self, sample_split_coord=None, neuroid_split_coord=None, iters=100):
+    def null(
+        self,
+        # sample_split_coord=None, neuroid_split_coord=None,
+        iters=100,
+    ):
         for i in tqdm([*range(iters)], desc="Running null permutations"):
             self.score(
                 null=True,
-                sample_split_coord=sample_split_coord,
-                neuroid_split_coord=neuroid_split_coord,
+                # sample_split_coord=sample_split_coord,
+                # neuroid_split_coord=neuroid_split_coord,
                 seed=i,
             )
         self.nulls = xr.concat(self.nulls, dim="iter")
