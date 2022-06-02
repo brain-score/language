@@ -81,7 +81,9 @@ def main(args):
     else:
         # TODO work out whether/how we want to pass additional kwargs for the
         # specific mapping class during instantiation; e.g., alpha for ridge regression
-        mapping = lbs.mapping.LearnedMap(args.mapping_class)
+        mapping = lbs.mapping.LearnedMap(
+            args.mapping_class, split_coord=args.sample_split_coord
+        )
 
     #### step 5: define metric
     metric_class = lbs.metrics.metric_classes[args.metric_class]
@@ -97,12 +99,11 @@ def main(args):
         ),
         mapping=mapping,
         metric=metric,
+        sample_split_coord=args.sample_split_coord,
+        neuroid_split_coord=args.neuroid_split_coord,
     )
     if args.compute_brainscore:
-        brainscore.score(
-            sample_split_coord=args.sample_split_coord,
-            neuroid_split_coord=args.neuroid_split_coord,
-        )
+        brainscore.score()
         s = brainscore.scores.mean()
         lbs.utils.logging.log(f"brainscore = {s}", cmap="ANNOUNCE", type="INFO")
         if args.use_wandb:

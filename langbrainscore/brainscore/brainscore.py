@@ -30,6 +30,8 @@ class BrainScore(_BrainScore):
         Y: typing.Union[xr.DataArray, EncoderRepresentations],
         mapping: _Mapping,
         metric: _Metric,
+        sample_split_coord: str = None,
+        neuroid_split_coord: str = None,
         run=False,
     ) -> "BrainScore":
         """Initializes the [lang]BrainScore object using two encoded representations and a mapping
@@ -52,6 +54,9 @@ class BrainScore(_BrainScore):
         assert self.X.sampleid.size == self.Y.sampleid.size
         self.mapping = mapping
         self.metric = metric
+        self._sample_split_coord = sample_split_coord
+        self._neuroid_split_coord = neuroid_split_coord
+
         if run:
             self.run()
 
@@ -88,8 +93,6 @@ class BrainScore(_BrainScore):
         self,
         ceiling=False,
         null=False,
-        sample_split_coord=None,
-        neuroid_split_coord=None,
         seed=0,
     ):
         """
@@ -97,6 +100,8 @@ class BrainScore(_BrainScore):
         Mapping instance which is a member attribute of a BrainScore instance
         """
         assert not (ceiling and null)
+        sample_split_coord = self._sample_split_coord
+        neuroid_split_coord = self._neuroid_split_coord
 
         if sample_split_coord:
             assert sample_split_coord in self.Y.coords
@@ -170,8 +175,10 @@ class BrainScore(_BrainScore):
                                 self._score(
                                     y_pred_time_group,
                                     y_true_time_group.isel(
-                                        neuroid=y_true_time_group[neuroid_split_coord]
-                                        == neuroid
+                                        neuroid=(
+                                            y_true_time_group[neuroid_split_coord]
+                                            == neuroid
+                                        )
                                     ),
                                     self.metric,
                                 )
@@ -221,12 +228,12 @@ class BrainScore(_BrainScore):
                 )
             )
 
-    def ceiling(self, sample_split_coord=None, neuroid_split_coord=None):
+    def ceiling(self):  # , sample_split_coord=None, neuroid_split_coord=None):
         logging.log("Calculating ceiling.", type="INFO")
         self.score(
             ceiling=True,
-            sample_split_coord=sample_split_coord,
-            neuroid_split_coord=neuroid_split_coord,
+            # sample_split_coord=self._sample_split_coord,
+            # neuroid_split_coord=neuroid_split_coord,
         )
 
     def null(self, sample_split_coord=None, neuroid_split_coord=None, iters=100):
