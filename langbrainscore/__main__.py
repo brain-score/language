@@ -36,7 +36,8 @@ def main(args):
         )
         raise NotImplementedError("wandb support coming soon.")
 
-    os.environ["LBS_CACHE"] = args.cache_dir
+    os.environ["LBS_CACHE"] = args.cache_prefix
+    args.cache = not args.no_write_cache
 
     #### step 1: load benchmark/dataset
     if not args.recompute:
@@ -103,19 +104,25 @@ def main(args):
             sample_split_coord=args.sample_split_coord,
             neuroid_split_coord=args.neuroid_split_coord,
         )
-        lbs.utils.logging.log(f"brainscore = {brainscore.scores.mean()}")
+        lbs.utils.logging.log(
+            f"brainscore = {brainscore.scores.mean()}", cmap="ANNOUNCE", type="INFO"
+        )
     if args.compute_ceiling:
         brainscore.ceiling(
             sample_split_coord=args.sample_split_coord,
             neuroid_split_coord=args.neuroid_split_coord,
         )
-        lbs.utils.logging.log(f"ceiling = {brainscore.ceilings.mean()}")
+        lbs.utils.logging.log(
+            f"ceiling = {brainscore.ceilings.mean()}", cmap="ANNOUNCE", type="INFO"
+        )
     if args.compute_null_permutation:
         brainscore.null(
             sample_split_coord=args.sample_split_coord,
             neuroid_split_coord=args.neuroid_split_coord,
         )
-        lbs.utils.logging.log(f"null = {brainscore.nulls.mean()}")
+        lbs.utils.logging.log(
+            f"null = {brainscore.nulls.mean()}", cmap="ANNOUNCE", type="INFO"
+        )
 
     lbs.utils.logging.log(f"Finished.")
 
@@ -161,14 +168,16 @@ if __name__ == "__main__":
         help="Skip loading from cache if it exists and recompute any values",
     )
     score_parser.add_argument(
-        "--cache",
+        "--no_write_cache",
         action="store_true",
-        help="Save representations and results to cache for future use",
+        help="""If flag is enabled, representations and results will not 
+                be cached for future use. By default, everything is cached.""",
     )
     score_parser.add_argument(
-        "--cache_dir",
-        default="~/.cache/langbrainscore",
-        help="Default directory to use for caching",
+        "--cache_prefix",
+        default="~/.cache",
+        help="""Default directory to use for caching. (A langbrainscore subdirectory 
+                is created within the prefix directory if it doesn't already exist)""",
     )
     score_parser.add_argument(
         "--dry-run",
@@ -183,7 +192,7 @@ if __name__ == "__main__":
         "Metric (Similarity evaluation) options"
     )
     score_parser_brainscore = score_parser.add_argument_group(
-        "BrainScore computation options"
+        "Language Brain Score computation options"
     )
 
     #### benchmark arguments
