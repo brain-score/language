@@ -1,7 +1,10 @@
+from abc import ABC
+import typing
+
 import xarray as xr
+
 from langbrainscore.interface.cacheable import _Cacheable
 from langbrainscore.utils.xarray import fix_xr_dtypes
-from abc import ABC
 
 
 class _Dataset(_Cacheable, ABC):
@@ -12,7 +15,11 @@ class _Dataset(_Cacheable, ABC):
     dataset_name: str = None
 
     def __init__(
-        self, xr_obj: xr.DataArray, dataset_name: str = None, _skip_checks: bool = False
+        self,
+        xr_obj: xr.DataArray,
+        dataset_name: str = None,
+        # modality: str = None,
+        _skip_checks: bool = False,
     ) -> "_Dataset":
         """
         accepts an xarray with the following core
@@ -30,6 +37,7 @@ class _Dataset(_Cacheable, ABC):
             except KeyError:
                 pass
         self.dataset_name = self.dataset_name or dataset_name
+        # self.modality = modality
 
         if not _skip_checks:
             dims = ("sampleid", "neuroid", "timeid")
@@ -38,4 +46,13 @@ class _Dataset(_Cacheable, ABC):
             assert xr_obj.ndim == len(dims)
             assert all([dim in xr_obj.dims for dim in dims])
             assert all([coord in xr_obj.coords for coord in coords])
-            self._xr_obj = fix_xr_dtypes(xr_obj)
+
+        self._xr_obj = fix_xr_dtypes(xr_obj)
+
+    # def __getattr__(self, __name: str) -> typing.Any:
+    #     """falls back on the xarray object in case of a NameError using __getattribute__
+    #     on this object"""
+    #     try:
+    #         return getattr(self.contents, __name)
+    #     except AttributeError:
+    #         raise AttributeError(f"no attribute called `{__name}` on object")
