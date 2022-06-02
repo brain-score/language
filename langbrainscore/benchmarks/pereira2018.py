@@ -71,22 +71,28 @@ def _pereira2018_mean_froi() -> xr.DataArray:
     mpf_xr = collapse_multidim_coord(mpf_xr, "session", "neuroid")
 
     mpf_xr.attrs["source"] = str(source)
-    # mpf_xr.attrs["name"] = f"Pereira2018NatStories"
+    mpf_xr.attrs["measurement"] = "fmri"
+    mpf_xr.attrs["modality"] = "text"
+    # mpf_xr.attrs["name"] = f"pereira2018_mean_froi"
 
     return mpf_xr
 
 
-def pereira2018_mean_froi(network=None, load_cache=True) -> Dataset:
+def pereira2018_mean_froi(network="Lang", load_cache=True) -> Dataset:
     """ """
     dataset_name = (
-        "pereira2018_mean_froi_{network}" if network else "pereira2018_mean_froi"
+        f"pereira2018_mean_froi_{network}" if network else "pereira2018_mean_froi"
     )
 
     def package() -> Dataset:
         mpf_xr = _pereira2018_mean_froi()
         if network:
-            mpf_xr = (mpf_xr.isel(neuroid=mpf_xr.roi.str.contains(network)),)
-        mpf_dataset = Dataset(mpf_xr, dataset_name=dataset_name)
+            mpf_xr = mpf_xr.isel(neuroid=mpf_xr.roi.str.contains(network))
+        mpf_dataset = Dataset(
+            mpf_xr,
+            dataset_name=dataset_name,
+            # modality="text"
+        )
         return mpf_dataset
 
     if load_cache:
@@ -94,6 +100,7 @@ def pereira2018_mean_froi(network=None, load_cache=True) -> Dataset:
             mpf_dataset = Dataset(
                 xr.DataArray(),
                 dataset_name=dataset_name,
+                # modality="text",
                 _skip_checks=True,
             )
             mpf_dataset.load_cache()
@@ -101,6 +108,6 @@ def pereira2018_mean_froi(network=None, load_cache=True) -> Dataset:
             mpf_dataset = package()
     else:
         mpf_dataset = package()
-        mpf_dataset.to_cache()
+        # mpf_dataset.to_cache()
 
     return mpf_dataset
