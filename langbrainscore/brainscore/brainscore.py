@@ -2,6 +2,7 @@ import typing
 
 import numpy as np
 import xarray as xr
+from tqdm.auto import tqdm
 
 # from methodtools import lru_cache
 from pathlib import Path
@@ -229,8 +230,7 @@ class BrainScore(_BrainScore):
         )
 
     def null(self, sample_split_coord=None, neuroid_split_coord=None, iters=100):
-        for i in range(iters):
-            logging.log(f"Running null permutations: {i+1} of {iters}", type="INFO")
+        for i in tqdm([*range(iters)], desc="Running null permutations"):
             self.score(
                 null=True,
                 sample_split_coord=sample_split_coord,

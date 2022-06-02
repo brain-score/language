@@ -152,7 +152,7 @@ class HuggingFaceEncoder(_ModelEncoder):
         ###############################################################################
         _, unique_ixs = np.unique(context_groups, return_index=True)
         # Make sure context group order is preserved
-        for group in tqdm(context_groups[np.sort(unique_ixs)]):
+        for group in tqdm(context_groups[np.sort(unique_ixs)], desc="Encoding stimuli"):
             # Mask based on the context group
             mask_context = context_groups == group
             stimuli_in_context = stimuli[mask_context]
