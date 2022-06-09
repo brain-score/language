@@ -8,9 +8,9 @@ import xarray as xr
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.linear_model import LinearRegression, RidgeCV
 
-from langbrainscore.interface import _Mapping
-from langbrainscore.utils import logging
-from langbrainscore.utils.xarray import collapse_multidim_coord
+from brainscore_language.interface import _Mapping
+from brainscore_language.utils import logging
+from brainscore_language.utils.xarray import collapse_multidim_coord
 
 mapping_classes_params = {
     "linreg": (LinearRegression, {}),

@@ -2,11 +2,11 @@
 from pathlib import Path
 import typing
 from numbers import Number
-from langbrainscore.interface.cacheable import _Cacheable
+from brainscore_language.interface.cacheable import _Cacheable
 import xarray as xr
-import langbrainscore as lbs
-import langbrainscore.benchmarks
-from langbrainscore.utils.logging import log
+import brainscore_language as lbs
+import brainscore_language.benchmarks
+from brainscore_language.utils.logging import log
 
 pereira_xr = lbs.benchmarks.pereira2018_nat_stories()
 dataset = lbs.dataset.Dataset(pereira_xr)

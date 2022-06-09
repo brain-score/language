@@ -133,7 +133,7 @@ dmypy.json
 
 ### project specific additions:
 
-langbrainscore/data
+brainscore_language/data
 html
 .vscode
 *.code-workspace
