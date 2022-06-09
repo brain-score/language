@@ -1,7 +1,6 @@
 """submodule housing metrics used to evaluate similarity of representations"""
 
-import typing
-from langbrainscore.metrics.metric import (
+from .metric import (
     CKA,
     FisherCorr,
     PearsonR,
@@ -10,7 +9,6 @@ from langbrainscore.metrics.metric import (
     RMSE,
     KendallTau,
     SpearmanRho,
-    # Metric,
 )
 
 metric_classes = {
@@ -23,10 +21,3 @@ metric_classes = {
     "rmse": RMSE,
     "acc": ClassificationAccuracy,
 }
-
-
-# def load_metric(metric_class: typing.Union[str, Metric]):
-#     if metric_class in metric_class_mapping:
-#         return Metric(metric_class_mapping[metric_class])
-#     elif callable(metric_class):
-#         return Metric(metric_class)

@@ -7,11 +7,11 @@
 import pdb
 import random
 
-import langbrainscore as lbs
+import brainscore_language as lbs
 import numpy as np
 import pandas as pd
 import xarray as xr
-from langbrainscore.utils.logging import log
+from brainscore_language.utils.logging import log
 import matplotlib.pyplot as plt
 
 import IPython

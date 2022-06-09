@@ -1,5 +1,5 @@
 import argcomplete, argparse
-import langbrainscore as lbs
+import brainscore_language as lbs
 import xarray as xr
 import wandb
 import os

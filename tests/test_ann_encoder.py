@@ -5,8 +5,8 @@ minimally, in simple cases (no context, single sentence, etc). the motivation of
 some inconsistency in control-neural encode method
 """
 
-import langbrainscore as lbs
-from langbrainscore.utils.logging import log
+import brainscore_language as lbs
+from brainscore_language.utils.logging import log
 from pathlib import Path
 
 # pereira_xr = lbs.benchmarks.pereira2018_nat_stories()

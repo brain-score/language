@@ -1,4 +1,4 @@
-import langbrainscore
+import brainscore_language
 
 def test_dummy():
     assert True

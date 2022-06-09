@@ -4,8 +4,8 @@ from pathlib import Path
 import pandas as pd
 import xarray as xr
 
-from langbrainscore.utils.logging import log
-from langbrainscore.dataset import Dataset
+from brainscore_language.utils.logging import log
+from brainscore_language.dataset import Dataset
 
 
 def test_load_pereira_data():

@@ -49,8 +49,9 @@ Alternatively, take a peek at the `examples/` directory for scripts as well as n
 
 Following is a schematic of the library usage. Note that it is not a minimal working example (MWE). You will
 find MWEs in `examples/`.
+
 ```python
-import langbrainscore as lbs
+import brainscore_language as lbs
 
 pereira18_data = ...
 

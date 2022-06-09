@@ -1,35 +1,7 @@
-import typing
-
 import numpy as np
-import xarray as xr
-from langbrainscore.interface import _MatrixMetric, _Metric, _VectorMetric
+from brainscore_language.interface import _MatrixMetric, _VectorMetric
 from scipy.stats import kendalltau, pearsonr, spearmanr
 from sklearn.metrics import accuracy_score, mean_squared_error, pairwise_distances
-
-
-# class Metric:
-#     """
-#     wrapper for metric classes that confirms they instantiate the proper interface
-#     and coordinates their execution over the contents of supplied xarrays
-#     """
-
-#     def __init__(self, metric: typing.Union[_Metric, str], **kwargs) -> "Metric":
-#         assert issubclass(metric, _Metric)
-#         self._metric = metric(**kwargs)
-
-#     def __call__(self, X: xr.DataArray, Y: xr.DataArray) -> np.ndarray:
-#         """
-#         args:
-#             xr.DataArray: X
-#             xr.DataArray: Y
-
-#         returns:
-#             score of specified metric applied to X and Y
-#         """
-#         score = self._metric(X.values, Y.values)
-#         if not isinstance(score, np.ndarray):
-#             return np.array(score).reshape(-1)
-#         return score
 
 
 class PearsonR(_VectorMetric):

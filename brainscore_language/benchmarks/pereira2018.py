@@ -3,9 +3,9 @@ import numpy as np
 from tqdm.auto import tqdm
 import xarray as xr
 from pathlib import Path
-from langbrainscore.utils.logging import log
-from langbrainscore.utils.xarray import collapse_multidim_coord
-from langbrainscore.dataset import Dataset
+from brainscore_language.utils.logging import log
+from brainscore_language.utils.xarray import collapse_multidim_coord
+from brainscore_language.dataset import Dataset
 
 
 def _pereira2018_mean_froi() -> xr.DataArray:
