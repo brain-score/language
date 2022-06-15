@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/brain-score/language.svg?token=vqt7d2yhhpLGwHsiTZvT&branch=main)](https://travis-ci.com/brain-score/language)
+[![Build Status](https://app.travis-ci.com/brain-score/language.svg?token=vqt7d2yhhpLGwHsiTZvT&branch=main)](https://app.travis-ci.com/brain-score/language)
 [![Documentation Status](https://readthedocs.org/projects/brain-score_language/badge/?version=latest)](https://brain-score_language.readthedocs.io/en/latest/?badge=latest)
 
 Brain-Score Language is a platform to evaluate computational models of language on their match to behavioral and neural
