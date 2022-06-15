@@ -2,7 +2,7 @@ language: python
 python:
 - "3.7"
 before_install:
-- pip install "setuptools>=60.5.0"  # travis build seems to fail otherwise
+- pip install "setuptools>=61"  # travis build seems to fail otherwise
 install:
 - pip install .
 - pip list # list installed package versions
