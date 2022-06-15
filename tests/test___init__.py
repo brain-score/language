@@ -1,3 +1,3 @@
-def can_import():
+def test_can_import():
     # noinspection PyUnresolvedReferences
     import brainscore_language
