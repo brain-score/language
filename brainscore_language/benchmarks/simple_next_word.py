@@ -17,21 +17,17 @@ def predict_next_word(input, tokenizer, model):
     print("\nTokenized input data structure: ")
     print(inpts)
 
-    # res = model.generate(input_ids, **generator_args)
-    # output = tokenizer.batch_decode(res, skip_special_tokens=True)
-
-    # inpt_ids = inpts["input_ids"]  # just IDS, no attn mask
-    # print("\nToken IDs and their words: ")
-    # for id in inpt_ids[0]:
-    #   word = tokenizer.decode(id)
-    #   print(id, word)
+    inpt_ids = inpts["input_ids"]  # just IDS, no attn mask
+    print("\nToken IDs and their words: ")
+    for id in inpt_ids[0]:
+      word = tokenizer.decode(id)
+      print(id, word)
 
     with torch.no_grad():
         output = model(**inpts)
-    (loss, logits) = outputs[:2]
+    (loss, logits) = output[:2]
 
     print("\nAll logits for next word: ")
-    print(logits)
     print(logits.shape)
 
     pred_id = torch.argmax(logits).item()
