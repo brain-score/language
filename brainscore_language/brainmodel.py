@@ -26,6 +26,15 @@ class BrainModel:
     task to perform
     """
 
+    print('test')
+
+    def identifier(self) -> str:
+        """
+        The unique identifier for this model.
+        :return: e.g. `'CORnet-S'`, or `'alexnet'`
+        """
+        raise NotImplementedError()
+
     def digest_text(self, todostimuli):
         raise NotImplementedError()
 
