@@ -26,8 +26,6 @@ class BrainModel:
     task to perform
     """
 
-    print('test')
-
     def identifier(self) -> str:
         """
         The unique identifier for this model.

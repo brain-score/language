@@ -7,8 +7,6 @@ from benchmarks.benchmark_bag import predict_next_word
 
 class HuggingfaceModel(BrainModel):
 
-    print('start')
-
     def __init__(
         self,
         model_id,
@@ -26,7 +24,6 @@ class HuggingfaceModel(BrainModel):
         self.model_id = model_id
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
         self.model = AutoModelForCausalLM.from_pretrained(self.model_id)
-        print('init complete')
 
     def identifier(self):
         return self.model_id
@@ -44,13 +41,3 @@ class HuggingfaceModel(BrainModel):
             BrainModel.Task.next_word: predict_next_word
         }
         self.inference = task_function_mapping_dict[task]
-
-
-
-# from brainscore_language.brainmodel import BrainModel
-temp = HuggingfaceModel(model_id='distilgpt2')
-print(temp.identifier() )
-temp.start_task(BrainModel.Task.next_word)
-text = 'the quick brown fox'
-next_word = temp.digest_text(text)
-print('next_word:', next_word)

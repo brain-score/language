@@ -130,6 +130,9 @@ dmypy.json
 .pyre/
 *.swp
 
+# MAC OS X
+.DS_Store
+
 
 ### project specific additions:
 
@@ -146,3 +149,4 @@ cache
 .cache
 .idea/
 wandb/
+
