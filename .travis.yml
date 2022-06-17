@@ -1,0 +1,11 @@
+language: python
+python:
+- "3.8"
+before_install:
+- pip install "setuptools>=61"  # travis build seems to fail otherwise
+- pip install poetry
+install:
+- poetry install
+- poetry show # list installed package versions
+script:
+- pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow"
