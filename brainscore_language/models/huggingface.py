@@ -3,7 +3,7 @@ import os.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 
 from brainmodel import BrainModel
-from benchmarks.simple_next_word import predict_next_word
+from benchmarks.benchmark_bag import predict_next_word
 
 class HuggingfaceModel(BrainModel):
 
@@ -18,19 +18,14 @@ class HuggingfaceModel(BrainModel):
             model_id (str): the model id i.e. name
         """
 
-        from transformers import AutoConfig, AutoModel, AutoTokenizer
+        from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModelForMaskedLM
         from transformers import logging as transformers_logging
-        from transformers import pipeline
 
         transformers_logging.set_verbosity_error()
 
         self.model_id = model_id
-        # self.device = device or get_torch_device()
-        self.config = AutoConfig.from_pretrained(self.model_id)
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            self.model_id, multiprocessing=True
-        )
-        self.model = AutoModel.from_pretrained(self.model_id, config=self.config)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
+        self.model = AutoModelForCausalLM.from_pretrained(self.model_id)
         print('init complete')
 
     def identifier(self):
@@ -58,7 +53,4 @@ print(temp.identifier() )
 temp.start_task(BrainModel.Task.next_word)
 text = 'the quick brown fox'
 next_word = temp.digest_text(text)
-
-# generator = pipeline('text-generation', model='distilgpt2')
-# print(generator("Hello, I’m a language model", max_length=20, num_return_sequences=5))
-# # Setting `pad_token_id` to `eos_token_id`:50256 for open-end generation.
+print('next_word:', next_word)
