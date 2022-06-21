@@ -3,7 +3,7 @@ import os.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 
 from brainmodel import BrainModel
-from benchmarks.benchmark_bag import predict_next_word
+from benchmarks.predict_word_bag import predict_next_word
 
 class HuggingfaceModel(BrainModel):
 

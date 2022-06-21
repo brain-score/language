@@ -29,7 +29,7 @@ class BrainModel:
     def identifier(self) -> str:
         """
         The unique identifier for this model.
-        :return: e.g. `'CORnet-S'`, or `'alexnet'`
+        :return: e.g. 'glove', or 'distilgpt2'
         """
         raise NotImplementedError()
 
