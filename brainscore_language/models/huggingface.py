@@ -11,17 +11,28 @@ class HuggingfaceModel(InSilicoModel):
     def __init__(
         self,
         model_id,
-        model,
-        tokenizer
+        model=None,
+        tokenizer=None
     ):
         """
         Args:
             model_id (str): the model id i.e. name
+            model (transformers.models.auto.modeling_auto): the model to run inference from e.g. from transformers import AutoModelForCausalLM
+            tokenizer (transformers.models.auto.tokenization_auto): the model's associated tokenizer
         """
 
         self.model_id = model_id
-        self.model = model.from_pretrained(self.model_id)
-        self.tokenizer = tokenizer.from_pretrained(self.model_id)
+        if model:
+            self.model = model.from_pretrained(self.model_id)
+        else:
+            from transformers import AutoModel
+            self.model = AutoModel.from_pretrained(self.model_id)
+
+        if tokenizer:
+            self.tokenizer = tokenizer.from_pretrained(self.model_id)
+        else:
+            from transformers import AutoTokenizer
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
 
     def identifier(self):
         return self.model_id

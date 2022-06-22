@@ -11,7 +11,9 @@ class TestHuggingfaceModel(unittest.TestCase):
 
         model = HuggingfaceModel(model_id='distilgpt2',
                                  model=AutoModelForCausalLM,
-                                 tokenizer=AutoTokenizer)
+                                 tokenizer=AutoTokenizer
+                                 )
+
         logging.info(' '.join(['Running', model.identifier(), 'for next word prediction']) )
         model.start_task(InSilicoModel.Task.next_word)
         text = 'the quick brown fox'
