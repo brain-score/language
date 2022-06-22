@@ -20,5 +20,3 @@ class TestHuggingfaceModel(unittest.TestCase):
         next_word = model.digest_text(text)
         assert next_word == 'es'
         logging.info( ' '.join(['next_word:', next_word]) )
-
-
