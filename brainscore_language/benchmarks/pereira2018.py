@@ -1,16 +1,15 @@
-import pandas as pd
-import numpy as np
-from tqdm.auto import tqdm
-import xarray as xr
-from pathlib import Path
-from brainscore_language.utils.logging import log
-from brainscore_language.utils.xarray import collapse_multidim_coord
-from brainscore_language.dataset import Dataset
 
-
+#  COMMENTED because a lot of the imports don't work as is
 def _pereira2018_mean_froi() -> xr.DataArray:
     """ """
-
+    import pandas as pd
+    import numpy as np
+    from tqdm.auto import tqdm
+    import xarray as xr
+    from pathlib import Path
+    from brainscore_language.utils.logging import log
+    from brainscore_language.utils.xarray import collapse_multidim_coord
+    from brainscore_language.dataset import Dataset
     source = (
         Path(__file__).parents[2]
         / "data/Pereira_FirstSession_TrialEffectSizes_20220223.csv"
@@ -80,6 +79,16 @@ def _pereira2018_mean_froi() -> xr.DataArray:
 
 def pereira2018_mean_froi(network="Lang", load_cache=True) -> Dataset:
     """ """
+
+    import pandas as pd
+    import numpy as np
+    from tqdm.auto import tqdm
+    import xarray as xr
+    from pathlib import Path
+    from brainscore_language.utils.logging import log
+    from brainscore_language.utils.xarray import collapse_multidim_coord
+    from brainscore_language.dataset import Dataset
+
     dataset_name = (
         f"pereira2018_mean_froi_{network}" if network else "pereira2018_mean_froi"
     )

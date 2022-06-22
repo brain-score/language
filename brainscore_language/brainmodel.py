@@ -1,7 +1,6 @@
 from enum import Enum
 
-
-class BrainModel:
+class InSilicoModel:
     # TODO @EvLab: do these make sense?
     RecordingTarget = Enum('RecordingTarget', " ".join([
         'language_system',
@@ -25,6 +24,13 @@ class BrainModel:
     """
     task to perform
     """
+
+    def identifier(self) -> str:
+        """
+        The unique identifier for this model.
+        :return: e.g. 'glove', or 'distilgpt2'
+        """
+        raise NotImplementedError()
 
     def digest_text(self, todostimuli):
         raise NotImplementedError()
