@@ -25,6 +25,7 @@ coverage = {extras = ["toml"], version = "^6.3.1"}
 pytest-html = "^3"
 yapf = "^0.32.0"
 transformers = "^4.11.3"
+torch = "^1.9.1"
 
 
 [build-system]
