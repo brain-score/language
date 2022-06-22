@@ -1,7 +1,6 @@
 from enum import Enum
 
-
-class BrainModel:
+class InSilicoModel:
     # TODO @EvLab: do these make sense?
     RecordingTarget = Enum('RecordingTarget', " ".join([
         'language_system',
