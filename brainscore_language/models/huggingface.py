@@ -2,22 +2,24 @@ from brainscore_language.brainmodel import InSilicoModel
 
 from .predict_word_bag import predict_next_word
 
+from transformers import AutoModel, AutoTokenizer
 
 class HuggingfaceModel(InSilicoModel):
     def __init__(
             self,
             model_id: str,
-            model,
-            tokenizer
+            model_class=AutoModel,
+            tokenizer_class=AutoTokenizer
     ):
         """
-        :param model_id: the model identifier / name
+            :param model_id (str): the model id i.e. name
+            :param model (AutoModel): the model to run inference from e.g. from transformers import AutoModelForCausalLM
+            :param tokenizer (AutoTokenizer): the model's associated tokenizer
         """
 
         self.model_id = model_id
-        self.model = model.from_pretrained(self.model_id)
-        self.tokenizer = tokenizer.from_pretrained(self.model_id)
-        self.inference = None
+        self.model = model_class.from_pretrained(self.model_id)
+        self.tokenizer = tokenizer_class.from_pretrained(self.model_id)
 
     def identifier(self):
         return self.model_id
