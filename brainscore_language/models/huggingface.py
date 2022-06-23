@@ -1,4 +1,4 @@
-from brainmodel import InSilicoModel
+from brainscore_language.brainmodel import InSilicoModel
 
 from .predict_word_bag import predict_next_word
 
