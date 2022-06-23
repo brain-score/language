@@ -1,21 +1,21 @@
 import unittest
-from brainscore_language.models.huggingface import HuggingfaceModel
-from brainmodel import InSilicoModel
+from brainscore_language.models.huggingface import HuggingfaceSubject
+from artificial_subject import ArtificialSubject
 import logging
 logging.basicConfig(level=logging.INFO)
 
-class TestHuggingfaceModel(unittest.TestCase):
+class TestHuggingfaceSubject(unittest.TestCase):
     def test_next_word(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
         from transformers import logging as transformers_logging
 
-        model = HuggingfaceModel(model_id='distilgpt2',
+        model = HuggingfaceSubject(model_id='distilgpt2',
                                  model_class=AutoModelForCausalLM,
                                  tokenizer_class=AutoTokenizer
                                  )
 
         logging.info(' '.join(['Running', model.identifier(), 'for next word prediction']) )
-        model.start_task(InSilicoModel.Task.next_word)
+        model.perform_task(ArtificialSubject.Task.next_word)
         text = 'the quick brown fox'
         next_word = model.digest_text(text)
         assert next_word == 'es'

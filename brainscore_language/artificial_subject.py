@@ -37,8 +37,8 @@ class ArtificialSubject:
 
     # TODO @Dhaval, @Jim, @EvLab: conceptual decision on how we want layer-to-region commitments to happen in the
     #  standard wrapper -- search for best layer on public data?
-    def start_recording(self, recording_target: RecordingTarget):
+    def get_representations(self, recording_target: RecordingTarget):
         raise NotImplementedError()
 
-    def start_task(self, task: Task):
+    def perform_task(self, task: Task):
         raise NotImplementedError()

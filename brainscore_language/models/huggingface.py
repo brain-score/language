@@ -3,12 +3,12 @@ import os.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 print(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 
-from brainmodel import InSilicoModel
+from artificial_subject import ArtificialSubject
 from benchmarks.predict_word_bag import predict_next_word
 
 from transformers import AutoModel, AutoTokenizer
 
-class HuggingfaceModel(InSilicoModel):
+class HuggingfaceSubject(ArtificialSubject):
 
     def __init__(
         self,
@@ -35,11 +35,11 @@ class HuggingfaceModel(InSilicoModel):
                               tokenizer=self.tokenizer,
                               model=self.model)
 
-    def start_recording(self, recording_target: InSilicoModel.RecordingTarget):
+    def get_representations(self, recording_target: ArtificialSubject.RecordingTarget):
         raise NotImplementedError()
 
-    def start_task(self, task: InSilicoModel.Task):
+    def perform_task(self, task: ArtificialSubject.Task):
         task_function_mapping_dict = {
-            InSilicoModel.Task.next_word: predict_next_word
+            ArtificialSubject.Task.next_word: predict_next_word
         }
         self.inference = task_function_mapping_dict[task]
