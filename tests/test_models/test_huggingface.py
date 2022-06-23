@@ -10,8 +10,8 @@ class TestHuggingfaceModel(unittest.TestCase):
         from transformers import logging as transformers_logging
 
         model = HuggingfaceModel(model_id='distilgpt2',
-                                 model=AutoModelForCausalLM,
-                                 tokenizer=AutoTokenizer
+                                 model_class=AutoModelForCausalLM,
+                                 tokenizer_class=AutoTokenizer
                                  )
 
         logging.info(' '.join(['Running', model.identifier(), 'for next word prediction']) )
