@@ -1,26 +1,20 @@
-import sys
-import os.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
-print(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
+from brainscore_language.brainmodel import InSilicoModel
 
-from brainmodel import InSilicoModel
-from benchmarks.predict_word_bag import predict_next_word
+from .predict_word_bag import predict_next_word
 
 from transformers import AutoModel, AutoTokenizer
 
 class HuggingfaceModel(InSilicoModel):
-
     def __init__(
-        self,
-        model_id,
-        model_class=AutoModel,
-        tokenizer_class=AutoTokenizer
+            self,
+            model_id: str,
+            model_class=AutoModel,
+            tokenizer_class=AutoTokenizer
     ):
         """
-        Args:
-            model_id (str): the model id i.e. name
-            model (AutoModel): the model to run inference from e.g. from transformers import AutoModelForCausalLM
-            tokenizer (AutoTokenizer): the model's associated tokenizer
+            :param model_id (str): the model id i.e. name
+            :param model (AutoModel): the model to run inference from e.g. from transformers import AutoModelForCausalLM
+            :param tokenizer (AutoTokenizer): the model's associated tokenizer
         """
 
         self.model_id = model_id
@@ -31,7 +25,7 @@ class HuggingfaceModel(InSilicoModel):
         return self.model_id
 
     def digest_text(self, todostimuli):
-        return self.inference(input = todostimuli,
+        return self.inference(input=todostimuli,
                               tokenizer=self.tokenizer,
                               model=self.model)
 
