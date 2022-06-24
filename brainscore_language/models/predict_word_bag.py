@@ -1,4 +1,3 @@
-
 def predict_next_word(input, tokenizer, model):
     """
     :param seq: the text to be used for inference e.g. "the quick brown fox"
@@ -9,11 +8,8 @@ def predict_next_word(input, tokenizer, model):
     """
     import torch
 
-    inpts = tokenizer(input, return_tensors="pt")
-
-    inpt_ids = inpts["input_ids"]  # just IDS, no attn mask
-
-    output = model(**inpts, output_hidden_states=True, return_dict=True)
+    tokenized_inputs = tokenizer(input, return_tensors="pt")
+    output = model(**tokenized_inputs, output_hidden_states=True, return_dict=True)
 
     logits = output['logits']
     pred_id = torch.argmax(logits, axis=2).squeeze()
@@ -21,4 +17,3 @@ def predict_next_word(input, tokenizer, model):
     next_word = tokenizer.decode(last_model_token_inference)
 
     return next_word
-
