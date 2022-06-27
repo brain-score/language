@@ -1,3 +1,4 @@
+import logging
 import unittest
 from brainscore_language.models.huggingface import HuggingfaceSubject
 from artificial_subject import ArtificialSubject
@@ -7,7 +8,6 @@ logging.basicConfig(level=logging.INFO)
 class TestHuggingfaceSubject(unittest.TestCase):
     def test_next_word(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
-        from transformers import logging as transformers_logging
 
         model = HuggingfaceSubject(model_id='distilgpt2',
                                  model_class=AutoModelForCausalLM,
@@ -19,4 +19,4 @@ class TestHuggingfaceSubject(unittest.TestCase):
         text = 'the quick brown fox'
         next_word = model.digest_text(text)
         assert next_word == 'es'
-        logging.info( ' '.join(['next_word:', next_word]) )
+        logging.info(' '.join(['next_word:', next_word]))

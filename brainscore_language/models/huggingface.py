@@ -11,16 +11,15 @@ from transformers import AutoModel, AutoTokenizer
 class HuggingfaceSubject(ArtificialSubject):
 
     def __init__(
-        self,
-        model_id,
-        model_class=AutoModel,
-        tokenizer_class=AutoTokenizer
+            self,
+            model_id: str,
+            model_class=AutoModel,
+            tokenizer_class=AutoTokenizer
     ):
         """
-        Args:
-            model_id (str): the model id i.e. name
-            model (AutoModel): the model to run inference from e.g. from transformers import AutoModelForCausalLM
-            tokenizer (AutoTokenizer): the model's associated tokenizer
+            :param model_id (str): the model id i.e. name
+            :param model (AutoModel): the model to run inference from e.g. from transformers import AutoModelForCausalLM
+            :param tokenizer (AutoTokenizer): the model's associated tokenizer
         """
 
         self.model_id = model_id
@@ -31,7 +30,7 @@ class HuggingfaceSubject(ArtificialSubject):
         return self.model_id
 
     def digest_text(self, todostimuli):
-        return self.inference(input = todostimuli,
+        return self.inference(input=todostimuli,
                               tokenizer=self.tokenizer,
                               model=self.model)
 
