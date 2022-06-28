@@ -1,12 +1,6 @@
 from enum import Enum
 
 class ArtificialSubject:
-    # TODO @EvLab: do these make sense?
-    # RecordingTarget = Enum('RecordingTarget', " ".join([
-    #     'language_system',
-    #     'language_system_left_hemisphere',
-    #     'language_system_right_hemisphere',
-    # ]))
     """
     location to record from
     """
