@@ -10,10 +10,9 @@ def predict_next_word(input, tokenizer, model):
 
     tokenized_inputs = tokenizer(input, return_tensors="pt")
     output = model(**tokenized_inputs, output_hidden_states=True, return_dict=True)
-
     logits = output['logits']
     pred_id = torch.argmax(logits, axis=2).squeeze()
     last_model_token_inference = pred_id[-1].tolist()
     next_word = tokenizer.decode(last_model_token_inference)
 
-    return next_word
+    return next_word, output['hidden_states']
