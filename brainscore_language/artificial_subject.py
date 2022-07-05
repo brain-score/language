@@ -1,17 +1,6 @@
 from enum import Enum
 
 class ArtificialSubject:
-    """
-    location to record from
-    """
-
-    RecordingType = Enum('RecordingTarget', " ".join([
-        'fMRI',
-    ]))
-    """
-    method of recording
-    """
-
     # TODO @Dhaval, @Jim: how do we specify this more accurately for what exactly the outputs are expected to be?
     #  Just more documentation? Also double-check with PIs that these are sufficient for a first round
     Task = Enum('Task', " ".join(['next_word', 'surprisal']))

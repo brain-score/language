@@ -14,7 +14,7 @@ class HuggingfaceSubject(ArtificialSubject):
             self,
             model_id: str,
             reprensetation_layer: int,
-            model_class=AutoModel,
+            model_class=AutoModelForCausalLM,
             tokenizer_class=AutoTokenizer,
     ):
         """
