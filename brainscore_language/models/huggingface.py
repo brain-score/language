@@ -13,7 +13,7 @@ class HuggingfaceSubject(ArtificialSubject):
     def __init__(
             self,
             model_id: str,
-            reprensetation_layer: int,
+            representation_layer: int,
             model_class=AutoModelForCausalLM,
             tokenizer_class=AutoTokenizer,
     ):
