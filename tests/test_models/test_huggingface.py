@@ -30,7 +30,7 @@ class TestHuggingfaceSubject(unittest.TestCase):
     def test_representation(self):
         """
         This is a simple test that takes in text = 'the quick brown fox', and asserts
-        that the `distilgpt2` layer indexed by `reprensetation_layer` is of shape torch.Size([1,4,768]).
+        that the `distilgpt2` layer indexed by `representation_layer` is of shape torch.Size([1,4,768]).
         This test is a stand-in prototype to check if our model definitions are correct.
         """
 
