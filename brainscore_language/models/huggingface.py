@@ -27,6 +27,8 @@ class HuggingfaceSubject(ArtificialSubject):
         self.model = model_class.from_pretrained(self.model_id)
         self.tokenizer = tokenizer_class.from_pretrained(self.model_id)
         self.representation_layer = representation_layer
+        self.region_layer_mapping= {'language_system': 'encoder.4',
+                                    'language_system_left_hemisphere': 'encoder.4.norm'}
 
     def identifier(self):
         return self.model_id
