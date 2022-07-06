@@ -26,7 +26,7 @@ class HuggingfaceSubject(ArtificialSubject):
         self.model_id = model_id
         self.model = model_class.from_pretrained(self.model_id)
         self.tokenizer = tokenizer_class.from_pretrained(self.model_id)
-        self.representation_layer = reprensetation_layer
+        self.representation_layer = representation_layer
 
     def identifier(self):
         return self.model_id
