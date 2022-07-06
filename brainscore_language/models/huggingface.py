@@ -6,7 +6,7 @@ print(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 from artificial_subject import ArtificialSubject
 from benchmarks.predict_word_bag import predict_next_word
 
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 class HuggingfaceSubject(ArtificialSubject):
 
@@ -31,8 +31,8 @@ class HuggingfaceSubject(ArtificialSubject):
     def identifier(self):
         return self.model_id
 
-    def digest_text(self, todostimuli):
-        return self.inference(input=todostimuli,
+    def digest_text(self, stimuli):
+        return self.inference(input=stimuli,
                               tokenizer=self.tokenizer,
                               model=self.model)
 
