@@ -32,7 +32,7 @@ class ArtificialSubject:
         """
         raise NotImplementedError()
 
-    def digest_text(self, todostimuli):
+    def digest_text(self, stimuli):
         raise NotImplementedError()
 
     # TODO @Dhaval, @Jim, @EvLab: conceptual decision on how we want layer-to-region commitments to happen in the
