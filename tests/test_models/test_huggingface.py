@@ -40,7 +40,7 @@ class TestHuggingfaceSubject(unittest.TestCase):
         model = HuggingfaceSubject(model_id='distilgpt2',
                                     model_class=AutoModelForCausalLM,
                                     tokenizer_class=AutoTokenizer,
-                                    reprensetation_layer=1
+                                    representation_layer=1
                                     )
 
         logging.info(' '.join(['Running', model.identifier(), 'for representation layer shape test']) )
