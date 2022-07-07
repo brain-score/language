@@ -1,10 +1,8 @@
 import sys
 import os.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
-print(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 
 from artificial_subject import ArtificialSubject
-from benchmarks.predict_word_bag import predict_next_word
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -28,6 +26,10 @@ class HuggingfaceSubject(ArtificialSubject):
         self.tokenizer = tokenizer_class.from_pretrained(self.model_id)
         self.representation_layer = representation_layer
 
+        self.next_word = None
+        self.representation = None
+
+
     def identifier(self):
         return self.model_id
 
@@ -41,6 +43,36 @@ class HuggingfaceSubject(ArtificialSubject):
 
     def perform_task(self, task: ArtificialSubject.Task):
         task_function_mapping_dict = {
-            ArtificialSubject.Task.next_word: predict_next_word
+            ArtificialSubject.Task.next_word: self.predict_next_word
         }
         self.inference = task_function_mapping_dict[task]
+
+    def predict_next_word(self, input, tokenizer, model):
+        """
+        :param seq: the text to be used for inference e.g. "the quick brown fox"
+        :param tokenizer: huggingface tokenizer, defined in the HuggingfaceModel class via: self.tokenizer =
+        AutoTokenizer.from_pretrained(self.model_id)
+        :param model: huggingface model, defined in the HuggingfaceModel class via: self.model = AutoModelForCausalLM.from_pretrained(self.model_id)
+        :return: single string which reprensets the model's prediction of the next word
+        """
+        import torch
+
+        tokenized_inputs = tokenizer(input, return_tensors="pt")
+        output = model(**tokenized_inputs, output_hidden_states=True, return_dict=True)
+        self.representation = output["hidden_states"]
+
+        logits = output['logits']
+        pred_id = torch.argmax(logits, axis=2).squeeze()
+        last_model_token_inference = pred_id[-1].tolist()
+        self.next_word = tokenizer.decode(last_model_token_inference)
+
+
+"""
+Done:
+- move predict_next_word function to hugginface.py
+- do we get a hidden state per token (words can sometimes be broken into tokens), or one for the whole sentence
+
+Not done:
+- stateful output i.e. if this is a reprensentation task, return the hidden state, if this is next word, output next word, etc.
+- add a region_layer_mapping that maps from model layer names to hidden state tensor indices. 
+"""
