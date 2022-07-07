@@ -8,9 +8,7 @@ logging.basicConfig(level=logging.INFO)
 class TestHuggingfaceSubject(unittest.TestCase):
     def test_next_word(self):
         """
-        This is a simple test that takes in text = 'the quick brown fox', and asserts
-        that the next word predicted is 'es'.
-        This test is a stand-in prototype to check if our model definitions are correct.
+        This is a simple test that takes in text = 'the quick brown fox', and asserts that the next word predicted is 'es'. This test is a stand-in prototype to check if our model definitions are correct.
         """
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -21,17 +19,17 @@ class TestHuggingfaceSubject(unittest.TestCase):
                                     )
 
         logging.info(' '.join(['Running', model.identifier(), 'for next word prediction test']) )
-        model.perform_task(ArtificialSubject.Task.next_word)
         text = 'the quick brown fox'
-        model.digest_text(text)
+        model.perform_task(stimuli=text,
+                           task=ArtificialSubject.Task.next_word)
+        model.digest_text()
         assert model.next_word == 'es'
 
     # def test_representation(self):
-    #     """
-    #     This is a simple test that takes in text = 'the quick brown fox', and asserts
-    #     that the `distilgpt2` layer indexed by `representation_layer` is of shape torch.Size([1,4,768]).
-    #     This test is a stand-in prototype to check if our model definitions are correct.
-    #     """
+        """
+        This is a simple test that takes in text = 'the quick brown fox', and asserts that the `distilgpt2` layer 
+        indexed by `representation_layer` is of shape torch.Size([1,4,768]). This test is a stand-in prototype to check if our model definitions are correct.
+        """
     #
     #     from transformers import AutoModelForCausalLM, AutoTokenizer
     #     import torch

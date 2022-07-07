@@ -3,7 +3,10 @@ from enum import Enum
 class ArtificialSubject:
     # TODO @Dhaval, @Jim: how do we specify this more accurately for what exactly the outputs are expected to be?
     #  Just more documentation? Also double-check with PIs that these are sufficient for a first round
-    Task = Enum('Task', " ".join(['next_word', 'surprisal']))
+    Task = Enum('Task', " ".join(['next_word',
+                                  'representation',
+                                  'surprisal'
+                                  ]))
     """
     task to perform
     """

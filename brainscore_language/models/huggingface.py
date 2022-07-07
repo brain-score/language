@@ -33,21 +33,23 @@ class HuggingfaceSubject(ArtificialSubject):
     def identifier(self):
         return self.model_id
 
-    def digest_text(self, stimuli):
-        return self.inference(input=stimuli,
-                              tokenizer=self.tokenizer,
-                              model=self.model)
+    def digest_text(self):
+        return self.run_experiment()
 
-    def get_representations(self, hidden_states):
-        return hidden_states[self.representation_layer]
+    def get_representations(self):
+        # return hidden_states[self.representation_layer]
+        return self.representation
 
-    def perform_task(self, task: ArtificialSubject.Task):
+    def perform_task(self, stimuli: str, task: ArtificialSubject.Task):
         task_function_mapping_dict = {
-            ArtificialSubject.Task.next_word: self.predict_next_word
+            ArtificialSubject.Task.next_word: self.predict_next_word,
+            ArtificialSubject.Task.representation: self.get_representations
         }
-        self.inference = task_function_mapping_dict[task]
 
-    def predict_next_word(self, input, tokenizer, model):
+        self.stimuli = stimuli
+        self.run_experiment = task_function_mapping_dict[task]
+
+    def predict_next_word(self):
         """
         :param seq: the text to be used for inference e.g. "the quick brown fox"
         :param tokenizer: huggingface tokenizer, defined in the HuggingfaceModel class via: self.tokenizer =
@@ -57,14 +59,14 @@ class HuggingfaceSubject(ArtificialSubject):
         """
         import torch
 
-        tokenized_inputs = tokenizer(input, return_tensors="pt")
-        output = model(**tokenized_inputs, output_hidden_states=True, return_dict=True)
+        tokenized_inputs = self.tokenizer(self.stimuli, return_tensors="pt")
+        output = self.model(**tokenized_inputs, output_hidden_states=True, return_dict=True)
         self.representation = output["hidden_states"]
 
         logits = output['logits']
         pred_id = torch.argmax(logits, axis=2).squeeze()
         last_model_token_inference = pred_id[-1].tolist()
-        self.next_word = tokenizer.decode(last_model_token_inference)
+        self.next_word = self.tokenizer.decode(last_model_token_inference)
 
 
 """
