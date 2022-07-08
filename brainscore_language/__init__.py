@@ -1,5 +1,5 @@
 from brainscore_core.benchmarks import Benchmark
-from brainscore_core.metrics import Score
+from brainscore_core.metrics import Score, Metric
 from brainscore_language.artificial_subject import ArtificialSubject
 
 datasets = {}
@@ -15,21 +15,21 @@ def load_dataset(identifier):
     return datasets[identifier]()
 
 
-def load_metric(identifier):
+def load_metric(identifier) -> Metric:
     # imports to load plugins until plugin system is implemented
     from brainscore_language.plugins.wikitext_next_word_prediction import metric
 
     return metrics[identifier]()
 
 
-def load_benchmark(identifier):
+def load_benchmark(identifier) -> Benchmark:
     # imports to load plugins until plugin system is implemented
     from brainscore_language.plugins.wikitext_next_word_prediction import benchmark
 
     return benchmarks[identifier]()
 
 
-def load_model(identifier):
+def load_model(identifier) -> ArtificialSubject:
     return models[identifier]
 
 

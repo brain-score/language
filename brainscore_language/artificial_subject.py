@@ -1,7 +1,24 @@
 from enum import Enum
 
+from brainscore_core import DataAssembly
+
+
 class ArtificialSubject:
-    # TODO @EvLab: do these make sense?
+    def identifier(self) -> str:
+        """
+        The unique identifier for this model.
+        :return: e.g. 'glove', or 'distilgpt2'
+        """
+        raise NotImplementedError()
+
+    Task = Enum('Task', " ".join(['next_word', 'surprisal']))
+    """
+    task to perform
+    """
+
+    def perform_task(self, task: Task):
+        raise NotImplementedError()
+
     RecordingTarget = Enum('RecordingTarget', " ".join([
         'language_system',
         'language_system_left_hemisphere',
@@ -12,33 +29,14 @@ class ArtificialSubject:
     """
 
     RecordingType = Enum('RecordingTarget', " ".join([
-        'fMRI',
+        'exact', 'fMRI',
     ]))
     """
     method of recording
     """
 
-    # TODO @Dhaval, @Jim: how do we specify this more accurately for what exactly the outputs are expected to be?
-    #  Just more documentation? Also double-check with PIs that these are sufficient for a first round
-    Task = Enum('Task', " ".join(['next_word', 'surprisal']))
-    """
-    task to perform
-    """
-
-    def identifier(self) -> str:
-        """
-        The unique identifier for this model.
-        :return: e.g. 'glove', or 'distilgpt2'
-        """
+    def get_representations(self, recording_target: RecordingTarget, recording_type: RecordingType):
         raise NotImplementedError()
 
-    def digest_text(self, stimuli):
-        raise NotImplementedError()
-
-    # TODO @Dhaval, @Jim, @EvLab: conceptual decision on how we want layer-to-region commitments to happen in the
-    #  standard wrapper -- search for best layer on public data?
-    def get_representations(self, recording_target: RecordingTarget):
-        raise NotImplementedError()
-
-    def perform_task(self, task: Task):
+    def digest_text(self, stimuli) -> DataAssembly:
         raise NotImplementedError()
