@@ -91,17 +91,19 @@ class HuggingfaceSubject(ArtificialSubject):
         last_model_token_inference = pred_id[-1].tolist()
         self.next_word = self.tokenizer.decode(last_model_token_inference)
 
-    def get_layer(self, layer_name):
+    def get_layer(self, layer_name: str):
         SUBMODULE_SEPARATOR = '.'
 
         module = self.model
         for part in layer_name.split(SUBMODULE_SEPARATOR):
-            print(part)
             module = module._modules.get(part)
             assert module is not None, f"No submodule found for layer {layer_name}, at part {part}"
         return module
 
-    def register_hook(self, layer, layer_name, target_dict):
+    def register_hook(self,
+                      layer,
+                      layer_name: str,
+                      target_dict: dict):
 
         def hook_function(_layer, _input, output, name=layer_name):
             target_dict[name] = HuggingfaceSubject._tensor_to_numpy(output)
