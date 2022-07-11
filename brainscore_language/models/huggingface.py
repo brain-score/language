@@ -26,6 +26,7 @@ class HuggingfaceSubject(ArtificialSubject):
 
         self.next_word = None
         self.representation = None
+        self.layer_name = None
 
 
     def identifier(self):
@@ -38,7 +39,8 @@ class HuggingfaceSubject(ArtificialSubject):
         if not self.recording:
             import sys
             raise Exception("You cannot call `get_representations` when `recording` is False")
-        return self.representation[self.layer_name]
+        else:
+            return self.representation[self.layer_name]
 
     def perform_task(self, stimuli: str,
                      task: ArtificialSubject.Task,
@@ -100,6 +102,7 @@ class HuggingfaceSubject(ArtificialSubject):
         return module
 
     def register_hook(self, layer, layer_name, target_dict):
+
         def hook_function(_layer, _input, output, name=layer_name):
             target_dict[name] = HuggingfaceSubject._tensor_to_numpy(output)
 
