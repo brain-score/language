@@ -23,11 +23,9 @@ class HuggingfaceSubject(ArtificialSubject):
         self.model_id = model_id
         self.model = model_class.from_pretrained(self.model_id)
         self.tokenizer = tokenizer_class.from_pretrained(self.model_id)
-        # self.representation_layer = representation_layer
 
         self.next_word = None
         self.representation = None
-        # self.recording = recording
 
 
     def identifier(self):
@@ -35,8 +33,6 @@ class HuggingfaceSubject(ArtificialSubject):
 
     def digest_text(self):
         return self.run_experiment()
-        # for func in self.experiments_to_run:
-        #     func()
 
     def get_representations(self):
         if not self.recording:
@@ -52,7 +48,6 @@ class HuggingfaceSubject(ArtificialSubject):
         task_function_mapping_dict = {
             ArtificialSubject.Task.next_word: self.predict_next_word,
         }
-
         region_layer_mapping = {'Broca': 'transformer.h.0.ln_1' #stand-in example
                                 }
 
@@ -115,13 +110,4 @@ class HuggingfaceSubject(ArtificialSubject):
     def _tensor_to_numpy(cls, output):
         return output.cpu().data.numpy()
 
-"""
-Done:
-- move predict_next_word function to hugginface.py
-- do we get a hidden state per token (words can sometimes be broken into tokens), or one for the whole sentence
-- stateful output i.e. if this is a reprensentation task, return the hidden state, if this is next word, output next word, etc.
-
-Not done:
-- add a region_layer_mapping that maps from model layer names to hidden state tensor indices. 
-"""
 
