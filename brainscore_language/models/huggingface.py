@@ -1,5 +1,6 @@
 import sys
 import os.path
+import torch
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 
 from artificial_subject import ArtificialSubject
@@ -44,8 +45,8 @@ class HuggingfaceSubject(ArtificialSubject):
 
     def perform_task(self, stimuli: str,
                      task: ArtificialSubject.Task,
-                     recording=False,
-                     language_system = None
+                     recording=False, # boolean
+                     language_system = None #otherwise a string
                      ):
         task_function_mapping_dict = {
             ArtificialSubject.Task.next_word: self.predict_next_word,
@@ -67,7 +68,6 @@ class HuggingfaceSubject(ArtificialSubject):
         :param model: huggingface model, defined in the HuggingfaceModel class via: self.model = AutoModelForCausalLM.from_pretrained(self.model_id)
         :return: single string which reprensets the model's prediction of the next word
         """
-        import torch
         from collections import OrderedDict
 
         tokenized_inputs = self.tokenizer(self.stimuli, return_tensors="pt")
@@ -101,7 +101,7 @@ class HuggingfaceSubject(ArtificialSubject):
         return module
 
     def register_hook(self,
-                      layer,
+                      layer: torch.nn.modules,
                       layer_name: str,
                       target_dict: dict):
 
@@ -112,7 +112,8 @@ class HuggingfaceSubject(ArtificialSubject):
         return hook
 
     @classmethod
-    def _tensor_to_numpy(cls, output):
+    def _tensor_to_numpy(cls,
+                         output: torch.Tensor):
         return output.cpu().data.numpy()
 
 
