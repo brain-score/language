@@ -13,6 +13,7 @@ license = "MIT"
 python = "3.8.*"
 tqdm = "*"
 numpy = "^1.21"
+brainscore_core = { git = "https://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@github.com/brain-score/core.git", branch="main" }
 brainio = { git = "https://github.com/brain-score/brainio.git", branch="main" }
 
 [tool.poetry.dev-dependencies]
