@@ -1,26 +1,12 @@
 from enum import Enum
 
 class ArtificialSubject:
-    # TODO @EvLab: do these make sense?
-    RecordingTarget = Enum('RecordingTarget', " ".join([
-        'language_system',
-        'language_system_left_hemisphere',
-        'language_system_right_hemisphere',
-    ]))
-    """
-    location to record from
-    """
-
-    RecordingType = Enum('RecordingTarget', " ".join([
-        'fMRI',
-    ]))
-    """
-    method of recording
-    """
-
     # TODO @Dhaval, @Jim: how do we specify this more accurately for what exactly the outputs are expected to be?
     #  Just more documentation? Also double-check with PIs that these are sufficient for a first round
-    Task = Enum('Task', " ".join(['next_word', 'surprisal']))
+    Task = Enum('Task', " ".join(['next_word',
+                                  'representation',
+                                  'surprisal'
+                                  ]))
     """
     task to perform
     """
@@ -32,12 +18,12 @@ class ArtificialSubject:
         """
         raise NotImplementedError()
 
-    def digest_text(self, stimuli):
+    def digest_text(self, todostimuli: str):
         raise NotImplementedError()
 
     # TODO @Dhaval, @Jim, @EvLab: conceptual decision on how we want layer-to-region commitments to happen in the
     #  standard wrapper -- search for best layer on public data?
-    def get_representations(self, recording_target: RecordingTarget):
+    def get_representations(self):
         raise NotImplementedError()
 
     def perform_task(self, task: Task):
