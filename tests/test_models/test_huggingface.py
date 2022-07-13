@@ -15,7 +15,7 @@ class TestHuggingfaceSubject(unittest.TestCase):
         """
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
-        model = HuggingfaceSubject(model_id='gpt2-xl',
+        model = HuggingfaceSubject(model_id='bert-base-uncased',
                                     model_class=AutoModelForCausalLM,
                                     tokenizer_class=AutoTokenizer,
                                     )
@@ -26,7 +26,30 @@ class TestHuggingfaceSubject(unittest.TestCase):
                            task=ArtificialSubject.Task.next_word,
                            )
         model.digest_text()
+        print(model.next_word)
         assert model.next_word.strip() == 'jumps'
+
+
+    # def test_next_word_gpt2_xl(self):
+    #     """
+    #     This is a simple test that takes in text = 'the quick brown fox', and asserts
+    #     that the next word predicted is 'es'.
+    #     This test is a stand-in prototype to check if our model definitions are correct.
+    #     """
+    #     from transformers import AutoModelForCausalLM, AutoTokenizer
+    #
+    #     model = HuggingfaceSubject(model_id='gpt2-xl',
+    #                                 model_class=AutoModelForCausalLM,
+    #                                 tokenizer_class=AutoTokenizer,
+    #                                 )
+    #
+    #     logging.info(' '.join(['Running', model.identifier(), 'for next word prediction test']) )
+    #     text = 'the quick brown fox'
+    #     model.perform_task(stimuli=text,
+    #                        task=ArtificialSubject.Task.next_word,
+    #                        )
+    #     model.digest_text()
+    #     assert model.next_word.strip() == 'jumps'
 
     #
     # def test_next_word(self):

@@ -24,6 +24,9 @@ class HuggingfaceSubject(ArtificialSubject):
         self.model_id = model_id
         self.model = model_class.from_pretrained(self.model_id)
         self.tokenizer = tokenizer_class.from_pretrained(self.model_id)
+        self.representation_layer = representation_layer
+        self.region_layer_mapping= {'language_system': 'encoder.4',
+                                    'language_system_left_hemisphere': 'encoder.4.norm'}
 
         self.next_word = None
         self.representation = None
@@ -51,7 +54,7 @@ class HuggingfaceSubject(ArtificialSubject):
         task_function_mapping_dict = {
             ArtificialSubject.Task.next_word: self.predict_next_word,
         }
-        region_layer_mapping = {'Broca': 'transformer.h.0.ln_1' #stand-in example
+        region_layer_mapping = {'left_hemisphere': 'transformer.h.0.ln_1' #stand-in example
                                 }
 
         self.stimuli = stimuli
