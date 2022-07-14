@@ -61,11 +61,8 @@ class HuggingfaceSubject(ArtificialSubject):
 
     def predict_next_word(self):
         """
-        :param seq: the text to be used for inference e.g. "the quick brown fox"
-        :param tokenizer: huggingface tokenizer, defined in the HuggingfaceModel class via: self.tokenizer =
-        AutoTokenizer.from_pretrained(self.model_id)
-        :param model: huggingface model, defined in the HuggingfaceModel class via: self.model = AutoModelForCausalLM.from_pretrained(self.model_id)
-        :return: single string which reprensets the model's prediction of the next word
+        Predicts the next word in a sentence:
+        '[CLS] the quick brown fox' gives -> 'jumps'
         """
         from collections import OrderedDict
 
@@ -74,8 +71,8 @@ class HuggingfaceSubject(ArtificialSubject):
         if self.recording:
             self.representation = OrderedDict()
             hooks = []
-            layer = self.get_layer(self.layer_name)
-            hook = self.register_hook(layer, self.layer_name, target_dict=self.representation)
+            layer = self._get_layer(self.layer_name)
+            hook = self._register_hook(layer, self.layer_name, target_dict=self.representation)
             hooks.append(hook)
 
         with torch.no_grad():
@@ -92,11 +89,9 @@ class HuggingfaceSubject(ArtificialSubject):
 
     def fill_mask(self):
         """
-        :param seq: the text to be used for inference e.g. "the quick brown fox"
-        :param tokenizer: huggingface tokenizer, defined in the HuggingfaceModel class via: self.tokenizer =
-        AutoTokenizer.from_pretrained(self.model_id)
-        :param model: huggingface model, defined in the HuggingfaceModel class via: self.model = AutoModelForCausalLM.from_pretrained(self.model_id)
-        :return: single string which reprensets the model's prediction of the next word
+        Fills in the masked workd in a sentence:
+        '[CLS] the quick brown fox [MASK] over the lazy dog [SEP]' gives -> '. the quick brown fox took over the
+        lazy dog ..'
         """
         from collections import OrderedDict
 
@@ -106,8 +101,8 @@ class HuggingfaceSubject(ArtificialSubject):
         if self.recording:
             self.representation = OrderedDict()
             hooks = []
-            layer = self.get_layer(self.layer_name)
-            hook = self.register_hook(layer, self.layer_name, target_dict=self.representation)
+            layer = self._get_layer(self.layer_name)
+            hook = self._register_hook(layer, self.layer_name, target_dict=self.representation)
             hooks.append(hook)
 
         with torch.no_grad():
@@ -122,7 +117,7 @@ class HuggingfaceSubject(ArtificialSubject):
         fill_mask_token_inference = pred_id[mask_location]
         self.fill_mask_word = self.tokenizer.decode(fill_mask_token_inference)
 
-    def get_layer(self, layer_name: str):
+    def _get_layer(self, layer_name: str):
         SUBMODULE_SEPARATOR = '.'
 
         module = self.model
@@ -131,7 +126,7 @@ class HuggingfaceSubject(ArtificialSubject):
             assert module is not None, f"No submodule found for layer {layer_name}, at part {part}"
         return module
 
-    def register_hook(self,
+    def _register_hook(self,
                       layer: torch.nn.modules,
                       layer_name: str,
                       target_dict: dict):
