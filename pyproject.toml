@@ -27,7 +27,7 @@ pytest-html = "^3"
 yapf = "^0.32.0"
 transformers = "^4.11.3"
 torch = "^1.9.1"
-netCDF4 = "^1.6.0"
+netCDF4 = "^1.5.8"
 boto3 = "^1.24.28"
 
 [build-system]
