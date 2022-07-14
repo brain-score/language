@@ -8,30 +8,7 @@ logging.basicConfig(level=logging.INFO)
 class TestHuggingfaceSubject(unittest.TestCase):
 
 
-    # def test_fill_mask_t511b(self):
-    #     """
-    #     This is a simple test that takes in text = 'the quick brown fox', and asserts
-    #     that the next word predicted is 'es'.
-    #     This test is a stand-in prototype to check if our model definitions are correct.
-    #     """
-    #     from transformers import AutoModelForCausalLM, AutoTokenizer
-    #
-    #     model = HuggingfaceSubject(model_id='t5-11b',
-    #                                 model_class=AutoModelForCausalLM,
-    #                                 tokenizer_class=AutoTokenizer,
-    #                                 )
-    #
-    #     logging.info(' '.join(['Running', model.identifier(), 'for next word prediction test']) )
-    #     text = 'the quick brown fox [MASK] over the lazy dog'
-    #     # self.tokenizer.decode(tokenized_inputs['input_ids']): '[CLS] the quick brown fox [MASK] over the lazy dog [SEP]'"
-    #     model.perform_task(stimuli=text,
-    #                        task=ArtificialSubject.Task.fill_mask,
-    #                        )
-    #     model.digest_text()
-    #     print('model.fill_mask_word:', model.fill_mask_word)
-    #     assert model.fill_mask_word.strip() == 'took'
-
-    def test_fill_mask_bert_base_uncased(self):
+    def test_fill_mask_t511b(self):
         """
         This is a simple test that takes in text = 'the quick brown fox', and asserts
         that the next word predicted is 'es'.
@@ -39,7 +16,7 @@ class TestHuggingfaceSubject(unittest.TestCase):
         """
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
-        model = HuggingfaceSubject(model_id='bert-base-uncased',
+        model = HuggingfaceSubject(model_id='t5-11b',
                                     model_class=AutoModelForCausalLM,
                                     tokenizer_class=AutoTokenizer,
                                     )
@@ -51,8 +28,31 @@ class TestHuggingfaceSubject(unittest.TestCase):
                            task=ArtificialSubject.Task.fill_mask,
                            )
         model.digest_text()
-        print(model.fill_mask_word)
+        print('model.fill_mask_word:', model.fill_mask_word)
         assert model.fill_mask_word.strip() == 'took'
+
+    # def test_fill_mask_bert_base_uncased(self):
+    #     """
+    #     This is a simple test that takes in text = 'the quick brown fox', and asserts
+    #     that the next word predicted is 'es'.
+    #     This test is a stand-in prototype to check if our model definitions are correct.
+    #     """
+    #     from transformers import AutoModelForCausalLM, AutoTokenizer
+    #
+    #     model = HuggingfaceSubject(model_id='bert-base-uncased',
+    #                                 model_class=AutoModelForCausalLM,
+    #                                 tokenizer_class=AutoTokenizer,
+    #                                 )
+    #
+    #     logging.info(' '.join(['Running', model.identifier(), 'for next word prediction test']) )
+    #     text = 'the quick brown fox [MASK] over the lazy dog'
+    #     # self.tokenizer.decode(tokenized_inputs['input_ids']): '[CLS] the quick brown fox [MASK] over the lazy dog [SEP]'"
+    #     model.perform_task(stimuli=text,
+    #                        task=ArtificialSubject.Task.fill_mask,
+    #                        )
+    #     model.digest_text()
+    #     print(model.fill_mask_word)
+    #     assert model.fill_mask_word.strip() == 'took'
     #
     #
     # def test_next_word_gpt2_xl(self):
