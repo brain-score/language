@@ -24,11 +24,6 @@ class HuggingfaceSubject(ArtificialSubject):
         self.model_id = model_id
         self.model = model_class.from_pretrained(self.model_id)
         self.tokenizer = tokenizer_class.from_pretrained(self.model_id)
-        self.representation_layer = representation_layer
-        self.region_layer_mapping= {'language_system': 'encoder.4',
-                                    'language_system_left_hemisphere': 'encoder.4.norm'}
-
-        self.next_word = None
         self.representation = None
         self.layer_name = None
 
@@ -53,6 +48,7 @@ class HuggingfaceSubject(ArtificialSubject):
                      ):
         task_function_mapping_dict = {
             ArtificialSubject.Task.next_word: self.predict_next_word,
+            ArtificialSubject.Task.fill_mask: self.fill_mask,
         }
         region_layer_mapping = {'left_hemisphere': 'transformer.h.0.ln_1' #stand-in example
                                 }
@@ -93,6 +89,38 @@ class HuggingfaceSubject(ArtificialSubject):
         pred_id = torch.argmax(logits, axis=2).squeeze()
         last_model_token_inference = pred_id[-1].tolist()
         self.next_word = self.tokenizer.decode(last_model_token_inference)
+
+    def fill_mask(self):
+        """
+        :param seq: the text to be used for inference e.g. "the quick brown fox"
+        :param tokenizer: huggingface tokenizer, defined in the HuggingfaceModel class via: self.tokenizer =
+        AutoTokenizer.from_pretrained(self.model_id)
+        :param model: huggingface model, defined in the HuggingfaceModel class via: self.model = AutoModelForCausalLM.from_pretrained(self.model_id)
+        :return: single string which reprensets the model's prediction of the next word
+        """
+        from collections import OrderedDict
+
+        tokenized_inputs = self.tokenizer(self.stimuli, return_tensors="pt")
+        mask_location = self.tokenizer.decode(tokenized_inputs['input_ids'][0]).split(' ').index('[MASK]')
+
+        if self.recording:
+            self.representation = OrderedDict()
+            hooks = []
+            layer = self.get_layer(self.layer_name)
+            hook = self.register_hook(layer, self.layer_name, target_dict=self.representation)
+            hooks.append(hook)
+
+        with torch.no_grad():
+            output = self.model(**tokenized_inputs, output_hidden_states=True, return_dict=True)
+
+        if self.recording:
+            for hook in hooks:
+                hook.remove()
+
+        logits = output['logits']
+        pred_id = torch.argmax(logits, axis=2).squeeze()
+        fill_mask_token_inference = pred_id[mask_location]
+        self.fill_mask_word = self.tokenizer.decode(fill_mask_token_inference)
 
     def get_layer(self, layer_name: str):
         SUBMODULE_SEPARATOR = '.'
