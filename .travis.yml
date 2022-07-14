@@ -4,6 +4,7 @@ python:
 before_install:
 - pip install "setuptools>=61"  # travis build seems to fail otherwise
 - pip install poetry
+-
 install:
 - poetry install
 - poetry show # list installed package versions
