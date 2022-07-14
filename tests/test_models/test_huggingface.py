@@ -14,10 +14,10 @@ class TestHuggingfaceSubject(unittest.TestCase):
         that the next word predicted is 'es'.
         This test is a stand-in prototype to check if our model definitions are correct.
         """
-        from transformers import AutoModelForCausalLM, AutoTokenizer
+        from transformers import AutoModel, AutoTokenizer
 
         model = HuggingfaceSubject(model_id='t5-11b',
-                                    model_class=AutoModelForCausalLM,
+                                    model_class=AutoModel,
                                     tokenizer_class=AutoTokenizer,
                                     )
 
