@@ -5,6 +5,7 @@ class ArtificialSubject:
     #  Just more documentation? Also double-check with PIs that these are sufficient for a first round
     Task = Enum('Task', " ".join(['next_word',
                                   'fill_mask',
+                                  'input_target_sequence',
                                   ]))
     """
     task to perform
