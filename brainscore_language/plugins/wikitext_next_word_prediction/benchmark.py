@@ -30,9 +30,9 @@ class Merity2016nextwordAccuracy(BenchmarkBase):
         self.metric = load_metric('accuracy')
 
     def __call__(self, candidate: ArtificialSubject) -> Score:
-        candidate.perform_task(ArtificialSubject.Task.next_word)
+        candidate.perform_behavioral_task(ArtificialSubject.Task.next_word)
         contexts, targets = self.build_contexts()
-        predictions = candidate.digest_text(contexts)
+        predictions = candidate.digest_text(contexts)['behavior']
         score = self.metric(predictions, targets)
         return score
 
