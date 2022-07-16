@@ -9,7 +9,8 @@ logging.basicConfig(level=logging.INFO)
 class TestHuggingfaceSubject(unittest.TestCase):
     def test_next_word(self):
         """
-        This is a simple test that takes in text = 'the quick brown fox', and asserts that the next word predicted is 'es'. This test is a stand-in prototype to check if our model definitions are correct.
+        This is a simple test that takes in text = 'the quick brown fox',
+        and asserts that the next word predicted is 'es'.
         """
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
         text = 'the quick brown fox'
@@ -21,7 +22,7 @@ class TestHuggingfaceSubject(unittest.TestCase):
     def test_representation_one_text_single_target(self):
         """
         This is a simple test that takes in text = 'the quick brown fox', and asserts that the `distilgpt2` layer
-        indexed by `representation_layer` has 4 presentations and 768 neurons. This test is a stand-in prototype to
+        indexed by `representation_layer` has 1 text presentation and 768 neurons. This test is a stand-in prototype to
         check if our model definitions are correct.
         """
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={
