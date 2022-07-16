@@ -1,9 +1,10 @@
+import functools
 from collections import OrderedDict
 from typing import Union, List, Tuple, Dict
-
+from numpy.core import defchararray
 import numpy as np
 import torch
-from brainio.assemblies import DataAssembly, NeuroidAssembly
+from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly
 from torch.utils.hooks import RemovableHandle
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -69,33 +70,47 @@ class HuggingfaceSubject(ArtificialSubject):
 
         # format output
         output = {'behavior': None, 'neural': None}
+        stimuli_coords = {
+            'context': ('presentation', [text] if isinstance(text, str) else text),
+            # TODO: It will be hard to build a unique stimulus id (which is used for e.g. cross-validation in metrics),
+            #  especially when we don't know if other text with the same words will be presented later on.
+            #  Maybe we need a StimulusSet class with metadata instead of just text strings after all?
+            'stimulus_id': ('presentation', [0] if isinstance(text, str) else np.arange(len(text))),
+        }
         if self.behavioral_task:
             logits = base_output.logits
             pred_id = torch.argmax(logits, axis=2).squeeze()
             last_model_token_inference = pred_id[-1].tolist()
             next_word = self.tokenizer.decode(last_model_token_inference)
-            output['behavior'] = next_word
+            behavior = BehavioralAssembly(
+                [next_word],
+                coords=stimuli_coords,
+                dims=['presentation']
+            )
+            output['behavior'] = behavior
         if self.neural_recordings:
-            representation_values = np.concatenate([values.squeeze(0) for values in layer_representations.values()],
-                                                   axis=-1)  # concatenate along neuron axis
+            representation_values = np.concatenate([
+                # use last token (-1) of values[batch, token, unit] to represent passage.
+                # TODO: this is a choice and needs to be marked as such, and maybe an option given to the user
+                # TODO: likely need to be clever about this when there are multiple passages
+                values[:, -1:, :].squeeze(0) for values in layer_representations.values()],
+                axis=-1)  # concatenate along neuron axis
+            neuroid_coords = {
+                'layer': ('neuroid', np.concatenate([[layer] * values.shape[-1]
+                                                     for (recording_target, layer), values in
+                                                     layer_representations.items()])),
+                'region': ('neuroid', np.concatenate([[recording_target] * values.shape[-1]
+                                                      for (recording_target, layer), values in
+                                                      layer_representations.items()])),
+                'neuron_number_in_layer': ('neuroid', np.concatenate(
+                    [np.arange(values.shape[-1]) for values in layer_representations.values()])),
+            }
+            neuroid_coords['neuroid_id'] = 'neuroid', functools.reduce(defchararray.add, [
+                neuroid_coords['layer'][1], '--', neuroid_coords['neuron_number_in_layer'][1].astype(str)])
             representations = NeuroidAssembly(
                 representation_values,
-                coords={
-                    # TODO: I don't think splitting on space is reliable for all models, it depends on tokenization
-                    'stimuli': ('presentation', text.split(' ')),
-                    'stimulus_number': ('presentation', np.arange(len(text.split(' ')))),
-                    'layer': ('neuroid', np.concatenate([[layer] * values.shape[-1]
-                                                         for (recording_target, layer), values in
-                                                         layer_representations.items()])),
-                    'region': ('neuroid', np.concatenate([[recording_target] * values.shape[-1]
-                                                          for (recording_target, layer), values in
-                                                          layer_representations.items()])),
-                    'neuron_number_in_layer': ('neuroid', np.concatenate(
-                        [np.arange(values.shape[-1]) for values in layer_representations.values()])),
-                },
+                coords={**stimuli_coords, **neuroid_coords},
                 dims=['presentation', 'neuroid'])
-            neuroid_id = representations['layer'] + '--' + representations['neuron_number_in_layer'].values.astype(str)
-            representations['neuroid_id'] = 'neuroid', neuroid_id
             output['neural'] = representations
         return output
 
