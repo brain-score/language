@@ -13,6 +13,6 @@ See the [Documentation](https://brain-score_language.readthedocs.io) for more de
 Brain-Score is made by and for the community. To contribute,
 please [send in a pull request](https://github.com/brain-score/language/pulls).
 
-## License
+## License.
 
 MIT license
