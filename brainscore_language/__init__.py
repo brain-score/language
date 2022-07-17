@@ -10,21 +10,21 @@ models = {}
 
 def load_dataset(identifier):
     # imports to load plugins until plugin system is implemented
-    from brainscore_language.plugins.wikitext_next_word_prediction import data
+    from brainscore_language.plugins.sg_targeted_syntactic_evaluation import data
 
     return datasets[identifier]()
 
 
 def load_metric(identifier):
     # imports to load plugins until plugin system is implemented
-    from brainscore_language.plugins.wikitext_next_word_prediction import metric
+    from brainscore_language.plugins.sg_targeted_syntactic_evaluation import metric
 
     return metrics[identifier]()
 
 
 def load_benchmark(identifier):
     # imports to load plugins until plugin system is implemented
-    from brainscore_language.plugins.wikitext_next_word_prediction import benchmark
+    from brainscore_language.plugins.sg_targeted_syntactic_evaluation import benchmark
 
     return benchmarks[identifier]()
 

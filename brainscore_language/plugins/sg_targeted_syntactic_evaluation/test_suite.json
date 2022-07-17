@@ -1,0 +1,46 @@
+{
+    "meta": {"name": "Sample subject--verb suite", "metric": "sum"},
+    "predictions": [{"type": "formula", "formula": "(2;%mismatch%) > (2;%match%)"}],
+    "region_meta": {"1": "Subject NP", "2": "Verb", "3": "Continuation"},
+    "items": [
+      {
+        "item_number": 1,
+        "conditions": [
+          {"condition_name": "match",
+           "regions": [{"region_number": 1, "content": "The dog"},
+                       {"region_number": 2, "content": "sleeps"},
+                       {"region_number": 3, "content": "on the mat"}]},
+          {"condition_name": "mismatch",
+           "regions": [{"region_number": 1, "content": "The dog"},
+                       {"region_number": 2, "content": "sleep"},
+                       {"region_number": 3, "content": "on the mat"}]}
+        ]
+      },
+      {
+        "item_number": 2,
+        "conditions": [
+          {"condition_name": "match",
+           "regions": [{"region_number": 1, "content": "The kids"},
+                       {"region_number": 2, "content": "are eat"},
+                       {"region_number": 3, "content": "the ice cream cones"}]},
+          {"condition_name": "mismatch",
+           "regions": [{"region_number": 1, "content": "The kids"},
+                       {"region_number": 2, "content": "are eating"},
+                       {"region_number": 3, "content": "the ice cream cones"}]}
+        ]
+      },
+      {
+        "item_number": 3,
+        "conditions": [
+          {"condition_name": "match",
+           "regions": [{"region_number": 1, "content": "The woman"},
+                       {"region_number": 2, "content": "catch"},
+                       {"region_number": 3, "content": "the fish"}]},
+          {"condition_name": "mismatch",
+           "regions": [{"region_number": 1, "content": "The woman"},
+                       {"region_number": 2, "content": "catches"},
+                       {"region_number": 3, "content": "the fish"}]}
+        ]
+      }
+    ]
+  }

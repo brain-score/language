@@ -1,0 +1,17 @@
+################################################################
+#### poetry config ####
+################################################################
+
+[tool.poetry]
+name = "wikitext-next_word_prediction"
+version = "0.1.0"
+description = ""
+authors = ["Martin Schrimpf"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "3.*"
+datasets = "*"
+
+[tool.poetry.dev-dependencies]
+pytest = "*"
