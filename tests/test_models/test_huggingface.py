@@ -15,7 +15,7 @@ class TestHuggingfaceSubject(unittest.TestCase):
         """
         from transformers import AutoModel, AutoTokenizer
 
-        model = HuggingfaceSubject(model_id='t5-11b',
+        model = HuggingfaceSubject(model_id='t5-small',
                                     model_class=AutoModel,
                                     tokenizer_class=AutoTokenizer,
                                     )
