@@ -103,12 +103,12 @@ class HuggingfaceSubject(ArtificialSubject):
         lm_labels = self.tokenizer.encode('<extra_id_1> cute dog <extra_id_2> the <extra_id_3> </s>', return_tensors='pt')
         # the forward function automatically creates the correct decoder_input_ids
 
-        # if self.recording:
-        #     self.representation = OrderedDict()
-        #     hooks = []
-        #     layer = self._get_layer(self.layer_name)
-        #     hook = self._register_hook(layer, self.layer_name, target_dict=self.representation)
-        #     hooks.append(hook)
+        if self.recording:
+            self.representation = OrderedDict()
+            hooks = []
+            layer = self._get_layer(self.layer_name)
+            hook = self._register_hook(layer, self.layer_name, target_dict=self.representation)
+            hooks.append(hook)
 
         output = self.model(input_ids=input_ids, lm_labels=lm_labels)
         print('output:', output)
@@ -116,14 +116,14 @@ class HuggingfaceSubject(ArtificialSubject):
         # with torch.no_grad():
         #     output = self.model(**tokenized_inputs, output_hidden_states=True, return_dict=True)
 
-        # if self.recording:
-        #     for hook in hooks:
-        #         hook.remove()
+        if self.recording:
+            for hook in hooks:
+                hook.remove()
 
-        # logits = output['logits']
-        # pred_id = torch.argmax(logits, axis=2).squeeze()
-        # fill_mask_token_inference = pred_id[mask_location]
-        # self.fill_mask_word = self.tokenizer.decode(fill_mask_token_inference)
+        logits = output['logits']
+        pred_id = torch.argmax(logits, axis=2).squeeze()
+        fill_mask_token_inference = pred_id[mask_location]
+        self.fill_mask_word = self.tokenizer.decode(fill_mask_token_inference)
 
     def fill_mask(self):
         """

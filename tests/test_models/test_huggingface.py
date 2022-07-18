@@ -30,6 +30,7 @@ class TestHuggingfaceSubject(unittest.TestCase):
     #     print('model.fill_mask_word:', model.fill_mask_word)
     #     assert model.fill_mask_word.strip() == 'took'
 
+    @pytest.mark.memory_intense
     def test_fill_mask_bert_base_uncased(self):
         """
         This is a simple test that takes in text = 'the quick brown fox', and asserts
