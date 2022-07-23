@@ -7,5 +7,9 @@ before_install:
 install:
 - poetry install
 - poetry show # list installed package versions
+
+# http://docs.travis-ci.com/user/build-lifecycle/
+before_script:
+  - echo -e "Host github.com\n\tHostName github.com\n\tUser git\n\tIdentityFile ~/.ssh/id_rsa\n" >> ~/.ssh/config
 script:
 - pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow"
