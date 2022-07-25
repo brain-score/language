@@ -9,6 +9,7 @@ logging.basicConfig(level=logging.INFO)
 
 class TestHuggingfaceSubject(unittest.TestCase):
 
+    @pytest.mark.memory_intense
     def test_fill_mask_t5(self):
         """
         Text to Text approach where sentinel tokens are dropped from the original text resulting in:
@@ -35,6 +36,7 @@ class TestHuggingfaceSubject(unittest.TestCase):
         print('model.extras:', model.extras)
         assert model.extras == '<extra_id_0> park park<extra_id_1> the<extra_id_2> park'
 
+    @pytest.mark.memory_intense
     def test_fill_mask_t5_and_representation(self):
         """
         Text to Text approach where sentinel tokens are dropped from the original text resulting in:
