@@ -13,4 +13,4 @@ before_script:
   - echo -e "Host github.com\n\tHostName github.com\n\tUser git\n\tIdentityFile ~/.ssh/id_rsa\n" >> ~/.ssh/config
 script:
 - pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow"
-- python plugins/run_tests.py
+- python brainscore_language/plugins/run_tests.py
