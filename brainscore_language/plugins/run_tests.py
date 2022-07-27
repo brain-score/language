@@ -30,3 +30,4 @@ if __name__ == '__main__':
 		if plugin_directory.is_dir():
 			assert (plugin_directory / 'test.py').is_file(), "'test.py' not found"
 			PluginTestRunner(plugin_directory)
+			
