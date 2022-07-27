@@ -3,6 +3,7 @@ import re
 import string
 
 from brainscore_core.benchmarks import BenchmarkBase
+from brainscore_core.metrics import Score
 from brainscore_language import load_dataset, load_metric, benchmarks
 from brainscore_language.artificial_subject import ArtificialSubject
 
@@ -28,10 +29,10 @@ class Merity2016nextwordAccuracy(BenchmarkBase):
         self.data = load_dataset('wikitext-2/test')
         self.metric = load_metric('accuracy')
 
-    def __call__(self, candidate: ArtificialSubject):
-        candidate.perform_task(ArtificialSubject.Task.next_word)
+    def __call__(self, candidate: ArtificialSubject) -> Score:
+        candidate.perform_behavioral_task(ArtificialSubject.Task.next_word)
         contexts, targets = self.build_contexts()
-        predictions = candidate.digest_text(contexts)
+        predictions = candidate.digest_text(contexts)['behavior'].values
         score = self.metric(predictions, targets)
         return score
 
