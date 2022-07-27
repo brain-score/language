@@ -10,7 +10,7 @@ class TestData:
         assert data[1] == ' = Robert Boulter = \n'
 
     def test_length(self):
-        data = load_dataset('wikitext-2')
+        data = load_dataset('wikitext-2/test')
         assert len(data) == 4358
 
 
