@@ -1,119 +1,138 @@
-import sys
-import os.path
+import functools
+from collections import OrderedDict
+from typing import Union, List, Tuple, Dict
+from numpy.core import defchararray
+import numpy as np
 import torch
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
-
-from artificial_subject import ArtificialSubject
-
+from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly
+from torch.utils.hooks import RemovableHandle
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-class HuggingfaceSubject(ArtificialSubject):
+from brainscore_language.artificial_subject import ArtificialSubject
 
+
+class HuggingfaceSubject(ArtificialSubject):
     def __init__(
             self,
             model_id: str,
-            model_class=AutoModelForCausalLM,
-            tokenizer_class=AutoTokenizer
+            region_layer_mapping: dict,
+            model=None,
+            tokenizer=None,
     ):
         """
-            :param model_id (str): the model id i.e. name
-            :param model (AutoModel): the model to run inference from e.g. from transformers import AutoModelForCausalLM
-            :param tokenizer (AutoTokenizer): the model's associated tokenizer
+            :param model_id: the model id i.e. name
+            :param region_layer_mapping
+            :param model: the model to run inference from. Using `AutoModelForCausalLM.from_pretrained` if `None`.
+            :param tokenizer: the model's associated tokenizer. Using `AutoTokenizer.from_pretrained` if `None`.
         """
 
         self.model_id = model_id
-        self.model = model_class.from_pretrained(self.model_id)
-        self.tokenizer = tokenizer_class.from_pretrained(self.model_id)
+        self.region_layer_mapping = region_layer_mapping
+        self.basemodel = model if model is not None else AutoModelForCausalLM.from_pretrained(self.model_id)
+        self.tokenizer = tokenizer if tokenizer is not None else AutoTokenizer.from_pretrained(self.model_id)
 
-        self.next_word = None
-        self.representation = None
-        self.layer_name = None
-
+        self.behavioral_task = None
+        self.neural_recordings = []
 
     def identifier(self):
         return self.model_id
 
-    def digest_text(self):
-        return self.run_experiment()
+    def perform_behavioral_task(self, task: ArtificialSubject.Task):
+        self.behavioral_task = task
 
-    def get_representations(self):
-        if not self.recording:
-            import sys
-            raise Exception("You cannot call `get_representations` when `recording` is False")
-        else:
-            return self.representation[self.layer_name]
+    def perform_neural_recording(self,
+                                 recording_target: ArtificialSubject.RecordingTarget,
+                                 recording_type: ArtificialSubject.RecordingType):
+        self.neural_recordings.append((recording_target, recording_type))
 
-    def perform_task(self, stimuli: str,
-                     task: ArtificialSubject.Task,
-                     recording=False, # boolean
-                     language_system = None #otherwise a string
-                     ):
-        task_function_mapping_dict = {
-            ArtificialSubject.Task.next_word: self.predict_next_word,
-        }
-        region_layer_mapping = {'Broca': 'transformer.h.0.ln_1' #stand-in example
-                                }
-
-        self.stimuli = stimuli
-        self.recording = recording
-        self.run_experiment = task_function_mapping_dict[task]
-        if recording:
-            self.layer_name =  region_layer_mapping[language_system]
-
-    def predict_next_word(self):
+    def digest_text(self, text: Union[str, List[str]]) -> Dict[str, DataAssembly]:
         """
-        :param seq: the text to be used for inference e.g. "the quick brown fox"
-        :param tokenizer: huggingface tokenizer, defined in the HuggingfaceModel class via: self.tokenizer =
-        AutoTokenizer.from_pretrained(self.model_id)
-        :param model: huggingface model, defined in the HuggingfaceModel class via: self.model = AutoModelForCausalLM.from_pretrained(self.model_id)
-        :return: single string which reprensets the model's prediction of the next word
+        :param text: the text to be used for inference e.g. "the quick brown fox"
+        :return: assembly of either behavioral output or internal neural representations
         """
-        from collections import OrderedDict
+        # tokenize
+        tokenized_inputs = self.tokenizer(text, return_tensors="pt")
 
-        tokenized_inputs = self.tokenizer(self.stimuli, return_tensors="pt")
-
-        if self.recording:
-            self.representation = OrderedDict()
-            hooks = []
-            layer = self.get_layer(self.layer_name)
-            hook = self.register_hook(layer, self.layer_name, target_dict=self.representation)
+        # prepare recording hooks
+        hooks = []
+        layer_representations = OrderedDict()
+        for (recording_target, recording_type) in self.neural_recordings:
+            layer_name = self.region_layer_mapping[recording_target]
+            layer = self._get_layer(layer_name)
+            hook = self._register_hook(layer, name=(recording_target, layer_name), target_dict=layer_representations)
             hooks.append(hook)
 
+        # run and remove hooks
         with torch.no_grad():
-            output = self.model(**tokenized_inputs, output_hidden_states=True, return_dict=True)
+            base_output = self.basemodel(**tokenized_inputs)
+        for hook in hooks:
+            hook.remove()
 
-        if self.recording:
-            for hook in hooks:
-                hook.remove()
+        # format output
+        output = {'behavior': None, 'neural': None}
+        stimuli_coords = {
+            'context': ('presentation', [text] if isinstance(text, str) else text),
+            # TODO: It will be hard to build a unique stimulus id (which is used for e.g. cross-validation in metrics),
+            #  especially when we don't know if other text with the same words will be presented later on.
+            #  Maybe we need a StimulusSet class with metadata instead of just text strings after all?
+            'stimulus_id': ('presentation', [0] if isinstance(text, str) else np.arange(len(text))),
+        }
+        if self.behavioral_task:
+            logits = base_output.logits
+            pred_id = torch.argmax(logits, axis=2).squeeze()
+            last_model_token_inference = pred_id[-1].tolist()
+            next_word = self.tokenizer.decode(last_model_token_inference)
+            behavior = BehavioralAssembly(
+                [next_word],
+                coords=stimuli_coords,
+                dims=['presentation']
+            )
+            output['behavior'] = behavior
+        if self.neural_recordings:
+            representation_values = np.concatenate([
+                # use last token (-1) of values[batch, token, unit] to represent passage.
+                # TODO: this is a choice and needs to be marked as such, and maybe an option given to the user
+                # TODO: likely need to be clever about this when there are multiple passages
+                values[:, -1:, :].squeeze(0) for values in layer_representations.values()],
+                axis=-1)  # concatenate along neuron axis
+            neuroid_coords = {
+                'layer': ('neuroid', np.concatenate([[layer] * values.shape[-1]
+                                                     for (recording_target, layer), values in
+                                                     layer_representations.items()])),
+                'region': ('neuroid', np.concatenate([[recording_target] * values.shape[-1]
+                                                      for (recording_target, layer), values in
+                                                      layer_representations.items()])),
+                'neuron_number_in_layer': ('neuroid', np.concatenate(
+                    [np.arange(values.shape[-1]) for values in layer_representations.values()])),
+            }
+            neuroid_coords['neuroid_id'] = 'neuroid', functools.reduce(defchararray.add, [
+                neuroid_coords['layer'][1], '--', neuroid_coords['neuron_number_in_layer'][1].astype(str)])
+            representations = NeuroidAssembly(
+                representation_values,
+                coords={**stimuli_coords, **neuroid_coords},
+                dims=['presentation', 'neuroid'])
+            output['neural'] = representations
+        return output
 
-        logits = output['logits']
-        pred_id = torch.argmax(logits, axis=2).squeeze()
-        last_model_token_inference = pred_id[-1].tolist()
-        self.next_word = self.tokenizer.decode(last_model_token_inference)
-
-    def get_layer(self, layer_name: str):
+    def _get_layer(self, layer_name: str) -> torch.nn.Module:
         SUBMODULE_SEPARATOR = '.'
 
-        module = self.model
+        module = self.basemodel
         for part in layer_name.split(SUBMODULE_SEPARATOR):
             module = module._modules.get(part)
             assert module is not None, f"No submodule found for layer {layer_name}, at part {part}"
         return module
 
-    def register_hook(self,
-                      layer: torch.nn.modules,
-                      layer_name: str,
-                      target_dict: dict):
+    def _register_hook(self,
+                       layer: torch.nn.Module,
+                       name: Union[str, Tuple[str, str]],
+                       target_dict: dict) -> RemovableHandle:
 
-        def hook_function(_layer, _input, output, name=layer_name):
-            target_dict[name] = HuggingfaceSubject._tensor_to_numpy(output)
+        def hook_function(_layer: torch.nn.Module, _input, output: torch.Tensor, name: str = name):
+            target_dict[name] = self._tensor_to_numpy(output)
 
         hook = layer.register_forward_hook(hook_function)
         return hook
 
-    @classmethod
-    def _tensor_to_numpy(cls,
-                         output: torch.Tensor):
-        return output.cpu().data.numpy()
-
-
+    def _tensor_to_numpy(self, tensor: torch.Tensor) -> np.ndarray:
+        return tensor.cpu().data.numpy()
