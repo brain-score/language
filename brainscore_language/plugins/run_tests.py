@@ -1,32 +1,33 @@
 import os
+from pathlib import Path
 import pytest
 import subprocess
 
-PLUGINS_DIRPATH = "brainscore_language/plugins"
+PLUGINS_DIRPATH = Path(__file__).parent
 
 
 class PluginTestRunner:
-	def __init__(self, plugin_path, plugin_name):
-		self.plugin_path = plugin_path
-		self.plugin_name = plugin_name
+	def __init__(self, plugin_directory):
+		self.plugin_directory = plugin_directory
+		self.plugin_name = str(self.plugin_directory).split('/')[-1]
+
+	def __call__(self):
 		self.run_tests()
 		self.teardown()
 
 	def run_tests(self):
-		subprocess.run("./brainscore_language/plugins/create_env.sh \
-			{plugin_path} {plugin_name}".format(
-			plugin_path=self.plugin_path, plugin_name=self.plugin_name), shell=True)
+		subprocess.run(f"./brainscore_language/plugins/create_env.sh \
+			{self.plugin_path} {self.plugin_name}", shell=True)
 
 	def teardown(self):
-		subprocess.run("conda env remove -n {plugin_name}".format(
-			plugin_name=self.plugin_name), shell=True)
+		subprocess.run(f"conda env remove -n {self.plugin_name}", shell=True)
 
 
-# run tests for each plugin in "plugins" directory
-# requires test file ("test.py") and requirements file ("requirements.txt")
-for filename in os.listdir(PLUGINS_DIRPATH):
-	f = os.path.join(PLUGINS_DIRPATH, filename)
-	if os.path.isdir(f) and filename[0] not in ["_", "."]:
-		assert(os.path.exists(os.path.join(f, 'test.py'))), "'test.py' not found"
-		assert(os.path.exists(os.path.join(f, 'requirements.txt'))), "'requirements.txt' not found"
-		PluginTestRunner(f, filename)
+if __name__ == '__main__':
+	# run tests for each plugin in "plugins" directory
+	# requires test file ("test.py") and requirements file ("requirements.txt")
+	for plugin_directory in PLUGINS_DIRPATH.glob('[!._]*'):
+		if plugin_directory.is_dir():
+			assert (plugin_directory / 'test.py').is_file(), "'test.py' not found"
+			assert (plugin_directory / 'requirements.txt').is_file(), "'requirements.txt' not found"
+			PluginTestRunner(plugin_directory)
