@@ -86,16 +86,17 @@ class TestHuggingfaceSubject(unittest.TestCase):
     #                                 )
     #
     #     logging.info(' '.join(['Running', model.identifier(), 'for next word prediction test']) )
-    #     text = 'the quick brown fox [MASK] over the lazy dog'
+    #     text = 'the quick brown fox jumps over the lazy [MASK]'
     #     # self.tokenizer.decode(tokenized_inputs['input_ids']): '[CLS] the quick brown fox [MASK] over the lazy dog [SEP]'"
     #     model.perform_behavioral_task(
     #                        # stimuli=text,
-    #                        task=ArtificialSubject.Task.fill_mask,
+    #                        # task=ArtificialSubject.Task.fill_mask,
+    #                        task=ArtificialSubject.Task.next_word,
     #                        )
     #     # model.digest_text()
-    #     fill_mask_word = model.digest_text(text)['behavior'].values
+    #     next_word = model.digest_text(text)['behavior'].values
     #     # print(model.fill_mask_word)
-    #     assert model.fill_mask_word.strip() == 'took'
+    #     assert model.next_word.strip() == 'took'
 
 
     def test_next_word_gpt2_xl(self):
@@ -118,7 +119,7 @@ class TestHuggingfaceSubject(unittest.TestCase):
         assert next_word[0].strip() == 'jumps'
     #
     #
-    def test_next_word(self):
+    def test_next_word_distilgpt2(self):
         """
         This is a simple test that takes in text = 'the quick brown fox',
         and asserts that the next word predicted is 'es'.
