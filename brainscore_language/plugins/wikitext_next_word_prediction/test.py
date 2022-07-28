@@ -1,3 +1,5 @@
+import numpy as np
+from brainio.assemblies import BehavioralAssembly
 from pytest import approx
 
 from brainscore_language import load_dataset, load_benchmark, load_metric
@@ -39,9 +41,12 @@ class TestMetric:
 class TestBenchmark:
     class DummyModel(ArtificialSubject):
         def digest_text(self, stimuli):
-            return ['the' for passage in stimuli]
+            return {'behavior': BehavioralAssembly(
+                ['the' for passage in stimuli],
+                coords={'context': ('presentation', stimuli), 'stimulus_id': ('presentation', np.arange(len(stimuli)))},
+                dims=['presentation'])}
 
-        def perform_task(self, task: ArtificialSubject.Task):
+        def perform_behavioral_task(self, task: ArtificialSubject.Task):
             if task != ArtificialSubject.Task.next_word:
                 raise NotImplementedError()
 
