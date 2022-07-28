@@ -70,32 +70,32 @@ class TestHuggingfaceSubject(unittest.TestCase):
     #     assert layer_to_compare_to_brain.shape == torch.Size([1,7,512])
     #     logging.info(' '.join(['representation shape is correct:', str(layer_to_compare_to_brain.shape) ]))
     #
-    @pytest.mark.memory_intense
-    def test_fill_mask_bert_base_uncased(self):
-        """
-        This is a simple test that takes in text = 'the quick brown fox', and asserts
-        that the next word predicted is 'es'.
-        This test is a stand-in prototype to check if our model definitions are correct.
-        """
-        # from transformers import AutoModelForCausalLM, AutoTokenizer
-
-        model = HuggingfaceSubject(model_id='bert-base-uncased',
-                                    # model_class=AutoModelForCausalLM,
-                                    # tokenizer_class=AutoTokenizer,
-                                   region_layer_mapping={}
-                                    )
-
-        logging.info(' '.join(['Running', model.identifier(), 'for next word prediction test']) )
-        text = 'the quick brown fox [MASK] over the lazy dog'
-        # self.tokenizer.decode(tokenized_inputs['input_ids']): '[CLS] the quick brown fox [MASK] over the lazy dog [SEP]'"
-        model.perform_behavioral_task(
-                           # stimuli=text,
-                           task=ArtificialSubject.Task.fill_mask,
-                           )
-        # model.digest_text()
-        fill_mask_word = model.digest_text(text)['behavior'].values
-        # print(model.fill_mask_word)
-        assert model.fill_mask_word.strip() == 'took'
+    # @pytest.mark.memory_intense
+    # def test_fill_mask_bert_base_uncased(self):
+    #     """
+    #     This is a simple test that takes in text = 'the quick brown fox', and asserts
+    #     that the next word predicted is 'es'.
+    #     This test is a stand-in prototype to check if our model definitions are correct.
+    #     """
+    #     # from transformers import AutoModelForCausalLM, AutoTokenizer
+    #
+    #     model = HuggingfaceSubject(model_id='bert-base-uncased',
+    #                                 # model_class=AutoModelForCausalLM,
+    #                                 # tokenizer_class=AutoTokenizer,
+    #                                region_layer_mapping={}
+    #                                 )
+    #
+    #     logging.info(' '.join(['Running', model.identifier(), 'for next word prediction test']) )
+    #     text = 'the quick brown fox [MASK] over the lazy dog'
+    #     # self.tokenizer.decode(tokenized_inputs['input_ids']): '[CLS] the quick brown fox [MASK] over the lazy dog [SEP]'"
+    #     model.perform_behavioral_task(
+    #                        # stimuli=text,
+    #                        task=ArtificialSubject.Task.fill_mask,
+    #                        )
+    #     # model.digest_text()
+    #     fill_mask_word = model.digest_text(text)['behavior'].values
+    #     # print(model.fill_mask_word)
+    #     assert model.fill_mask_word.strip() == 'took'
 
 
     def test_next_word_gpt2_xl(self):
