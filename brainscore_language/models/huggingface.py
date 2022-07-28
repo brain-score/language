@@ -34,11 +34,18 @@ class HuggingfaceSubject(ArtificialSubject):
         self.behavioral_task = None
         self.neural_recordings = []
 
+        self.task_function_mapping_dict = {
+            ArtificialSubject.Task.next_word: self.predict_next_word,
+            # ArtificialSubject.Task.fill_mask: self.fill_mask,
+            # ArtificialSubject.Task.input_target_sequence: self.input_target_sequence,
+        }
+
     def identifier(self):
         return self.model_id
 
     def perform_behavioral_task(self, task: ArtificialSubject.Task):
         self.behavioral_task = task
+        self.run_experiment = self.task_function_mapping_dict[task]
 
     def perform_neural_recording(self,
                                  recording_target: ArtificialSubject.RecordingTarget,
@@ -46,6 +53,10 @@ class HuggingfaceSubject(ArtificialSubject):
         self.neural_recordings.append((recording_target, recording_type))
 
     def digest_text(self, text: Union[str, List[str]]) -> Dict[str, DataAssembly]:
+        output = self.run_experiment(text=text)
+        return output
+
+    def predict_next_word(self, text):
         """
         :param text: the text to be used for inference e.g. "the quick brown fox"
         :return: assembly of either behavioral output or internal neural representations
