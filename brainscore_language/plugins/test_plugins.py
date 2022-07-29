@@ -23,9 +23,10 @@ class PluginTestRunner:
 		assert (self.plugin_directory / 'test.py').is_file(), "'test.py' not found"
 
 	def run_tests(self):
-		return subprocess.run(f"./brainscore_language/plugins/create_env.sh \
+		completed_process = subprocess.run(f"./brainscore_language/plugins/create_env.sh \
 			{self.plugin_directory} {self.plugin_name} \
 			{str(self.has_requirements).lower()}", shell=True)
+		return completed_process
 
 	def teardown(self):
 		completed_process = subprocess.run(f"conda env remove -n {self.plugin_name}", shell=True)
