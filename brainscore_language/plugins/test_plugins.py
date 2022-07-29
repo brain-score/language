@@ -9,7 +9,7 @@ PLUGINS_DIRPATH = Path(__file__).parent
 class PluginTestRunner:
 	def __init__(self, plugin_directory):
 		self.plugin_directory = plugin_directory
-		self.plugin_name = str(self.plugin_directory).split('/')[-1]
+		self.plugin_name = Path(self.plugin_directory).name
 		self.has_requirements = (self.plugin_directory / 'requirements.txt').is_file()
 
 	def __call__(self):
