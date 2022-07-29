@@ -11,8 +11,6 @@ class PluginTestRunner:
 		self.plugin_directory = plugin_directory
 		self.plugin_name = str(self.plugin_directory).split('/')[-1]
 		self.has_requirements = (self.plugin_directory / 'requirements.txt').is_file()
-		self.conda_envs_dirpath = Path('/'.join(os.environ["CONDA_PREFIX"].split('/')[:-1]))
-		self.plugin_env_path = self.conda_envs_dirpath / self.plugin_name
 
 	def __call__(self):
 		self.validate_plugin()
@@ -31,7 +29,7 @@ class PluginTestRunner:
 	def teardown(self):
 		completed_process = subprocess.run(f"conda env remove -n {self.plugin_name}", shell=True)
 		if completed_process.returncode != 0:
-			subprocess.run(f"rm -rf {self.plugin_env_path}")
+			completed_process = subprocess.run(f"rm -rf {self.plugin_env_path}")
 		return completed_process
 
 
