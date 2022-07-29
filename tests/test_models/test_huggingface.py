@@ -45,7 +45,10 @@ class TestHuggingfaceSubject(unittest.TestCase):
                                    region_layer_mapping={}
                                     )
 
-        logging.info(' '.join(['Running', model.identifier(), 'for next word prediction test']) )
+    def test_representation_one_text_two_targets(self):
+        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={
+            ArtificialSubject.RecordingTarget.language_system_left_hemisphere: 'transformer.h.0.ln_1',
+            ArtificialSubject.RecordingTarget.language_system_right_hemisphere: 'transformer.h.1.ln_1'})
         text = 'the quick brown fox'
         model.perform_behavioral_task(
                            task=ArtificialSubject.Task.next_word,

@@ -36,8 +36,6 @@ class HuggingfaceSubject(ArtificialSubject):
 
         self.task_function_mapping_dict = {
             ArtificialSubject.Task.next_word: self.predict_next_word,
-            # ArtificialSubject.Task.fill_mask: self.fill_mask,
-            # ArtificialSubject.Task.input_target_sequence: self.input_target_sequence,
         }
 
     def identifier(self):
@@ -95,7 +93,6 @@ class HuggingfaceSubject(ArtificialSubject):
                 dims=['presentation']
             )
             output['behavior'] = behavior
-
         if self.neural_recordings:
             representation_values = np.concatenate([
                 # use last token (-1) of values[batch, token, unit] to represent passage.

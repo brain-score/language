@@ -17,7 +17,6 @@ class ArtificialSubject:
         # but accessing enums gives weird Enum objects
         # whereas this setup just gives a string
         next_word = 'next_word'
-        fill_mask = 'fill_mask'
         """
         Predict the next word from the preceding context. Output a :class:`~brainio.assemblies.BehavioralAssembly` with
         next-word predictions as the values and preceding context in the `context` coordinate.
