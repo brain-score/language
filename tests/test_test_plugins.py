@@ -14,7 +14,6 @@ DUMMY_REQUIREMENTS = DUMMY_PLUGIN_PATH / "requirements.txt"
 
 
 class TestPluginTestRunner:
-
 	def setup_method(self):
 		DUMMY_PLUGIN_PATH.mkdir(parents=True, exist_ok=True)
 		Path(DUMMY_REQUIREMENTS).touch()
@@ -53,5 +52,4 @@ class TestPluginTestRunner:
 		subprocess.run(f"conda create -n {DUMMY_PLUGIN} python=3.8 -y", shell=True)
 		completed_process = plugin_test_runner.teardown()
 		assert completed_process.returncode == 0
-
 	  
