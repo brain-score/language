@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import pytest
 import subprocess
+import warnings
 
 PLUGINS_DIRPATH = Path(__file__).parent
 
@@ -28,6 +29,8 @@ class PluginTestRunner:
 
 	def teardown(self):
 		completed_process = subprocess.run(f"conda env remove -n {self.plugin_name}", shell=True)
+		if completed_process.returncode != 0:
+			warnings.warn(f"conda env {self.plugin_name} removal failed and must be manually deleted.")
 		return completed_process
 
 

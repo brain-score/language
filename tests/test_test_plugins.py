@@ -51,7 +51,7 @@ class TestPluginTestRunner:
 	def test_teardown(self):
 		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH)
 		subprocess.run(f"conda create -n {DUMMY_PLUGIN} python=3.8 -y", shell=True)
-		plugin_test_runner.teardown()
+		completed_process = plugin_test_runner.teardown()
 		assert completed_process.returncode == 0
 
 	  
