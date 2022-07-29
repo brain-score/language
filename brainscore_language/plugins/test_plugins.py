@@ -29,7 +29,9 @@ class PluginTestRunner:
 	def teardown(self):
 		completed_process = subprocess.run(f"conda env remove -n {self.plugin_name}", shell=True)
 		if completed_process.returncode != 0:
-			completed_process = subprocess.run(f"rm -rf {self.plugin_env_path}")
+			conda_base = subprocess.check_output("conda info --base", shell=True).strip().decode('utf-8')
+			plugin_env_path = Path(conda_base) / 'envs' / self.plugin_name
+			completed_process = subprocess.run(f"rm -rf {plugin_env_path}")
 		return completed_process
 
 

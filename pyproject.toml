@@ -27,6 +27,7 @@ pytest-html = "^3"
 yapf = "^0.32.0"
 transformers = "^4.11.3"
 torch = "^1.9.1"
+conda = "*"
 
 
 [build-system]
