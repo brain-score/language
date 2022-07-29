@@ -16,7 +16,7 @@ class TestHuggingfaceSubject(unittest.TestCase):
     def test_next_word_mask_bert_base_uncased(self):
         """
         This is a simple test that takes in text = 'the quick brown fox', and asserts
-        that the next word predicted is 'es'.
+        that the next word predicted is '.'
         This test is a stand-in prototype to check if our model definitions are correct.
         """
         model = HuggingfaceSubject(model_id='bert-base-uncased',
@@ -37,26 +37,20 @@ class TestHuggingfaceSubject(unittest.TestCase):
     def test_next_word_gpt2_xl(self):
         """
         This is a simple test that takes in text = 'the quick brown fox', and asserts
-        that the next word predicted is 'es'.
+        that the next word predicted is ' jumps'.
         This test is a stand-in prototype to check if our model definitions are correct.
         """
 
         model = HuggingfaceSubject(model_id='gpt2-xl',
                                    region_layer_mapping={}
                                     )
-
-    def test_representation_one_text_two_targets(self):
-        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={
-            ArtificialSubject.RecordingTarget.language_system_left_hemisphere: 'transformer.h.0.ln_1',
-            ArtificialSubject.RecordingTarget.language_system_right_hemisphere: 'transformer.h.1.ln_1'})
         text = 'the quick brown fox'
-        model.perform_behavioral_task(
-                           task=ArtificialSubject.Task.next_word,
-                           )
+        logging.info(f'Running {model.identifier()} with text "{text}"')
+        model.perform_behavioral_task(task=ArtificialSubject.Task.next_word)
         next_word = model.digest_text(text)['behavior'].values
-        assert next_word[0].strip() == 'jumps'
-    #
-    #
+        assert next_word == ' jumps'
+
+
     def test_next_word_distilgpt2(self):
         """
         This is a simple test that takes in text = 'the quick brown fox',
@@ -86,6 +80,7 @@ class TestHuggingfaceSubject(unittest.TestCase):
         assert representations['context'].squeeze() == text
         assert len(representations['neuroid']) == 768
         logging.info(f'representation shape is correct: {representations.shape}')
+
 
     def test_representation_one_text_two_targets(self):
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={
