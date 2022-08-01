@@ -34,9 +34,9 @@ class TestPluginTestRunner:
 	def test_get_conda_base(self):
 		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH)
 		try:
-        	plugin_test_runner.get_conda_base()
-	    except CalledProcessError as e:
-	        assert False, e
+			plugin_test_runner.get_conda_base()
+		except CalledProcessError as e:
+			assert False, e
 
 	def test_has_testfile(self):
 		DUMMY_TESTFILE.unlink()
