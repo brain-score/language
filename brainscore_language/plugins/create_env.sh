@@ -19,4 +19,5 @@ fi
 pip install poetry
 pip install pytest
 poetry install
+poetry show
 pytest $PLUGIN_TEST_PATH
