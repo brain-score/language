@@ -53,3 +53,4 @@ class TestPluginTestRunner:
 		assert plugin_test_runner.plugin_env_path.is_dir() == True
 		plugin_test_runner.teardown()
 		assert plugin_test_runner.plugin_env_path.is_dir() == False
+		
