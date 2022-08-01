@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import pytest
+import shutil
 import subprocess
 import warnings
 
@@ -30,7 +31,12 @@ class PluginTestRunner:
 	def teardown(self):
 		completed_process = subprocess.run(f"conda env remove -n {self.plugin_name}", shell=True)
 		if completed_process.returncode != 0:
-			warnings.warn(f"conda env {self.plugin_name} removal failed and must be manually deleted.")
+			try:
+				conda_base = subprocess.check_output("conda info --base", shell=True).strip().decode('utf-8')
+				plugin_env_path = Path(conda_base) / 'envs' / self.plugin_name
+				shutil.rmtree(plugin_env_path)
+			except Exception as e:
+				warnings.warn(f"conda env {self.plugin_name} removal failed and must be manually deleted.")
 		return completed_process
 
 
