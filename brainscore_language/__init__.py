@@ -50,7 +50,7 @@ def score(model_identifier: str, benchmark_identifier: str) -> Score:
     The benchmark will be looked up from the :data:`~brainscore_language.benchmarks` and evaluates the model on how
     brain-like it is under that benchmark's experimental paradigm, primate measurements, comparison metric, and ceiling
     This results in a quantitative
-    :ref:`Score <https://brain-score-core.readthedocs.io/en/latest/modules/metrics.html#brainscore_core.metrics.Score>`
+    `Score <https://brain-score-core.readthedocs.io/en/latest/modules/metrics.html#brainscore_core.metrics.Score>`_
     ranging from 0 (least brain-like) to 1 (most brain-like under this benchmark).
 
     :param model_identifier: the identifier for the model
