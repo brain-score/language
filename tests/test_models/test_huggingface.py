@@ -33,22 +33,22 @@ class TestHuggingfaceSubject(unittest.TestCase):
     #     next_word = model.digest_text(text)['behavior'].values
     #     assert next_word == '.'
 
+    @pytest.mark.memory_intense
+    def test_next_word_gpt2_xl(self):
+        """
+        This is a simple test that takes in text = 'the quick brown fox', and asserts
+        that the next word predicted is ' jumps'.
+        This test is a stand-in prototype to check if our model definitions are correct.
+        """
 
-    # def test_next_word_gpt2_xl(self):
-    #     """
-    #     This is a simple test that takes in text = 'the quick brown fox', and asserts
-    #     that the next word predicted is ' jumps'.
-    #     This test is a stand-in prototype to check if our model definitions are correct.
-    #     """
-    #
-    #     model = HuggingfaceSubject(model_id='gpt2-xl',
-    #                                region_layer_mapping={}
-    #                                 )
-    #     text = 'the quick brown fox'
-    #     logging.info(f'Running {model.identifier()} with text "{text}"')
-    #     model.perform_behavioral_task(task=ArtificialSubject.Task.next_word)
-    #     next_word = model.digest_text(text)['behavior'].values
-    #     assert next_word == ' jumps'
+        model = HuggingfaceSubject(model_id='gpt2-xl',
+                                   region_layer_mapping={}
+                                    )
+        text = 'the quick brown fox'
+        logging.info(f'Running {model.identifier()} with text "{text}"')
+        model.perform_behavioral_task(task=ArtificialSubject.Task.next_word)
+        next_word = model.digest_text(text)['behavior'].values
+        assert next_word == ' jumps'
 
 
     def test_next_word_distilgpt2(self):
