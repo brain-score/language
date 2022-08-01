@@ -21,5 +21,5 @@ The `score` function is the primary entry point to score a model on a benchmark.
    :caption: Contents:
 
    modules/artificial_subject
-   modules/plugins
+   brainscore_language/plugins
    modules/api_reference

@@ -6,10 +6,13 @@ from brainscore_language.artificial_subject import ArtificialSubject
 
 datasets: Dict[str, Type[Any]] = {}
 """ Pool of available data """
+
 metrics: Dict[str, Type[Metric]] = {}
 """ Pool of available metrics """
+
 benchmarks: Dict[str, Type[Benchmark]] = {}
 """ Pool of available benchmarks """
+
 models: Dict[str, ArtificialSubject] = {}
 """ Pool of available models """
 
