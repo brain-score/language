@@ -31,6 +31,13 @@ class TestPluginTestRunner:
 		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH)
 		assert plugin_test_runner.plugin_name == DUMMY_PLUGIN
 
+	def test_get_conda_base(self):
+		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH)
+		try:
+        	plugin_test_runner.get_conda_base()
+	    except CalledProcessError as e:
+	        assert False, e
+
 	def test_has_testfile(self):
 		DUMMY_TESTFILE.unlink()
 		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH)
@@ -53,4 +60,3 @@ class TestPluginTestRunner:
 		assert plugin_test_runner.plugin_env_path.is_dir() == True
 		plugin_test_runner.teardown()
 		assert plugin_test_runner.plugin_env_path.is_dir() == False
-		
