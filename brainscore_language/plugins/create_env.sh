@@ -17,6 +17,6 @@ else
 	echo "Warning: no requirements.txt found. Installing only base dependencies."
 fi
 pip install poetry
-poetry update
+pip install pytest
 poetry install
 pytest $PLUGIN_TEST_PATH
