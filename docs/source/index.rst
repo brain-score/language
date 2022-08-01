@@ -10,7 +10,7 @@ benchmarks that can easily be used to test language models on their alignment to
 processing,
 as well as language models in a form that they can easily be tested on new behavioral or neural data.
 This makes experimental data accessible to modelers, and computational models accessible to experimenters,
-thereby accelerating progress in discovering ever-more-accurate models of the human brain and mind.
+accelerating progress in discovering ever-more-accurate models of the human brain and mind.
 
 The `score` function is the primary entry point to score a model on a benchmark.
 
