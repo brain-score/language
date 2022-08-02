@@ -8,7 +8,7 @@ class ArtificialSubject:
         """
         The unique identifier for this model.
 
-        :return: e.g. 'glove', or 'distilgpt2'
+        :return: e.g. `'glove'`, or `'distilgpt2'`
         """
         raise NotImplementedError()
 
