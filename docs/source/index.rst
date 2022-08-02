@@ -1,5 +1,5 @@
-Brain-Score
-===========
+Brain-Score Language
+====================
 
 Brain-Score is a collection of benchmarks and models:
 benchmarks combine neural/behavioral data with a metric to score models on their alignment to humans,
