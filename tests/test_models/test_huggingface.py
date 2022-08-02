@@ -12,26 +12,26 @@ logging.basicConfig(level=logging.INFO)
 class TestHuggingfaceSubject(unittest.TestCase):
 
 
-    # @pytest.mark.memory_intense
-    # def test_next_word_mask_bert_base_uncased(self):
-    #     """
-    #     This is a simple test that takes in text = 'the quick brown fox', and asserts
-    #     that the next word predicted is '.'
-    #     This test is a stand-in prototype to check if our model definitions are correct.
-    #     """
-    #     model = HuggingfaceSubject(model_id='bert-base-uncased',
-    #                                 # model_class=AutoModelForCausalLM,
-    #                                 # tokenizer_class=AutoTokenizer,
-    #                                region_layer_mapping={}
-    #                                 )
-    #
-    #     logging.info(' '.join(['Running', model.identifier(), 'for next word prediction test']) )
-    #     text = 'the quick brown fox jumps over the lazy [MASK]'
-    #     model.perform_behavioral_task(
-    #                        task=ArtificialSubject.Task.next_word,
-    #                        )
-    #     next_word = model.digest_text(text)['behavior'].values
-    #     assert next_word == '.'
+    @pytest.mark.memory_intense
+    def test_next_word_mask_bert_base_uncased(self):
+        """
+        This is a simple test that takes in text = 'the quick brown fox', and asserts
+        that the next word predicted is '.'
+        This test is a stand-in prototype to check if our model definitions are correct.
+        """
+        model = HuggingfaceSubject(model_id='bert-base-uncased',
+                                    # model_class=AutoModelForCausalLM,
+                                    # tokenizer_class=AutoTokenizer,
+                                   region_layer_mapping={}
+                                    )
+
+        logging.info(' '.join(['Running', model.identifier(), 'for next word prediction test']) )
+        text = 'the quick brown fox jumps over the lazy [MASK]'
+        model.perform_behavioral_task(
+                           task=ArtificialSubject.Task.next_word,
+                           )
+        next_word = model.digest_text(text)['behavior'].values
+        assert next_word == '.'
 
     @pytest.mark.memory_intense
     def test_next_word_gpt2_xl(self):
