@@ -1,5 +1,5 @@
-import numpy as np
 import logging
+import numpy as np
 from numpy.random import RandomState
 
 from brainio.assemblies import DataAssembly
@@ -7,10 +7,9 @@ from brainscore_core.benchmarks import BenchmarkBase
 from brainscore_core.metrics import Score, Metric
 from brainscore_language import load_dataset, load_metric, benchmarks
 from brainscore_language.artificial_subject import ArtificialSubject
+from .data import BIBTEX
 
 logger = logging.getLogger(__name__)
-
-BIBTEX = """"""  # todo: who gets credit here? data/benchmark/both?
 
 
 class Futrell2018Pearsonr(BenchmarkBase):
@@ -31,7 +30,7 @@ class Futrell2018Pearsonr(BenchmarkBase):
             version=1,
             parent='behavior',
             ceiling_func=lambda: ceiler(self.data),
-            bibtex=BIBTEX)  # TODO: I think this should go into the data plugin somehow
+            bibtex=BIBTEX)
 
     def __call__(self, candidate: ArtificialSubject) -> Score:
         candidate.perform_behavioral_task(ArtificialSubject.Task.reading_times)
