@@ -8,7 +8,7 @@ and models are evaluated as computational hypotheses of human brain processing.
 The Brain-Score Language library contains
 benchmarks that can easily be used to test language models on their alignment to human behavioral and internal brain
 processing,
-as well as language models in a form that they can easily be tested on new behavioral or neural data.
+as well as language models that can easily be tested on new behavioral or neural data.
 This makes experimental data accessible to modelers, and computational models accessible to experimenters,
 accelerating progress in discovering ever-more-accurate models of the human brain and mind.
 
