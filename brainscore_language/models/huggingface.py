@@ -43,7 +43,7 @@ class HuggingfaceSubject(ArtificialSubject):
 
     def perform_behavioral_task(self, task: ArtificialSubject.Task):
         self.behavioral_task = task
-        self.run_behavioral_experiment = self.task_function_mapping_dict[task]
+        self.output_to_behavior = self.task_function_mapping_dict[task]
 
     def perform_neural_recording(self,
                                  recording_target: ArtificialSubject.RecordingTarget,
@@ -85,8 +85,7 @@ class HuggingfaceSubject(ArtificialSubject):
         }
 
         if self.behavioral_task:
-            behavioral_output = self.run_behavioral_experiment(text=text,
-                                                    base_output= base_output)
+            behavioral_output = self.output_to_behavior(base_output= base_output)
             behavior = BehavioralAssembly(
                 [behavioral_output],
                 coords=stimuli_coords,
@@ -120,7 +119,7 @@ class HuggingfaceSubject(ArtificialSubject):
 
         return output
 
-    def predict_next_word(self, text, base_output):
+    def predict_next_word(self, base_output):
 
         logits = base_output.logits
         pred_id = torch.argmax(logits, axis=2).squeeze()
