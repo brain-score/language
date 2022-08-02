@@ -17,8 +17,9 @@ class Futrell2018Pearsonr(BenchmarkBase):
     Evaluate model ability to predict reading times on the natural stories corpus introduced in Futrell et al. 2018.
     Alignment of reading times between model and human subjects is evaluated via Pearson correlation.
 
-    This benchmark builds off the behavioral benchmark introduced in Schrimpf et al. 2021, but does not allow for any
-    fitting; rather model candidates have to directly output reading times.
+    This benchmark builds off the behavioral benchmark introduced in Schrimpf et al. 2021, but:
+    * does not allow for any fitting; rather model candidates have to directly output reading times, and
+    * estimates the ceiling with Spearman-Brown corrected split-halves consistency.
     """
 
     def __init__(self):
