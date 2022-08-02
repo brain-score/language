@@ -7,6 +7,7 @@ class ArtificialSubject:
     def identifier(self) -> str:
         """
         The unique identifier for this model.
+
         :return: e.g. 'glove', or 'distilgpt2'
         """
         raise NotImplementedError()
