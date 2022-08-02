@@ -17,14 +17,7 @@ brainscore_core = { git = "https://github.com/brain-score/core.git", branch="mai
 brainio = { git = "https://github.com/brain-score/brainio.git", branch="main" }
 
 [tool.poetry.dev-dependencies]
-pdoc3 = "^0.10.0"
-ipython = "^8"
-mypy = "^0.931"
-lxml = "^4.7.1"
 pytest = "*"
-coverage = {extras = ["toml"], version = "^6.3.1"}
-pytest-html = "^3"
-yapf = "^0.32.0"
 transformers = "^4.11.3"
 torch = "^1.9.1"
 
