@@ -14,12 +14,70 @@ class ArtificialSubject:
     class Task:
         """ task to perform """
         # ideally we would define these as enums (also for RecordingTarget and RecordingType)
-        # but accessing enums gives weird Enum objects
-        # whereas this setup just gives a string
+        # but accessing enums gives weird Enum objects whereas this setup just gives a string
+
         next_word = 'next_word'
         """ 
         Predict the next word from the preceding context. Output a :class:`~brainio.assemblies.BehavioralAssembly` with 
-        next-word predictions as the values and preceding context in the `context` coordinate. 
+        next-word predictions as the values and preceding context in the `context` coordinate.
+        
+        Example:
+        
+        Calling `digest_text(text = 'the quick brown')` could output 
+        
+        .. code-block:: python
+        
+           {'behavior': <xarray.BehavioralAssembly (presentation: 1)>
+                        array(['fox']), # the actual next word
+                        Coordinates:
+                          * presentation  (presentation) MultiIndex
+                          - context       (presentation) object 'the quick brown'
+                          - stimulus_id   (presentation) int64 0}
+        
+        Example:
+        
+        Calling `digest_text(text = ['the quick brown', 'fox jumps', 'over the lazy'])` could output 
+        
+        .. code-block:: python
+        
+           {'behavior': <xarray.BehavioralAssembly (presentation: 3)>
+                        array(['fox', 'over', 'dog']), # the actual next words
+                        Coordinates:
+                          * presentation  (presentation) MultiIndex
+                          - context       (presentation) object 'the quick brown' 'fox jumps', 'over the lazy'
+                          - stimulus_id   (presentation) int64 0 1 2}
+        """
+
+        reading_times = 'reading_times'
+        """ 
+        Output how long it took to read a given text, in . Output a :class:`~brainio.assemblies.BehavioralAssembly` with 
+        reading times in milliseconds as the values and text in the `context` coordinate.
+        
+        Example:
+        
+        Calling `digest_text(text = 'the quick brown')` could output 
+        
+        .. code-block:: python
+        
+           {'behavior': <xarray.BehavioralAssembly (presentation: 1)>
+                        array([329.15]), # reading time in milliseconds
+                        Coordinates:
+                          * presentation  (presentation) MultiIndex
+                          - context       (presentation) object 'the quick brown'
+                          - stimulus_id   (presentation) int64 0}
+        
+        Example:
+        
+        Calling `digest_text(text = ['the quick brown', 'fox jumps', 'over the lazy'])` could output 
+        
+        .. code-block:: python
+        
+           {'behavior': <xarray.BehavioralAssembly (presentation: 3)>
+                        array([329.15, 337.53, 341.13]), # reading times in milliseconds
+                        Coordinates:
+                          * presentation  (presentation) MultiIndex
+                          - context       (presentation) object 'the quick brown' 'fox jumps', 'over the lazy'
+                          - stimulus_id   (presentation) int64 0 1 2}
         """
 
     def perform_behavioral_task(self, task: Task):
