@@ -13,6 +13,11 @@ See the [Documentation](https://brain-score_language.readthedocs.io) for more de
 Brain-Score is made by and for the community. To contribute,
 please [send in a pull request](https://github.com/brain-score/language/pulls).
 
+## Alpha status
+This repository is under active development, and should be considered to be in an alpha status.
+Code is likely to change substantially, without backwards compatibility.
+Please let us know of any problems by [creating an issue](https://github.com/brain-score/language/issues/new).
+
 ## License
 
 MIT license
