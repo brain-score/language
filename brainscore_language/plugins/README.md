@@ -12,4 +12,4 @@ While you can easily run your own models, benchmarks, and metrics by adding them
 ### Submission
 Now that your plugin is ready to share, there are two paths to submission:
 1. Upload your plugin as a zipfile via [the Brain-Score website](brain-score.org)
-2. Create a pull request in this repository 
+2. Create a pull request in this repository
