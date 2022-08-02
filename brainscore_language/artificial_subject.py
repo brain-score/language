@@ -19,9 +19,9 @@ class ArtificialSubject:
         # whereas this setup just gives a string
 
         next_word = 'next_word'
-        """ 
-        Predict the next word from the preceding context. Output a :class:`~brainio.assemblies.BehavioralAssembly` with 
-        next-word predictions as the values and preceding context in the `context` coordinate. 
+        """
+        Predict the next word from the preceding context. Output a :class:`~brainio.assemblies.BehavioralAssembly` with
+        next-word predictions as the values and preceding context in the `context` coordinate.
         """
 
     def perform_behavioral_task(self, task: Task):
