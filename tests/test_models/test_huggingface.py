@@ -20,8 +20,6 @@ class TestHuggingfaceSubject(unittest.TestCase):
         This test is a stand-in prototype to check if our model definitions are correct.
         """
         model = HuggingfaceSubject(model_id='bert-base-uncased',
-                                    # model_class=AutoModelForCausalLM,
-                                    # tokenizer_class=AutoTokenizer,
                                    region_layer_mapping={}
                                     )
 
