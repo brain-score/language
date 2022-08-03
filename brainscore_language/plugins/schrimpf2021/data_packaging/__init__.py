@@ -4,6 +4,7 @@ from pathlib import Path
 
 from brainio import fetch
 from brainio.packaging import write_netcdf, upload_to_s3
+from brainscore_language.plugins.schrimpf2021.data_packaging.blank2014 import load_blank2014
 from brainscore_language.plugins.schrimpf2021.data_packaging.fedorenko2016 import load_fedorenko2016
 from brainscore_language.plugins.schrimpf2021.data_packaging.pereira2018 import load_pereira2018
 
@@ -25,6 +26,13 @@ def upload_fedorenko2016():
     assembly = load_fedorenko2016()
     upload_data_assembly(assembly,
                          assembly_identifier="Fedorenko2016.language",
+                         bucket_name="brainscore-language")
+
+
+def upload_blank2014():
+    assembly = load_blank2014()
+    upload_data_assembly(assembly,
+                         assembly_identifier="Blank2014.fROI4s",
                          bucket_name="brainscore-language")
 
 
@@ -54,3 +62,4 @@ if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     upload_pereira2018()
     upload_fedorenko2016()
+    upload_blank2014()
