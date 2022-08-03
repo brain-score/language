@@ -59,30 +59,10 @@ def load_Pereira2018():
             assembly['neuroid_id'] = 'neuroid', _build_id(assembly, ['subject', 'voxel_num'])
             assemblies.append(assembly)
 
-            # stimuli
-            if experiment_filename not in stimuli:
-                sentences = data['keySentences']
-                sentences = [sentence[0] for sentence in sentences[:, 0]]
-                stimuli[experiment_filename] = {
-                    'sentence': sentences,
-                    'sentence_num': list(range(len(sentences))),
-                    'stimulus_id': stimulus_id,
-                    'experiment': assembly['experiment'].values,
-                    'story': assembly['story'].values,
-                }
-                for copy_coord in ['experiment', 'story', 'passage_index', 'passage_label', 'passage_category']:
-                    stimuli[experiment_filename][copy_coord] = assembly[copy_coord].values
-
     _logger.debug(f"Merging {len(assemblies)} assemblies")
     assembly = merge_data_arrays(assemblies)
 
     _logger.debug("Creating StimulusSet")
-    combined_stimuli = {}
-    for key in stimuli[experiment2]:
-        combined_stimuli[key] = np.concatenate((stimuli[experiment2][key], stimuli[experiment3][key]))
-    stimuli = StimulusSet(combined_stimuli)
-    stimuli.name = "Pereira2018"
-    assembly.attrs['stimulus_set'] = stimuli
     return assembly
 
 
@@ -162,13 +142,11 @@ def upload_pereira2018():
 
     _logger.debug(f"Merging {len(assemblies)} assemblies")
     assembly = merge_data_arrays(assemblies)
-
-    _logger.debug("Creating StimulusSet")
-    assembly.attrs['stimulus_set'] = reference_data.stimulus_set
+    assembly = assembly.sel(atlas='language')
 
     # upload
     upload_data_assembly(assembly,
-                         assembly_identifier="Futrell2018",
+                         assembly_identifier="Pereira2018.language_system",
                          bucket_name="brainscore-language")
 
 
