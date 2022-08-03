@@ -142,7 +142,11 @@ def upload_pereira2018():
 
     _logger.debug(f"Merging {len(assemblies)} assemblies")
     assembly = merge_data_arrays(assemblies)
-    assembly = assembly.sel(atlas='language')
+
+    # filter
+    assembly = assembly.sel(atlas='language', atlas_selection_lower=90)
+    assembly = assembly[{'neuroid': [filter_strategy in [np.nan, 'HminusE', 'FIXminusH']
+                                     for filter_strategy in assembly['filter_strategy'].values]}]
 
     # upload
     upload_data_assembly(assembly,
