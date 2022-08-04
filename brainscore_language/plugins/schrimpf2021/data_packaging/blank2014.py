@@ -2,19 +2,22 @@ from collections import namedtuple, defaultdict
 
 import numpy as np
 import operator
+import pandas as pd
 import scipy.io
 import scipy.io
 import scipy.stats
 import scipy.stats
 import warnings
-import xarray as xr
 from nltk_contrib.textgrid import TextGrid
 from pathlib import Path
 from tqdm import tqdm
 
-from brainio.assemblies import walk_coords, merge_data_arrays, DataAssembly, gather_indexes, array_is_element
+from brainio.assemblies import walk_coords, merge_data_arrays, array_is_element, DataAssembly
 from brainio.stimuli import StimulusSet
 
+
+# This file requires nltk_contrib to be installed to run. nltk_contrib is not part of requirements.txt because this
+# script is only run once for data upload.
 
 # adapted from
 # https://github.com/mschrimpf/neural-nlp/blob/cedac1f868c8081ce6754ef0c13895ce8bc32efc/neural_nlp/neural_data/fmri.py#L241
@@ -23,24 +26,23 @@ from brainio.stimuli import StimulusSet
 def load_blank2014():
     bold_shift = 4
     assembly = load_voxels(bold_shift_seconds=bold_shift)
-    assembly = average_subregions(assembly, bold_shift=bold_shift)
+    assembly = average_subregions(assembly)
     return assembly
 
 
 def load_voxels(bold_shift_seconds=4):
     assembly = load_voxel_data(bold_shift_seconds=bold_shift_seconds)
+    assembly['subject_id'] = assembly['subject_UID']
     assembly = DataAssembly(assembly)
     stimulus_set = NaturalisticStories()()
     stimulus_set, assembly = _align_stimuli_recordings(stimulus_set, assembly)
     assert set(assembly['stimulus_sentence'].values).issubset(set(stimulus_set['sentence']))
-    assembly.attrs['stimulus_set'] = stimulus_set
-    assembly.attrs['stimulus_set_name'] = stimulus_set.name
     return assembly
 
 
 def load_voxel_data(bold_shift_seconds=4):
     data = load_filtered_voxel_timepoints()
-    gather_indexes(data)
+    data = DataAssembly(data)
     meta = load_time_meta()
     annotated_data = _merge_voxel_meta(data, meta, bold_shift_seconds)
     return annotated_data
@@ -48,15 +50,15 @@ def load_voxel_data(bold_shift_seconds=4):
 
 def load_filtered_voxel_timepoints():
     data = load_voxel_timepoints()
+    data = DataAssembly(data)
     data = data.sel(threshold='from90to100')
-    gather_indexes(data)
     data = data.sel(subject_nStories=8)
     return data
 
 
 stories_meta = ['Boar', 'Aqua', 'MatchstickSeller', 'KingOfBirds', 'Elvis', 'MrSticky',
                 'HighSchool', 'Roswell', 'Tulips', 'Tourette', 'Boar']
-stories_meta = xr.DataArray(stories_meta, coords={
+stories_meta = DataAssembly(stories_meta, coords={
     'story_name': ('story', stories_meta),
     'number': ('story', list(range(1, 11)) + [1]),
     'reader': ('story', ['Ted', 'Ted', 'Nancy', 'Nancy', 'Ted', 'Nancy', 'Nancy', 'Ted', 'Ted', 'Nancy', 'Terri']),
@@ -67,7 +69,6 @@ stories_meta = xr.DataArray(stories_meta, coords={
 }, dims=['story'])
 stories_meta['story_index'] = 'story', [".".join([str(value) for value in values]) for values in zip(*[
     stories_meta[coord].values for coord in ['story_name', 'reader']])]
-gather_indexes(stories_meta)
 
 fROIs = {
     'language': [
@@ -169,7 +170,7 @@ def load_voxel_timepoints():
         indices = {dim: np.searchsorted(dim_index[dim][0], story_dim_index[dim]) for dim in dim_index}
         indices = [indices[dim] for dim in story_data.dims]
         data[np.ix_(*indices)] = story_data.values
-    data = xr.DataArray(data, coords=coords, dims=['threshold', 'neuroid', 'timepoint'])
+    data = DataAssembly(data, coords=coords, dims=['threshold', 'neuroid', 'timepoint'])
     data['neuroid_id'] = 'neuroid', [".".join([str(value) for value in values]) for values in zip(*[
         data[coord].values for coord in ['subject_UID', 'region', 'fROI_area', 'voxel_num']])]
     return data
@@ -219,7 +220,7 @@ def _iterate_voxel_timepoints(desc='files'):
                         subject_story_index = subject_meta['stories'].index(story)
                         num_neuroids, num_timepoints = story_data.shape[0], story_data.shape[1]
 
-                        story_data = xr.DataArray([story_data], coords={**{
+                        story_data = DataAssembly([story_data], coords={**{
                             'threshold': [threshold],
                             'voxel_num': ('neuroid', np.arange(0, num_neuroids)),
                             'region': ('neuroid', [region] * num_neuroids),
@@ -232,14 +233,7 @@ def _iterate_voxel_timepoints(desc='files'):
                             f"subject_{key}": ('neuroid', [value] * num_neuroids)
                             for key, value in subject_meta.items()
                             if key not in ['stories', 'storiesComprehensionScores', 'storiesComprehensionUnanswered']
-                        },  # **{
-                                                                        # f"story_comprehension_score": (('neuroid', 'timepoint'), np.tile(
-                                                                        # subject_meta['storiesComprehensionScores'][subject_story_index], story_data.shape)),
-                                                                        #         f"story_comprehension_unanswered": (('neuroid', 'timepoint'), np.tile(bool(
-                                                                        #             subject_meta['storiesComprehensionUnanswered'][subject_story_index])
-                                                                        #                                                           , story_data.shape))
-                                                                        #         }
-                                                                        }, dims=['threshold', 'neuroid', 'timepoint'])
+                        }}, dims=['threshold', 'neuroid', 'timepoint'])
                         yield story_data
 
 
@@ -258,14 +252,13 @@ def load_time_meta():
         story_index = int(file.stem)
         story = stories_meta.sel(number=story_index).values
         story = next(iter(set(story)))  # Boar was read twice
-        rows = xr.DataArray(rows['word'],
+        rows = DataAssembly(rows['word'],
                             coords={'filepath': ('time_bin', [file.name] * len(rows['word'])),
                                     'story': ('time_bin', [story] * len(rows['word'])),
                                     'time_start': ('time_bin', rows['time_start']),
                                     'time_end': ('time_bin', rows['time_end']),
                                     },
                             dims=['time_bin'])
-        gather_indexes(rows)
         time_to_words.append(rows)
     time_to_words = merge_data_arrays(time_to_words)
     return time_to_words
@@ -331,9 +324,8 @@ def _merge_voxel_meta(data, meta, bold_shift_seconds):
         story_data = story_data[{dim: slice(None) if dim != 'timepoint' else sentence_index
                                  for dim in story_data.dims}]
         dims = [dim if not dim.startswith('timepoint') else 'presentation' for dim in story_data.dims]
-        story_data = xr.DataArray(story_data.values, coords=coords, dims=dims)
+        story_data = DataAssembly(story_data.values, coords=coords, dims=dims)
         story_data['story'] = 'presentation', [story] * len(story_data['presentation'])
-        gather_indexes(story_data)
         annotated_data.append(story_data)
     annotated_data = merge_data_arrays(annotated_data)
     return annotated_data
@@ -434,16 +426,48 @@ def is_sorted(x):
     return all(x[i] <= x[i + 1] for i in range(len(x) - 1))
 
 
-def average_subregions(assembly, bold_shift):
+class NaturalisticStories:
+    story_item_mapping = {'Boar': 1, 'Aqua': 2, 'MatchstickSeller': 3, 'KingOfBirds': 4, 'Elvis': 5,
+                          'MrSticky': 6, 'HighSchool': 7, 'Roswell': 8, 'Tulips': 9, 'Tourette': 10}
+    item_story_mapping = {item: story for story, item in story_item_mapping.items()}
+    sentence_end = ['.', '?', '!', ".'", "?'", "!'"]
+
+    def __init__(self, stimuli_filepath=Path(__file__).parent / 'naturalistic_stories' / 'all_stories.tok'):
+        self._filepath = stimuli_filepath
+
+    def __call__(self, keep_meta=True):
+        data = pd.read_csv(self._filepath, delimiter='\t')
+
+        def words_to_sentences(words):
+            sentences = []
+            sentence = ''
+            for word in words:
+                sentence += word
+                if any(word.endswith(sentence_end) for sentence_end in self.sentence_end):
+                    sentences.append(sentence)
+                    sentence = ''
+                else:
+                    sentence += ' '
+            return pd.DataFrame({'sentence': sentences, 'sentence_num': list(range(len(sentences)))})
+
+        data = data.groupby('item')['word'].apply(words_to_sentences).reset_index(level=0)
+        data['story'] = [self.item_story_mapping[item] for item in data['item']]
+        data = data[['story', 'item', 'sentence_num', 'sentence']]
+        data = StimulusSet(data)
+        data.name = 'naturalistic_stories'
+        return data
+
+
+def average_subregions(assembly):
     attrs = assembly.attrs
     del assembly['threshold']
     # group by stimuli, fROI, subject after one another.
     # this gets rid of adjacent coords unfortunately, but we accept that for now.
     averaged_assembly = assembly.groupby('stimulus_id').apply(
         lambda stimulus_group: stimulus_group.groupby('fROI_area').apply(
-            lambda fROI_group: fROI_group.groupby('subject_UID').mean()
+            lambda fROI_group: fROI_group.groupby('subject_id').mean()
         ))
-    averaged_assembly = averaged_assembly.stack(presentation=['stimulus_id'], neuroid=['fROI_area', 'subject_UID'])
+    averaged_assembly = averaged_assembly.stack(neuroid=['fROI_area', 'subject_id'])
     # copy presentation coords back since those are needed for e.g. metric stratification
     order = [averaged_assembly['stimulus_id'].values.tolist().index(stimulus_id)
              for stimulus_id in assembly['stimulus_id'].values]
@@ -453,5 +477,5 @@ def average_subregions(assembly, bold_shift):
         averaged_assembly[copy_coord] = dims, copy_value[order]
     averaged_assembly.attrs = attrs
     averaged_assembly['neuroid_id'] = 'neuroid', [".".join([str(value) for value in values]) for values in zip(*[
-        averaged_assembly[coord].values for coord in ['subject_UID', 'fROI_area']])]
+        averaged_assembly[coord].values for coord in ['subject_id', 'fROI_area']])]
     return averaged_assembly

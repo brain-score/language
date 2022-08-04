@@ -32,7 +32,7 @@ def upload_fedorenko2016():
 def upload_blank2014():
     assembly = load_blank2014()
     upload_data_assembly(assembly,
-                         assembly_identifier="Blank2014.fROI4s",
+                         assembly_identifier="Blank2014.fROI",
                          bucket_name="brainscore-language")
 
 
