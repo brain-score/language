@@ -1,42 +1,25 @@
-from collections import OrderedDict
-
-import itertools
 import logging
 import math
 import numpy as np
 import xarray as xr
-from brainio.assemblies import DataAssembly, walk_coords
-from brainio.transform import subset
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit, KFold, StratifiedKFold
 from tqdm import tqdm
+from typing import List
 
-from brainscore.metrics import Score
-from brainscore.metrics.utils import unique_ordered
-from brainscore.utils import fullname
-
-
-def apply_aggregate(aggregate_fnc, values):
-    """
-    Applies the aggregate while keeping the raw values in the attrs.
-    If raw values are already present, keeps them, else they are added.
-    """
-    score = aggregate_fnc(values)
-    if Score.RAW_VALUES_KEY not in score.attrs:
-        # check if the raw values are already in the values.
-        # if yes, they didn't get copied to the aggregate score and we use those as the "rawest" values.
-        raw = values if Score.RAW_VALUES_KEY not in values.attrs else values.attrs[Score.RAW_VALUES_KEY]
-        score.attrs[Score.RAW_VALUES_KEY] = raw
-    return score
+from brainio.assemblies import walk_coords
+from brainio.transform import subset
+from brainscore_core.metrics import Score
+from . import fullname
 
 
-class Transformation(object):
+class Transformation:
     """
     Transforms an incoming assembly into parts/combinations thereof,
     yields them for further processing,
     and packages the results back together.
     """
 
-    def __call__(self, *args, apply, aggregate=None, **kwargs):
+    def __call__(self, *args, apply, aggregate=None, **kwargs) -> Score:
         values = self._run_pipe(*args, apply=apply, **kwargs)
 
         score = apply_aggregate(aggregate, values) if aggregate is not None else values
@@ -68,98 +51,8 @@ class Transformation(object):
         yield done  # wait for coroutine to send back similarity and inform whether result is ready to be returned
         return result
 
-    def aggregate(self, score):
+    def aggregate(self, score: Score) -> Score:
         return Score(score)
-
-
-class Alignment(Transformation):
-    class Defaults:
-        order_dimensions = ('presentation', 'neuroid')
-        alignment_dim = 'stimulus_id'
-        repeat = False
-
-    def __init__(self, order_dimensions=Defaults.order_dimensions, alignment_dim=Defaults.alignment_dim,
-                 repeat=Defaults.repeat):
-        self._order_dimensions = order_dimensions
-        self._alignment_dim = alignment_dim
-        self._repeat = repeat
-        self._logger = logging.getLogger(fullname(self))
-
-    def pipe(self, source_assembly, target_assembly):
-        self._logger.debug("Aligning by {} and {}, {} repeats".format(
-            self._order_dimensions, self._alignment_dim, "with" if self._repeat else "no"))
-        source_assembly = self.align(source_assembly, target_assembly)
-        self._logger.debug("Sorting by {}".format(self._alignment_dim))
-        source_assembly, target_assembly = self.sort(source_assembly), self.sort(target_assembly)
-        result = yield from self._get_result(source_assembly, target_assembly, done=True)
-        yield result
-
-    def align(self, source_assembly, target_assembly):
-        dimensions = list(self._order_dimensions) + list(set(source_assembly.dims) - set(self._order_dimensions))
-        source_assembly = source_assembly.transpose(*dimensions)
-        return subset(source_assembly, target_assembly, subset_dims=[self._alignment_dim], repeat=self._repeat)
-
-    def sort(self, assembly):
-        return assembly.sortby(self._alignment_dim)
-
-
-class CartesianProduct(Transformation):
-    """
-    Splits an incoming assembly along all dimensions that similarity is not computed over
-    as well as along dividing coords that denote separate parts of the assembly.
-    """
-
-    def __init__(self, dividers=()):
-        super(CartesianProduct, self).__init__()
-        self._dividers = dividers or ()
-        self._logger = logging.getLogger(fullname(self))
-
-    def dividers(self, assembly, dividing_coords):
-        """
-        divide data along dividing coords and non-central dimensions,
-        i.e. dimensions that the metric is not computed over
-        """
-        non_matched_coords = [coord for coord in dividing_coords if not hasattr(assembly, coord)]
-        assert not non_matched_coords, f"{non_matched_coords} not found in assembly"
-        choices = {coord: unique_ordered(assembly[coord].values) for coord in dividing_coords}
-        combinations = [dict(zip(choices, values)) for values in itertools.product(*choices.values())]
-        return combinations
-
-    def pipe(self, assembly):
-        """
-        :param brainscore.assemblies.NeuroidAssembly assembly:
-        :return: brainscore.assemblies.DataAssembly
-        """
-        dividers = self.dividers(assembly, dividing_coords=self._dividers)
-        scores = []
-        progress = tqdm(enumerate_done(dividers), total=len(dividers), desc='cartesian product')
-        for i, divider, done in progress:
-            progress.set_description(str(divider))
-            divided_assembly = assembly.multisel(**divider)
-            # squeeze dimensions if necessary
-            for divider_coord in divider:
-                dims = assembly[divider_coord].dims
-                assert len(dims) == 1
-                if dims[0] in divided_assembly.dims and len(divided_assembly[dims[0]]) == 1:
-                    divided_assembly = divided_assembly.squeeze(dims[0])
-            result = yield from self._get_result(divided_assembly, done=done)
-
-            for coord_name, coord_value in divider.items():
-                # expand and set coordinate value. If the underlying raw values already contain that coordinate
-                # (e.g. as part of a MultiIndex), don't create and set new dimension on raw values.
-                if not hasattr(result, 'raw'):  # no raw values anyway
-                    kwargs = {}
-                elif not hasattr(result.raw, coord_name):  # doesn't have values yet, we can set (True by default)
-                    kwargs = {}
-                else:  # has raw values but already has coord in them --> need to prevent setting
-                    # this expects the result to accept `_apply_raw` in its `expand_dims` method
-                    # which is true for our `Score` class, but not a standard `DataAssembly`.
-                    kwargs = dict(_apply_raw=False)
-                result = result.expand_dims(coord_name, **kwargs)
-                result.__setitem__(coord_name, [coord_value], **kwargs)
-            scores.append(result)
-        scores = Score.merge(*scores)
-        yield scores
 
 
 class Split:
@@ -167,7 +60,7 @@ class Split:
         splits = 10
         train_size = .9
         split_coord = 'stimulus_id'
-        stratification_coord = 'object_name'  # cross-validation across images, balancing objects
+        stratification_coord = None
         unique_split_values = False
         random_state = 1
 
@@ -332,38 +225,22 @@ class CrossValidation(Transformation):
         return self._split.aggregate(score)
 
 
+def apply_aggregate(aggregate_fnc, values: List[Score]):
+    """
+    Applies the aggregate while keeping the raw values in the attrs.
+    If raw values are already present, keeps them, else they are added.
+    """
+    score = aggregate_fnc(values)
+    if Score.RAW_VALUES_KEY not in score.attrs:
+        # check if the raw values are already in the values.
+        # if yes, they didn't get copied to the aggregate score and we use those as the "rawest" values.
+        raw = values if Score.RAW_VALUES_KEY not in values.attrs else values.attrs[Score.RAW_VALUES_KEY]
+        score.attrs[Score.RAW_VALUES_KEY] = raw
+    return score
+
+
 def standard_error_of_the_mean(values, dim):
     return values.std(dim) / math.sqrt(len(values[dim]))
-
-
-def expand(assembly, target_dims):
-    def strip(coord):
-        stripped_coord = coord
-        if stripped_coord.endswith('_source'):
-            stripped_coord = stripped_coord[:-len('_source')]
-        if stripped_coord.endswith('_target'):
-            stripped_coord = stripped_coord[:-len('_target')]
-        return stripped_coord
-
-    def reformat_coord_values(coord, dims, values):
-        stripped_coord = strip(coord)
-
-        if stripped_coord in target_dims and len(values.shape) == 0:
-            values = np.array([values])
-            dims = [coord]
-        return dims, values
-
-    coords = {coord: reformat_coord_values(coord, values.dims, values.values)
-              for coord, values in assembly.coords.items()}
-    dim_shapes = OrderedDict((coord, values[1].shape)
-                             for coord, values in coords.items() if strip(coord) in target_dims)
-    shape = [_shape for shape in dim_shapes.values() for _shape in shape]
-    # prepare values for broadcasting by adding new dimensions
-    values = assembly.values
-    for _ in range(sum([dim not in assembly.dims for dim in dim_shapes])):
-        values = values[:, np.newaxis]
-    values = np.broadcast_to(values, shape)
-    return DataAssembly(values, coords=coords, dims=list(dim_shapes.keys()))
 
 
 def enumerate_done(values):
