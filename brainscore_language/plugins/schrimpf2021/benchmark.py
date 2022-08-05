@@ -28,7 +28,7 @@ class Pereira2018Linear(BenchmarkBase):
 
     def __init__(self):
         self.data = load_dataset('Pereira2018.language_system')
-        self.metric = load_metric('linear_predictivity')
+        self.metric = load_metric('linear_pearsonr')
         ceiler = None
         super(Pereira2018Linear, self).__init__(
             identifier='Pereira2018-linear',
