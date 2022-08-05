@@ -20,6 +20,7 @@ models: Dict[str, ArtificialSubject] = {}
 def load_dataset(identifier: str):
     # imports to load plugins until plugin system is implemented
     from brainscore_language.plugins.wikitext_next_word_prediction import data
+    from brainscore_language.plugins.schrimpf2021 import data
 
     return datasets[identifier]()
 
@@ -27,6 +28,7 @@ def load_dataset(identifier: str):
 def load_metric(identifier: str) -> Metric:
     # imports to load plugins until plugin system is implemented
     from brainscore_language.plugins.wikitext_next_word_prediction import metric
+    from brainscore_language.plugins.schrimpf2021 import metric
 
     return metrics[identifier]()
 
@@ -34,6 +36,7 @@ def load_metric(identifier: str) -> Metric:
 def load_benchmark(identifier: str) -> Benchmark:
     # imports to load plugins until plugin system is implemented
     from brainscore_language.plugins.wikitext_next_word_prediction import benchmark
+    from brainscore_language.plugins.schrimpf2021 import benchmark
 
     return benchmarks[identifier]()
 
