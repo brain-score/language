@@ -36,7 +36,7 @@ class Futrell2018Pearsonr(BenchmarkBase):
     def __call__(self, candidate: ArtificialSubject) -> Score:
         candidate.perform_behavioral_task(ArtificialSubject.Task.reading_times)
         stimuli = self.data['word'].values
-        predictions = candidate.digest_text(stimuli)['behavior'].values
+        predictions = candidate.digest_text(stimuli)['behavior']
         targets = self.data.mean('subject')  # compare to "average human"
         raw_score = self.metric(predictions, targets)
         score = ceiling_normalize(raw_score, self.ceiling)
