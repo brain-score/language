@@ -5,7 +5,7 @@ from sklearn.preprocessing import scale
 
 from brainio.assemblies import NeuroidAssembly, array_is_element
 from brainio.assemblies import walk_coords
-from brainscore_core.metrics import Score
+from brainscore_core.metrics import Metric, Score
 from brainscore_language import metrics
 from brainscore_language.utils.transformations import CrossValidation
 
@@ -104,7 +104,7 @@ class XarrayCorrelation:
         return result
 
 
-class CrossRegressedCorrelation:
+class CrossRegressedCorrelation(Metric):
     def __init__(self, regression, correlation, crossvalidation_kwargs=None):
         crossvalidation_defaults = dict(train_size=.9, test_size=None)
         crossvalidation_kwargs = {**crossvalidation_defaults, **(crossvalidation_kwargs or {})}
@@ -113,8 +113,8 @@ class CrossRegressedCorrelation:
         self.regression = regression
         self.correlation = correlation
 
-    def __call__(self, source, target):
-        return self.cross_validation(source, target, apply=self.apply, aggregate=self.aggregate)
+    def __call__(self, assembly1, assembly2) -> Score:
+        return self.cross_validation(assembly1, assembly2, apply=self.apply, aggregate=self.aggregate)
 
     def apply(self, source_train, target_train, source_test, target_test):
         self.regression.fit(source_train, target_train)

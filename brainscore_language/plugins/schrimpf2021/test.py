@@ -67,7 +67,7 @@ class TestMetric:
         target = random_state.poisson(lam=1, size=30 * 25).reshape((30, 25))
         target = self._make_assembly(target)
         metric = load_metric('linear_predictivity')
-        score = metric(source=source, target=target)
+        score = metric(assembly1=source, assembly2=target)
         assert score.sel(aggregation='center') == approx(.02826294, abs=.00001)
 
     def _make_assembly(self, values=None):
