@@ -3,7 +3,7 @@ from numpy.random import RandomState
 from pytest import approx
 
 from brainio.assemblies import NeuroidAssembly
-from brainscore_language import load_dataset, load_metric
+from brainscore_language import load_dataset, load_metric, ArtificialSubject, load_benchmark
 from brainscore_language.plugins.schrimpf2021.metric import linear_regression
 
 
@@ -80,3 +80,36 @@ class TestMetric:
                                            'region': ('neuroid', ['some_region'] * 25)},
                                    dims=['presentation', 'neuroid'])
         return assembly
+
+
+class TestBenchmark:
+    class DummyModel(ArtificialSubject):
+        def __init__(self, neural_activity):
+            self.neural_activity = neural_activity
+
+        def digest_text(self, stimuli):
+            # todo: assert stimulus_id equality
+            return {'neural': self.neural_activity}
+
+        def perform_neural_recording(self, recording_target: ArtificialSubject.RecordingTarget,
+                                     recording_type: ArtificialSubject.RecordingType):
+            assert recording_target == ArtificialSubject.RecordingTarget.language_system
+            assert recording_type == ArtificialSubject.RecordingType.spikerate_exact
+
+    def test_dummy_bad(self):
+        benchmark = load_benchmark('Pereira2018-linear')
+        neural_activity = RandomState(0).random(10256)  # todo
+        dummy_model = TestBenchmark.DummyModel(neural_activity=neural_activity)
+        score = benchmark(dummy_model)
+        assert score == approx(0.0098731 / .858, abs=0.001)
+
+    def test_exact(self):
+        benchmark = load_benchmark('Pereira2018-linear')
+        dummy_model = TestBenchmark.DummyModel(neural_activity=benchmark.data)
+        score = benchmark(dummy_model)
+        assert score == approx(1)
+
+    def test_ceiling(self):
+        benchmark = load_benchmark('Pereira2018-linear')
+        ceiling = benchmark.ceiling
+        assert ceiling == approx(.32, abs=.0005)
