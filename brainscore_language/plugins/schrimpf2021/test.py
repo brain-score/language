@@ -8,13 +8,21 @@ from brainscore_language.plugins.schrimpf2021.metric import linear_regression
 
 
 class TestData:
-    def test_Pereira2018(self):
+    def test_Pereira2018language(self):
         assembly = load_dataset('Pereira2018.language_system')
         assert set(assembly['experiment'].values) == {'243sentences', '384sentences'}
         assert len(assembly['presentation']) == 243 + 384
         assert len(set(assembly['subject'].values)) == 10
         assert len(set(assembly['neuroid_id'].values)) == 13553
         assert np.nansum(assembly.values) == approx(1935595.263162177)
+
+    def test_Pereira2018auditory(self):
+        assembly = load_dataset('Pereira2018.auditory')
+        assert set(assembly['experiment'].values) == {'243sentences', '384sentences'}
+        assert len(assembly['presentation']) == 243 + 384
+        assert len(set(assembly['subject'].values)) == 10
+        assert len(set(assembly['neuroid_id'].values)) == 5692
+        assert np.nansum(assembly.values) == approx(-257124.1144940494)
 
     def test_Fedorenko2016(self):
         assembly = load_dataset('Fedorenko2016.language')
