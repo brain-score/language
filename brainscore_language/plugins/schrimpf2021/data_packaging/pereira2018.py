@@ -64,7 +64,7 @@ def load_Pereira2018_reference():
     return assembly
 
 
-def load_pereira2018():
+def load_pereira2018_full():
     # adapted from
     # https://github.com/mschrimpf/neural-nlp/blob/cedac1f868c8081ce6754ef0c13895ce8bc32efc/neural_nlp/neural_data/naturalStories.py#L15
 
@@ -141,11 +141,14 @@ def load_pereira2018():
     _logger.debug(f"Merging {len(assemblies)} assemblies")
     assembly = merge_data_arrays(assemblies)
 
-    # filter
-    assembly = assembly.sel(atlas='language', atlas_selection_lower=90)
+    return assembly
+
+
+def load_pereira2018(atlas):
+    assembly = load_pereira2018_full()
+    assembly = assembly.sel(atlas=atlas, atlas_selection_lower=90)
     assembly = assembly[{'neuroid': [filter_strategy in [np.nan, 'HminusE', 'FIXminusH']
                                      for filter_strategy in assembly['filter_strategy'].values]}]
-
     return assembly
 
 

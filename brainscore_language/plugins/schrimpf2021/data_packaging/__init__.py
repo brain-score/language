@@ -15,10 +15,10 @@ The code in this package was run only once to initially upload the data, and is 
 """
 
 
-def upload_pereira2018():
-    assembly = load_pereira2018()
+def upload_pereira2018(atlas):
+    assembly = load_pereira2018(atlas=atlas)
     upload_data_assembly(assembly,
-                         assembly_identifier="Pereira2018.language_system",
+                         assembly_identifier=f"Pereira2018.{atlas}",
                          bucket_name="brainscore-language")
 
 
@@ -60,6 +60,7 @@ def upload_data_assembly(assembly, assembly_identifier, bucket_name):
 
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-    upload_pereira2018()
-    upload_fedorenko2016()
-    upload_blank2014()
+    # upload_pereira2018(atlas='language')
+    upload_pereira2018(atlas='auditory')
+    # upload_fedorenko2016()
+    # upload_blank2014()
