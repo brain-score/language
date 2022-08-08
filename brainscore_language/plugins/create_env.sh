@@ -17,6 +17,5 @@ if $HAS_REQUIREMENTS; then
 else
 	echo "Warning: no requirements.txt found. Installing only base dependencies."
 fi
-pip install poetry
-poetry install
+python -m pip install ".[test]"
 pytest $PLUGIN_TEST_PATH

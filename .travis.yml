@@ -1,13 +1,9 @@
 language: python
 python:
 - "3.8"
-before_install:
-- pip install "setuptools>=61"  # travis build seems to fail otherwise
-- pip install poetry
 install:
-- poetry install
-- poetry show # list installed package versions
-# install conda
+- python -m pip install ".[test]"
+# install conda for plugin runner
 - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
 - bash miniconda.sh -b -p $HOME/miniconda
 - source "$HOME/miniconda/etc/profile.d/conda.sh"
@@ -16,9 +12,6 @@ install:
 - conda update -q conda
 - conda info -a
 
-# http://docs.travis-ci.com/user/build-lifecycle/
-before_script:
-  - echo -e "Host github.com\n\tHostName github.com\n\tUser git\n\tIdentityFile ~/.ssh/id_rsa\n" >> ~/.ssh/config
 script:
 - pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow"
 - python brainscore_language/plugins/test_plugins.py
