@@ -5,7 +5,7 @@ from sklearn.preprocessing import scale
 
 from brainio.assemblies import NeuroidAssembly, array_is_element
 from brainio.assemblies import walk_coords
-from brainscore_core.metrics import Metric, Score
+from brainscore_core.metrics import Score
 from brainscore_language import metrics
 from brainscore_language.utils.transformations import CrossValidation
 
