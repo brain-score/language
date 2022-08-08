@@ -1,4 +1,3 @@
-import itertools
 import logging
 import numpy as np
 from numpy import AxisError
@@ -29,12 +28,12 @@ class Pereira2018Linear(BenchmarkBase):
     def __init__(self):
         self.data = load_dataset('Pereira2018.language_system')
         self.metric = load_metric('linear_pearsonr')
-        ceiler = None
+        ceiler = ExtrapolationCeiling()
         super(Pereira2018Linear, self).__init__(
             identifier='Pereira2018-linear',
             version=1,
             parent='neural',
-            ceiling_func=lambda: ceiler(self.data),
+            ceiling_func=lambda: ceiler(self.data, metric=self.metric),
             bibtex=BIBTEX_PEREIRA2018)
 
     def __call__(self, candidate: ArtificialSubject) -> Score:
@@ -43,12 +42,11 @@ class Pereira2018Linear(BenchmarkBase):
         stimuli = self.data  # todo
         predictions = candidate.digest_text(stimuli)['neural']
         raw_score = self.metric(predictions, self.data)
-        return raw_score
-        # score = ceiling_normalize(raw_score, self.ceiling) # todo
-        # return score
+        score = ceiling_normalize(raw_score, self.ceiling)  # todo unify with Futrell2018 somehow
+        return score
 
 
-def v(x, v0, tau0):
+def v(x, v0, tau0):  # function for ceiling extrapolation
     return v0 * (1 - np.exp(-x / tau0))
 
 
@@ -56,11 +54,13 @@ class HoldoutSubjectCeiling:
     def __init__(self, subject_column):
         self.subject_column = subject_column
         self._logger = logging.getLogger(fullname(self))
+        self._rng = RandomState(0)
+        self._num_bootstraps = 5
 
     def __call__(self, assembly, metric):
         subjects = set(assembly[self.subject_column].values)
         scores = []
-        iterate_subjects = self.get_subject_iterations(subjects)
+        iterate_subjects = self._rng.choice(list(subjects), size=self._num_bootstraps)  # use only a subset of subjects
         for subject in tqdm(iterate_subjects, desc='heldout subject'):
             try:
                 subject_assembly = assembly[{'neuroid': [subject_value == subject
@@ -69,7 +69,7 @@ class HoldoutSubjectCeiling:
                 subject_pool = subjects - {subject}
                 pool_assembly = assembly[
                     {'neuroid': [subject in subject_pool for subject in assembly[self.subject_column].values]}]
-                score = self.score(pool_assembly, subject_assembly, metric=metric)
+                score = metric(pool_assembly, subject_assembly)
                 # store scores
                 apply_raw = 'raw' in score.attrs and \
                             not hasattr(score.raw, self.subject_column)  # only propagate if column not part of score
@@ -92,32 +92,25 @@ class HoldoutSubjectCeiling:
         scores.loc[{'aggregation': 'error'}] = error
         return scores
 
-    def get_subject_iterations(self, subjects):
-        return subjects  # iterate over all subjects
-
-    def score(self, pool_assembly, subject_assembly, metric):
-        return metric(pool_assembly, subject_assembly)
-
 
 class ExtrapolationCeiling:
     def __init__(self, subject_column='subject', extrapolation_dimension='neuroid',
-                 num_bootstraps=100, post_process=None):
+                 num_bootstraps=100):
         self._logger = logging.getLogger(fullname(self))
         self.subject_column = subject_column
-        self.holdout_ceiling = HoldoutSubjectCeiling(subject_column=subject_column)
         self.extrapolation_dimension = extrapolation_dimension
         self.num_bootstraps = num_bootstraps
-        self._post_process = post_process
+        self.num_subsamples = 10
+        self.holdout_ceiling = HoldoutSubjectCeiling(subject_column=subject_column)
+        self._rng = RandomState(0)
 
-    @store(identifier_ignore=['assembly', 'metric'])
-    def __call__(self, identifier, assembly, metric):
-        scores = self.collect(identifier, assembly=assembly, metric=metric)
+    def __call__(self, assembly, metric):
+        scores = self.collect(assembly=assembly, metric=metric)
         return self.extrapolate(scores)
 
-    @store(identifier_ignore=['assembly', 'metric'])
-    def collect(self, identifier, assembly, metric):
+    def collect(self, assembly, metric):
         subjects = set(assembly[self.subject_column].values)
-        subject_subsamples = self.build_subject_subsamples(subjects)
+        subject_subsamples = self._rng.choice(list(subjects), size=self.num_bootstraps)
         scores = []
         for num_subjects in tqdm(subject_subsamples, desc='num subjects'):
             selection_combinations = self.iterate_subsets(assembly, num_subjects=num_subjects)
@@ -138,22 +131,34 @@ class ExtrapolationCeiling:
                     else:
                         raise e
         scores = Score.merge(*scores)
-        scores = self.post_process(scores)
+        scores = apply_aggregate(lambda values: values.mean('sub_experiment').mean('experiment'), scores)
         return scores
 
-    def build_subject_subsamples(self, subjects):
-        return tuple(range(2, len(subjects) + 1))
-
     def iterate_subsets(self, assembly, num_subjects):
-        subjects = set(assembly[self.subject_column].values)
-        subject_combinations = list(itertools.combinations(subjects, num_subjects))
-        for sub_subjects in subject_combinations:
-            sub_assembly = assembly[{'neuroid': [subject in sub_subjects
-                                                 for subject in assembly[self.subject_column].values]}]
-            yield {self.subject_column: sub_subjects}, sub_assembly
+        # cross experiment to obtain more subjects to extrapolate.
+        # don't worry about atlases here, cross-metric will take care of it.
+        experiments = set(assembly['experiment'].values)
+        for experiment in sorted(experiments):
+            experiment_assembly = assembly[{'presentation': [
+                experiment_value == experiment for experiment_value in assembly['experiment'].values]}]
+            experiment_assembly = experiment_assembly.dropna('neuroid')  # drop subjects that haven't done this exp
+            if len(set(experiment_assembly[self.subject_column].values)) < num_subjects:
+                continue  # not enough subjects
+            for sub_subjects in self._random_combinations(
+                    subjects=set(experiment_assembly[self.subject_column].values),
+                    num_subjects=num_subjects, choice=self.num_subsamples, rng=self._rng):
+                sub_assembly = assembly[{'neuroid': [subject in sub_subjects
+                                                     for subject in assembly[self.subject_column].values]}]
+                yield {self.subject_column: sub_subjects, 'experiment': experiment}, sub_assembly
 
-    def average_collected(self, scores):
-        return scores.median('neuroid')
+    def _random_combinations(self, subjects, num_subjects, choice, rng):
+        # following https://stackoverflow.com/a/55929159/2225200. Also see similar method in `behavioral.py`.
+        subjects = np.array(list(subjects))
+        combinations = set()
+        while len(combinations) < choice:
+            elements = rng.choice(subjects, size=num_subjects, replace=False)
+            combinations.add(tuple(elements))
+        return combinations
 
     def extrapolate(self, ceilings):
         neuroid_ceilings, bootstrap_params, endpoint_xs = [], [], []
@@ -184,6 +189,7 @@ class ExtrapolationCeiling:
         self._logger.debug("Merging endpoints")
         endpoint_xs = manual_merge(*endpoint_xs, on=self.extrapolation_dimension)
         neuroid_ceilings.attrs['endpoint_x'] = endpoint_xs
+        assert neuroid_ceilings['atlas'].values.item() == 'language'  # todo: make sure it's only language neuroids
         # aggregate
         ceiling = self.aggregate_neuroid_ceilings(neuroid_ceilings)
         return ceiling
@@ -247,81 +253,13 @@ class ExtrapolationCeiling:
         return score
 
     def fit(self, subject_subsamples, bootstrapped_scores):
+        valid = ~np.isnan(bootstrapped_scores)
+        if sum(valid) < 1:
+            raise RuntimeError("No valid scores in sample")
         params, pcov = curve_fit(v, subject_subsamples, bootstrapped_scores,
                                  # v (i.e. max ceiling) is between 0 and 1, tau0 unconstrained
                                  bounds=([0, -np.inf], [1, np.inf]))
         return params
-
-    def post_process(self, scores):
-        if self._post_process is not None:
-            scores = self._post_process(scores)
-        return scores
-
-
-class PereiraExtrapolationCeiling(ExtrapolationCeiling):
-    def __init__(self, subject_column, *args, **kwargs):
-        super(PereiraExtrapolationCeiling, self).__init__(
-            subject_column, *args, **kwargs)
-        self._num_subsamples = 10
-        self.holdout_ceiling = PereiraHoldoutSubjectCeiling(subject_column=subject_column)
-        self._rng = RandomState(0)
-
-    def iterate_subsets(self, assembly, num_subjects):
-        # cross experiment to obtain more subjects to extrapolate.
-        # don't worry about atlases here, cross-metric will take care of it.
-        experiments = set(assembly['experiment'].values)
-        for experiment in sorted(experiments):
-            experiment_assembly = assembly[{'presentation': [
-                experiment_value == experiment for experiment_value in assembly['experiment'].values]}]
-            experiment_assembly = experiment_assembly.dropna('neuroid')  # drop subjects that haven't done this exp
-            if len(set(experiment_assembly[self.subject_column].values)) < num_subjects:
-                continue  # not enough subjects
-            for sub_subjects in self._random_combinations(
-                    subjects=set(experiment_assembly[self.subject_column].values),
-                    num_subjects=num_subjects, choice=self._num_subsamples, rng=self._rng):
-                sub_assembly = assembly[{'neuroid': [subject in sub_subjects
-                                                     for subject in assembly[self.subject_column].values]}]
-                yield {self.subject_column: sub_subjects, 'experiment': experiment}, sub_assembly
-
-    def _random_combinations(self, subjects, num_subjects, choice, rng):
-        # following https://stackoverflow.com/a/55929159/2225200. Also see similar method in `behavioral.py`.
-        subjects = np.array(list(subjects))
-        combinations = set()
-        while len(combinations) < choice:
-            elements = rng.choice(subjects, size=num_subjects, replace=False)
-            combinations.add(tuple(elements))
-        return combinations
-
-    def extrapolate(self, ceilings):
-        ceiling = super(PereiraExtrapolationCeiling, self).extrapolate(ceilings)
-        # compute aggregate ceiling only for language neuroids
-        neuroid_ceilings = ceiling.raw
-        language_ceilings = neuroid_ceilings.sel(atlas='language')
-        ceiling = self.aggregate_neuroid_ceilings(language_ceilings)
-        ceiling.attrs['raw'] = neuroid_ceilings  # reset to all neuroids
-        return ceiling
-
-    def fit(self, subject_subsamples, bootstrapped_scores):
-        valid = ~np.isnan(bootstrapped_scores)
-        if sum(valid) < 1:
-            raise RuntimeError("No valid scores in sample")
-        return super(PereiraExtrapolationCeiling, self).fit(
-            np.array(subject_subsamples)[valid], np.array(bootstrapped_scores)[valid])
-
-    def post_process(self, scores):
-        scores = apply_aggregate(lambda values: values.mean('sub_experiment').mean('experiment'), scores)
-        return scores
-
-
-class PereiraHoldoutSubjectCeiling(HoldoutSubjectCeiling):
-    def __init__(self, *args, **kwargs):
-        super(PereiraHoldoutSubjectCeiling, self).__init__(*args, **kwargs)
-        self._rng = RandomState(0)
-        self._num_bootstraps = 5
-
-    def get_subject_iterations(self, subjects):
-        # use only a subset of subjects
-        return self._rng.choice(list(subjects), size=self._num_bootstraps)
 
 
 def manual_merge(*elements, on='neuroid'):

@@ -60,6 +60,6 @@ def upload_data_assembly(assembly, assembly_identifier, bucket_name):
 
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-    upload_pereira2018()
-    upload_fedorenko2016()
+    # upload_pereira2018()
+    # upload_fedorenko2016()
     upload_blank2014()

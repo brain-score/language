@@ -84,6 +84,7 @@ def load_fedorenko2016():
     assembly = NeuroidAssembly(ecog_mtrix_T,
                                dims=('presentation', 'neuroid'),
                                coords={'stimulus_id': ('presentation', word_number),
+                                       'stimulus': ('presentation', sentence_words),
                                        'word': ('presentation', sentence_words),
                                        'word_num': ('presentation', word_nums),
                                        'sentence_id': ('presentation', sentenceID),

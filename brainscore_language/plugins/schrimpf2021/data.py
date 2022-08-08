@@ -44,6 +44,6 @@ BIBTEX_BLANK2014 = """@article{blank2014functional,
 datasets['Pereira2018.language_system'] = functools.partial(
     load_from_s3, identifier="Pereira2018.language_system", sha1="8b5056b79129e27cdbc2b9ee032e7ba06396f0f0")
 datasets['Fedorenko2016.language'] = functools.partial(
-    load_from_s3, identifier="Fedorenko2016.language", sha1="e3d0f4605e9685365dc37952302dc9a21da16660")
+    load_from_s3, identifier="Fedorenko2016.language", sha1="05ac632ee6cf4eaf0d71deb77afb688e7a965f9e")
 datasets['Blank2014.fROI'] = functools.partial(
     load_from_s3, identifier="Blank2014.fROI", sha1="82c376712c26888fb769d02d3eca740e5f3a7679")

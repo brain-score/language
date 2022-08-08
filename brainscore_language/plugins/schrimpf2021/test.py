@@ -12,6 +12,8 @@ class TestData:
         assembly = load_dataset('Pereira2018.language_system')
         assert set(assembly['experiment'].values) == {'243sentences', '384sentences'}
         assert len(assembly['presentation']) == 243 + 384
+        assert len(set(assembly['stimulu'].values)) == 243 + 384
+        assert 'Once upon a time' in assembly['stimuli'].values
         assert len(set(assembly['subject'].values)) == 10
         assert len(set(assembly['neuroid_id'].values)) == 13553
         assert np.nansum(assembly.values) == approx(1935595.263162177)
@@ -19,12 +21,19 @@ class TestData:
     def test_Fedorenko2016(self):
         assembly = load_dataset('Fedorenko2016.language')
         assert len(assembly['presentation']) == 416
+        assert len(set(assembly['stimulus'].values)) == len(set(assembly['word'].values)) == 255
+        assert ' '.join(assembly.sel(sentence_id=0)['stimulus'].values) == 'ALEX WAS TIRED SO HE TOOK A NAP'
+        assert set(assembly['word_num'].values) == {0, 1, 2, 3, 4, 5, 6, 7}
+        assert len(set(assembly['sentence_id'].values)) == 52
         assert len(assembly['neuroid']) == 97
         assert len(np.unique(assembly['subject_UID'])) == 5
 
     def test_Blank2014(self):
         assembly = load_dataset('Blank2014.fROI')
         assert len(assembly['presentation']) == 1317
+        assembly[assembly.where((assembly['story'] == 'Boar') & (assembly['sentence_num'] <= 10))]
+        assert assembly.sel(story='Boar')['stimulus_sentence']
+        assert 'Once upon a time' in assembly['stimuli'].values
         assert len(assembly['neuroid']) == 60
         assert len(set(assembly['stimulus_id'].values)) == len(assembly['presentation'])
         assert set(assembly['story'].values) == {'Aqua', 'Boar', 'Elvis', 'HighSchool',
@@ -50,14 +59,14 @@ class TestMetric:
     def test_identical_source_target(self):
         assembly = self._make_assembly()
         metric = load_metric('linear_pearsonr')
-        score = metric(source=assembly, target=assembly)
+        score = metric(assembly1=assembly, assembly2=assembly)
         assert score.sel(aggregation='center') == approx(1, abs=.00001)
 
     def test_offset_source_target(self):
         source = self._make_assembly()
         target = source + 2  # offset all values
         metric = load_metric('linear_pearsonr')
-        score = metric(source=source, target=target)
+        score = metric(assembly1=source, assembly2=target)
         assert score.sel(aggregation='center') == approx(1, abs=.00001)
 
     def test_mismatched_source_target(self):
@@ -69,6 +78,13 @@ class TestMetric:
         metric = load_metric('linear_pearsonr')
         score = metric(assembly1=source, assembly2=target)
         assert score.sel(aggregation='center') == approx(.02826294, abs=.00001)
+
+    def test_weights_stored(self):
+        assembly = self._make_assembly()
+        metric = load_metric('linear_pearsonr', store_regression_weights=True)
+        score = metric(assembly1=assembly, assembly2=assembly)
+        assert score.attrs['regression_coef'] is not None
+        assert score.attrs['regression_intercept'] is not None
 
     def _make_assembly(self, values=None):
         if values is None:
@@ -88,7 +104,7 @@ class TestBenchmark:
             self.neural_activity = neural_activity
 
         def digest_text(self, stimuli):
-            # todo: assert stimulus_id equality
+            np.testing.assert_array_equal(stimuli, self.neural_activity['stimulus'])
             return {'neural': self.neural_activity}
 
         def perform_neural_recording(self, recording_target: ArtificialSubject.RecordingTarget,
@@ -98,10 +114,16 @@ class TestBenchmark:
 
     def test_dummy_bad(self):
         benchmark = load_benchmark('Pereira2018-linear')
-        neural_activity = RandomState(0).random(10256)  # todo
+        neural_activity = RandomState(0).random(size=(30, 25))  # todo
+        neural_activity = NeuroidAssembly(neural_activity,
+                                          coords={'stimulus_id': ('presentation', np.arange(30)),
+                                                  'stimulus_category': ('presentation', ['a', 'b', 'c'] * 10),
+                                                  'neuroid_id': ('neuroid', np.arange(25)),
+                                                  'region': ('neuroid', ['some_region'] * 25)},
+                                          dims=['presentation', 'neuroid'])
         dummy_model = TestBenchmark.DummyModel(neural_activity=neural_activity)
         score = benchmark(dummy_model)
-        assert score == approx(0.0098731 / .858, abs=0.001)
+        assert score == approx(0.0098731 / .318567, abs=0.001)
 
     def test_exact(self):
         benchmark = load_benchmark('Pereira2018-linear')
@@ -112,4 +134,4 @@ class TestBenchmark:
     def test_ceiling(self):
         benchmark = load_benchmark('Pereira2018-linear')
         ceiling = benchmark.ceiling
-        assert ceiling == approx(.32, abs=.0005)
+        assert ceiling == approx(.318567, abs=.0005)

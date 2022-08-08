@@ -36,9 +36,12 @@ def load_Pereira2018_reference():
             # assembly
             assembly = data['examples']
             meta = data['meta']
+            sentences = [sentence.item() for sentence in data['keySentences'][:, 0]]
             assembly = NeuroidAssembly(assembly, coords={
                 'experiment': ('presentation', [os.path.splitext(experiment_filename)[0]] * assembly.shape[0]),
                 'stimulus_num': ('presentation', list(range(assembly.shape[0]))),
+                'sentence': ('presentation', sentences),
+                'stimulus': ('presentation', sentences),
                 'passage_index': ('presentation', data['labelsPassageForEachSentence'][:, 0]),
                 'passage_label': ('presentation', [data['keyPassages'][index - 1, 0][0]
                                                    for index in data['labelsPassageForEachSentence'][:, 0]]),
@@ -59,8 +62,6 @@ def load_Pereira2018_reference():
 
     _logger.debug(f"Merging {len(assemblies)} assemblies")
     assembly = merge_data_arrays(assemblies)
-
-    _logger.debug("Creating StimulusSet")
     return assembly
 
 

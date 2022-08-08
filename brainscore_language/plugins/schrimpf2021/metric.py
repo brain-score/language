@@ -105,13 +105,14 @@ class XarrayCorrelation:
 
 
 class CrossRegressedCorrelation(Metric):
-    def __init__(self, regression, correlation, crossvalidation_kwargs=None):
+    def __init__(self, regression, correlation, crossvalidation_kwargs=None, store_regression_weights=False):
         crossvalidation_defaults = dict(train_size=.9, test_size=None)
         crossvalidation_kwargs = {**crossvalidation_defaults, **(crossvalidation_kwargs or {})}
 
         self.cross_validation = CrossValidation(**crossvalidation_kwargs)
         self.regression = regression
         self.correlation = correlation
+        self.store_regression_weights = store_regression_weights
 
     def __call__(self, assembly1, assembly2) -> Score:
         return self.cross_validation(assembly1, assembly2, apply=self.apply, aggregate=self.aggregate)
@@ -120,6 +121,10 @@ class CrossRegressedCorrelation(Metric):
         self.regression.fit(source_train, target_train)
         prediction = self.regression.predict(source_test)
         score = self.correlation(prediction, target_test)
+        if self.store_regression_weights:
+            score.attrs['regression_coef'] = self.regression._regression.coef_
+            score.attrs['regression_intercept'] = self.regression._regression.intercept_
+            # todo: will this work with crossval?
         return score
 
     def aggregate(self, scores):
@@ -157,3 +162,6 @@ def linear_pearsonr(*args, regression_kwargs=None, correlation_kwargs=None, **kw
 
 
 metrics['linear_pearsonr'] = linear_pearsonr
+
+# todo: Keep intermediate values (e.g. regression alpha values) in `score.attrs`
+#   store_regression_weights = True
