@@ -12,26 +12,27 @@ from .data import BIBTEX
 logger = logging.getLogger(__name__)
 
 
-class Pereira2018Pearsonr(BenchmarkBase):
+class Pereira2018LinregPearsonr(BenchmarkBase):
     """
-    Evaluate model ability to predict reading times on the natural stories corpus introduced in Futrell et al. 2018.
-    Alignment of reading times between model and human subjects is evaluated via Pearson correlation.
+    Evaluate model ability to predict neural data (ROI/voxel, OBS: to-do, update) introduced in Pereira et al. 2018.
+    The mapping model is fitted on X folds of the data in k-fold cross-validation scheme, and the resulting predicted neuroid
+    values are evaluated against the actual neuroid values via Pearson correlation.
 
-    This benchmark builds off the behavioral benchmark introduced in Schrimpf et al. 2021, but:
-    * does not allow for any fitting; rather model candidates have to directly output reading times, and
-    * estimates the ceiling with Spearman-Brown corrected split-halves consistency.
+    This benchmark builds off the neural benchmark introduced in Schrimpf et al. 2021, but:
+    * contains re-modeled data (SPM12 as opposed to SPM5)
+    * XXXX (if ROIs, note!)
     """
 
     def __init__(self):
         self.data = load_dataset("Pereira2018")
         self.metric = load_metric("pearsonr")
-        ceiler = SplitHalvesConsistency(
+        ceiler = SplitHalvesConsistency( # todo
             num_splits=10, split_coordinate="subject_id", consistency_metric=self.metric
         )
         super(Pereira2018Pearsonr, self).__init__(
-            identifier="Pereira2018-pearsonr",
+            identifier="Pereira2018-linregpearsonr",
             version=1,
-            parent="behavior",
+            parent="neural",
             ceiling_func=lambda: ceiler(self.data),
             bibtex=BIBTEX,
         )
