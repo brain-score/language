@@ -14,6 +14,7 @@ requires-python = "==3.8.*"
 dependencies = [
     "tqdm",
     "numpy>=1.21",
+    "datasets==2.*",
     "brainscore_core@git+https://github.com/brain-score/core.git@main",
     "brainio@git+https://github.com/brain-score/brainio.git@main"
 ]
