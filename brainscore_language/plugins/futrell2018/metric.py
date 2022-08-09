@@ -1,0 +1,21 @@
+import numpy as np
+from scipy.stats import pearsonr
+
+from brainio.assemblies import DataAssembly
+from brainscore_core.metrics import Score, Metric
+from brainscore_language import metrics
+
+
+class PearsonCorrelation(Metric):
+    """
+    Pearson-r correlation between two vectors.
+    """
+
+    def __call__(self, assembly1: DataAssembly, assembly2: DataAssembly) -> Score:
+        score, pvalue = pearsonr(assembly1, assembly2)
+        score = Score(np.abs(score))
+        score.attrs['pvalue'] = pvalue
+        return score
+
+
+metrics['pearsonr'] = PearsonCorrelation

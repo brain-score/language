@@ -34,11 +34,16 @@ class HuggingfaceSubject(ArtificialSubject):
         self.behavioral_task = None
         self.neural_recordings = []
 
+        self.task_function_mapping_dict = {
+            ArtificialSubject.Task.next_word: self.predict_next_word,
+        }
+
     def identifier(self):
         return self.model_id
 
     def perform_behavioral_task(self, task: ArtificialSubject.Task):
         self.behavioral_task = task
+        self.output_to_behavior = self.task_function_mapping_dict[task]
 
     def perform_neural_recording(self,
                                  recording_target: ArtificialSubject.RecordingTarget,
@@ -46,6 +51,7 @@ class HuggingfaceSubject(ArtificialSubject):
         self.neural_recordings.append((recording_target, recording_type))
 
     def digest_text(self, text: Union[str, List[str]]) -> Dict[str, DataAssembly]:
+
         """
         :param text: the text to be used for inference e.g. "the quick brown fox"
         :return: assembly of either behavioral output or internal neural representations
@@ -77,13 +83,11 @@ class HuggingfaceSubject(ArtificialSubject):
             #  Maybe we need a StimulusSet class with metadata instead of just text strings after all?
             'stimulus_id': ('presentation', [0] if isinstance(text, str) else np.arange(len(text))),
         }
+
         if self.behavioral_task:
-            logits = base_output.logits
-            pred_id = torch.argmax(logits, axis=2).squeeze()
-            last_model_token_inference = pred_id[-1].tolist()
-            next_word = self.tokenizer.decode(last_model_token_inference)
+            behavioral_output = self.output_to_behavior(base_output= base_output)
             behavior = BehavioralAssembly(
-                [next_word],
+                [behavioral_output],
                 coords=stimuli_coords,
                 dims=['presentation']
             )
@@ -112,7 +116,17 @@ class HuggingfaceSubject(ArtificialSubject):
                 coords={**stimuli_coords, **neuroid_coords},
                 dims=['presentation', 'neuroid'])
             output['neural'] = representations
+
         return output
+
+    def predict_next_word(self, base_output):
+
+        logits = base_output.logits
+        pred_id = torch.argmax(logits, axis=2).squeeze()
+        last_model_token_inference = pred_id[-1].tolist()
+        next_word = self.tokenizer.decode(last_model_token_inference)
+
+        return next_word
 
     def _get_layer(self, layer_name: str) -> torch.nn.Module:
         SUBMODULE_SEPARATOR = '.'
