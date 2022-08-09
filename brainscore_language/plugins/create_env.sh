@@ -17,5 +17,5 @@ if $HAS_REQUIREMENTS; then
 else
 	echo "Warning: no requirements.txt found. Installing only base dependencies."
 fi
-python -m pip install ".[test]"
+python -m pip install -e ".[test]"
 pytest $PLUGIN_TEST_PATH
