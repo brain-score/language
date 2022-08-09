@@ -26,7 +26,10 @@ test = [
 ]
 
 [build-system]
-requires = ["setuptools >= 61", "wheel"]
+requires = [
+    "setuptools @ git+https://github.com/pypa/setuptools@feature/pep660",
+    "wheel"
+]
 
 
 ################################################################
