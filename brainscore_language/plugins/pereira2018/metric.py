@@ -5,7 +5,7 @@ from sklearn.preprocessing import scale
 
 from brainio.assemblies import NeuroidAssembly, array_is_element
 from brainio.assemblies import walk_coords
-from brainscore_core.metrics import Score
+from brainscore_core.metrics import Score, Metric
 from brainscore_language import metrics
 from brainscore_language.utils.transformations import CrossValidation
 
@@ -124,7 +124,7 @@ class CrossRegressedCorrelation(Metric):
         if self.store_regression_weights:
             score.attrs['regression_coef'] = self.regression._regression.coef_
             score.attrs['regression_intercept'] = self.regression._regression.intercept_
-            # todo: will this work with crossval?
+            # todo: will this work with crossvalidation?
         return score
 
     def aggregate(self, scores):

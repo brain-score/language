@@ -38,7 +38,7 @@ class Pereira2018Linear(BenchmarkBase):
 
     def __call__(self, candidate: ArtificialSubject) -> Score:
         candidate.perform_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
-                                           recording_type=ArtificialSubject.RecordingType.spikerate_exact)
+                                           recording_type=ArtificialSubject.RecordingType.fMRI)
         stimuli = self.data  # todo
         predictions = candidate.digest_text(stimuli)['neural']
         raw_score = self.metric(predictions, self.data)
