@@ -34,7 +34,7 @@ class PluginTestRunner:
 		return completed_process
 
 	def teardown(self):
-		completed_process = subprocess.run(f"conda env remove -n {self.plugin_name}", shell=True)
+		completed_process = subprocess.run(f"output=`conda env remove -n {self.plugin_name} 2>&1` || echo $output", shell=True)
 		if completed_process.returncode != 0: # directly remove env dir if conda fails
 			try:
 				shutil.rmtree(plugin_env_path)
