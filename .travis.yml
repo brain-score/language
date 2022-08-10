@@ -14,4 +14,6 @@ install:
 
 script:
 - pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow"
+- echo -en 'travis_fold:start:test_plugins//r'
 - python brainscore_language/plugins/test_plugins.py
+- echo -en 'travis_fold:end:test_plugins//r'
