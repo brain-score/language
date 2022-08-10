@@ -50,3 +50,7 @@ filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::FutureWarning"
 ]
+
+markers = [
+    "memory_intense"
+]
