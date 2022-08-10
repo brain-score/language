@@ -45,3 +45,12 @@ ignore_missing_imports = true
 testpaths = [
     "tests"
 ]
+
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::FutureWarning"
+]
+
+markers = [
+    "memory_intense"
+]
