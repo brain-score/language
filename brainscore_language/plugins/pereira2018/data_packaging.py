@@ -4,16 +4,25 @@ import os
 import re
 import scipy.io
 import scipy.stats
+import sys
 from pathlib import Path
 from tqdm import tqdm
 
 from brainio.assemblies import NeuroidAssembly, walk_coords, merge_data_arrays
+from brainscore_language.utils.s3 import upload_data_assembly
 
 _logger = logging.getLogger(__name__)
 
 """
 The code in this file was run only once to initially upload the data, and is kept here for reference.
 """
+
+
+def upload_pereira2018():
+    assembly = load_pereira2018()
+    upload_data_assembly(assembly,
+                         assembly_identifier="Pereira2018.language_system",
+                         bucket_name="brainscore-language")
 
 
 # adapted from
@@ -152,3 +161,8 @@ def load_pereira2018():
 
 def _build_id(assembly, coords):
     return [".".join([f"{value}" for value in values]) for values in zip(*[assembly[coord].values for coord in coords])]
+
+
+if __name__ == '__main__':
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+    upload_pereira2018()

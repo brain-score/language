@@ -5,11 +5,24 @@ import numpy as np
 import os
 import scipy.io
 import scipy.stats
+import sys
 from pathlib import Path
 
 from brainio.assemblies import NeuroidAssembly
+from brainscore_language.utils.s3 import upload_data_assembly
 
 _logger = logging.getLogger(__name__)
+
+"""
+The code in this package was run only once to initially upload the data, and is kept here for reference.
+"""
+
+
+def upload_fedorenko2016():
+    assembly = load_fedorenko2016()
+    upload_data_assembly(assembly,
+                         assembly_identifier="Fedorenko2016.language",
+                         bucket_name="brainscore-language")
 
 
 # adapted from
@@ -94,3 +107,8 @@ def load_fedorenko2016():
                                        })
 
     return assembly
+
+
+if __name__ == '__main__':
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+    upload_fedorenko2016()
