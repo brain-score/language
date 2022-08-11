@@ -41,12 +41,25 @@ class TestHuggingfaceSubject:
         model = HuggingfaceSubject(model_id=model_identifier,
                                    region_layer_mapping={}
                                    )
-        texts = ['the quick brown fox', 'jumps over', 'the lazy']
-        logging.info(f'Running {model.identifier()} with text "{texts}"')
+        text = ['the quick brown fox', 'jumps over', 'the lazy']
+        logging.info(f'Running {model.identifier()} with text "{text}"')
         model.perform_behavioral_task(task=ArtificialSubject.Task.next_word)
-        next_word = model.digest_text(texts)['behavior'].values
+        next_word = model.digest_text(text)['behavior'].values
         print(model.identifier(), next_word)
         assert next_word == expected_next_word
+
+    def test_representation_multiple_texts(self):
+        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={
+            ArtificialSubject.RecordingTarget.language_system: 'transformer.h.0.ln_1'})
+        text = ['the quick brown fox', 'jumps over', 'the lazy dog']
+        logging.info(f'Running {model.identifier()} with text "{text}"')
+        model.perform_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
+                                       recording_type=ArtificialSubject.RecordingType.spikerate_exact)
+        representations = model.digest_text(text)['neural']
+        assert len(representations['presentation']) == 1
+        assert representations['context'].squeeze() == ' '.join(text)
+        assert len(representations['neuroid']) == 768
+        logging.info(f'representation shape is correct: {representations.shape}')
 
     @pytest.mark.memory_intense
     def test_representation_one_text_single_target(self):
