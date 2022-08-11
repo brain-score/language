@@ -55,7 +55,11 @@ class HuggingfaceSubject(ArtificialSubject):
         """
         :param text: the text to be used for inference e.g. "the quick brown fox"
         :return: assembly of either behavioral output or internal neural representations
+        TODO: every function call, context/state of model is reset
         """
+        if type(text) == list:
+            text = ' '.join(text)
+
         # tokenize
         tokenized_inputs = self.tokenizer(text, return_tensors="pt")
 

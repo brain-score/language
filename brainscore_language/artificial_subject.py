@@ -127,5 +127,7 @@ class ArtificialSubject:
             The `behavior` output has no other dimension, while the `neural` output has a `neuroid` dimension
             (including a `neuroid_id` coordinate to uniquely identify each recording unit), and sometimes a
             `time_bin` dimension (including `time_bin_start` and `time_bin_end`).
+
+            TODO: not stateful between function calls. reset every time you call it.
         """
         raise NotImplementedError()
