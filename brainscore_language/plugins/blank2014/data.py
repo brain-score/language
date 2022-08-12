@@ -17,4 +17,4 @@ BIBTEX = """@article{blank2014functional,
 }"""
 
 datasets['Blank2014.fROI'] = lambda: load_from_s3(
-    identifier="Blank2014.fROI", sha1="82c376712c26888fb769d02d3eca740e5f3a7679")
+    identifier="Blank2014.fROI", sha1="af1e868821b897cb1684e4c8dcd33977121ef552")

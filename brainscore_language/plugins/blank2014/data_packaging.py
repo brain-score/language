@@ -426,8 +426,14 @@ def _align_stimuli_recordings(stimulus_set, assembly):
     assembly_coords = {**{coord: (dims, values) for coord, dims, values in walk_coords(assembly)},
                        **{'stimulus_id': ('presentation', aligned_stimulus_set['stimulus_id'].values[alignment]),
                           'meta_sentence': ('presentation', assembly['stimulus_sentence'].values),
-                          'stimulus_sentence': ('presentation', aligned_stimulus_set['sentence'].values[alignment])}}
+                          'sentence_number_in_story': ('presentation',
+                                                       aligned_stimulus_set['sentence_num'].values[alignment]),
+                          'part_number_in_sentence': ('presentation',
+                                                      aligned_stimulus_set['sentence_part'].values[alignment]),
+                          'stimulus_sentence': ('presentation', aligned_stimulus_set['sentence'].values[alignment]),
+                          }}
     assembly = type(assembly)(assembly.values, coords=assembly_coords, dims=assembly.dims)
+    assembly['stimulus'] = assembly['stimulus_sentence']
 
     return aligned_stimulus_set, assembly
 
