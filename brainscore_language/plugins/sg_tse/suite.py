@@ -152,7 +152,7 @@ class Suite(object):
         return isinstance(other, Suite) and json.dumps(self.as_dict()) == json.dumps(other.as_dict())
 
 
-class Sentence(object):
+class Sentence:
     def __init__(self, tokens, unks=None, item_num=None,
                  condition_name='', regions=None):
         self.tokens = tokens

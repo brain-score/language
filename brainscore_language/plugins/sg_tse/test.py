@@ -2,7 +2,6 @@ from pytest import approx
 from brainscore_language import load_benchmark, load_metric
 from brainscore_language.models.huggingface import HuggingfaceSubject
 from brainscore_language.plugins.sg_tse import _load_suite
-#from brainscore_language.plugins.sg_tse.data import user_def_params
 
 class TestData:
     def test_firstline(self):

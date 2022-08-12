@@ -1,7 +1,6 @@
 import logging
 from brainscore_core.benchmarks import BenchmarkBase
 from brainscore_language import load_metric, benchmarks
-#from brainscore_language.plugins.sg_tse.data import user_def_params
 from brainscore_language.models.huggingface import HuggingfaceSubject
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.plugins.sg_tse import compute_surprisals, evaluate

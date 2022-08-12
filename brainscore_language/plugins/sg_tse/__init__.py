@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Union, Dict, TextIO, List
 
 from brainscore_language.models.huggingface import HuggingfaceSubject
+from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.plugins.sg_tse.agg_surprisals import aggregate_surprisals
 from brainscore_language.plugins.sg_tse.suite import Suite
 
@@ -26,7 +27,7 @@ def _load_suite(suite_ref: Union[str, Path, TextIO, Dict, Suite]) -> Suite:
     return Suite.from_dict(suite)
 
 
-def compute_surprisals(model, suite) -> Suite:
+def compute_surprisals(model: ArtificialSubject, suite) -> Suite:
     """
     Compute per-region surprisals for a language model on the given suite.
 
