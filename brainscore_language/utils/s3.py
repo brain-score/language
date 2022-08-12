@@ -9,7 +9,7 @@ from brainio.packaging import write_netcdf, upload_to_s3
 _logger = logging.getLogger(__name__)
 
 
-def upload_data_assembly(assembly, assembly_identifier, bucket_name):
+def upload_data_assembly(assembly, assembly_identifier, bucket_name="brainscore-language"):
     # adapted from
     # https://github.com/mschrimpf/brainio/blob/8a40a3558d0b86072b9e221808f19005c7cb8c17/brainio/packaging.py#L217
 

@@ -1,8 +1,7 @@
 import logging
 
-from brainio.assemblies import AssemblyLoader, BehavioralAssembly
-from brainio.fetch import fetch_file
 from brainscore_language import datasets
+from brainscore_language.utils.s3 import load_from_s3
 
 _logger = logging.getLogger(__name__)
 
@@ -15,15 +14,5 @@ BIBTEX = """@proceedings{futrell2018natural,
   year={2018}
 }"""
 
-
-def load_from_s3():
-    file_path = fetch_file(location_type="S3",
-                           location="https://brainscore-language.s3.amazonaws.com/assy_Futrell2018.nc",
-                           sha1="381ccc8038fbdb31235b5f3e1d350f359b5e287f")
-    loader = AssemblyLoader(cls=BehavioralAssembly, file_path=file_path)
-    assembly = loader.load()
-    assembly.attrs['identifier'] = "Futrell2018"
-    return assembly
-
-
-datasets['Futrell2018'] = load_from_s3
+datasets['Futrell2018'] = lambda: load_from_s3(
+    identifier="Futrell2018", sha1="381ccc8038fbdb31235b5f3e1d350f359b5e287f")
