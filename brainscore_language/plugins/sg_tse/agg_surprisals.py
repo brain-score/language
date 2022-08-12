@@ -367,9 +367,6 @@ def prepare_sentences_huggingface(model, tokens: List[List[str]],
     implementation uses Huggingface models' detokenization information and
     should be more robust than the heuristic method.
     """
-#    if not model.provides_token_offsets:
-#        raise NotImplementedError("Only implemented for Huggingface models "
-#                                  "which support detokenization.")
 
     region_edges = list(suite.iter_region_edges())
 
@@ -450,10 +447,9 @@ def aggregate_surprisals(model, surprisals: pd.DataFrame,
 
     # Run sentence prep procedure -- map tokens in each sentence onto regions
     # of corresponding test trial sentence
-#    if isinstance(model, HuggingFaceModel) and model.provides_token_offsets:
+
         mapper = prepare_sentences_huggingface
-#    else:
-#        mapper = prepare_sentences
+
 
     sentence_mappings: List[ItemSentenceMapping] = mapper(model, tokens, suite)
 
