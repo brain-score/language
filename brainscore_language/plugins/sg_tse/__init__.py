@@ -56,7 +56,7 @@ def compute_surprisals(model, suite) -> Suite:
     return result
 
 
-def evaluate(suite, return_df=True):
+def evaluate(suite: Suite, return_df=True):
     """
     Evaluate prediction results on the given suite. The suite must contain
     surprisal estimates for all regions.
