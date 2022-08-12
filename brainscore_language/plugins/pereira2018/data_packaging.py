@@ -21,7 +21,7 @@ The code in this file was run only once to initially upload the data, and is kep
 def upload_pereira2018():
     assembly = load_pereira2018()
     upload_data_assembly(assembly,
-                         assembly_identifier="Pereira2018.language_system",
+                         assembly_identifier="Pereira2018.language",
                          bucket_name="brainscore-language")
 
 
