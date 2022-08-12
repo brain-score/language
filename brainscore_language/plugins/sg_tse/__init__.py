@@ -31,7 +31,7 @@ def compute_surprisals(model, suite) -> Suite:
     Compute per-region surprisals for a language model on the given suite.
 
     Args:
-        model: An LM Zoo ``Model``.
+        model: A Brain-Score Language ``Model`` following the ArtificialSubject API.
         suite_file: A path or open file stream to a suite JSON file, or an
             already loaded suite dict
 
