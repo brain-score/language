@@ -3,7 +3,7 @@ import scipy.stats
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import scale
 
-from brainio.assemblies import NeuroidAssembly, array_is_element
+from brainio.assemblies import NeuroidAssembly, array_is_element, DataAssembly
 from brainio.assemblies import walk_coords
 from brainscore_core.metrics import Score, Metric
 from brainscore_language import metrics
@@ -122,10 +122,26 @@ class CrossRegressedCorrelation(Metric):
         prediction = self.regression.predict(source_test)
         score = self.correlation(prediction, target_test)
         if self.store_regression_weights:
-            score.attrs['regression_coef'] = self.regression._regression.coef_
-            score.attrs['regression_intercept'] = self.regression._regression.intercept_
-            # todo: will this work with crossvalidation?
+            self.attach_regression_weights(score=score, source_test=source_test, target_test=target_test)
         return score
+
+    def attach_regression_weights(self, score, source_test, target_test):
+        source_weight_dim = source_test.dims[-1]
+        target_weight_dim = target_test.dims[-1]
+        coef = DataAssembly(self.regression._regression.coef_,
+                            coords={
+                                **{f'source_{coord}': (f'source_{source_weight_dim}', values)
+                                   for coord, dims, values in walk_coords(source_test[source_weight_dim])},
+                                **{f'target_{coord}': (f'target_{target_weight_dim}', values)
+                                   for coord, dims, values in walk_coords(target_test[target_weight_dim])},
+                            },
+                            dims=[f'source_{source_weight_dim}', f'target_{target_weight_dim}'])
+        score.attrs['raw_regression_coef'] = coef
+        intercept = DataAssembly(self.regression._regression.intercept_,
+                                 coords={f'target_{coord}': (f'target_{target_weight_dim}', values)
+                                         for coord, dims, values in walk_coords(target_test[target_weight_dim])},
+                                 dims=[f'target_{target_weight_dim}'])
+        score.attrs['raw_regression_intercept'] = intercept
 
     def aggregate(self, scores):
         return scores.median(dim='neuroid')
@@ -162,6 +178,3 @@ def linear_pearsonr(*args, regression_kwargs=None, correlation_kwargs=None, **kw
 
 
 metrics['linear_pearsonr'] = linear_pearsonr
-
-# todo: Keep intermediate values (e.g. regression alpha values) in `score.attrs`
-#   store_regression_weights = True
