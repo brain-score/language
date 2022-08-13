@@ -18,4 +18,10 @@ BIBTEX = """@article{pereira2018toward,
 }"""
 
 datasets['Pereira2018.language'] = lambda: load_from_s3(
-    identifier="Pereira2018.language", sha1="8b5056b79129e27cdbc2b9ee032e7ba06396f0f0")
+    identifier="Pereira2018.language",
+    version_id="fq0gh.P7ThLu6DWUulho5W_F.YTEhDqJ",
+    sha1="f8434b4022f5b2c862f0ff2854d5b3f5f2a7fb96")
+datasets['Pereira2018.auditory'] = lambda: load_from_s3(
+    identifier="Pereira2018.auditory",
+    version_id=".lCMuSrGBlsEgLtZDOApLlr3h2szCmoC",
+    sha1="08e576bd3b8caf64850bb879abf07ae228ff1f5f")

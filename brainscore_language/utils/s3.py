@@ -23,15 +23,18 @@ def upload_data_assembly(assembly, assembly_identifier, bucket_name="brainscore-
 
     # write to disk and upload
     netcdf_kf_sha1 = write_netcdf(assembly, target_netcdf_path)
-    upload_to_s3(target_netcdf_path, bucket_name, s3_key)
-    _logger.debug(f"Uploaded assembly {assembly_identifier} to S3: {s3_key} (SHA1 hash {netcdf_kf_sha1})")
-    return netcdf_kf_sha1
+    response = upload_to_s3(target_netcdf_path, bucket_name, s3_key)
+    _logger.debug(f"Uploaded assembly {assembly_identifier} to S3 "
+                  f"with key={s3_key}, sha1={netcdf_kf_sha1}, version_id={response['VersionId']}: {response}")
+    response['sha1'] = netcdf_kf_sha1
+    return response
 
 
-def load_from_s3(identifier, sha1) -> DataAssembly:
+def load_from_s3(identifier, version_id, sha1) -> DataAssembly:
     filename = f"assy_{identifier.replace('.', '_')}.nc"
     file_path = fetch_file(location_type="S3",
                            location=f"https://brainscore-language.s3.amazonaws.com/{filename}",
+                           version_id=version_id,
                            sha1=sha1)
     loader = AssemblyLoader(cls=NeuroidAssembly, file_path=file_path)
     assembly = loader.load()

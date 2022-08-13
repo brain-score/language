@@ -17,4 +17,6 @@ BIBTEX = """@article{fedorenko2016neural,
   publisher={National Acad Sciences}
 }"""
 datasets['Fedorenko2016.language'] = lambda: load_from_s3(
-    identifier="Fedorenko2016.language", sha1="05ac632ee6cf4eaf0d71deb77afb688e7a965f9e")
+    identifier="Fedorenko2016.language",
+    version_id="qvB7YZfEjbXEE64bODNLlQlZKWGpgPhy",
+    sha1="2966b6d78e972a72068aa6907377483f427e8d9a")
