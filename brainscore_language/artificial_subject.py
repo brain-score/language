@@ -41,11 +41,11 @@ class ArtificialSubject:
         .. code-block:: python
         
            {'behavior': <xarray.BehavioralAssembly (presentation: 3)>
-                        array(['fox', 'over', 'dog']), # the actual next words
+                        array(['fox']), # the actual next words
                         Coordinates:
                           * presentation  (presentation) MultiIndex
-                          - context       (presentation) object 'the quick brown' 'fox jumps', 'over the lazy'
-                          - stimulus_id   (presentation) int64 0 1 2}
+                          - context       (presentation) object 'the quick brown fox jumps over the lazy'
+                          - stimulus_id   (presentation) int64 0}
         """
 
         reading_times = 'reading_times'
@@ -73,11 +73,11 @@ class ArtificialSubject:
         .. code-block:: python
         
            {'behavior': <xarray.BehavioralAssembly (presentation: 3)>
-                        array([329.15, 337.53, 341.13]), # reading times in milliseconds
+                        array([329.15]), # reading times in milliseconds
                         Coordinates:
                           * presentation  (presentation) MultiIndex
-                          - context       (presentation) object 'the quick brown' 'fox jumps', 'over the lazy'
-                          - stimulus_id   (presentation) int64 0 1 2}
+                          - context       (presentation) object 'the quick brown fox jumps over the lazy'
+                          - stimulus_id   (presentation) int64 0}
         """
 
     def perform_behavioral_task(self, task: Task):

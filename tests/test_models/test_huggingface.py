@@ -8,6 +8,23 @@ logging.basicConfig(level=logging.INFO)
 
 
 class TestHuggingfaceSubject:
+
+    def test_reading_time(self):
+        """
+        This is a simple test that takes in text = 'the quick brown fox', and tests reading time (estimated using
+        perplexity).
+        This test is a stand-in prototype to check if our model definitions are correct.
+        """
+        model = HuggingfaceSubject(model_id='distilgpt2',
+                                   region_layer_mapping={}
+                                   )
+        text = ['the quick brown fox', 'jumps over', 'the lazy']
+        logging.info(f'Running {model.identifier()} with text "{text}"')
+        model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
+        reading_times = model.digest_text(text)['behavior'].values
+        print(model.identifier(), reading_times)
+        assert reading_times == 5.7483068
+
     @pytest.mark.parametrize('model_identifier, expected_next_word', [
         pytest.param('bert-base-uncased', '.', marks=pytest.mark.memory_intense),
         pytest.param('gpt2-xl', ' jumps', marks=pytest.mark.memory_intense),

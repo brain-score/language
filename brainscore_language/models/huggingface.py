@@ -36,6 +36,7 @@ class HuggingfaceSubject(ArtificialSubject):
 
         self.task_function_mapping_dict = {
             ArtificialSubject.Task.next_word: self.predict_next_word,
+            ArtificialSubject.Task.reading_times: self.estimate_reading_times,
         }
 
     def identifier(self):
@@ -61,7 +62,7 @@ class HuggingfaceSubject(ArtificialSubject):
             text = ' '.join(text)
 
         # tokenize
-        tokenized_inputs = self.tokenizer(text, return_tensors="pt")
+        self.tokenized_inputs = self.tokenizer(text, return_tensors="pt")
 
         # prepare recording hooks
         hooks = []
@@ -74,7 +75,7 @@ class HuggingfaceSubject(ArtificialSubject):
 
         # run and remove hooks
         with torch.no_grad():
-            base_output = self.basemodel(**tokenized_inputs)
+            base_output = self.basemodel(**self.tokenized_inputs)
         for hook in hooks:
             hook.remove()
 
@@ -122,6 +123,14 @@ class HuggingfaceSubject(ArtificialSubject):
             output['neural'] = representations
 
         return output
+
+    def estimate_reading_times(self, base_output):
+        import torch.nn.functional as F
+        logits = base_output.logits
+        last_token_logits = logits[-1][-1]
+        last_token = self.tokenized_inputs['input_ids'][0][-1]
+        perplexity = F.cross_entropy(last_token_logits, last_token) # as per https://stackoverflow.com/a/59219379/1504411
+        return perplexity
 
     def predict_next_word(self, base_output):
 
