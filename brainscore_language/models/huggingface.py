@@ -125,6 +125,10 @@ class HuggingfaceSubject(ArtificialSubject):
         return output
 
     def estimate_reading_times(self, base_output):
+        """
+        :param base_output: the neural network's output
+        :return: perplexity (calculated as cross entropy) as a proxy for reading times
+        """
         import torch.nn.functional as F
         logits = base_output.logits
         last_token_logits = logits[-1][-1]
@@ -133,6 +137,10 @@ class HuggingfaceSubject(ArtificialSubject):
         return perplexity
 
     def predict_next_word(self, base_output):
+        """
+        :param base_output: the neural network's output
+        :return: predicted next word
+        """
 
         logits = base_output.logits
         pred_id = torch.argmax(logits, axis=2).squeeze()
