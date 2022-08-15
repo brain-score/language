@@ -17,16 +17,29 @@ from brainscore_language.utils.transformations import apply_aggregate
 logger = logging.getLogger(__name__)
 
 
-class Pereira2018Linear(BenchmarkBase):
+def Pereira2018Experiment243():
+    return _Pereira2018ExperimentLinear(experiment='243sentences')
+
+
+def Pereira2018Experiment384():
+    return _Pereira2018ExperimentLinear(experiment='384sentences')
+
+
+class _Pereira2018ExperimentLinear(BenchmarkBase):
     """
     Evaluate model ability to predict neural activity in the human language system in response to natural sentences,
     recorded by Pereira et al. 2018.
     Alignment of neural activity between model and human subjects is evaluated via cross-validated linear predictivity.
     This benchmark was first introduced in Schrimpf et al. 2021.
+
+    Each of these benchmarks evaluates one of the two experiments, the overall Pereira2018-linear score is the mean of
+    the two ceiling-normalized scores.
     """
 
-    def __init__(self):
-        self.data = load_dataset('Pereira2018.language_system')
+    def __init__(self, experiment):
+        self.data = load_dataset('Pereira2018.language')
+        self.data = self.data.sel(experiment=experiment)  # filter experiment
+        self.data = self.data.dropna('neuroid')  # not all subjects have done both experiments, drop those that haven't
         self.metric = load_metric('linear_pearsonr')
         ceiler = ExtrapolationCeiling()
         super(Pereira2018Linear, self).__init__(
@@ -304,4 +317,5 @@ class NoOverlapException(Exception):
     pass
 
 
-benchmarks['Pereira2018-linear'] = Pereira2018Linear
+benchmarks['Pereira2018.243-linear'] = Pereira2018Experiment243
+benchmarks['Pereira2018.384-linear'] = Pereira2018Experiment384
