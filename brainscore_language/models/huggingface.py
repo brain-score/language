@@ -119,6 +119,10 @@ class HuggingfaceSubject(ArtificialSubject):
 
         return output
 
+    def tokenize(self, sentences: List[str]) -> List[List[str]]:
+        return [self.tokenizer.tokenize(sentence, add_special_tokens=True)
+                for sentence in sentences]
+
     def predict_next_word(self, base_output):
 
         logits = base_output.logits

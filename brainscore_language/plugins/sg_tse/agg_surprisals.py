@@ -333,7 +333,6 @@ def compute_mapping_heuristic(tokens: List[str], regions: List[Region],
                             break
 
                 if content.strip() == '' and r_idx == len(regions) - 1:
-                    # TODO break
                     return region2tokens
 
             # if end of content (removing spaces), and before last region
@@ -488,6 +487,4 @@ def aggregate_surprisals(model, surprisals: pd.DataFrame,
             # update sentence counter
             sent_idx += 1
 
-    # update meta information with model name
-  #  ret.meta['model'] = spec(model)['name']
     return ret

@@ -27,7 +27,7 @@ def _load_suite(suite_ref: Union[str, Path, TextIO, Dict, Suite]) -> Suite:
     return Suite.from_dict(suite)
 
 
-def compute_surprisals(model: ArtificialSubject, suite) -> Suite:
+def compute_surprisals(model: HuggingfaceSubject, suite) -> Suite:
     """
     Compute per-region surprisals for a language model on the given suite.
 
@@ -49,7 +49,7 @@ def compute_surprisals(model: ArtificialSubject, suite) -> Suite:
     surprisals_df = get_surprisals(model, suite_sentences)
 
     # Track tokens
-    tokens = tokenize(model, suite_sentences)
+    tokens = HuggingfaceSubject.tokenize(model, suite_sentences)
 
     # Now aggregate over regions and get result df
     result = aggregate_surprisals(model, surprisals_df, tokens, suite)
@@ -87,10 +87,6 @@ def _get_predictions_inner(model: HuggingfaceSubject, sentence: str):
 
     return list(zip(sent_tokens, indexed_tokens,
                     (None,) + log_probs.unbind()))
-
-def tokenize(model: HuggingfaceSubject, sentences: List[str]) -> List[List[str]]:
-    return [model.tokenizer.tokenize(sentence, add_special_tokens=True)
-            for sentence in sentences]
 
 def get_surprisals(model: HuggingfaceSubject, sentences: List[str]) -> pd.DataFrame:
     df = []

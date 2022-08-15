@@ -33,7 +33,7 @@ def load_metric(identifier: str, *args, **kwargs) -> Metric:
     from brainscore_language.plugins.wikitext_next_word_prediction import metric
     from brainscore_language.plugins.futrell2018 import metric
     from brainscore_language.plugins.schrimpf2021 import metric
-    from brainscore_language.plugins.sg_tse import metric
+#    from brainscore_language.plugins.sg_tse import metric
 
     return metrics[identifier](*args, **kwargs)
 
