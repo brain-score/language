@@ -9,6 +9,7 @@ logging.basicConfig(level=logging.INFO)
 
 class TestHuggingfaceSubject:
 
+    @pytest.mark.memory_intense
     def test_reading_time(self):
         """
         This is a simple test that takes in text = 'the quick brown fox', and tests reading time (estimated using
