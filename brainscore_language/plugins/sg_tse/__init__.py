@@ -49,9 +49,8 @@ def compute_surprisals(model: HuggingfaceSubject, suite) -> Suite:
     surprisals_df = get_surprisals(model, suite_sentences)
 
     # Track tokens
-#    tokens = HuggingfaceSubject.tokenize(model, suite_sentences)
-    tokens = HuggingfaceSubject.digest_text(model, suite_sentences)
-    print(tokens)
+    tokens = HuggingfaceSubject.tokenize(model, suite_sentences)
+
     # Now aggregate over regions and get result df
     result = aggregate_surprisals(model, surprisals_df, tokens, suite)
 

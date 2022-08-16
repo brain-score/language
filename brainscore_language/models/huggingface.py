@@ -58,8 +58,6 @@ class HuggingfaceSubject(ArtificialSubject):
         """
         # tokenize
         tokenized_inputs = self.tokenizer(text, return_tensors="pt")
-        tokenized_inputs2 =[self.tokenizer(sentence, add_special_tokens=True)
-         for sentence in sentences]
 
         # prepare recording hooks
         hooks = []
@@ -119,7 +117,7 @@ class HuggingfaceSubject(ArtificialSubject):
                 dims=['presentation', 'neuroid'])
             output['neural'] = representations
 
-        return [output, tokenized_inputs2]
+        return output
 
     def tokenize(self, sentences: List[str]) -> List[List[str]]:
         return [self.tokenizer.tokenize(sentence, add_special_tokens=True)
