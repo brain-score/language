@@ -119,9 +119,9 @@ class HuggingfaceSubject(ArtificialSubject):
 
         return output
 
-    def tokenize(self, sentences: List[str]) -> List[List[str]]:
-        return [self.tokenizer.tokenize(sentence, add_special_tokens=True)
-                for sentence in sentences]
+#    def tokenize(self, sentences: List[str]) -> List[List[str]]:
+#        return [self.tokenizer.tokenize(sentence, add_special_tokens=True)
+#                for sentence in sentences]
 
     def _get_predictions_inner(self, sentence: str):
         sent_tokens = self.tokenizer.tokenize(sentence, add_special_tokens=True)
