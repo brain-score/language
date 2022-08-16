@@ -75,31 +75,16 @@ def evaluate(suite: Suite, return_df=True):
             .set_index(["suite", "prediction_id", "item_number"])
 
 
-def _get_predictions_inner(model: HuggingfaceSubject, sentence: str):
-    sent_tokens = model.tokenizer.tokenize(sentence, add_special_tokens=True)
-    indexed_tokens = model.tokenizer.convert_tokens_to_ids(sent_tokens)
-    # create 1 * T input token tensor
-    tokens_tensor = torch.tensor(indexed_tokens).unsqueeze(0)
-
-    with torch.no_grad():
-        log_probs = model.basemodel(tokens_tensor)[0] \
-            .log_softmax(dim=2).squeeze()
-
-    return list(zip(sent_tokens, indexed_tokens,
-                    (None,) + log_probs.unbind()))
-
 def get_surprisals(model: HuggingfaceSubject, sentences: List[str]) -> pd.DataFrame:
     df = []
     columns = ["sentence_id", "token_id", "token", "surprisal"]
     for i, sentence in enumerate(sentences):
-        predictions = _get_predictions_inner(model, sentence)
-
+        predictions = HuggingfaceSubject._get_predictions_inner(model, sentence)
         for j, (word, word_idx, preds) in enumerate(predictions):
             if preds is None:
                 surprisal = 0.0
             else:
                 surprisal = -preds[word_idx].item() / np.log(2)
-
             df.append((i + 1, j + 1, word, surprisal))
 
     return pd.DataFrame(df, columns=columns) \

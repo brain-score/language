@@ -117,11 +117,22 @@ class HuggingfaceSubject(ArtificialSubject):
                 dims=['presentation', 'neuroid'])
             output['neural'] = representations
 
-        return output
+        return [output, tokenized_inputs]
 
     def tokenize(self, sentences: List[str]) -> List[List[str]]:
         return [self.tokenizer.tokenize(sentence, add_special_tokens=True)
                 for sentence in sentences]
+
+    def _get_predictions_inner(self, sentence: str):
+        sent_tokens = self.tokenizer.tokenize(sentence, add_special_tokens=True)
+        indexed_tokens = self.tokenizer.convert_tokens_to_ids(sent_tokens)
+        # create 1 * T input token tensor
+        tokens_tensor = torch.tensor(indexed_tokens).unsqueeze(0)
+        with torch.no_grad():
+            log_probs = self.basemodel(tokens_tensor)[0] \
+                .log_softmax(dim=2).squeeze()
+        return list(zip(sent_tokens, indexed_tokens,
+                        (None,) + log_probs.unbind()))
 
     def predict_next_word(self, base_output):
 
