@@ -12,25 +12,28 @@ from .data import BIBTEX
 logger = logging.getLogger(__name__)
 
 
-class Pereira2018LinregPearsonr(BenchmarkBase):
+class Pereira2018ROI_LinregPearsonr(BenchmarkBase):
     """
-    Evaluate model ability to predict neural data (ROI/voxel, OBS: to-do, update) introduced in Pereira et al. 2018.
+    Evaluate model ability to predict fMRI data introduced in Pereira et al. 2018.
+    This benchmark evaluates the fMRI data on the region-of-interest (ROI) level: each neural unit (neuroid) is the arithmetic
+    mean of the voxels' responses within that ROI. 
+
     The mapping model is fitted on X folds of the data in k-fold cross-validation scheme, and the resulting predicted neuroid
     values are evaluated against the actual neuroid values via Pearson correlation.
 
     This benchmark builds off the neural benchmark introduced in Schrimpf et al. 2021, but:
     * contains re-modeled data (SPM12 as opposed to SPM5)
-    * XXXX (if ROIs, note!)
+    * averages across voxels within ROIs
     """
 
     def __init__(self):
-        self.data = load_dataset("Pereira2018")
+        self.data = load_dataset("Pereira2018ROI")
         self.metric = load_metric("pearsonr")
-        ceiler = SplitHalvesConsistency( # todo
+        ceiler = SplitHalvesConsistency( # todo! 
             num_splits=10, split_coordinate="subject_id", consistency_metric=self.metric
         )
-        super(Pereira2018Pearsonr, self).__init__(
-            identifier="Pereira2018-linregpearsonr",
+        super(Pereira2018ROI_LinregPearsonr, self).__init__(
+            identifier="Pereira2018ROI-linregpearsonr",
             version=1,
             parent="neural",
             ceiling_func=lambda: ceiler(self.data),
@@ -62,7 +65,7 @@ def ceiling_normalize(raw_score, ceiling):
     return score
 
 
-benchmarks["Pereira2018-pearsonr"] = Pereira2018Pearsonr
+benchmarks["Pereira2018ROI-linregpearsonr"] = Pereira2018ROI_LinregPearsonr
 
 
 class SplitHalvesConsistency:
