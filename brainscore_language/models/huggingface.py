@@ -117,7 +117,7 @@ class HuggingfaceSubject(ArtificialSubject):
                 dims=['presentation', 'neuroid'])
             output['neural'] = representations
 
-        return [output, tokenized_inputs]
+        return output
 
     def tokenize(self, sentences: List[str]) -> List[List[str]]:
         return [self.tokenizer.tokenize(sentence, add_special_tokens=True)
