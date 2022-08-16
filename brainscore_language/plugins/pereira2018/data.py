@@ -16,13 +16,25 @@ BIBTEX = """@article{Pereira2018TowardAU,
 
 
 def load_from_s3():
-    file_path = fetch_file(location_type="S3",
-                           location="https://brainscore-language.s3.amazonaws.com/assy_Futrell2018.nc", # todo update paths
-                           sha1="381ccc8038fbdb31235b5f3e1d350f359b5e287f")
+    file_path = fetch_file(
+        location_type="S3",
+        location="https://brainscore-language.s3.amazonaws.com/assy_Futrell2018.nc",  # todo update paths
+        sha1="381ccc8038fbdb31235b5f3e1d350f359b5e287f",
+    )
     loader = AssemblyLoader(cls=BehavioralAssembly, file_path=file_path)
     assembly = loader.load()
-    assembly.attrs['identifier'] = "Pereira2018ROI"
+    assembly.attrs["identifier"] = "Pereira2018ROI"
     return assembly
 
 
-datasets['Pereira2018ROI'] = load_from_s3
+def load_from_local():
+    from pathlib import Path
+
+    file_path = Path(__file__).parent / "Pereira2018_Lang_fROI.csv"
+    loader = AssemblyLoader(cls=BehavioralAssembly, file_path=file_path)
+    assembly = loader.load()
+    assembly.attrs["identifier"] = "Pereira2018ROI"
+    return assembly
+
+
+datasets["Pereira2018ROI"] = load_from_local

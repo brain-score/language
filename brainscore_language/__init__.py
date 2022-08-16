@@ -22,6 +22,7 @@ def load_dataset(identifier: str) -> Union[DataAssembly, Any]:
     # imports to load plugins until plugin system is implemented
     from brainscore_language.plugins.wikitext_next_word_prediction import data
     from brainscore_language.plugins.futrell2018 import data
+    from brainscore_language.plugins.pereira2018 import data
 
     return datasets[identifier]()
 
@@ -65,6 +66,6 @@ def score(model_identifier: str, benchmark_identifier: str) -> Score:
     model: ArtificialSubject = load_model(model_identifier)
     benchmark: Benchmark = load_benchmark(benchmark_identifier)
     score: Score = benchmark(model)
-    score.attrs['model_identifier'] = model_identifier
-    score.attrs['benchmark_identifier'] = benchmark_identifier
+    score.attrs["model_identifier"] = model_identifier
+    score.attrs["benchmark_identifier"] = benchmark_identifier
     return score
