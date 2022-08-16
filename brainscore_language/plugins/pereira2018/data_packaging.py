@@ -17,13 +17,13 @@ The code in this file was run only once to initially upload the data, and is kep
 """
 
 
-def upload_natural_stories():
-    # adapted from
-    # https://github.com/mschrimpf/neural-nlp/blob/cedac1f868c8081ce6754ef0c13895ce8bc32efc/neural_nlp/neural_data/naturalStories.py#L15
+def upload_Pereira2018ROI():
+    """
+    Load Pereira2018ROI benchmark csv file and package it into an xarray benchmark. 
+    """
     data_path = Path(__file__).parent / 'naturalstories_RTS'
-    data_file = data_path / 'processed_RTs.csv'
-    stories_file = data_path / 'all_stories.tok'
-    _logger.info(f'Data file: {data_file}. Stories file: {stories_file}.')
+    data_file = data_path / 'processed_RTs.csv' # contains both neural data and associated stimuli.
+    _logger.info(f'Data file: {data_file}.')
 
     # get data
     data = pd.read_csv(data_file)
@@ -110,8 +110,8 @@ def upload_natural_stories():
     # stimulus_ID = unique index of word across all stories
     # subjects = WorkerIDs
     # correct_meta = number of correct answers in comprehension questions
-    assembly = BehavioralAssembly(reading_times,
-                                  dims=('presentation', 'subject'),
+    assembly = NeuroidAssembly(reading_times,
+                                  dims=('presentation', 'neuroid', 'time'), #? added time
                                   coords={'word': ('presentation', voc_word),
                                           'word_core': ('presentation', word_core),
                                           'story_id': ('presentation', voc_item_ID),
@@ -126,7 +126,7 @@ def upload_natural_stories():
 
     # upload
     upload_data_assembly(assembly,
-                         assembly_identifier="Futrell2018",
+                         assembly_identifier="Pereira2018ROI",
                          bucket_name="brainscore-language")
 
 
