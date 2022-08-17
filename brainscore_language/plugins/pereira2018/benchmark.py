@@ -11,14 +11,14 @@ from .data import BIBTEX
 logger = logging.getLogger(__name__)
 
 
-def Pereira2018Experiment243():
+def Pereira2018_243sentences():
     return _Pereira2018ExperimentLinear(experiment='243sentences', ceiling_s3_kwargs=dict(
         version_id='yJ2mOYGaBM9wNy3A7lD29N62j7LW.qzJ',
         sha1='5e23de899883828f9c886aec304bc5aa0f58f66c'
     ))
 
 
-def Pereira2018Experiment384():
+def Pereira2018_384sentences():
     return _Pereira2018ExperimentLinear(experiment='384sentences', ceiling_s3_kwargs=dict(
         version_id='YJGsV8d1Vsvluz6JL6xuygOh_uyw3f8A',
         sha1='fc895adc52fd79cea3040961d65d8f736a9d3e29'
@@ -72,5 +72,5 @@ class _Pereira2018ExperimentLinear(BenchmarkBase):
         return score
 
 
-benchmarks['Pereira2018.243-linear'] = Pereira2018Experiment243
-benchmarks['Pereira2018.384-linear'] = Pereira2018Experiment384
+benchmarks['Pereira2018.243sentences-linear'] = Pereira2018_243sentences
+benchmarks['Pereira2018.384sentences-linear'] = Pereira2018_384sentences

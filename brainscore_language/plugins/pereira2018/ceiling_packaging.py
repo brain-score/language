@@ -296,5 +296,5 @@ if __name__ == '__main__':
         logging.getLogger(shush_logger).setLevel(logging.INFO)
     warnings.filterwarnings("ignore")  # suppress RuntimeWarning from extrapolation overflows
 
-    upload_ceiling(243)
-    upload_ceiling(384)
+    upload_ceiling('243sentences')
+    upload_ceiling('384sentences')

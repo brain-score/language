@@ -51,7 +51,7 @@ class TestBenchmark:
         (384, approx(0.01215216 / .36343748, abs=0.001)),
     ])
     def test_dummy_bad(self, experiment, expected_score):
-        benchmark = load_benchmark(f'Pereira2018.{experiment}-linear')
+        benchmark = load_benchmark(f'Pereira2018.{experiment}sentences-linear')
         neural_activity = RandomState(0).random(size=(experiment, 25))  # presentation x neuroid
         neural_activity = NeuroidAssembly(neural_activity,
                                           coords={'stimulus_seq': ('presentation', np.arange(experiment)),
@@ -68,7 +68,7 @@ class TestBenchmark:
         384,
     ])
     def test_exact(self, experiment):
-        benchmark = load_benchmark(f'Pereira2018.{experiment}-linear')
+        benchmark = load_benchmark(f'Pereira2018.{experiment}sentences-linear')
         exact_data = copy.deepcopy(benchmark.data).reset_index('presentation')
         del exact_data['stimulus_id'], exact_data['stimulus']
         exact_data = exact_data.set_index(presentation=list(exact_data['presentation'].coords))
@@ -81,6 +81,6 @@ class TestBenchmark:
         (384, .36343748),
     ])
     def test_ceiling(self, experiment, expected_ceiling):
-        benchmark = load_benchmark(f'Pereira2018.{experiment}-linear')
+        benchmark = load_benchmark(f'Pereira2018.{experiment}sentences-linear')
         ceiling = benchmark.ceiling
         assert ceiling == approx(expected_ceiling, abs=.0005)
