@@ -24,7 +24,7 @@ class Merity2016nextwordAccuracy(BenchmarkBase):
             identifier='Merity2016nextword-accuracy',
             version=1,
             parent='engineering',
-            ceiling_func=None,
+            ceiling=None,
             bibtex=BIBTEX)  # TODO: I think this should go into the data plugin somehow
         self.data = load_dataset('wikitext-2/test')
         self.metric = load_metric('accuracy')
