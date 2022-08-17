@@ -1,11 +1,11 @@
 import logging
 import math
+
 import numpy as np
 import xarray as xr
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit, KFold, StratifiedKFold
 from tqdm import tqdm
 
-from brainio.assemblies import walk_coords
 from brainio.transform import subset
 from brainscore_core.metrics import Score
 from . import fullname
@@ -102,12 +102,10 @@ class Split:
 
     @classmethod
     def aggregate(cls, values):
-        center = values.mean('split')
-        error = standard_error_of_the_mean(values, 'split')
-        return Score([center, error],
-                     coords={**{'aggregation': ['center', 'error']},
-                             **{coord: (dims, values) for coord, dims, values in walk_coords(center)}},
-                     dims=('aggregation',) + center.dims)
+        score = values.mean('split')
+        if not hasattr(score, Score.RAW_VALUES_KEY):  # if score doesn't already have raw set, use `values` as raw
+            score.attrs[Score.RAW_VALUES_KEY] = values
+        return score
 
 
 def extract_coord(assembly, coord, unique=False):
