@@ -18,10 +18,10 @@ BIBTEX = """@proceedings{merity2017pointer,
 }"""
 
 
-class Merity2016nextwordAccuracy(BenchmarkBase):
+class WikitextAccuracy(BenchmarkBase):
     def __init__(self):
-        super(Merity2016nextwordAccuracy, self).__init__(
-            identifier='Merity2016nextword-accuracy',
+        super(WikitextAccuracy, self).__init__(
+            identifier='Wikitext-accuracy',
             version=1,
             parent='engineering',
             ceiling_func=None,
@@ -65,4 +65,4 @@ class Merity2016nextwordAccuracy(BenchmarkBase):
         return contexts, targets
 
 
-benchmarks['Merity2016nextword-accuracy'] = Merity2016nextwordAccuracy
+benchmarks['Wikitext-accuracy'] = WikitextAccuracy
