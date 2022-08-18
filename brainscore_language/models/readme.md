@@ -12,7 +12,6 @@ New `task` and `recording_type` should be defined both in the `ArtificialSubject
 
 Lastly, the task is performed using
 
-        reading_times = model.digest_text(text)['behavior'].values
 to get outputs of the task, or using 
 
         representations = model.digest_text(text)['neural']
