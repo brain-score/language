@@ -14,7 +14,6 @@ Lastly, the task is performed using
 
 to get outputs of the task, or using 
 
-        representations = model.digest_text(text)['neural']
 to get the reprensetation behind the task. 
 
 For more examples of usage of these models, refer to the unit tests in `tests/test_models/test_huggingface.py`. 
