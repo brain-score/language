@@ -46,39 +46,45 @@ class TestHuggingfaceSubject:
     #     next_word = model.digest_text(text)['behavior'].values
     #     assert next_word == expected_next_word
     #
-    @pytest.mark.parametrize('model_identifier, expected_next_word', [
-        pytest.param('bert-base-uncased', ['.', '.', '.'], marks=pytest.mark.memory_intense),
-        pytest.param('gpt2-xl', [' jumps', ' the', ','], marks=pytest.mark.memory_intense),
-        ('distilgpt2', ['es', ' the', ','] ),
-    ])
-    def test_behavior_multiple_texts(self, model_identifier, expected_next_word):
+    # @pytest.mark.parametrize('model_identifier, expected_next_word', [
+    #     pytest.param('bert-base-uncased', ['.', '.', '.'], marks=pytest.mark.memory_intense),
+    #     pytest.param('gpt2-xl', [' jumps', ' the', ','], marks=pytest.mark.memory_intense),
+    #     ('distilgpt2', ['es', ' the', ','] ),
+    # ])
+    # def test_behavior_multiple_texts(self, model_identifier, expected_next_word):
+    #     """
+    #     This is a simple test that takes in text = ['the quick brown fox', 'jumps over', 'the lazy'], and tests the
+    #     next word for each sentence in the list.
+    #     This test is a stand-in prototype to check if our model definitions are correct.
+    #     """
+    #     model = HuggingfaceSubject(model_id=model_identifier,
+    #                                region_layer_mapping={}
+    #                                )
+    #     text = ['the quick brown fox', 'jumps over', 'the lazy']
+    #     logging.info(f'Running {model.identifier()} with text "{text}"')
+    #     model.perform_behavioral_task(task=ArtificialSubject.Task.next_word)
+    #     next_words = [word['behavior'].values for word in  model.digest_text(text)]
+    #     print(model.identifier(), next_words)
+    #     assert next_words == expected_next_word
+
+    def test_representation_multiple_texts(self):
         """
-        This is a simple test that takes in text = 'the quick brown fox', and tests the next word.
+        This is a simple test that takes in text = ['the quick brown fox', 'jumps over', 'the lazy'], and tests the
+        representation for next word prediction for each sentence in the list.
         This test is a stand-in prototype to check if our model definitions are correct.
         """
-        model = HuggingfaceSubject(model_id=model_identifier,
-                                   region_layer_mapping={}
-                                   )
-        text = ['the quick brown fox', 'jumps over', 'the lazy']
+
+        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={
+            ArtificialSubject.RecordingTarget.language_system: 'transformer.h.0.ln_1'})
+        text = ['the quick brown fox', 'jumps over', 'the lazy dog']
         logging.info(f'Running {model.identifier()} with text "{text}"')
-        model.perform_behavioral_task(task=ArtificialSubject.Task.next_word)
-        next_words = [word['behavior'].values for word in  model.digest_text(text)]
-        print(model.identifier(), next_words)
-        assert next_words == expected_next_word
-    #
-    # def test_representation_multiple_texts(self):
-    #     model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={
-    #         ArtificialSubject.RecordingTarget.language_system: 'transformer.h.0.ln_1'})
-    #     text = ['the quick brown fox', 'jumps over', 'the lazy dog']
-    #     logging.info(f'Running {model.identifier()} with text "{text}"')
-    #     model.perform_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
-    #                                    recording_type=ArtificialSubject.RecordingType.spikerate_exact)
-    #     representations = model.digest_text(text)['neural']
-    #     assert len(representations['presentation']) == 1
-    #     assert representations['context'].squeeze() == ' '.join(text)
-    #     assert len(representations['neuroid']) == 768
-    #     logging.info(f'representation shape is correct: {representations.shape}')
-    #
+        model.perform_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
+                                       recording_type=ArtificialSubject.RecordingType.spikerate_exact)
+        representations = [word['neural'] for word in  model.digest_text(text)]
+        assert [len(representation['presentation']) for representation in representations] == [1,1,1]
+        assert [representation['context'].squeeze() for representation in representations] == text
+        assert [len(representation['neuroid']) for representation in representations] == [768, 768, 768]
+
     # @pytest.mark.memory_intense
     # def test_representation_one_text_single_target(self):
     #     """
