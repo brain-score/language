@@ -1,6 +1,6 @@
 from typing import Dict, List, Union
 
-from brainscore_core import DataAssembly
+from brainio.assemblies import DataAssembly
 
 
 class ArtificialSubject:
@@ -124,6 +124,7 @@ class ArtificialSubject:
             The :class:`~brainio.assemblies.DataAssembly` always contains a `presentation` dimension, corresponding to
             the presentation of text stimuli (including a `context` coordinate for the text,
             and a `stimulus_id` coordinate that uniquely identifies each context).
+            Values along the `presentation` dimension are ordered in the same way as the input.
             The `behavior` output has no other dimension, while the `neural` output has a `neuroid` dimension
             (including a `neuroid_id` coordinate to uniquely identify each recording unit), and sometimes a
             `time_bin` dimension (including `time_bin_start` and `time_bin_end`).

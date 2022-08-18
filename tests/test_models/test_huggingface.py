@@ -1,4 +1,6 @@
 import logging
+
+import numpy as np
 import pytest
 
 from brainscore_language.artificial_subject import ArtificialSubject
@@ -8,7 +10,6 @@ logging.basicConfig(level=logging.INFO)
 
 
 class TestHuggingfaceSubject:
-
     @pytest.mark.memory_intense
     def test_reading_time(self):
         """
@@ -22,9 +23,8 @@ class TestHuggingfaceSubject:
         text = ['the quick brown fox', 'jumps over', 'the lazy']
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
-        reading_times = [times['behavior'].values for times in  model.digest_text(text)]
-        print(model.identifier(), reading_times)
-        assert reading_times == [7.147589, 6.482851, 4.872053]
+        reading_times = model.digest_text(text)['behavior']
+        np.testing.assert_allclose(reading_times, [7.147589, 6.482851, 4.872053], atol=0.0001)
 
     @pytest.mark.parametrize('model_identifier, expected_next_word', [
         pytest.param('bert-base-uncased', '.', marks=pytest.mark.memory_intense),
@@ -46,12 +46,12 @@ class TestHuggingfaceSubject:
         next_word = model.digest_text(text)['behavior'].values
         assert next_word == expected_next_word
 
-    @pytest.mark.parametrize('model_identifier, expected_next_word', [
+    @pytest.mark.parametrize('model_identifier, expected_next_words', [
         pytest.param('bert-base-uncased', ['.', '.', '.'], marks=pytest.mark.memory_intense),
         pytest.param('gpt2-xl', [' jumps', ' the', ','], marks=pytest.mark.memory_intense),
-        ('distilgpt2', ['es', ' the', ','] ),
+        ('distilgpt2', ['es', ' the', ',']),
     ])
-    def test_behavior_multiple_texts(self, model_identifier, expected_next_word):
+    def test_next_words_list_input(self, model_identifier, expected_next_words):
         """
         This is a simple test that takes in text = ['the quick brown fox', 'jumps over', 'the lazy'], and tests the
         next word for each sentence in the list.
@@ -63,11 +63,10 @@ class TestHuggingfaceSubject:
         text = ['the quick brown fox', 'jumps over', 'the lazy']
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.perform_behavioral_task(task=ArtificialSubject.Task.next_word)
-        next_words = [word['behavior'].values for word in  model.digest_text(text)]
-        print(model.identifier(), next_words)
-        assert next_words == expected_next_word
+        next_words = model.digest_text(text)['behavior']
+        np.testing.assert_array_equal(next_words, expected_next_words)
 
-    def test_representation_multiple_texts(self):
+    def test_representation_list_input(self):
         """
         This is a simple test that takes in text = ['the quick brown fox', 'jumps over', 'the lazy'], and tests the
         representation for next word prediction for each sentence in the list.
@@ -80,10 +79,10 @@ class TestHuggingfaceSubject:
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.perform_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
                                        recording_type=ArtificialSubject.RecordingType.spikerate_exact)
-        representations = [word['neural'] for word in  model.digest_text(text)]
-        assert [len(representation['presentation']) for representation in representations] == [1,1,1]
-        assert [representation['context'].squeeze() for representation in representations] == text
-        assert [len(representation['neuroid']) for representation in representations] == [768, 768, 768]
+        representations = model.digest_text(text)['neural']
+        assert len(representations['presentation']) == 3
+        np.testing.assert_array_equal(representations['context'], text)
+        assert len(representations['neuroid']) == 768
 
     @pytest.mark.memory_intense
     def test_representation_one_text_single_target(self):

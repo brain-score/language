@@ -1,13 +1,14 @@
 import functools
 from collections import OrderedDict
 from typing import Union, List, Tuple, Dict
-from numpy.core import defchararray
+
 import numpy as np
 import torch
-from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly
+from numpy.core import defchararray
 from torch.utils.hooks import RemovableHandle
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly, merge_data_arrays
 from brainscore_language.artificial_subject import ArtificialSubject
 
 
@@ -61,11 +62,11 @@ class HuggingfaceSubject(ArtificialSubject):
         if type(text) == str:
             text = [text]
 
-        output_list = []
+        output = {'behavior': [], 'neural': []}
 
-        for sentence in text:
+        for part_number, text_part in enumerate(text):
             # tokenize
-            self.tokenized_inputs = self.tokenizer(sentence, return_tensors="pt")
+            self.tokenized_inputs = self.tokenizer(text_part, return_tensors="pt")
 
             # prepare recording hooks
             hooks = []
@@ -73,7 +74,8 @@ class HuggingfaceSubject(ArtificialSubject):
             for (recording_target, recording_type) in self.neural_recordings:
                 layer_name = self.region_layer_mapping[recording_target]
                 layer = self._get_layer(layer_name)
-                hook = self._register_hook(layer, name=(recording_target, layer_name), target_dict=layer_representations)
+                hook = self._register_hook(layer, name=(recording_target, layer_name),
+                                           target_dict=layer_representations)
                 hooks.append(hook)
 
             # run and remove hooks
@@ -83,23 +85,19 @@ class HuggingfaceSubject(ArtificialSubject):
                 hook.remove()
 
             # format output
-            output = {'behavior': None, 'neural': None}
             stimuli_coords = {
-                'context': ('presentation', [sentence] if isinstance(sentence, str) else sentence),
-                # TODO: It will be hard to build a unique stimulus id (which is used for e.g. cross-validation in metrics),
-                #  especially when we don't know if other text with the same words will be presented later on.
-                #  Maybe we need a StimulusSet class with metadata instead of just text strings after all?
-                'stimulus_id': ('presentation', [0] if isinstance(sentence, str) else np.arange(len(sentence))),
+                'context': ('presentation', [text_part]),
+                'part_number': ('presentation', [part_number]),
             }
 
             if self.behavioral_task:
-                behavioral_output = self.output_to_behavior(base_output= base_output)
+                behavioral_output = self.output_to_behavior(base_output=base_output)
                 behavior = BehavioralAssembly(
                     [behavioral_output],
                     coords=stimuli_coords,
                     dims=['presentation']
                 )
-                output['behavior'] = behavior
+                output['behavior'].append(behavior)
             if self.neural_recordings:
                 representation_values = np.concatenate([
                     # use last token (-1) of values[batch, token, unit] to represent passage.
@@ -123,14 +121,11 @@ class HuggingfaceSubject(ArtificialSubject):
                     representation_values,
                     coords={**stimuli_coords, **neuroid_coords},
                     dims=['presentation', 'neuroid'])
-                output['neural'] = representations
+                output['neural'].append(representations)
 
-            output_list.append(output)
-
-        if len(output_list) == 1:
-            output_list = output_list[0]
-
-        return output_list
+        output['behavior'] = merge_data_arrays(output['behavior']).sortby('part_number') if output['behavior'] else None
+        output['neural'] = merge_data_arrays(output['neural']).sortby('part_number') if output['neural'] else None
+        return output
 
     def estimate_reading_times(self, base_output):
         """
@@ -141,7 +136,7 @@ class HuggingfaceSubject(ArtificialSubject):
         logits = base_output.logits
         last_token_logits = logits[-1][-1]
         last_token = self.tokenized_inputs['input_ids'][0][-1]
-        perplexity = F.cross_entropy(last_token_logits, last_token) # as per https://stackoverflow.com/a/59219379/1504411
+        perplexity = F.cross_entropy(last_token_logits, last_token)  # per https://stackoverflow.com/a/59219379/1504411
         return perplexity
 
     def predict_next_word(self, base_output):
