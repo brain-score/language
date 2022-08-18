@@ -65,8 +65,6 @@ class HuggingfaceSubject(ArtificialSubject):
         output_list = []
 
         for sentence in text:
-
-
             # tokenize
             self.tokenized_inputs = self.tokenizer(sentence, return_tensors="pt")
 
