@@ -20,14 +20,14 @@ class TestMetric:
         assembly = self._make_assembly()
         metric = load_metric('linear_pearsonr')
         score = metric(assembly1=assembly, assembly2=assembly)
-        assert score.sel(aggregation='center') == approx(1, abs=.00001)
+        assert score == approx(1, abs=.00001)
 
     def test_offset_source_target(self):
         source = self._make_assembly()
         target = source + 2  # offset all values
         metric = load_metric('linear_pearsonr')
         score = metric(assembly1=source, assembly2=target)
-        assert score.sel(aggregation='center') == approx(1, abs=.00001)
+        assert score == approx(1, abs=.00001)
 
     def test_mismatched_source_target(self):
         random_state = RandomState(1)
@@ -37,7 +37,7 @@ class TestMetric:
         target = self._make_assembly(target)
         metric = load_metric('linear_pearsonr')
         score = metric(assembly1=source, assembly2=target)
-        assert score.sel(aggregation='center') == approx(.02826294, abs=.00001)
+        assert score == approx(.02826294, abs=.00001)
 
     def test_weights_stored(self):
         assembly = self._make_assembly()
