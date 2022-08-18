@@ -7,11 +7,6 @@ First, the model is set-up as a `HuggingfaceSubject` instance.
 
 Next, the model is instructed what kind of behavioral or neural recording task needs to be done using 
 
-    model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times) 
-or 
-    
-    model.perform_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
-                                       recording_type=ArtificialSubject.RecordingType.spikerate_exact)
 
 New `task` and `recording_type` should be defined both in the `ArtificialSubject` class' `Task` class inside `artificial_subject.py`, and inside `self.task_function_mapping_dict` in `HuggingfaceSubject`'s `__init__` to be accessed during inference.  
 
