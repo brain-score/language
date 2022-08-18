@@ -49,7 +49,7 @@ def compute_surprisals(model: HuggingfaceSubject, suite) -> Suite:
     surprisals_df = get_surprisals(model, suite_sentences)
 
     # Track tokens
-    tokens = HuggingfaceSubject.tokenize(model, suite_sentences)
+    tokens = tokenize(model, suite_sentences)
 
     # Now aggregate over regions and get result df
     result = aggregate_surprisals(model, surprisals_df, tokens, suite)
@@ -74,12 +74,15 @@ def evaluate(suite: Suite, return_df=True):
     return pd.DataFrame(results_data, columns=["suite", "prediction_id", "item_number", "result"]) \
             .set_index(["suite", "prediction_id", "item_number"])
 
+def tokenize(HuggingfaceSubject, sentences: List[str]) -> List[List[str]]:
+    return [HuggingfaceSubject.tokenizer.tokenize(sentence, add_special_tokens=True)
+            for sentence in sentences]
 
 def get_surprisals(model: HuggingfaceSubject, sentences: List[str]) -> pd.DataFrame:
     df = []
     columns = ["sentence_id", "token_id", "token", "surprisal"]
     for i, sentence in enumerate(sentences):
-        predictions = HuggingfaceSubject._get_predictions_inner(model, sentence)
+        predictions = _get_predictions_inner(model, sentence)
         for j, (word, word_idx, preds) in enumerate(predictions):
             if preds is None:
                 surprisal = 0.0
@@ -90,4 +93,13 @@ def get_surprisals(model: HuggingfaceSubject, sentences: List[str]) -> pd.DataFr
     return pd.DataFrame(df, columns=columns) \
         .set_index(["sentence_id", "token_id"])
 
-
+def _get_predictions_inner(HuggingfaceSubject, sentence: str):
+    sent_tokens = HuggingfaceSubject.tokenizer.tokenize(sentence, add_special_tokens=True)
+    indexed_tokens = HuggingfaceSubject.tokenizer.convert_tokens_to_ids(sent_tokens)
+    # create 1 * T input token tensor
+    tokens_tensor = torch.tensor(indexed_tokens).unsqueeze(0)
+    with torch.no_grad():
+        log_probs = HuggingfaceSubject.basemodel(tokens_tensor)[0] \
+            .log_softmax(dim=2).squeeze()
+    return list(zip(sent_tokens, indexed_tokens,
+                    (None,) + log_probs.unbind()))

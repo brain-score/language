@@ -23,7 +23,6 @@ def load_dataset(identifier: str) -> Union[DataAssembly, Any]:
     from brainscore_language.plugins.wikitext_next_word_prediction import data
     from brainscore_language.plugins.futrell2018 import data
     from brainscore_language.plugins.schrimpf2021 import data
-    from brainscore_language.plugins.sg_tse import data
 
     return datasets[identifier]()
 
