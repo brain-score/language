@@ -1,5 +1,6 @@
 import logging
 
+from brainio.assemblies import NeuroidAssembly
 from brainscore_core.benchmarks import BenchmarkBase
 from brainscore_core.metrics import Score
 from brainscore_language import load_dataset, load_metric, benchmarks
@@ -13,15 +14,31 @@ logger = logging.getLogger(__name__)
 
 def Pereira2018_243sentences():
     return _Pereira2018ExperimentLinear(experiment='243sentences', ceiling_s3_kwargs=dict(
-        version_id='yJ2mOYGaBM9wNy3A7lD29N62j7LW.qzJ',
-        sha1='5e23de899883828f9c886aec304bc5aa0f58f66c'
+        version_id='CHl_9aFHIWVnPW_njePfy28yzggKuUPw',
+        sha1='5e23de899883828f9c886aec304bc5aa0f58f66c',
+        raw_kwargs=dict(
+            version_id='uZye03ENmn.vKB5mARUGhcIY_DjShtPD',
+            sha1='525a6ac8c14ad826c63fdd71faeefb8ba542d5ac',
+            raw_kwargs=dict(
+                version_id='XVTo58Po5YrNjTuDIWrmfHI0nbN2MVZa',
+                sha1='34ba453dc7e8a19aed18cc9bca160e97b4a80be5'
+            )
+        )
     ))
 
 
 def Pereira2018_384sentences():
     return _Pereira2018ExperimentLinear(experiment='384sentences', ceiling_s3_kwargs=dict(
-        version_id='YJGsV8d1Vsvluz6JL6xuygOh_uyw3f8A',
-        sha1='fc895adc52fd79cea3040961d65d8f736a9d3e29'
+        version_id='sjlnXr5wXUoGv6exoWu06C4kYI0KpZLk',
+        sha1='fc895adc52fd79cea3040961d65d8f736a9d3e29',
+        raw_kwargs=dict(
+            version_id='Hi74r9UKfpK0h0Bjf5DL.JgflGoaknrA',
+            sha1='ce2044a7713426870a44131a99bfc63d8843dae0',
+            raw_kwargs=dict(
+                version_id='m4dq_ouKWZkYtdyNPMSP0p6rqb7wcYpi.qzJ',
+                sha1='fe9fb24b34fd5602e18e34006ac5ccc7d4c825b8'
+            )
+        )
     ))
 
 
@@ -42,11 +59,11 @@ class _Pereira2018ExperimentLinear(BenchmarkBase):
     the two ceiling-normalized scores.
     """
 
-    def __init__(self, experiment, ceiling_s3_kwargs):
-        self.data = self.load_data(experiment)
+    def __init__(self, experiment: str, ceiling_s3_kwargs: dict):
+        self.data = self._load_data(experiment)
         self.metric = load_metric('linear_pearsonr')
         identifier = f'Pereira2018.{experiment}-linear'
-        ceiling = load_from_s3(identifier, cls=Score, assembly_prefix="ceiling_", **ceiling_s3_kwargs)
+        ceiling = self._load_ceiling(identifier=identifier, **ceiling_s3_kwargs)
         super(_Pereira2018ExperimentLinear, self).__init__(
             identifier=identifier,
             version=1,
@@ -54,12 +71,19 @@ class _Pereira2018ExperimentLinear(BenchmarkBase):
             ceiling=ceiling,
             bibtex=BIBTEX)
 
-    def load_data(self, experiment):
+    def _load_data(self, experiment: str) -> NeuroidAssembly:
         data = load_dataset('Pereira2018.language')
         data = data.sel(experiment=experiment)  # filter experiment
         data = data.dropna('neuroid')  # not all subjects have done both experiments, drop those that haven't
         data.attrs['identifier'] = f"{data.identifier}.{experiment}"
         return data
+
+    def _load_ceiling(self, identifier: str, version_id: str, sha1: str, assembly_prefix="ceiling_", raw_kwargs=None):
+        ceiling = load_from_s3(identifier, cls=Score, assembly_prefix=assembly_prefix, version_id=version_id, sha1=sha1)
+        if raw_kwargs:  # recursively load raw attributes
+            raw = self._load_ceiling(identifier=identifier, assembly_prefix=assembly_prefix + "raw_", **raw_kwargs)
+            ceiling.attrs['raw'] = raw
+        return ceiling
 
     def __call__(self, candidate: ArtificialSubject) -> Score:
         candidate.perform_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,

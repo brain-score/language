@@ -36,6 +36,13 @@ def upload_ceiling(experiment):
     upload_data_assembly(ceiling,
                          assembly_identifier=benchmark.identifier,
                          assembly_prefix='ceiling_')
+    # also upload raw (and raw.raw) attributes
+    upload_data_assembly(ceiling.raw,
+                         assembly_identifier=benchmark.identifier,
+                         assembly_prefix='ceiling_raw_')
+    upload_data_assembly(ceiling.raw.raw,
+                         assembly_identifier=benchmark.identifier,
+                         assembly_prefix='ceiling_raw_raw_')
 
 
 def v(x, v0, tau0):  # function for ceiling extrapolation
@@ -158,8 +165,6 @@ class ExtrapolationCeiling:
             except AxisError:  # no extrapolation successful (happens for 1 neuroid in Pereira)
                 _logger.warning(f"Failed to extrapolate neuroid ceiling {i}", exc_info=True)
                 continue
-
-            if i == 3: break  # fixme
 
         # merge and add meta
         self._logger.debug("Merging neuroid ceilings")

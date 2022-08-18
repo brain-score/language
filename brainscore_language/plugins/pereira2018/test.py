@@ -84,3 +84,13 @@ class TestBenchmark:
         benchmark = load_benchmark(f'Pereira2018.{experiment}sentences-linear')
         ceiling = benchmark.ceiling
         assert ceiling == approx(expected_ceiling, abs=.0005)
+
+    @pytest.mark.parametrize('experiment', [243, 384])
+    def test_ceiling_raw(self, experiment):
+        benchmark = load_benchmark(f'Pereira2018.{experiment}sentences-linear')
+        ceiling = benchmark.ceiling
+        assert hasattr(ceiling, 'raw')
+        assert set(ceiling.raw.dims) == {'neuroid'}
+        assert ceiling.raw.median() == ceiling
+        assert hasattr(ceiling.raw, 'raw')
+        assert set(ceiling.raw.raw.dims) == {'sub_subject', 'num_subjects', 'split', 'neuroid'}
