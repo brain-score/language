@@ -18,6 +18,7 @@ dependencies = [
     "brainio@git+https://github.com/brain-score/brainio.git@main",
     "datasets==2.*",  # necessary for wikitext -- remove once plugin system works
     "scipy",  # necessary for accuracy metric -- remove once plugin system works
+    "scikit-learn",  # necessary for neural predictivity -- remove once plugin system works
 ]
 
 [project.optional-dependencies]
