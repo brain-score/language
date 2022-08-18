@@ -35,7 +35,7 @@ def Pereira2018_384sentences():
             version_id='Hi74r9UKfpK0h0Bjf5DL.JgflGoaknrA',
             sha1='ce2044a7713426870a44131a99bfc63d8843dae0',
             raw_kwargs=dict(
-                version_id='m4dq_ouKWZkYtdyNPMSP0p6rqb7wcYpi.qzJ',
+                version_id='m4dq_ouKWZkYtdyNPMSP0p6rqb7wcYpi',
                 sha1='fe9fb24b34fd5602e18e34006ac5ccc7d4c825b8'
             )
         )
