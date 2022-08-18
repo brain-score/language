@@ -3,9 +3,6 @@
 
 First, the model is set-up as a `HuggingfaceSubject` instance. 
 
-    model = HuggingfaceSubject(model_id='distilgpt2',
-                                   region_layer_mapping={}
-                                   )
 
 
 Next, the model is instructed what kind of behavioral or neural recording task needs to be done using 
