@@ -26,45 +26,45 @@ class TestHuggingfaceSubject:
     #     print(model.identifier(), reading_times)
     #     assert reading_times == 5.7483068
 
-    @pytest.mark.parametrize('model_identifier, expected_next_word', [
-        pytest.param('bert-base-uncased', '.', marks=pytest.mark.memory_intense),
-        pytest.param('gpt2-xl', ' jumps', marks=pytest.mark.memory_intense),
-        ('distilgpt2', 'es'),
-    ])
-    def test_next_word(self, model_identifier, expected_next_word):
-        """
-        This is a simple test that takes in text = 'the quick brown fox', and tests the next word.
-        This test is a stand-in prototype to check if our model definitions are correct.
-        """
-
-        model = HuggingfaceSubject(model_id=model_identifier,
-                                   region_layer_mapping={}
-                                   )
-        text = 'the quick brown fox'
-        logging.info(f'Running {model.identifier()} with text "{text}"')
-        model.perform_behavioral_task(task=ArtificialSubject.Task.next_word)
-        next_word = model.digest_text(text)['behavior'].values
-        assert next_word == expected_next_word
-    #
     # @pytest.mark.parametrize('model_identifier, expected_next_word', [
     #     pytest.param('bert-base-uncased', '.', marks=pytest.mark.memory_intense),
-    #     pytest.param('gpt2-xl', ' dog', marks=pytest.mark.memory_intense),
-    #     ('distilgpt2', ' fox'),
+    #     pytest.param('gpt2-xl', ' jumps', marks=pytest.mark.memory_intense),
+    #     ('distilgpt2', 'es'),
     # ])
-    # def test_behavior_multiple_texts(self, model_identifier, expected_next_word):
+    # def test_next_word(self, model_identifier, expected_next_word):
     #     """
     #     This is a simple test that takes in text = 'the quick brown fox', and tests the next word.
     #     This test is a stand-in prototype to check if our model definitions are correct.
     #     """
+    #
     #     model = HuggingfaceSubject(model_id=model_identifier,
     #                                region_layer_mapping={}
     #                                )
-    #     text = ['the quick brown fox', 'jumps over', 'the lazy']
+    #     text = 'the quick brown fox'
     #     logging.info(f'Running {model.identifier()} with text "{text}"')
     #     model.perform_behavioral_task(task=ArtificialSubject.Task.next_word)
     #     next_word = model.digest_text(text)['behavior'].values
-    #     print(model.identifier(), next_word)
     #     assert next_word == expected_next_word
+    #
+    @pytest.mark.parametrize('model_identifier, expected_next_word', [
+        pytest.param('bert-base-uncased', ['.', '.', '.'], marks=pytest.mark.memory_intense),
+        pytest.param('gpt2-xl', [' jumps', ' the', ','], marks=pytest.mark.memory_intense),
+        ('distilgpt2', ['es', ' the', ','] ),
+    ])
+    def test_behavior_multiple_texts(self, model_identifier, expected_next_word):
+        """
+        This is a simple test that takes in text = 'the quick brown fox', and tests the next word.
+        This test is a stand-in prototype to check if our model definitions are correct.
+        """
+        model = HuggingfaceSubject(model_id=model_identifier,
+                                   region_layer_mapping={}
+                                   )
+        text = ['the quick brown fox', 'jumps over', 'the lazy']
+        logging.info(f'Running {model.identifier()} with text "{text}"')
+        model.perform_behavioral_task(task=ArtificialSubject.Task.next_word)
+        next_words = [word['behavior'].values for word in  model.digest_text(text)]
+        print(model.identifier(), next_words)
+        assert next_words == expected_next_word
     #
     # def test_representation_multiple_texts(self):
     #     model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={
