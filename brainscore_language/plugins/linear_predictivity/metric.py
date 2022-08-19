@@ -114,7 +114,7 @@ class CrossRegressedCorrelation(Metric):
         self.correlation = correlation
         self.store_regression_weights = store_regression_weights
 
-    def __call__(self, assembly1, assembly2) -> Score:
+    def __call__(self, assembly1: DataAssembly, assembly2: DataAssembly) -> Score:
         return self.cross_validation(assembly1, assembly2, apply=self.apply, aggregate=self.aggregate)
 
     def apply(self, source_train, target_train, source_test, target_test):
@@ -147,12 +147,12 @@ class CrossRegressedCorrelation(Metric):
         return scores.median(dim='neuroid')
 
 
-class ScaledCrossRegressedCorrelation:
+class ScaledCrossRegressedCorrelation(Metric):
     def __init__(self, *args, **kwargs):
         self.cross_regressed_correlation = CrossRegressedCorrelation(*args, **kwargs)
         self.aggregate = self.cross_regressed_correlation.aggregate
 
-    def __call__(self, source, target):
+    def __call__(self, source: DataAssembly, target: DataAssembly) -> Score:
         scaled_values = scale(target, copy=True)
         target = target.__class__(scaled_values, coords={
             coord: (dims, value) for coord, dims, value in walk_coords(target)}, dims=target.dims)
