@@ -133,10 +133,12 @@ class HuggingfaceSubject(ArtificialSubject):
         :return: perplexity (calculated as cross entropy) as a proxy for reading times
         """
         import torch.nn.functional as F
-        logits = base_output.logits
-        last_token_logits = logits[-1][-1]
-        last_token = self.tokenized_inputs['input_ids'][0][-1]
-        perplexity = F.cross_entropy(last_token_logits, last_token)  # per https://stackoverflow.com/a/59219379/1504411
+        tokens = self.tokenized_inputs['input_ids'].squeeze()
+        logits = base_output.logits.squeeze()
+        # assume that reading time is additive,
+        # i.e. reading time of multiple tokens is the sum of the perplexity of each individual token
+        cross_entropy = F.cross_entropy(logits, tokens, reduction='sum')
+        perplexity = torch.exp(cross_entropy)  # https://stackoverflow.com/a/59219379/1504411
         return perplexity
 
     def predict_next_word(self, base_output):
