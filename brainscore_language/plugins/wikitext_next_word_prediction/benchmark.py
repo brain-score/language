@@ -24,7 +24,7 @@ class WikitextAccuracy(BenchmarkBase):
             identifier='Wikitext-accuracy',
             version=1,
             parent='engineering',
-            ceiling_func=None,
+            ceiling=None,
             bibtex=BIBTEX)  # TODO: I think this should go into the data plugin somehow
         self.data = load_dataset('wikitext-2/test')
         self.metric = load_metric('accuracy')
@@ -32,7 +32,7 @@ class WikitextAccuracy(BenchmarkBase):
     def __call__(self, candidate: ArtificialSubject) -> Score:
         candidate.perform_behavioral_task(ArtificialSubject.Task.next_word)
         contexts, targets = self.build_contexts()
-        predictions = candidate.digest_text(contexts)['behavior'].values
+        predictions = candidate.digest_text(contexts)['behavior']
         score = self.metric(predictions, targets)
         return score
 
