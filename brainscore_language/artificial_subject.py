@@ -100,9 +100,6 @@ class ArtificialSubject:
     class RecordingType:
         """ method of recording """
 
-        spikerate_exact = "spikerate_exact"
-        """ the exact spike-rate activity of each neuron """
-
         fMRI = "fMRI"
         """ functional magnetic resonance imaging """
 
