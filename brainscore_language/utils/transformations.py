@@ -1,12 +1,11 @@
 import logging
 import math
+
 import numpy as np
 import xarray as xr
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit, KFold, StratifiedKFold
 from tqdm import tqdm
-from typing import List
 
-from brainio.assemblies import walk_coords
 from brainio.transform import subset
 from brainscore_core.metrics import Score
 from . import fullname
@@ -103,12 +102,10 @@ class Split:
 
     @classmethod
     def aggregate(cls, values):
-        center = values.mean('split')
-        error = standard_error_of_the_mean(values, 'split')
-        return Score([center, error],
-                     coords={**{'aggregation': ['center', 'error']},
-                             **{coord: (dims, values) for coord, dims, values in walk_coords(center)}},
-                     dims=('aggregation',) + center.dims)
+        score = values.mean('split')
+        if not hasattr(score, Score.RAW_VALUES_KEY):  # if score doesn't already have raw set, use `values` as raw
+            score.attrs[Score.RAW_VALUES_KEY] = values
+        return score
 
 
 def extract_coord(assembly, coord, unique=False):
@@ -225,17 +222,19 @@ class CrossValidation(Transformation):
         return self._split.aggregate(score)
 
 
-def apply_aggregate(aggregate_fnc, values: List[Score]):
+def apply_aggregate(aggregate_fnc, values: Score) -> Score:
     """
     Applies the aggregate while keeping the raw values in the attrs.
     If raw values are already present, keeps them, else they are added.
     """
     score = aggregate_fnc(values)
+    # make sure we maintain all the raw attributes in the score object
+    for attr_key in values[0].attrs:
+        if attr_key not in score.attrs:
+            score.attrs[attr_key] = values.attrs[attr_key]
+    # if there is not already a raw attribute on the aggregated score, keep the input to this function.
     if Score.RAW_VALUES_KEY not in score.attrs:
-        # check if the raw values are already in the values.
-        # if yes, they didn't get copied to the aggregate score and we use those as the "rawest" values.
-        raw = values if Score.RAW_VALUES_KEY not in values.attrs else values.attrs[Score.RAW_VALUES_KEY]
-        score.attrs[Score.RAW_VALUES_KEY] = raw
+        score.attrs[Score.RAW_VALUES_KEY] = values
     return score
 
 

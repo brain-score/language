@@ -1,7 +1,5 @@
 import logging
-import unittest
 import pytest
-
 
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.models.huggingface import HuggingfaceSubject
@@ -9,57 +7,26 @@ from brainscore_language.models.huggingface import HuggingfaceSubject
 logging.basicConfig(level=logging.INFO)
 
 
-class TestHuggingfaceSubject(unittest.TestCase):
-
-
-    @pytest.mark.memory_intense
-    def test_next_word_mask_bert_base_uncased(self):
+class TestHuggingfaceSubject:
+    @pytest.mark.parametrize('model_identifier, expected_next_word', [
+        pytest.param('bert-base-uncased', '.', marks=pytest.mark.memory_intense),
+        pytest.param('gpt2-xl', ' jumps', marks=pytest.mark.memory_intense),
+        ('distilgpt2', 'es'),
+    ])
+    def test_next_word(self, model_identifier, expected_next_word):
         """
-        This is a simple test that takes in text = 'the quick brown fox', and asserts
-        that the next word predicted is '.'
-        This test is a stand-in prototype to check if our model definitions are correct.
-        """
-        model = HuggingfaceSubject(model_id='bert-base-uncased',
-                                   region_layer_mapping={}
-                                    )
-
-        logging.info(' '.join(['Running', model.identifier(), 'for next word prediction test']) )
-        text = 'the quick brown fox jumps over the lazy [MASK]'
-        model.perform_behavioral_task(
-                           task=ArtificialSubject.Task.next_word,
-                           )
-        next_word = model.digest_text(text)['behavior'].values
-        assert next_word == '.'
-
-    @pytest.mark.memory_intense
-    def test_next_word_gpt2_xl(self):
-        """
-        This is a simple test that takes in text = 'the quick brown fox', and asserts
-        that the next word predicted is ' jumps'.
+        This is a simple test that takes in text = 'the quick brown fox', and tests the next word.
         This test is a stand-in prototype to check if our model definitions are correct.
         """
 
-        model = HuggingfaceSubject(model_id='gpt2-xl',
+        model = HuggingfaceSubject(model_id=model_identifier,
                                    region_layer_mapping={}
-                                    )
+                                   )
         text = 'the quick brown fox'
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.perform_behavioral_task(task=ArtificialSubject.Task.next_word)
         next_word = model.digest_text(text)['behavior'].values
-        assert next_word == ' jumps'
-
-
-    def test_next_word_distilgpt2(self):
-        """
-        This is a simple test that takes in text = 'the quick brown fox',
-        and asserts that the next word predicted is 'es'.
-        """
-        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
-        text = 'the quick brown fox'
-        logging.info(f'Running {model.identifier()} with text "{text}"')
-        model.perform_behavioral_task(task=ArtificialSubject.Task.next_word)
-        next_word = model.digest_text(text)['behavior'].values
-        assert next_word == 'es'
+        assert next_word == expected_next_word
 
     @pytest.mark.memory_intense
     def test_representation_one_text_single_target(self):
@@ -73,7 +40,7 @@ class TestHuggingfaceSubject(unittest.TestCase):
         text = 'the quick brown fox'
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.perform_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
-                                       recording_type=ArtificialSubject.RecordingType.spikerate_exact)
+                                       recording_type=ArtificialSubject.RecordingType.fMRI)
         representations = model.digest_text(text)['neural']
         assert len(representations['presentation']) == 1
         assert representations['context'].squeeze() == text
@@ -87,10 +54,12 @@ class TestHuggingfaceSubject(unittest.TestCase):
             ArtificialSubject.RecordingTarget.language_system_right_hemisphere: 'transformer.h.1.ln_1'})
         text = 'the quick brown fox'
         logging.info(f'Running {model.identifier()} with text "{text}"')
-        model.perform_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system_left_hemisphere,
-                                       recording_type=ArtificialSubject.RecordingType.spikerate_exact)
-        model.perform_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system_right_hemisphere,
-                                       recording_type=ArtificialSubject.RecordingType.spikerate_exact)
+        model.perform_neural_recording(
+            recording_target=ArtificialSubject.RecordingTarget.language_system_left_hemisphere,
+            recording_type=ArtificialSubject.RecordingType.fMRI)
+        model.perform_neural_recording(
+            recording_target=ArtificialSubject.RecordingTarget.language_system_right_hemisphere,
+            recording_type=ArtificialSubject.RecordingType.fMRI)
         representations = model.digest_text(text)['neural']
         assert len(representations['presentation']) == 1
         assert representations['context'].squeeze() == text

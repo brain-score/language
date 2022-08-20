@@ -4,16 +4,24 @@ import os
 import re
 import scipy.io
 import scipy.stats
+import sys
 from pathlib import Path
 from tqdm import tqdm
 
 from brainio.assemblies import NeuroidAssembly, walk_coords, merge_data_arrays
+from brainscore_language.utils.s3 import upload_data_assembly
 
 _logger = logging.getLogger(__name__)
 
 """
 The code in this file was run only once to initially upload the data, and is kept here for reference.
 """
+
+
+def upload_pereira2018(atlas):
+    assembly = load_pereira2018(atlas=atlas)
+    upload_data_assembly(assembly,
+                         assembly_identifier=f"Pereira2018.{atlas}")
 
 
 # adapted from
@@ -36,9 +44,12 @@ def load_Pereira2018_reference():
             # assembly
             assembly = data['examples']
             meta = data['meta']
+            sentences = [sentence.item() for sentence in data['keySentences'][:, 0]]
             assembly = NeuroidAssembly(assembly, coords={
                 'experiment': ('presentation', [os.path.splitext(experiment_filename)[0]] * assembly.shape[0]),
                 'stimulus_num': ('presentation', list(range(assembly.shape[0]))),
+                'sentence': ('presentation', sentences),
+                'stimulus': ('presentation', sentences),
                 'passage_index': ('presentation', data['labelsPassageForEachSentence'][:, 0]),
                 'passage_label': ('presentation', [data['keyPassages'][index - 1, 0][0]
                                                    for index in data['labelsPassageForEachSentence'][:, 0]]),
@@ -59,8 +70,6 @@ def load_Pereira2018_reference():
 
     _logger.debug(f"Merging {len(assemblies)} assemblies")
     assembly = merge_data_arrays(assemblies)
-
-    _logger.debug("Creating StimulusSet")
     return assembly
 
 
@@ -154,3 +163,9 @@ def load_pereira2018(atlas):
 
 def _build_id(assembly, coords):
     return [".".join([f"{value}" for value in values]) for values in zip(*[assembly[coord].values for coord in coords])]
+
+
+if __name__ == '__main__':
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+    upload_pereira2018(atlas='language')
+    upload_pereira2018(atlas='auditory')

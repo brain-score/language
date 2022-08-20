@@ -1,5 +1,6 @@
 from collections import namedtuple, defaultdict
 
+import logging
 import numpy as np
 import operator
 import pandas as pd
@@ -7,6 +8,7 @@ import scipy.io
 import scipy.io
 import scipy.stats
 import scipy.stats
+import sys
 import warnings
 from nltk_contrib.textgrid import TextGrid
 from pathlib import Path
@@ -14,6 +16,20 @@ from tqdm import tqdm
 
 from brainio.assemblies import walk_coords, merge_data_arrays, array_is_element, DataAssembly
 from brainio.stimuli import StimulusSet
+from brainscore_language.utils.s3 import upload_data_assembly
+
+_logger = logging.getLogger(__name__)
+
+"""
+The code in this package was run only once to initially upload the data, and is kept here for reference.
+"""
+
+
+def upload_blank2014():
+    assembly = load_blank2014()
+    upload_data_assembly(assembly,
+                         assembly_identifier="Blank2014.fROI",
+                         bucket_name="brainscore-language")
 
 
 # This file requires nltk_contrib to be installed to run. nltk_contrib is not part of requirements.txt because this
@@ -410,8 +426,14 @@ def _align_stimuli_recordings(stimulus_set, assembly):
     assembly_coords = {**{coord: (dims, values) for coord, dims, values in walk_coords(assembly)},
                        **{'stimulus_id': ('presentation', aligned_stimulus_set['stimulus_id'].values[alignment]),
                           'meta_sentence': ('presentation', assembly['stimulus_sentence'].values),
-                          'stimulus_sentence': ('presentation', aligned_stimulus_set['sentence'].values[alignment])}}
+                          'sentence_number_in_story': ('presentation',
+                                                       aligned_stimulus_set['sentence_num'].values[alignment]),
+                          'part_number_in_sentence': ('presentation',
+                                                      aligned_stimulus_set['sentence_part'].values[alignment]),
+                          'stimulus_sentence': ('presentation', aligned_stimulus_set['sentence'].values[alignment]),
+                          }}
     assembly = type(assembly)(assembly.values, coords=assembly_coords, dims=assembly.dims)
+    assembly['stimulus'] = assembly['stimulus_sentence']
 
     return aligned_stimulus_set, assembly
 
@@ -479,3 +501,8 @@ def average_subregions(assembly):
     averaged_assembly['neuroid_id'] = 'neuroid', [".".join([str(value) for value in values]) for values in zip(*[
         averaged_assembly[coord].values for coord in ['subject_id', 'fROI_area']])]
     return averaged_assembly
+
+
+if __name__ == '__main__':
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+    upload_blank2014()

@@ -1,6 +1,6 @@
 from typing import Dict, List, Union
 
-from brainscore_core import DataAssembly
+from brainio.assemblies import DataAssembly
 
 
 class ArtificialSubject:
@@ -99,7 +99,9 @@ class ArtificialSubject:
 
     class RecordingType:
         """ method of recording """
-        spikerate_exact = "spikerate_exact"  # the exact spike-rate activity of each neuron
+
+        fMRI = "fMRI"
+        """ functional magnetic resonance imaging """
 
     def perform_neural_recording(self, recording_target: RecordingTarget, recording_type: RecordingType):
         """

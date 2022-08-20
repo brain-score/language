@@ -3,9 +3,9 @@ import scipy.stats
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import scale
 
-from brainio.assemblies import NeuroidAssembly, array_is_element
+from brainio.assemblies import NeuroidAssembly, array_is_element, DataAssembly
 from brainio.assemblies import walk_coords
-from brainscore_core.metrics import Score
+from brainscore_core.metrics import Score, Metric
 from brainscore_language import metrics
 from brainscore_language.utils.transformations import CrossValidation
 
@@ -104,34 +104,55 @@ class XarrayCorrelation:
         return result
 
 
-class CrossRegressedCorrelation:
-    def __init__(self, regression, correlation, crossvalidation_kwargs=None):
+class CrossRegressedCorrelation(Metric):
+    def __init__(self, regression, correlation, crossvalidation_kwargs=None, store_regression_weights=False):
         crossvalidation_defaults = dict(train_size=.9, test_size=None)
         crossvalidation_kwargs = {**crossvalidation_defaults, **(crossvalidation_kwargs or {})}
 
         self.cross_validation = CrossValidation(**crossvalidation_kwargs)
         self.regression = regression
         self.correlation = correlation
+        self.store_regression_weights = store_regression_weights
 
-    def __call__(self, source, target):
-        return self.cross_validation(source, target, apply=self.apply, aggregate=self.aggregate)
+    def __call__(self, assembly1: DataAssembly, assembly2: DataAssembly) -> Score:
+        return self.cross_validation(assembly1, assembly2, apply=self.apply, aggregate=self.aggregate)
 
     def apply(self, source_train, target_train, source_test, target_test):
         self.regression.fit(source_train, target_train)
         prediction = self.regression.predict(source_test)
         score = self.correlation(prediction, target_test)
+        if self.store_regression_weights:
+            self.attach_regression_weights(score=score, source_test=source_test, target_test=target_test)
         return score
+
+    def attach_regression_weights(self, score, source_test, target_test):
+        source_weight_dim = source_test.dims[-1]
+        target_weight_dim = target_test.dims[-1]
+        coef = DataAssembly(self.regression._regression.coef_,
+                            coords={
+                                **{f'source_{coord}': (f'source_{source_weight_dim}', values)
+                                   for coord, dims, values in walk_coords(source_test[source_weight_dim])},
+                                **{f'target_{coord}': (f'target_{target_weight_dim}', values)
+                                   for coord, dims, values in walk_coords(target_test[target_weight_dim])},
+                            },
+                            dims=[f'source_{source_weight_dim}', f'target_{target_weight_dim}'])
+        score.attrs['raw_regression_coef'] = coef
+        intercept = DataAssembly(self.regression._regression.intercept_,
+                                 coords={f'target_{coord}': (f'target_{target_weight_dim}', values)
+                                         for coord, dims, values in walk_coords(target_test[target_weight_dim])},
+                                 dims=[f'target_{target_weight_dim}'])
+        score.attrs['raw_regression_intercept'] = intercept
 
     def aggregate(self, scores):
         return scores.median(dim='neuroid')
 
 
-class ScaledCrossRegressedCorrelation:
+class ScaledCrossRegressedCorrelation(Metric):
     def __init__(self, *args, **kwargs):
         self.cross_regressed_correlation = CrossRegressedCorrelation(*args, **kwargs)
         self.aggregate = self.cross_regressed_correlation.aggregate
 
-    def __call__(self, source, target):
+    def __call__(self, source: DataAssembly, target: DataAssembly) -> Score:
         scaled_values = scale(target, copy=True)
         target = target.__class__(scaled_values, coords={
             coord: (dims, value) for coord, dims, value in walk_coords(target)}, dims=target.dims)
@@ -150,10 +171,10 @@ def pearsonr_correlation(xarray_kwargs=None):
     return XarrayCorrelation(scipy.stats.pearsonr, **xarray_kwargs)
 
 
-def linear_predictivity(*args, regression_kwargs=None, correlation_kwargs=None, **kwargs):
+def linear_pearsonr(*args, regression_kwargs=None, correlation_kwargs=None, **kwargs):
     regression = linear_regression(regression_kwargs or {})
     correlation = pearsonr_correlation(correlation_kwargs or {})
     return CrossRegressedCorrelation(*args, regression=regression, correlation=correlation, **kwargs)
 
 
-metrics['linear_predictivity'] = linear_predictivity
+metrics['linear_pearsonr'] = linear_pearsonr
