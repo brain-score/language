@@ -122,7 +122,7 @@ class TestNeural:
         text = 'the quick brown fox'
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.perform_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
-                                       recording_type=ArtificialSubject.RecordingType.spikerate_exact)
+                                       recording_type=ArtificialSubject.RecordingType.fMRI)
         representations = model.digest_text(text)['neural']
         assert len(representations['presentation']) == 1
         assert representations['context'].squeeze() == text
@@ -138,10 +138,10 @@ class TestNeural:
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.perform_neural_recording(
             recording_target=ArtificialSubject.RecordingTarget.language_system_left_hemisphere,
-            recording_type=ArtificialSubject.RecordingType.spikerate_exact)
+            recording_type=ArtificialSubject.RecordingType.fMRI)
         model.perform_neural_recording(
             recording_target=ArtificialSubject.RecordingTarget.language_system_right_hemisphere,
-            recording_type=ArtificialSubject.RecordingType.spikerate_exact)
+            recording_type=ArtificialSubject.RecordingType.fMRI)
         representations = model.digest_text(text)['neural']
         assert len(representations['presentation']) == 1
         assert representations['context'].squeeze() == text

@@ -1,4 +1,5 @@
 import logging
+
 import numpy as np
 from numpy.random import RandomState
 
@@ -8,6 +9,7 @@ from brainscore_core.metrics import Score, Metric
 from brainscore_language import load_dataset, load_metric, benchmarks
 from brainscore_language.artificial_subject import ArtificialSubject
 from .data import BIBTEX
+from ...utils.ceiling import ceiling_normalize
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +20,7 @@ class Futrell2018Pearsonr(BenchmarkBase):
     Alignment of reading times between model and human subjects is evaluated via Pearson correlation.
 
     This benchmark builds off the behavioral benchmark introduced in Schrimpf et al. 2021, but:
+
     * does not allow for any fitting; rather model candidates have to directly output reading times, and
     * estimates the ceiling with Spearman-Brown corrected split-halves consistency.
     """
@@ -26,11 +29,12 @@ class Futrell2018Pearsonr(BenchmarkBase):
         self.data = load_dataset('Futrell2018')
         self.metric = load_metric('pearsonr')
         ceiler = SplitHalvesConsistency(num_splits=10, split_coordinate='subject_id', consistency_metric=self.metric)
+        ceiling = ceiler(self.data)
         super(Futrell2018Pearsonr, self).__init__(
             identifier='Futrell2018-pearsonr',
             version=1,
             parent='behavior',
-            ceiling_func=lambda: ceiler(self.data),
+            ceiling=ceiling,
             bibtex=BIBTEX)
 
     def __call__(self, candidate: ArtificialSubject) -> Score:
@@ -41,21 +45,6 @@ class Futrell2018Pearsonr(BenchmarkBase):
         raw_score = self.metric(predictions, targets)
         score = ceiling_normalize(raw_score, self.ceiling)
         return score
-
-
-def ceiling_normalize(raw_score, ceiling):
-    # normalize by ceiling, but not above 1
-    score = raw_score / ceiling
-    score.attrs['raw'] = raw_score
-    score.attrs['ceiling'] = ceiling
-    if score > 1:
-        overshoot_value = score.item()
-        # ideally we would just update the value, but I could not figure out how to update a scalar DataArray
-        attrs = score.attrs
-        score = type(score)(1, coords=score.coords, dims=score.dims)
-        score.attrs = attrs
-        score.attrs['overshoot'] = overshoot_value
-    return score
 
 
 benchmarks['Futrell2018-pearsonr'] = Futrell2018Pearsonr
