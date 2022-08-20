@@ -12,8 +12,9 @@ class PearsonCorrelation(Metric):
     """
 
     def __call__(self, assembly1: DataAssembly, assembly2: DataAssembly) -> Score:
-        score, pvalue = pearsonr(assembly1, assembly2)
-        score = Score(np.abs(score))
+        rvalue, pvalue = pearsonr(assembly1, assembly2)
+        score = Score(np.abs(rvalue))
+        score.attrs['rvalue'] = rvalue
         score.attrs['pvalue'] = pvalue
         return score
 
