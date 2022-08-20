@@ -1,9 +1,8 @@
-import os
-from pathlib import Path
 import pytest
 import shutil
 import subprocess
 import textwrap
+from pathlib import Path
 
 from brainscore_language.plugins.test_plugins import PluginTestRunner
 
@@ -30,6 +29,11 @@ class TestPluginTestRunner:
 	def test_plugin_name(self):
 		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH)
 		assert plugin_test_runner.plugin_name == DUMMY_PLUGIN
+		
+	def test_get_conda_base(self):
+		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH)
+		conda_base = plugin_test_runner.get_conda_base()
+		assert 'conda' in conda_base
 
 	def test_has_testfile(self):
 		DUMMY_TESTFILE.unlink()
@@ -50,6 +54,6 @@ class TestPluginTestRunner:
 	def test_teardown(self):
 		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH)
 		subprocess.run(f"conda create -n {DUMMY_PLUGIN} python=3.8 -y", shell=True)
-		completed_process = plugin_test_runner.teardown()
-		assert completed_process.returncode == 0
-	  
+		assert plugin_test_runner.plugin_env_path.is_dir() == True
+		plugin_test_runner.teardown()
+		assert plugin_test_runner.plugin_env_path.is_dir() == False
