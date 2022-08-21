@@ -104,7 +104,7 @@ class TestNeural:
         text = ['the quick brown fox', 'jumps over', 'the lazy dog']
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.perform_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
-                                       recording_type=ArtificialSubject.RecordingType.spikerate_exact)
+                                       recording_type=ArtificialSubject.RecordingType.fMRI)
         representations = model.digest_text(text)['neural']
         assert len(representations['presentation']) == 3
         np.testing.assert_array_equal(representations['context'], text)
