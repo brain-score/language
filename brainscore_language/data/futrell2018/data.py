@@ -14,7 +14,14 @@ BIBTEX = """@proceedings{futrell2018natural,
   year={2018}
 }"""
 
-datasets['Futrell2018'] = lambda: load_from_s3(
-    identifier="Futrell2018",
-    version_id="MpR.gIXN8UrUnqwQyj.kCrh4VWrBvsGf",
-    sha1="381ccc8038fbdb31235b5f3e1d350f359b5e287f")
+
+def load_assembly():
+    assembly = load_from_s3(
+        identifier="Futrell2018",
+        version_id="MpR.gIXN8UrUnqwQyj.kCrh4VWrBvsGf",
+        sha1="381ccc8038fbdb31235b5f3e1d350f359b5e287f")
+    assembly.attrs['bibtex'] = BIBTEX
+    return assembly
+
+
+datasets['Futrell2018'] = load_assembly

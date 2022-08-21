@@ -8,7 +8,6 @@ from brainscore_core.benchmarks import BenchmarkBase
 from brainscore_core.metrics import Score, Metric
 from brainscore_language import load_dataset, load_metric, benchmarks
 from brainscore_language.artificial_subject import ArtificialSubject
-from .data import BIBTEX
 from ...utils.ceiling import ceiling_normalize
 
 logger = logging.getLogger(__name__)
@@ -35,7 +34,7 @@ class Futrell2018Pearsonr(BenchmarkBase):
             version=1,
             parent='behavior',
             ceiling=ceiling,
-            bibtex=BIBTEX)
+            bibtex=self.data.bibtex)
 
     def __call__(self, candidate: ArtificialSubject) -> Score:
         candidate.perform_behavioral_task(ArtificialSubject.Task.reading_times)
