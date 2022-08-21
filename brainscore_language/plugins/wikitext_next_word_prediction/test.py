@@ -51,7 +51,7 @@ class TestBenchmark:
                 raise NotImplementedError()
 
     def test_dummy_the(self):
-        benchmark = load_benchmark('Merity2016nextword-accuracy')
+        benchmark = load_benchmark('Wikitext-accuracy')
         dummy_model = TestBenchmark.DummyModel()
         score = benchmark(dummy_model)
         assert score == approx(0.05945, abs=0.001)
