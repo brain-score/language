@@ -20,26 +20,26 @@ class ArtificialSubject:
         """ 
         Predict the next word from the preceding context. Output a :class:`~brainio.assemblies.BehavioralAssembly` with 
         next-word predictions as the values and preceding context in the `context` coordinate.
-        
+
         Example:
-        
+
         Calling `digest_text(text = 'the quick brown')` could output 
-        
+
         .. code-block:: python
-        
+
            {'behavior': <xarray.BehavioralAssembly (presentation: 1)>
                         array(['fox']), # the actual next word
                         Coordinates:
                           * presentation  (presentation) MultiIndex
                           - context       (presentation) object 'the quick brown'
                           - stimulus_id   (presentation) int64 0}
-        
+
         Example:
-        
+
         Calling `digest_text(text = ['the quick brown', 'fox jumps', 'over the lazy'])` could output 
-        
+
         .. code-block:: python
-        
+
            {'behavior': <xarray.BehavioralAssembly (presentation: 3)>
                         array(['fox', 'over', 'dog']), # the actual next words
                         Coordinates:
@@ -52,26 +52,26 @@ class ArtificialSubject:
         """ 
         Output how long it took to read a given text, in . Output a :class:`~brainio.assemblies.BehavioralAssembly` with 
         reading times in milliseconds as the values and text in the `context` coordinate.
-        
+
         Example:
-        
+
         Calling `digest_text(text = 'the quick brown')` could output 
-        
+
         .. code-block:: python
-        
+
            {'behavior': <xarray.BehavioralAssembly (presentation: 1)>
                         array([329.15]), # reading time in milliseconds
                         Coordinates:
                           * presentation  (presentation) MultiIndex
                           - context       (presentation) object 'the quick brown'
                           - stimulus_id   (presentation) int64 0}
-        
+
         Example:
-        
+
         Calling `digest_text(text = ['the quick brown', 'fox jumps', 'over the lazy'])` could output 
-        
+
         .. code-block:: python
-        
+
            {'behavior': <xarray.BehavioralAssembly (presentation: 3)>
                         array([329.15, 337.53, 341.13]), # reading times in milliseconds
                         Coordinates:
@@ -110,8 +110,7 @@ class ArtificialSubject:
         :class:`~brainio.assemblies.NeuroidAssembly` in the `'neural'` part of the output dict.
 
         :param recording_target: where in the language-involved parts of the brain to record from.
-        :param recording_type: What recording method should be used. Currently only exact unit-level spike-rates are
-            available, but this could be e.g. fMRI in the future.
+        :param  recording_type: What recording method should be used.
         """
         raise NotImplementedError()
 
@@ -126,8 +125,12 @@ class ArtificialSubject:
             The :class:`~brainio.assemblies.DataAssembly` always contains a `presentation` dimension, corresponding to
             the presentation of text stimuli (including a `context` coordinate for the text,
             and a `stimulus_id` coordinate that uniquely identifies each context).
+            Values along the `presentation` dimension are ordered in the same way as the input.
             The `behavior` output has no other dimension, while the `neural` output has a `neuroid` dimension
             (including a `neuroid_id` coordinate to uniquely identify each recording unit), and sometimes a
             `time_bin` dimension (including `time_bin_start` and `time_bin_end`).
+            Note that model state is not saved between every time that `digest_text` is called. For keeping states,
+            between different inputs, `text` should be a list.
+
         """
         raise NotImplementedError()
