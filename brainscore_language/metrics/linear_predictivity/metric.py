@@ -6,7 +6,7 @@ from sklearn.preprocessing import scale
 from brainio.assemblies import NeuroidAssembly, array_is_element, DataAssembly
 from brainio.assemblies import walk_coords
 from brainscore_core.metrics import Score, Metric
-from brainscore_language import metrics
+from brainscore_language import metric_registry
 from brainscore_language.utils.transformations import CrossValidation
 
 
@@ -177,4 +177,4 @@ def linear_pearsonr(*args, regression_kwargs=None, correlation_kwargs=None, **kw
     return CrossRegressedCorrelation(*args, regression=regression, correlation=correlation, **kwargs)
 
 
-metrics['linear_pearsonr'] = linear_pearsonr
+metric_registry['linear_pearsonr'] = linear_pearsonr

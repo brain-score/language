@@ -1,6 +1,6 @@
 import logging
 
-from brainscore_language import datasets
+from brainscore_language import data_registry
 from brainscore_language.utils.s3 import load_from_s3
 
 _logger = logging.getLogger(__name__)
@@ -24,4 +24,4 @@ def load_assembly():
     return assembly
 
 
-datasets['Futrell2018'] = load_assembly
+data_registry['Futrell2018'] = load_assembly

@@ -1,6 +1,6 @@
 from datasets import load_dataset
 
-from brainscore_language import datasets
+from brainscore_language import data_registry
 
 
 def wikitext2TestFromHuggingface():
@@ -9,4 +9,4 @@ def wikitext2TestFromHuggingface():
     return lines
 
 
-datasets['wikitext-2/test'] = wikitext2TestFromHuggingface
+data_registry['wikitext-2/test'] = wikitext2TestFromHuggingface

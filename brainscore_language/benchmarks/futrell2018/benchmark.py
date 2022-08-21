@@ -6,7 +6,7 @@ from numpy.random import RandomState
 from brainio.assemblies import DataAssembly
 from brainscore_core.benchmarks import BenchmarkBase
 from brainscore_core.metrics import Score, Metric
-from brainscore_language import load_dataset, load_metric, benchmarks
+from brainscore_language import load_dataset, load_metric, benchmark_registry
 from brainscore_language.artificial_subject import ArtificialSubject
 from ...utils.ceiling import ceiling_normalize
 
@@ -46,7 +46,7 @@ class Futrell2018Pearsonr(BenchmarkBase):
         return score
 
 
-benchmarks['Futrell2018-pearsonr'] = Futrell2018Pearsonr
+benchmark_registry['Futrell2018-pearsonr'] = Futrell2018Pearsonr
 
 
 class SplitHalvesConsistency:

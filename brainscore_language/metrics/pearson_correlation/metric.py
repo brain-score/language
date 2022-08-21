@@ -3,7 +3,7 @@ from scipy.stats import pearsonr
 
 from brainio.assemblies import DataAssembly
 from brainscore_core.metrics import Score, Metric
-from brainscore_language import metrics
+from brainscore_language import metric_registry
 
 
 class PearsonCorrelation(Metric):
@@ -19,4 +19,4 @@ class PearsonCorrelation(Metric):
         return score
 
 
-metrics['pearsonr'] = PearsonCorrelation
+metric_registry['pearsonr'] = PearsonCorrelation

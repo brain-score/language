@@ -3,7 +3,7 @@ import logging
 from brainio.assemblies import NeuroidAssembly
 from brainscore_core.benchmarks import BenchmarkBase
 from brainscore_core.metrics import Score
-from brainscore_language import load_dataset, load_metric, benchmarks
+from brainscore_language import load_dataset, load_metric, benchmark_registry
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.utils.ceiling import ceiling_normalize
 from brainscore_language.utils.s3 import load_from_s3
@@ -96,5 +96,5 @@ class _Pereira2018ExperimentLinear(BenchmarkBase):
         return score
 
 
-benchmarks['Pereira2018.243sentences-linear'] = Pereira2018_243sentences
-benchmarks['Pereira2018.384sentences-linear'] = Pereira2018_384sentences
+benchmark_registry['Pereira2018.243sentences-linear'] = Pereira2018_243sentences
+benchmark_registry['Pereira2018.384sentences-linear'] = Pereira2018_384sentences

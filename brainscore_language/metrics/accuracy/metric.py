@@ -1,7 +1,7 @@
 import numpy as np
 
 from brainscore_core.metrics import Score, Metric
-from brainscore_language import metrics
+from brainscore_language import metric_registry
 
 
 class Accuracy(Metric):
@@ -16,4 +16,4 @@ class Accuracy(Metric):
         return score
 
 
-metrics['accuracy'] = Accuracy
+metric_registry['accuracy'] = Accuracy
