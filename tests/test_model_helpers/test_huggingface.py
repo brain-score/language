@@ -2,7 +2,7 @@ import logging
 import pytest
 
 from brainscore_language.artificial_subject import ArtificialSubject
-from brainscore_language.models.huggingface import HuggingfaceSubject
+from brainscore_language.model_helpers.huggingface import HuggingfaceSubject
 
 logging.basicConfig(level=logging.INFO)
 
