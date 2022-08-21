@@ -1,13 +1,14 @@
 import functools
 from collections import OrderedDict
 from typing import Union, List, Tuple, Dict
-from numpy.core import defchararray
+
 import numpy as np
 import torch
-from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly
+from numpy.core import defchararray
 from torch.utils.hooks import RemovableHandle
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly, merge_data_arrays
 from brainscore_language.artificial_subject import ArtificialSubject
 
 
@@ -36,6 +37,7 @@ class HuggingfaceSubject(ArtificialSubject):
 
         self.task_function_mapping_dict = {
             ArtificialSubject.Task.next_word: self.predict_next_word,
+            ArtificialSubject.Task.reading_times: self.estimate_reading_times,
         }
 
     def identifier(self):
@@ -56,70 +58,94 @@ class HuggingfaceSubject(ArtificialSubject):
         :param text: the text to be used for inference e.g. "the quick brown fox"
         :return: assembly of either behavioral output or internal neural representations
         """
-        # tokenize
-        tokenized_inputs = self.tokenizer(text, return_tensors="pt")
 
-        # prepare recording hooks
-        hooks = []
-        layer_representations = OrderedDict()
-        for (recording_target, recording_type) in self.neural_recordings:
-            layer_name = self.region_layer_mapping[recording_target]
-            layer = self._get_layer(layer_name)
-            hook = self._register_hook(layer, name=(recording_target, layer_name), target_dict=layer_representations)
-            hooks.append(hook)
+        if type(text) == str:
+            text = [text]
 
-        # run and remove hooks
-        with torch.no_grad():
-            base_output = self.basemodel(**tokenized_inputs)
-        for hook in hooks:
-            hook.remove()
+        output = {'behavior': [], 'neural': []}
 
-        # format output
-        output = {'behavior': None, 'neural': None}
-        stimuli_coords = {
-            'context': ('presentation', [text] if isinstance(text, str) else text),
-            # TODO: It will be hard to build a unique stimulus id (which is used for e.g. cross-validation in metrics),
-            #  especially when we don't know if other text with the same words will be presented later on.
-            #  Maybe we need a StimulusSet class with metadata instead of just text strings after all?
-            'stimulus_id': ('presentation', [0] if isinstance(text, str) else np.arange(len(text))),
-        }
+        for part_number, text_part in enumerate(text):
+            # tokenize
+            self.tokenized_inputs = self.tokenizer(text_part, return_tensors="pt")
 
-        if self.behavioral_task:
-            behavioral_output = self.output_to_behavior(base_output= base_output)
-            behavior = BehavioralAssembly(
-                [behavioral_output],
-                coords=stimuli_coords,
-                dims=['presentation']
-            )
-            output['behavior'] = behavior
-        if self.neural_recordings:
-            representation_values = np.concatenate([
-                # use last token (-1) of values[batch, token, unit] to represent passage.
-                # TODO: this is a choice and needs to be marked as such, and maybe an option given to the user
-                # TODO: likely need to be clever about this when there are multiple passages
-                values[:, -1:, :].squeeze(0) for values in layer_representations.values()],
-                axis=-1)  # concatenate along neuron axis
-            neuroid_coords = {
-                'layer': ('neuroid', np.concatenate([[layer] * values.shape[-1]
-                                                     for (recording_target, layer), values in
-                                                     layer_representations.items()])),
-                'region': ('neuroid', np.concatenate([[recording_target] * values.shape[-1]
-                                                      for (recording_target, layer), values in
-                                                      layer_representations.items()])),
-                'neuron_number_in_layer': ('neuroid', np.concatenate(
-                    [np.arange(values.shape[-1]) for values in layer_representations.values()])),
+            # prepare recording hooks
+            hooks = []
+            layer_representations = OrderedDict()
+            for (recording_target, recording_type) in self.neural_recordings:
+                layer_name = self.region_layer_mapping[recording_target]
+                layer = self._get_layer(layer_name)
+                hook = self._register_hook(layer, name=(recording_target, layer_name),
+                                           target_dict=layer_representations)
+                hooks.append(hook)
+
+            # run and remove hooks
+            with torch.no_grad():
+                base_output = self.basemodel(**self.tokenized_inputs)
+            for hook in hooks:
+                hook.remove()
+
+            # format output
+            stimuli_coords = {
+                'context': ('presentation', [text_part]),
+                'part_number': ('presentation', [part_number]),
             }
-            neuroid_coords['neuroid_id'] = 'neuroid', functools.reduce(defchararray.add, [
-                neuroid_coords['layer'][1], '--', neuroid_coords['neuron_number_in_layer'][1].astype(str)])
-            representations = NeuroidAssembly(
-                representation_values,
-                coords={**stimuli_coords, **neuroid_coords},
-                dims=['presentation', 'neuroid'])
-            output['neural'] = representations
 
+            if self.behavioral_task:
+                behavioral_output = self.output_to_behavior(base_output=base_output)
+                behavior = BehavioralAssembly(
+                    [behavioral_output],
+                    coords=stimuli_coords,
+                    dims=['presentation']
+                )
+                output['behavior'].append(behavior)
+            if self.neural_recordings:
+                representation_values = np.concatenate([
+                    # use last token (-1) of values[batch, token, unit] to represent passage.
+                    # TODO: this is a choice and needs to be marked as such, and maybe an option given to the user
+                    # TODO: likely need to be clever about this when there are multiple passages
+                    values[:, -1:, :].squeeze(0) for values in layer_representations.values()],
+                    axis=-1)  # concatenate along neuron axis
+                neuroid_coords = {
+                    'layer': ('neuroid', np.concatenate([[layer] * values.shape[-1]
+                                                         for (recording_target, layer), values in
+                                                         layer_representations.items()])),
+                    'region': ('neuroid', np.concatenate([[recording_target] * values.shape[-1]
+                                                          for (recording_target, layer), values in
+                                                          layer_representations.items()])),
+                    'neuron_number_in_layer': ('neuroid', np.concatenate(
+                        [np.arange(values.shape[-1]) for values in layer_representations.values()])),
+                }
+                neuroid_coords['neuroid_id'] = 'neuroid', functools.reduce(defchararray.add, [
+                    neuroid_coords['layer'][1], '--', neuroid_coords['neuron_number_in_layer'][1].astype(str)])
+                representations = NeuroidAssembly(
+                    representation_values,
+                    coords={**stimuli_coords, **neuroid_coords},
+                    dims=['presentation', 'neuroid'])
+                output['neural'].append(representations)
+
+        output['behavior'] = merge_data_arrays(output['behavior']).sortby('part_number') if output['behavior'] else None
+        output['neural'] = merge_data_arrays(output['neural']).sortby('part_number') if output['neural'] else None
         return output
 
+    def estimate_reading_times(self, base_output):
+        """
+        :param base_output: the neural network's output
+        :return: perplexity (calculated as cross entropy) as a proxy for reading times
+        """
+        import torch.nn.functional as F
+        tokens = self.tokenized_inputs['input_ids'].squeeze()
+        logits = base_output.logits.squeeze()
+        # assume that reading time is additive,
+        # i.e. reading time of multiple tokens is the sum of the perplexity of each individual token
+        cross_entropy = F.cross_entropy(logits, tokens, reduction='sum')
+        perplexity = torch.exp(cross_entropy)  # https://stackoverflow.com/a/59219379/1504411
+        return perplexity
+
     def predict_next_word(self, base_output):
+        """
+        :param base_output: the neural network's output
+        :return: predicted next word
+        """
 
         logits = base_output.logits
         pred_id = torch.argmax(logits, axis=2).squeeze()
