@@ -18,6 +18,14 @@ This repository is under active development, and should be considered to be in a
 Code is likely to change substantially, without backwards compatibility.
 Please let us know of any problems by [creating an issue](https://github.com/brain-score/language/issues/new).
 
+## Usage
+
+Score an existing model on an existing benchmark:
+
+```bash
+python brainscore_language score --model_identifier='distilgpt2' --benchmark_identifier='Futrell2018-pearsonr'
+```
+
 ## License
 
 MIT license
