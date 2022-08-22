@@ -4,7 +4,7 @@ from pytest import approx
 
 from brainio.assemblies import NeuroidAssembly
 from brainscore_language import load_metric
-from .metric import linear_regression
+from metric import linear_regression
 
 
 class TestMetric:
