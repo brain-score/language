@@ -7,10 +7,21 @@ from brainscore_language import load_dataset, load_metric, benchmark_registry
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.utils.ceiling import ceiling_normalize
 from brainscore_language.utils.s3 import load_from_s3
-from .data import BIBTEX
+# from .data import BIBTEX
 
 logger = logging.getLogger(__name__)
 
+BIBTEX = """@article{pereira2018toward,
+  title={Toward a universal decoder of linguistic meaning from brain activation},
+  author={Pereira, Francisco and Lou, Bin and Pritchett, Brianna and Ritter, Samuel and Gershman, Samuel J 
+          and Kanwisher, Nancy and Botvinick, Matthew and Fedorenko, Evelina},
+  journal={Nature communications},
+  volume={9},
+  number={1},
+  pages={1--13},
+  year={2018},
+  publisher={Nature Publishing Group}
+}"""
 
 def Pereira2018_243sentences():
     return _Pereira2018ExperimentLinear(experiment='243sentences', ceiling_s3_kwargs=dict(
