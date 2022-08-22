@@ -4,7 +4,7 @@ import subprocess
 import textwrap
 from pathlib import Path
 
-from brainscore_language.utils.plugins.test_plugins import PluginTestRunner
+from brainscore_language.plugins.test_plugins import PluginTestRunner
 
 DUMMY_PLUGIN = "dummy_plugin"
 DUMMY_PLUGIN_PATH = Path(__file__).parent / DUMMY_PLUGIN
