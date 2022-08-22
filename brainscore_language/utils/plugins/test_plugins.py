@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import warnings
 
-PLUGINS_DIRPATH = Path(__file__).parent
+PLUGIN_TYPES = ['benchmarks', 'data', 'metrics']
 
 
 class PluginTestRunner:
@@ -27,10 +27,9 @@ class PluginTestRunner:
 		assert (self.plugin_directory / 'test.py').is_file(), "'test.py' not found"
 
 	def run_tests(self):
-		completed_process = subprocess.run(f"./brainscore_language/plugins/create_env.sh \
+		completed_process = subprocess.run(f"./{Path(__file__).parent}/create_env.sh \
 			{self.plugin_directory} {self.plugin_name} \
 			{str(self.has_requirements).lower()}", shell=True)
-		assert completed_process.returncode == 0
 		return completed_process
 
 	def teardown(self):
@@ -45,9 +44,11 @@ class PluginTestRunner:
 
 
 if __name__ == '__main__':
-	# run tests for each plugin in "plugins" directory
+	# run tests for each plugin
 	# requires test file ("test.py")
-	for plugin_directory in PLUGINS_DIRPATH.glob('[!._]*'):
-		if plugin_directory.is_dir():
-			plugin_test_runner = PluginTestRunner(plugin_directory)
-			plugin_test_runner()
+	for plugin_type in PLUGIN_TYPES:
+		plugins_dir = Path(Path(__file__).parents[2], plugin_type)
+		for plugin in plugins_dir.glob('[!._]*'):
+			if plugin.is_dir():
+				plugin_test_runner = PluginTestRunner(plugin)
+				plugin_test_runner()
