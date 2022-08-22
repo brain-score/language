@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import warnings
 
-PLUGIN_TYPES = ['benchmarks', 'data', 'metrics']
+PLUGIN_TYPES = ['benchmarks', 'data', 'metrics', 'models']
 
 
 class PluginTestRunner:
