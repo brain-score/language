@@ -138,7 +138,7 @@ class HuggingfaceSubject(ArtificialSubject):
         logits = base_output.logits.squeeze()
         # assume that reading time is additive,
         # i.e. reading time of multiple tokens is the sum of the perplexity of each individual token
-        cross_entropy = F.cross_entropy(logits, tokens, reduction='sum')
+        cross_entropy = -1 * F.cross_entropy(logits, tokens) / np.log(2)
         return cross_entropy
 
     def predict_next_word(self, base_output):
