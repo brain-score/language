@@ -7,7 +7,6 @@ from brainscore_language import load_dataset, load_metric, benchmark_registry
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.utils.ceiling import ceiling_normalize
 from brainscore_language.utils.s3 import load_from_s3
-# from .data import BIBTEX
 
 logger = logging.getLogger(__name__)
 
