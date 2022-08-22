@@ -30,7 +30,6 @@ class PluginTestRunner:
 		completed_process = subprocess.run(f"./brainscore_language/plugins/create_env.sh \
 			{self.plugin_directory} {self.plugin_name} \
 			{str(self.has_requirements).lower()}", shell=True)
-		assert completed_process.returncode == 0
 		return completed_process
 
 	def teardown(self):
