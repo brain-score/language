@@ -48,7 +48,7 @@ if __name__ == '__main__':
 	# run tests for each plugin
 	# requires test file ("test.py")
 	for plugin_type in PLUGIN_TYPES:
-		plugins_dir = Path(Path(__file__).parents[2], plugin_type)
+		plugins_dir = Path(Path(__file__).parents[1], plugin_type)
 		for plugin in plugins_dir.glob('[!._]*'):
 			if plugin.is_dir():
 				plugin_test_runner = PluginTestRunner(plugin)
