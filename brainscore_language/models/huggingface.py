@@ -22,7 +22,8 @@ class HuggingfaceSubject(ArtificialSubject):
     ):
         """
             :param model_id: the model id i.e. name
-            :param region_layer_mapping
+            :param region_layer_mapping: commit which layers correspond to which regions.
+                This can be left empty, but the model will not be able to be tested on neural benchmarks
             :param model: the model to run inference from. Using `AutoModelForCausalLM.from_pretrained` if `None`.
             :param tokenizer: the model's associated tokenizer. Using `AutoTokenizer.from_pretrained` if `None`.
         """
@@ -159,7 +160,7 @@ class HuggingfaceSubject(ArtificialSubject):
 
         # assume that reading time is additive,
         # i.e. reading time of multiple tokens is the sum of the perplexity of each individual token
-        cross_entropy = -1 * F.cross_entropy(predicted_logits, actual_tokens, reduction='sum') / np.log(2) \
+        cross_entropy = F.cross_entropy(predicted_logits, actual_tokens, reduction='sum') / np.log(2) \
                         + first_token_addition
         return cross_entropy
 

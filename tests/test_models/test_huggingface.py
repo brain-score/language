@@ -22,43 +22,36 @@ class TestReadingTimes:
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
         model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_time = model.digest_text('the quick brown fox')['behavior']
-        assert reading_time == -44.06524
+        assert reading_time == 44.06524
 
     @pytest.mark.memory_intense
     def test_list_input(self):
-        model = HuggingfaceSubject(model_id='distilgpt2',
-                                   region_layer_mapping={}
-                                   )
+        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
         text = ['the', 'quick', 'brown', 'fox', 'jumps', 'over', 'the', 'lazy']
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)['behavior']
         np.testing.assert_allclose(
-            reading_times, [0, -19.260605, -12.721411, -12.083241, -10.876629, -3.678278, -2.102749, -11.961533],
-            atol=0.0001)
+            reading_times, [0, 19.260605, 12.721411, 12.083241, 10.876629, 3.678278, 2.102749, 11.961533], atol=0.0001)
 
     @pytest.mark.memory_intense
     def test_multitoken_words(self):
-        model = HuggingfaceSubject(model_id='distilgpt2',
-                                   region_layer_mapping={}
-                                   )
+        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
         text = ['beekepers', 'often', 'go', 'beekeeping']
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)['behavior']
         np.testing.assert_allclose(
-            reading_times, [-26.090048, -16.81876, -6.711773, -19.165783], atol=0.0001)
+            reading_times, [26.090048, 16.81876, 6.711773, 19.165783], atol=0.0001)
 
     @pytest.mark.memory_intense
     def test_multiword_list_input(self):
-        model = HuggingfaceSubject(model_id='distilgpt2',
-                                   region_layer_mapping={}
-                                   )
+        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
         text = ['the quick brown fox', 'jumps over', 'the lazy']
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)['behavior']
-        np.testing.assert_allclose(reading_times, [-44.06524, -14.554907, -14.064276], atol=0.0001)
+        np.testing.assert_allclose(reading_times, [44.06524, 14.554907, 14.064276], atol=0.0001)
 
 
 class TestNextWord:
@@ -73,9 +66,7 @@ class TestNextWord:
         This test is a stand-in prototype to check if our model definitions are correct.
         """
 
-        model = HuggingfaceSubject(model_id=model_identifier,
-                                   region_layer_mapping={}
-                                   )
+        model = HuggingfaceSubject(model_id=model_identifier, region_layer_mapping={})
         text = 'the quick brown fox'
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.perform_behavioral_task(task=ArtificialSubject.Task.next_word)
@@ -93,9 +84,7 @@ class TestNextWord:
         next word for each text part in the list.
         This test is a stand-in prototype to check if our model definitions are correct.
         """
-        model = HuggingfaceSubject(model_id=model_identifier,
-                                   region_layer_mapping={}
-                                   )
+        model = HuggingfaceSubject(model_id=model_identifier, region_layer_mapping={})
         text = ['the quick brown fox', 'jumps over', 'the lazy']
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.perform_behavioral_task(task=ArtificialSubject.Task.next_word)
