@@ -68,7 +68,7 @@ class SplitHalvesConsistency:
         split_dim = np.array(assembly[self.split_coordinate].dims).item()
         split_values = assembly[self.split_coordinate].values
         random_state = RandomState(0)
-        consistencies = []
+        consistencies, uncorrected_consistencies = [], []
         splits = range(self.num_splits)
         for _ in splits:
             half1_values = random_state.choice(split_values, size=len(split_values) // 2, replace=False)
@@ -76,10 +76,13 @@ class SplitHalvesConsistency:
             half1 = assembly[{split_dim: [value in half1_values for value in split_values]}].mean(split_dim)
             half2 = assembly[{split_dim: [value in half2_values for value in split_values]}].mean(split_dim)
             consistency = self.consistency_metric(half1, half2)
+            uncorrected_consistencies.append(consistency)
             # Spearman-Brown correction for sub-sampling
             corrected_consistency = 2 * consistency / (1 + (2 - 1) * consistency)
             consistencies.append(corrected_consistency)
         consistencies = Score(consistencies, coords={'split': splits}, dims=['split'])
+        uncorrected_consistencies = Score(uncorrected_consistencies, coords={'split': splits}, dims=['split'])
         average_consistency = consistencies.median('split')
         average_consistency.attrs['raw'] = consistencies
+        average_consistency.attrs['uncorrected_consistencies'] = uncorrected_consistencies
         return average_consistency
