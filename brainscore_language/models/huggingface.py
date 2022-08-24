@@ -170,8 +170,10 @@ class HuggingfaceSubject(ArtificialSubject):
             actual_tokens = actual_tokens[1:]  # we have no prior context to predict the 0th token
             first_token_addition = FIRST_TOKEN_READING_TIME  # add the expected reading time for 0th token (see above)
 
-        # assume that reading time is additive,
-        # i.e. reading time of multiple tokens is the sum of the perplexity of each individual token
+        # assume that reading time is additive, i.e. reading time of multiple tokens is
+        # the sum of the perplexity of each individual token.
+        # Note that this implementation similarly sums over the surprisal of multiple words,
+        # e.g. for the surprisal of an entire sentence.
         cross_entropy = F.cross_entropy(predicted_logits, actual_tokens, reduction='sum') / np.log(2) \
                         + first_token_addition
         return cross_entropy
