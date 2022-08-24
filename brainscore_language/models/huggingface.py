@@ -81,14 +81,7 @@ class HuggingfaceSubject(ArtificialSubject):
             number_of_tokens = context_tokens['input_ids'].shape[-1]
 
             # prepare recording hooks
-            hooks = []
-            layer_representations = OrderedDict()
-            for (recording_target, recording_type) in self.neural_recordings:
-                layer_name = self.region_layer_mapping[recording_target]
-                layer = self._get_layer(layer_name)
-                hook = self._register_hook(layer, name=(recording_target, layer_name),
-                                           target_dict=layer_representations)
-                hooks.append(hook)
+            hooks, layer_representations = self._setup_hooks()
 
             # run and remove hooks
             with torch.no_grad():
@@ -101,7 +94,6 @@ class HuggingfaceSubject(ArtificialSubject):
                 'context': ('presentation', [text_part]),
                 'part_number': ('presentation', [part_number]),
             }
-
             if self.behavioral_task:
                 behavioral_output = self.output_to_behavior(base_output=base_output)
                 behavior = BehavioralAssembly(
@@ -118,6 +110,18 @@ class HuggingfaceSubject(ArtificialSubject):
         output['behavior'] = merge_data_arrays(output['behavior']).sortby('part_number') if output['behavior'] else None
         output['neural'] = merge_data_arrays(output['neural']).sortby('part_number') if output['neural'] else None
         return output
+
+    def _setup_hooks(self):
+        """ set up the hooks for recording internal neural activity from the model (aka layer activations) """
+        hooks = []
+        layer_representations = OrderedDict()
+        for (recording_target, recording_type) in self.neural_recordings:
+            layer_name = self.region_layer_mapping[recording_target]
+            layer = self._get_layer(layer_name)
+            hook = self._register_hook(layer, name=(recording_target, layer_name),
+                                       target_dict=layer_representations)
+            hooks.append(hook)
+        return hooks, layer_representations
 
     def output_to_representations(self, layer_representations, stimuli_coords):
         representation_values = np.concatenate([
