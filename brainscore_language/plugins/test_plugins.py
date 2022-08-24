@@ -28,7 +28,7 @@ class PluginTestRunner:
 		assert (self.plugin_directory / 'test.py').is_file(), "'test.py' not found"
 
 	def run_tests(self):
-		completed_process = subprocess.run(f"{Path(__file__).parent}/create_env.sh \
+		completed_process = subprocess.run(f"{Path(__file__).parent}/run_plugin.sh \
 			{self.plugin_directory} {self.plugin_name} \
 			{str(self.has_requirements).lower()}", shell=True)
 		return completed_process

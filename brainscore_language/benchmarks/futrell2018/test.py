@@ -39,3 +39,5 @@ class TestBenchmark:
         benchmark = load_benchmark('Futrell2018-pearsonr')
         ceiling = benchmark.ceiling
         assert ceiling == approx(.858, abs=.0005)
+        assert ceiling.raw.median('split') == ceiling
+        assert ceiling.uncorrected_consistencies.median('split') < ceiling
