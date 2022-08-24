@@ -1,12 +1,13 @@
 import functools
 from collections import OrderedDict
-from typing import Union, List, Tuple, Dict
+from typing import Union, List, Tuple, Dict, Callable
 
 import numpy as np
 import torch
 from numpy.core import defchararray
 from torch.utils.hooks import RemovableHandle
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers.modeling_outputs import CausalLMOutput
 
 from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly, merge_data_arrays
 from brainscore_language.artificial_subject import ArtificialSubject
@@ -19,6 +20,7 @@ class HuggingfaceSubject(ArtificialSubject):
             region_layer_mapping: dict,
             model=None,
             tokenizer=None,
+            task_heads: Union[None, Dict[ArtificialSubject.Task, Callable]] = None,
     ):
         """
             :param model_id: the model id i.e. name
@@ -26,6 +28,10 @@ class HuggingfaceSubject(ArtificialSubject):
                 This can be left empty, but the model will not be able to be tested on neural benchmarks
             :param model: the model to run inference from. Using `AutoModelForCausalLM.from_pretrained` if `None`.
             :param tokenizer: the model's associated tokenizer. Using `AutoTokenizer.from_pretrained` if `None`.
+            :param task_heads: a mapping from one or multiple tasks
+                (:class:`~brainscore_language.artificial_subject.ArtificialSubject.Task`) to a function outputting the
+                requested task output, given the basemodel's base output
+                (:class:`~transformers.modeling_outputs.CausalLMOutput`).
         """
 
         self.model_id = model_id
@@ -34,13 +40,13 @@ class HuggingfaceSubject(ArtificialSubject):
         self.tokenizer = tokenizer if tokenizer is not None else AutoTokenizer.from_pretrained(self.model_id)
         self.current_tokens = None  # keep track of current tokens
 
-        self.behavioral_task = None
-        self.neural_recordings = []
-
-        self.task_function_mapping_dict = {
+        self.neural_recordings: List[Tuple] = []  # list of `(recording_target, recording_type)` tuples to record
+        self.behavioral_task: Union[None, ArtificialSubject.Task] = None
+        task_mapping_default = {
             ArtificialSubject.Task.next_word: self.predict_next_word,
             ArtificialSubject.Task.reading_times: self.estimate_reading_times,
         }
+        self.task_function_mapping_dict = {**task_mapping_default, **task_heads} if task_heads else task_mapping_default
 
     def identifier(self):
         return self.model_id
@@ -55,7 +61,6 @@ class HuggingfaceSubject(ArtificialSubject):
         self.neural_recordings.append((recording_target, recording_type))
 
     def digest_text(self, text: Union[str, List[str]]) -> Dict[str, DataAssembly]:
-
         """
         :param text: the text to be used for inference e.g. "the quick brown fox"
         :return: assembly of either behavioral output or internal neural representations
@@ -106,35 +111,38 @@ class HuggingfaceSubject(ArtificialSubject):
                 )
                 output['behavior'].append(behavior)
             if self.neural_recordings:
-                representation_values = np.concatenate([
-                    # use last token (-1) of values[batch, token, unit] to represent passage.
-                    # TODO: this is a choice and needs to be marked as such, and maybe an option given to the user
-                    # TODO: likely need to be clever about this when there are multiple passages
-                    values[:, -1:, :].squeeze(0) for values in layer_representations.values()],
-                    axis=-1)  # concatenate along neuron axis
-                neuroid_coords = {
-                    'layer': ('neuroid', np.concatenate([[layer] * values.shape[-1]
-                                                         for (recording_target, layer), values in
-                                                         layer_representations.items()])),
-                    'region': ('neuroid', np.concatenate([[recording_target] * values.shape[-1]
-                                                          for (recording_target, layer), values in
-                                                          layer_representations.items()])),
-                    'neuron_number_in_layer': ('neuroid', np.concatenate(
-                        [np.arange(values.shape[-1]) for values in layer_representations.values()])),
-                }
-                neuroid_coords['neuroid_id'] = 'neuroid', functools.reduce(defchararray.add, [
-                    neuroid_coords['layer'][1], '--', neuroid_coords['neuron_number_in_layer'][1].astype(str)])
-                representations = NeuroidAssembly(
-                    representation_values,
-                    coords={**stimuli_coords, **neuroid_coords},
-                    dims=['presentation', 'neuroid'])
+                representations = self.output_to_representations(layer_representations, stimuli_coords=stimuli_coords)
                 output['neural'].append(representations)
 
+        # merge over text parts
         output['behavior'] = merge_data_arrays(output['behavior']).sortby('part_number') if output['behavior'] else None
         output['neural'] = merge_data_arrays(output['neural']).sortby('part_number') if output['neural'] else None
         return output
 
-    def estimate_reading_times(self, base_output):
+    def output_to_representations(self, layer_representations, stimuli_coords):
+        representation_values = np.concatenate([
+            # Choose to use last token (-1) of values[batch, token, unit] to represent passage.
+            values[:, -1:, :].squeeze(0) for values in layer_representations.values()],
+            axis=-1)  # concatenate along neuron axis
+        neuroid_coords = {
+            'layer': ('neuroid', np.concatenate([[layer] * values.shape[-1]
+                                                 for (recording_target, layer), values in
+                                                 layer_representations.items()])),
+            'region': ('neuroid', np.concatenate([[recording_target] * values.shape[-1]
+                                                  for (recording_target, layer), values in
+                                                  layer_representations.items()])),
+            'neuron_number_in_layer': ('neuroid', np.concatenate(
+                [np.arange(values.shape[-1]) for values in layer_representations.values()])),
+        }
+        neuroid_coords['neuroid_id'] = 'neuroid', functools.reduce(defchararray.add, [
+            neuroid_coords['layer'][1], '--', neuroid_coords['neuron_number_in_layer'][1].astype(str)])
+        representations = NeuroidAssembly(
+            representation_values,
+            coords={**stimuli_coords, **neuroid_coords},
+            dims=['presentation', 'neuroid'])
+        return representations
+
+    def estimate_reading_times(self, base_output: CausalLMOutput):
         """
         :param base_output: the neural network's output
         :return: cross entropy as a proxy for reading times, following Smith & Levy 2013
@@ -164,7 +172,7 @@ class HuggingfaceSubject(ArtificialSubject):
                         + first_token_addition
         return cross_entropy
 
-    def predict_next_word(self, base_output):
+    def predict_next_word(self, base_output: CausalLMOutput):
         """
         :param base_output: the neural network's output
         :return: predicted next word
@@ -172,9 +180,14 @@ class HuggingfaceSubject(ArtificialSubject):
 
         logits = base_output.logits
         pred_id = torch.argmax(logits, axis=2).squeeze()
+        # Note that this is currently only predicting the next *token* which might not always be entire words.
         last_model_token_inference = pred_id[-1].tolist()
         next_word = self.tokenizer.decode(last_model_token_inference)
-
+        # `next_word` often includes a space ` ` in front of the actual word. Since the task already tells us to output
+        # a word, we can strip the space.
+        # Note that the model might also predict a token completing the current word, e.g. `fox` -> `es` (`foxes`),
+        # this is not caught in the current implementation.
+        next_word = next_word.strip()
         return next_word
 
     def _get_layer(self, layer_name: str) -> torch.nn.Module:

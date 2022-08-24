@@ -57,7 +57,7 @@ class TestReadingTimes:
 class TestNextWord:
     @pytest.mark.parametrize('model_identifier, expected_next_word', [
         pytest.param('bert-base-uncased', '.', marks=pytest.mark.memory_intense),
-        pytest.param('gpt2-xl', ' jumps', marks=pytest.mark.memory_intense),
+        pytest.param('gpt2-xl', 'jumps', marks=pytest.mark.memory_intense),
         ('distilgpt2', 'es'),
     ])
     def test_single_string(self, model_identifier, expected_next_word):
@@ -75,8 +75,8 @@ class TestNextWord:
 
     @pytest.mark.parametrize('model_identifier, expected_next_words', [
         pytest.param('bert-base-uncased', ['.', '.', '.'], marks=pytest.mark.memory_intense),
-        pytest.param('gpt2-xl', [' jumps', ' the', ' dog'], marks=pytest.mark.memory_intense),
-        ('distilgpt2', ['es', ' the', ' fox']),
+        pytest.param('gpt2-xl', ['jumps', 'the', 'dog'], marks=pytest.mark.memory_intense),
+        ('distilgpt2', ['es', 'the', 'fox']),
     ])
     def test_list_input(self, model_identifier, expected_next_words):
         """
@@ -154,5 +154,3 @@ class TestNeural:
 
     # TODO: add test with long text input, e.g. thousands of words,
     #  to see if we need batching, and to stress-test token alignment
-
-    # TODO: add test with multiple passage input and representation retrieval, e.g. ['the', 'quick brown', 'fox']
