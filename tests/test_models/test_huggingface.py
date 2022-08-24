@@ -15,14 +15,14 @@ class TestReadingTimes:
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
         model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_time = model.digest_text('the')['behavior']
-        assert reading_time == 617.6809
+        assert reading_time == 0
 
     @pytest.mark.memory_intense
     def test_multiple_words(self):
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
         model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_time = model.digest_text('the quick brown fox')['behavior']
-        assert reading_time == 3.1093765e+11
+        assert reading_time == -44.06524
 
     @pytest.mark.memory_intense
     def test_list_input(self):
@@ -34,8 +34,20 @@ class TestReadingTimes:
         model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)['behavior']
         np.testing.assert_allclose(
-            reading_times, [6.1768091e+02, 3.5762270e+04, 3.1096322e+04, 1.7372783e+04,
-                            1.8824682e+06, 7.3022788e+03, 6.1768091e+02, 5.1282520e+06], atol=0.0001)
+            reading_times, [0, -19.260605, -12.721411, -12.083241, -10.876629, -3.678278, -2.102749, -11.961533],
+            atol=0.0001)
+
+    @pytest.mark.memory_intense
+    def test_multitoken_words(self):
+        model = HuggingfaceSubject(model_id='distilgpt2',
+                                   region_layer_mapping={}
+                                   )
+        text = ['beekepers', 'often', 'go', 'beekeeping']
+        logging.info(f'Running {model.identifier()} with text "{text}"')
+        model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
+        reading_times = model.digest_text(text)['behavior']
+        np.testing.assert_allclose(
+            reading_times, [-26.090048, -16.81876, -6.711773, -19.165783], atol=0.0001)
 
     @pytest.mark.memory_intense
     def test_multiword_list_input(self):
@@ -46,7 +58,7 @@ class TestReadingTimes:
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)['behavior']
-        np.testing.assert_allclose(reading_times, [3.1093765e+11, 1.2308246e+09, 8.0662641e+04], atol=0.0001)
+        np.testing.assert_allclose(reading_times, [-44.06524, -14.554907, -14.064276], atol=0.0001)
 
 
 class TestNextWord:

@@ -31,6 +31,7 @@ class HuggingfaceSubject(ArtificialSubject):
         self.region_layer_mapping = region_layer_mapping
         self.basemodel = model if model is not None else AutoModelForCausalLM.from_pretrained(self.model_id)
         self.tokenizer = tokenizer if tokenizer is not None else AutoTokenizer.from_pretrained(self.model_id)
+        self.current_tokens = None  # keep track of current tokens
 
         self.behavioral_task = None
         self.neural_recordings = []
@@ -63,10 +64,15 @@ class HuggingfaceSubject(ArtificialSubject):
             text = [text]
 
         output = {'behavior': [], 'neural': []}
+        number_of_tokens = 0
 
         for part_number, text_part in enumerate(text):
             # tokenize
-            self.tokenized_inputs = self.tokenizer(text_part, return_tensors="pt")
+            context = ' '.join(text[:part_number + 1])  # build up context over items in the text
+            context_tokens = self.tokenizer(context, return_tensors="pt")
+            # keep track of tokens in current `text_part`
+            self.current_tokens = {key: value[..., number_of_tokens:] for key, value in context_tokens.items()}
+            number_of_tokens = context_tokens['input_ids'].shape[-1]
 
             # prepare recording hooks
             hooks = []
@@ -80,7 +86,7 @@ class HuggingfaceSubject(ArtificialSubject):
 
             # run and remove hooks
             with torch.no_grad():
-                base_output = self.basemodel(**self.tokenized_inputs)
+                base_output = self.basemodel(**context_tokens)
             for hook in hooks:
                 hook.remove()
 
@@ -134,11 +140,27 @@ class HuggingfaceSubject(ArtificialSubject):
             (https://www.sciencedirect.com/science/article/pii/S0010027713000413)
         """
         import torch.nn.functional as F
-        tokens = self.tokenized_inputs['input_ids'].squeeze()
-        logits = base_output.logits.squeeze()
+        # `base_output.logits` is (batch_size, sequence_length, vocab_size)
+        logits = base_output.logits.squeeze(dim=0)
+
+        FIRST_TOKEN_READING_TIME = 0
+        if logits.shape[0] <= 1:  # sequence_length indicates we have only seen single word
+            # since we have no context, we can't predict the next word
+            # attempt to resolve by assuming a fixed reading time for the first word
+            return FIRST_TOKEN_READING_TIME
+
+        # get expectation (logits), shifted left by 1
+        predicted_logits = logits[-self.current_tokens['input_ids'].shape[-1] - 1: - 1, :].contiguous()
+        actual_tokens = self.current_tokens['input_ids'].squeeze(dim=0).contiguous()
+        first_token_addition = 0
+        if actual_tokens.shape[0] == predicted_logits.shape[0] + 1:  # multiple tokens for first model input
+            actual_tokens = actual_tokens[1:]  # we have no prior context to predict the 0th token
+            first_token_addition = FIRST_TOKEN_READING_TIME  # add the expected reading time for 0th token (see above)
+
         # assume that reading time is additive,
         # i.e. reading time of multiple tokens is the sum of the perplexity of each individual token
-        cross_entropy = -1 * F.cross_entropy(logits, tokens) / np.log(2)
+        cross_entropy = -1 * F.cross_entropy(predicted_logits, actual_tokens, reduction='sum') / np.log(2) \
+                        + first_token_addition
         return cross_entropy
 
     def predict_next_word(self, base_output):
