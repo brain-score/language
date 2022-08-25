@@ -16,6 +16,7 @@ class ArtificialSubject:
         """ task to perform """
         # ideally we would define these as enums (also for RecordingTarget and RecordingType)
         # but accessing enums gives weird Enum objects whereas this setup just gives a string
+
         next_word = 'next_word'
         """ 
         Predict the next word from the preceding context. Output a :class:`~brainio.assemblies.BehavioralAssembly` with 
@@ -50,8 +51,9 @@ class ArtificialSubject:
 
         reading_times = 'reading_times'
         """ 
-        Output how long it took to read a given text, in . Output a :class:`~brainio.assemblies.BehavioralAssembly` with 
-        reading times in milliseconds as the values and text in the `context` coordinate.
+        Output how long it took to read a given text, in milliseconds. 
+        Output a :class:`~brainio.assemblies.BehavioralAssembly` with reading times in milliseconds as the values and 
+        text in the `context` coordinate.
 
         Example:
 
