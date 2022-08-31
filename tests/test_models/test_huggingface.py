@@ -37,12 +37,12 @@ class TestReadingTimes:
     @pytest.mark.memory_intense
     def test_multitoken_words(self):
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
-        text = ['beekepers', 'often', 'go', 'beekeeping']
+        text = ['beekeepers', 'often', 'go', 'beekeeping']
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)['behavior']
         np.testing.assert_allclose(
-            reading_times, [26.090048, 16.81876, 6.711773, 19.165783], atol=0.0001)
+            reading_times, [16.1442, 10.4003, 6.6620, 16.0906 + 1.3748], atol=0.0001)
 
     @pytest.mark.memory_intense
     def test_multiword_list_input(self):
