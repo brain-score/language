@@ -156,7 +156,7 @@ class HuggingfaceSubject(ArtificialSubject):
         # `base_output.logits` is (batch_size, sequence_length, vocab_size)
         logits = base_output.logits.squeeze(dim=0)
 
-        FIRST_TOKEN_READING_TIME = 0
+        FIRST_TOKEN_READING_TIME = np.nan
         if logits.shape[0] <= 1:  # sequence_length indicates we have only seen single word
             # since we have no context, we can't predict the next word
             # attempt to resolve by assuming a fixed reading time for the first word
@@ -165,17 +165,14 @@ class HuggingfaceSubject(ArtificialSubject):
         # get expectation (logits), shifted left by 1
         predicted_logits = logits[-self.current_tokens['input_ids'].shape[-1] - 1: - 1, :].contiguous()
         actual_tokens = self.current_tokens['input_ids'].squeeze(dim=0).contiguous()
-        first_token_addition = 0
         if actual_tokens.shape[0] == predicted_logits.shape[0] + 1:  # multiple tokens for first model input
             actual_tokens = actual_tokens[1:]  # we have no prior context to predict the 0th token
-            first_token_addition = FIRST_TOKEN_READING_TIME  # add the expected reading time for 0th token (see above)
 
         # assume that reading time is additive, i.e. reading time of multiple tokens is
         # the sum of the surprisals of each individual token.
         # Note that this implementation similarly sums over the surprisal of multiple words,
         # e.g. for the surprisal of an entire sentence.
-        cross_entropy = F.cross_entropy(predicted_logits, actual_tokens, reduction='sum') / np.log(2) \
-                        + first_token_addition
+        cross_entropy = F.cross_entropy(predicted_logits, actual_tokens, reduction='sum') / np.log(2)
         return cross_entropy
 
     def predict_next_word(self, base_output: CausalLMOutput):

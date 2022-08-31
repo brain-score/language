@@ -32,7 +32,7 @@ class TestReadingTimes:
         model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)['behavior']
         np.testing.assert_allclose(
-            reading_times, [0, 19.260605, 12.721411, 12.083241, 10.876629, 3.678278, 2.102749, 11.961533], atol=0.0001)
+            reading_times, [np.nan, 19.260605, 12.721411, 12.083241, 10.876629, 3.678278, 2.102749, 11.961533], atol=0.0001)
 
     @pytest.mark.memory_intense
     def test_multitoken_words(self):
@@ -61,7 +61,7 @@ class TestReadingTimes:
         model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)['behavior']
         np.testing.assert_allclose(
-            reading_times, [0, 8.422014, 11.861147 + 5.9755263], atol=0.0001)
+            reading_times, [np.nan, 8.422014, 11.861147 + 5.9755263], atol=0.0001)
 
     @pytest.mark.memory_intense
     def test_tokenizer_eos(self):
