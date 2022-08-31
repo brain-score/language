@@ -149,7 +149,7 @@ class HuggingfaceSubject(ArtificialSubject):
     def estimate_reading_times(self, base_output: CausalLMOutput):
         """
         :param base_output: the neural network's output
-        :return: cross entropy as a proxy for reading times, following Smith & Levy 2013
+        :return: surprisal (in bits) as a proxy for reading times, following Smith & Levy 2013
             (https://www.sciencedirect.com/science/article/pii/S0010027713000413)
         """
         import torch.nn.functional as F
@@ -171,7 +171,7 @@ class HuggingfaceSubject(ArtificialSubject):
             first_token_addition = FIRST_TOKEN_READING_TIME  # add the expected reading time for 0th token (see above)
 
         # assume that reading time is additive, i.e. reading time of multiple tokens is
-        # the sum of the perplexity of each individual token.
+        # the sum of the surprisals of each individual token.
         # Note that this implementation similarly sums over the surprisal of multiple words,
         # e.g. for the surprisal of an entire sentence.
         cross_entropy = F.cross_entropy(predicted_logits, actual_tokens, reduction='sum') / np.log(2) \
