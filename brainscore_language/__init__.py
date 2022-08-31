@@ -5,46 +5,46 @@ from brainscore_core.benchmarks import Benchmark
 from brainscore_core.metrics import Score, Metric
 from brainscore_language.artificial_subject import ArtificialSubject
 
-datasets: Dict[str, Type[Union[DataAssembly, Any]]] = {}
+data_registry: Dict[str, Type[Union[DataAssembly, Any]]] = {}
 """ Pool of available data """
 
-metrics: Dict[str, Type[Metric]] = {}
+metric_registry: Dict[str, Type[Metric]] = {}
 """ Pool of available metrics """
 
-benchmarks: Dict[str, Type[Benchmark]] = {}
+benchmark_registry: Dict[str, Type[Benchmark]] = {}
 """ Pool of available benchmarks """
 
-models: Dict[str, ArtificialSubject] = {}
+model_registry: Dict[str, Type[ArtificialSubject]] = {}
 """ Pool of available models """
 
 
 def load_dataset(identifier: str) -> Union[DataAssembly, Any]:
     # imports to load plugins until plugin system is implemented
-    from brainscore_language.plugins.wikitext_next_word_prediction import data
-    from brainscore_language.plugins.futrell2018 import data
-    from brainscore_language.plugins.pereira2018 import data
-    from brainscore_language.plugins.fedorenko2016 import data
-    from brainscore_language.plugins.blank2014 import data
+    from brainscore_language.data import wikitext
+    from brainscore_language.data import futrell2018
+    from brainscore_language.data import pereira2018
+    from brainscore_language.data import fedorenko2016
+    from brainscore_language.data import blank2014
 
-    return datasets[identifier]()
+    return data_registry[identifier]()
 
 
 def load_metric(identifier: str, *args, **kwargs) -> Metric:
     # imports to load plugins until plugin system is implemented
-    from brainscore_language.plugins.wikitext_next_word_prediction import metric
-    from brainscore_language.plugins.futrell2018 import metric
-    from brainscore_language.plugins.linear_predictivity import metric
+    from brainscore_language.metrics import accuracy
+    from brainscore_language.metrics import pearson_correlation
+    from brainscore_language.metrics import linear_predictivity
 
-    return metrics[identifier](*args, **kwargs)
+    return metric_registry[identifier](*args, **kwargs)
 
 
 def load_benchmark(identifier: str) -> Benchmark:
     # imports to load plugins until plugin system is implemented
-    from brainscore_language.plugins.wikitext_next_word_prediction import benchmark
-    from brainscore_language.plugins.futrell2018 import benchmark
-    from brainscore_language.plugins.pereira2018 import benchmark
+    from brainscore_language.benchmarks import wikitext_next_word
+    from brainscore_language.benchmarks import futrell2018
+    from brainscore_language.benchmarks import pereira2018
 
-    return benchmarks[identifier]()
+    return benchmark_registry[identifier]()
 
 
 def load_model(identifier: str) -> ArtificialSubject:
