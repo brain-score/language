@@ -53,6 +53,35 @@ class TestReadingTimes:
         reading_times = model.digest_text(text)['behavior']
         np.testing.assert_allclose(reading_times, [44.06524, 14.554907, 14.064276], atol=0.0001)
 
+    @pytest.mark.memory_intense
+    def test_punct(self):
+        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
+        text = ['fox', 'is', 'quick.']
+        logging.info(f'Running {model.identifier()} with text "{text}"')
+        model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
+        reading_times = model.digest_text(text)['behavior']
+        np.testing.assert_allclose(
+            reading_times, [0, 8.422014, 11.861147 + 5.9755263], atol=0.0001)
+
+    @pytest.mark.memory_intense
+    def test_tokenizer_eos(self):
+        """
+        Test model outputs for a model whose tokenizer inserts EOS/BOS tokens.
+        """
+        model = HuggingfaceSubject(model_id='xlm-roberta-base', region_layer_mapping={})
+        text = ['the quick brown fox', 'jumps over', 'the lazy dog']
+        # expected tokenization:
+        # ['<s>', '▁The', '▁quick', '▁brown', '▁', 'fox', '▁jump', 's', '▁over', '▁the',
+        #  '▁la', 'zy', '▁dog', '</s>']
+        logging.info(f'Running {model.identifier()} with text "{text}"')
+        model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
+        reading_times = model.digest_text(text)['behavior']
+        np.testing.assert_allclose(
+            reading_times, [30.082321 + 20.296963 + 15.74586 + 8.194325 + 14.685713,
+                            20.900454 + 10.129476 + 35.79937,
+                            22.446146 + 28.266293 + 21.005472 + 21.539526 + 15.054998],
+            atol=0.0001)
+
 
 class TestNextWord:
     @pytest.mark.parametrize('model_identifier, expected_next_word', [
