@@ -1,17 +1,17 @@
 language: python
 python:
-- "3.8"
+  - "3.8"
 install:
-- python -m pip install -e ".[test]"
-# install conda for plugin runner
-- wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-- bash miniconda.sh -b -p $HOME/miniconda
-- source "$HOME/miniconda/etc/profile.d/conda.sh"
-- hash -r
-- conda config --set always_yes yes --set changeps1 no
-- conda update -q conda
-- conda info -a
+  - python -m pip install -e ".[test]"
+  # install conda for plugin runner
+  - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - source "$HOME/miniconda/etc/profile.d/conda.sh"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda info -a
 
 script:
-- pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow"
-- python brainscore_language/plugins/test_plugins.py
+  - pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow"
+  - python brainscore_language/plugin_management/test_plugins.py
