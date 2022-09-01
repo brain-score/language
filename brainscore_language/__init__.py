@@ -51,7 +51,9 @@ def load_model(identifier: str) -> ArtificialSubject:
     # imports to load plugins until plugin system is implemented
     from brainscore_language.models.gpt import model
 
-    return model_registry[identifier]()
+    model = model_registry[identifier]()
+    model.identifier = identifier
+    return model
 
 
 def score(model_identifier: str, benchmark_identifier: str) -> Score:
