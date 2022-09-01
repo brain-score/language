@@ -8,8 +8,8 @@ from brainscore_core.benchmarks import BenchmarkBase
 from brainscore_core.metrics import Score, Metric
 from brainscore_language import load_dataset, load_metric, benchmark_registry
 from brainscore_language.artificial_subject import ArtificialSubject
-from ...utils import attach_presentation_meta
-from ...utils.ceiling import ceiling_normalize
+from brainscore_language.utils import attach_presentation_meta
+from brainscore_language.utils.ceiling import ceiling_normalize
 
 logger = logging.getLogger(__name__)
 
