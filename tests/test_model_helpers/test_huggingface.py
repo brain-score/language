@@ -15,7 +15,7 @@ class TestReadingTimes:
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
         model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_time = model.digest_text('the')['behavior']
-        assert reading_time == 0
+        assert np.isnan(reading_time)
 
     @pytest.mark.memory_intense
     def test_multiple_words(self):
@@ -32,7 +32,8 @@ class TestReadingTimes:
         model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)['behavior']
         np.testing.assert_allclose(
-            reading_times, [np.nan, 19.260605, 12.721411, 12.083241, 10.876629, 3.678278, 2.102749, 11.961533], atol=0.0001)
+            reading_times, [np.nan, 19.260605, 12.721411, 12.083241, 10.876629, 3.678278, 2.102749, 11.961533],
+            atol=0.0001)
 
     @pytest.mark.memory_intense
     def test_multitoken_words(self):
@@ -77,10 +78,7 @@ class TestReadingTimes:
         model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)['behavior']
         np.testing.assert_allclose(
-            reading_times, [30.082321 + 20.296963 + 15.74586 + 8.194325 + 14.685713,
-                            20.900454 + 10.129476 + 35.79937,
-                            22.446146 + 28.266293 + 21.005472 + 21.539526 + 15.054998],
-            atol=0.0001)
+            reading_times, [139.66634, 111.14671, 136.64108], atol=0.0001)
 
 
 class TestNextWord:
