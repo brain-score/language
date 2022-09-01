@@ -27,7 +27,7 @@ class TestBenchmark:
         reading_times = RandomState(0).random(10256)
         dummy_model = TestBenchmark.DummyModel(reading_times=reading_times)
         score = benchmark(dummy_model)
-        assert score == approx(0.0098731 / .858, abs=0.001)
+        assert score == approx(0.00853059 / .858, abs=0.001)
 
     def test_exact(self):
         benchmark = load_benchmark('Futrell2018-pearsonr')
