@@ -276,7 +276,7 @@ For instance, you might run:
 
 .. code-block:: python
 
-    model_score = score(model_identifier='distilgpt2', benchmark_identifier='my_benchmark')
+    model_score = score(model_identifier='distilgpt2', benchmark_identifier='benchmarkid-metricid')
 
 Unit tests
 ----------
