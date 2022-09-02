@@ -1,6 +1,5 @@
 .. _new_benchmark_tutorial:
 
-
 **********************
 New Benchmark Tutorial
 **********************
@@ -176,6 +175,8 @@ Structure
 
 A benchmark runs the experiment on a (model) subject candidate in the :code:`__call__` method,
 and compares model predictions against experimental data.
+All interactions with the model are via methods defined in the :doc:`ArtificialSubject <./artificial_subject>` interface
+-- this allows all present and future models to be tested on your benchmark.
 
 For example:
 
