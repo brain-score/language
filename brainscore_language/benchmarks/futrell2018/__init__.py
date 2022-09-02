@@ -8,7 +8,8 @@ from brainscore_core.benchmarks import BenchmarkBase
 from brainscore_core.metrics import Score, Metric
 from brainscore_language import load_dataset, load_metric, benchmark_registry
 from brainscore_language.artificial_subject import ArtificialSubject
-from ...utils.ceiling import ceiling_normalize
+from brainscore_language.utils import attach_presentation_meta
+from brainscore_language.utils.ceiling import ceiling_normalize
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +38,16 @@ class Futrell2018Pearsonr(BenchmarkBase):
             bibtex=self.data.bibtex)
 
     def __call__(self, candidate: ArtificialSubject) -> Score:
+        # run experiment
         candidate.perform_behavioral_task(ArtificialSubject.Task.reading_times)
         stimuli = self.data['word'].values
         predictions = candidate.digest_text(stimuli)['behavior']
-        targets = self.data.mean('subject')  # compare to "average human"
+        attach_presentation_meta(predictions, self.data['presentation'])
+        # exclude first words
+        predictions = predictions[predictions['word_within_sentence_id'] != 1]
+        targets = self.data[self.data['word_within_sentence_id'] != 1]
+        targets = targets.mean('subject')  # compare to "average human"
+        # score
         raw_score = self.metric(predictions, targets)
         score = ceiling_normalize(raw_score, self.ceiling)
         return score
