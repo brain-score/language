@@ -272,6 +272,7 @@ Run the `score function <https://brain-score-language.readthedocs.io/en/latest/i
 passing in the desired model identifier(s) and the identifier for your benchmark.
 
 For instance, you might run:
+
 .. code-block:: python
 
     model_score = score(model_identifier='distilgpt2', benchmark_identifier='my_benchmark')
