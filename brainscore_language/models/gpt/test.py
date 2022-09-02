@@ -7,10 +7,10 @@ from brainscore_language.artificial_subject import ArtificialSubject
 
 @pytest.mark.memory_intense
 @pytest.mark.parametrize('model_identifier, expected_reading_times', [
-    ('distilgpt2', [6.1768091e+02, 3.5762270e+04, 3.1096322e+04, 1.7372783e+04,
-                    1.8824682e+06, 7.3022788e+03, 6.1768091e+02, 5.1282520e+06]),
-    ('gpt2-xl', [1.2396754e+04, 3.3883262e+04, 1.0283889e+04, 3.5502209e+02,
-                 1.0453620e+08, 2.1390867e+03, 1.2396754e+04, 2.0912675e+08]),
+    ('distilgpt2', [np.nan, 19.260605, 12.721411, 12.083241,
+                    10.876629, 3.678278, 2.102749, 11.961533]),
+    ('gpt2-xl', [np.nan, 1.378484e+01, 6.686095e+00, 2.284407e-01,
+                 7.538393e-01, 6.105860e-03, 2.644155e-02, 4.411311e-03]),
 ])
 def test_reading_times(model_identifier, expected_reading_times):
     model = load_model(model_identifier)
@@ -22,8 +22,8 @@ def test_reading_times(model_identifier, expected_reading_times):
 
 @pytest.mark.memory_intense
 @pytest.mark.parametrize('model_identifier, expected_next_words', [
-    ('distilgpt2', ['es', ' the', ',']),
-    ('gpt2-xl', [' jumps', ' the', ',']),
+    ('distilgpt2', ['es', 'the', 'fox']),
+    ('gpt2-xl', ['jumps', 'the', 'dog']),
 ])
 def test_next_word(model_identifier, expected_next_words):
     model = load_model(model_identifier)
