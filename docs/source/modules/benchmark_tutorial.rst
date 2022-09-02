@@ -52,6 +52,7 @@ The following is an excerpt from the
 `Futrell2018 data packaging <https://github.com/brain-score/language/blob/3e6fff2fda528f06cf5ffb3c5474f81acfa91ffe/brainscore_language/data/futrell2018/data_packaging.py>`_.
 
 .. code-block:: python
+
     reading_times = parse_experiment_data(...)
     # ... obtain as much metadata as we can ...
 
@@ -71,6 +72,7 @@ The following is an excerpt from the
 `Pereira2018 data packaging <https://github.com/brain-score/language/blob/3e6fff2fda528f06cf5ffb3c5474f81acfa91ffe/brainscore_language/data/futrell2018/data_packaging.py>`_.
 
 .. code-block:: python
+
     reading_times = parse_experiment_data(...)
     # ... obtain as much metadata as we can ...
 
@@ -91,6 +93,7 @@ So that your data can be accessed via an identifier, you need to define an endpo
 For instance, if your data is on S3, the plugin might look as follows:
 
 .. code-block:: python
+
     def load_assembly() -> BehavioralAssembly:
         assembly = load_from_s3(
             identifier="Futrell2018",
@@ -110,6 +113,7 @@ For instance, here is a small unit test example validating the dimensions of a r
 
 
 .. code-block:: python
+
     def test_shape(self):
         assembly = load_dataset('Futrell2018')
         assert len(assembly['presentation']) == 10256
@@ -131,6 +135,7 @@ Measurements could for instance be reading times, or fMRI recordings.
 A simple metric could be the pearson correlation of two measurements:
 
 .. code-block:: python
+
     class PearsonCorrelation(Metric):
         def __call__(self, assembly1: DataAssembly, assembly2: DataAssembly) -> Score:
             rvalue, pvalue = pearsonr(assembly1, assembly2)
@@ -150,6 +155,7 @@ For instance, the following is an excerpt from the
 `pearson correlation tests <https://github.com/brain-score/language/blob/3e6fff2fda528f06cf5ffb3c5474f81acfa91ffe/brainscore_language/metrics/pearson_correlation/test.py>`_.
 
 .. code-block:: python
+
     def test_weak_correlation():
         a1 = [1, 2, 3, 4, 5]
         a2 = [3, 1, 6, 1, 2]
@@ -173,6 +179,7 @@ and compares model predictions against experimental data.
 For example:
 
 .. code-block:: python
+
     class MyBenchmark(BenchmarkBase):
         def __init__(self):
             self.data = load_dataset('mydata')
@@ -201,6 +208,7 @@ For instance, here is a sample excerpt from the
 comparing reading times:
 
 .. code-block:: python
+
     class Futrell2018Pearsonr(BenchmarkBase):
         ...
 
@@ -227,6 +235,7 @@ For instance, here is a sample excerpt from the
 linearly comparing fMRI activity:
 
 .. code-block:: python
+
     class Pereira2018Linear(BenchmarkBase):
         ...
 
@@ -264,6 +273,7 @@ passing in the desired model identifier(s) and the identifier for your benchmark
 
 For instance, you might run:
 .. code-block:: python
+
     model_score = score(model_identifier='distilgpt2', benchmark_identifier='my_benchmark')
 
 Unit tests
@@ -274,6 +284,7 @@ For instance, the following is an excerpt from the
 `Futrell2018 tests <https://github.com/brain-score/language/blob/85afdae5294d0613fb51c33333aa76c52fc0849e/brainscore_language/benchmarks/futrell2018/test.py>`_:
 
 .. code-block:: python
+
     class DummyModel(ArtificialSubject):
         def __init__(self, reading_times):
             self.reading_times = reading_times
