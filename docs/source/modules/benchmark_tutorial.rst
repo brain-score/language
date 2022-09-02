@@ -19,6 +19,7 @@ and tests model predictions against the experimentally observed data,
 using a similarity metric.
 
 In other words, a benchmark consists of three things (each of which is a plugin):
+
 1. experimental paradigm
 2. biological data (neural/behavioral)
 3. similarity metric
