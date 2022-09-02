@@ -39,7 +39,7 @@ You can contribute new data by submitting a data plugin.
 If you are building a benchmark using existing data, you can skip this step.
 
 We use the `BrainIO <https://github.com/brain-score/brainio>`_ format to organize data.
-Datasets in brainio are called _assemblies_ and are based on `xarray <https://xarray.dev>`_,
+Datasets in brainio are called *assemblies* and are based on `xarray <https://xarray.dev>`_,
 a multi-dimensional version of pandas, which allows for metadata on numpy arrays of arbitrary dimensionality.
 
 Most assemblies contain a :code:`presentation` dimension for the stimuli that were presented, as well as potentially other
