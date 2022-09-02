@@ -321,6 +321,7 @@ and to make them accessible for continued model evaluation,
 please submit them to the platform.
 
 There are two main ways to do that:
+
 1. By uploading a zip file on the website
 2. By submitting a github pull request with the proposed changes
 
