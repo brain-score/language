@@ -1,3 +1,4 @@
+import pytest_check as check
 import shutil
 import subprocess
 import warnings
@@ -29,6 +30,7 @@ class PluginTestRunner:
         completed_process = subprocess.run(f"bash {Path(__file__).parent}/run_plugin.sh \
 			{self.plugin_directory} {self.plugin_name} \
 			{str(self.has_requirements).lower()}", shell=True)
+        check.equal(completed_process, 0)
         return completed_process
 
     def teardown(self):

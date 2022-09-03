@@ -13,7 +13,7 @@ class TestData:
     def test_language(self):
         assembly = load_dataset('Pereira2018.language')
         assert set(assembly['experiment'].values) == {'243sentences', '384sentences'}
-        assert len(assembly['presentation']) == 243 + 384
+        assert len(assembly['presentation']) == 243 + 384 + 1910281
         assert len(set(assembly['stimulus'].values)) == 243 + 384
         assert 'The concert pianist went blind in adulthood.' in assembly['stimulus'].values
         assert len(set(assembly['subject'].values)) == 10
