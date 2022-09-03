@@ -23,11 +23,12 @@ class GensimKeyedVectorsSubject(ArtificialSubject):
     """
 
     def __init__(self, identifier: str, weights_file: Union[str, Path], vector_size: int,
-                 weights_file_binary=False, layer_name: str = 'projection',
-                 average_representations=mean_over_words):
+                 weights_file_binary: bool = False, weights_file_no_header: bool = False,
+                 layer_name: str = 'projection', average_representations=mean_over_words):
         self._identifier = identifier
         self._logger = logging.getLogger(self.__class__.__name__)
-        self._model = KeyedVectors.load_word2vec_format(weights_file, binary=weights_file_binary)
+        self._model = KeyedVectors.load_word2vec_format(weights_file,
+                                                        binary=weights_file_binary, no_header=weights_file_no_header)
         self._vector_size = vector_size
         self._layer_name = layer_name
         self._average_representations = average_representations
