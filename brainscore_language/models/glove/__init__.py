@@ -1,18 +1,25 @@
-class Glove(KeyedVectorModel):
+import logging
+from pathlib import Path
+
+from gensim.scripts.glove2word2vec import glove2word2vec
+
+from brainscore_language import model_registry, ArtificialSubject
+from brainscore_language.model_helpers.embedding import GensimKeyedVectorsSubject
+
+_logger = logging.getLogger(__name__)
+
+
+def glove() -> ArtificialSubject:
     """
     Pennington et al., 2014
     http://www.aclweb.org/anthology/D14-1162
     """
+    weights_file = Path(__file__).parent / 'glove.840B.300d.txt'
+    word2vec_weightsfile = weights_file.parent / (weights_file.name + '.word2vec')
+    if not word2vec_weightsfile.is_file():
+        _logger.info(f"Converting weights {weights_file} to word2vec format")
+        glove2word2vec(weights_file, word2vec_weightsfile)
+    return GensimKeyedVectorsSubject(identifier='glove', weights_file=word2vec_weightsfile, vector_size=300)
 
-    identifier = 'glove'
 
-    def __init__(self, weights='glove.840B.300d.txt', random_embeddings=False, **kwargs):
-        from gensim.scripts.glove2word2vec import glove2word2vec
-        weights_file = os.path.join(_ressources_dir, 'glove', weights)
-        word2vec_weightsfile = weights_file + '.word2vec'
-        if not os.path.isfile(word2vec_weightsfile):
-            glove2word2vec(weights_file, word2vec_weightsfile)
-        super(Glove, self).__init__(
-            identifier=self.identifier + ('-untrained' if random_embeddings else ''), weights_file=word2vec_weightsfile,
-            # std from https://gist.github.com/MatthieuBizien/de26a7a2663f00ca16d8d2558815e9a6#file-fast_glove-py-L16
-            random_std=.01, random_embeddings=random_embeddings, **kwargs)
+model_registry['glove'] = glove

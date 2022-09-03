@@ -1,105 +1,96 @@
+import copy
+import functools
+import logging
+from pathlib import Path
+from typing import Union, List, Dict, Tuple
 
-class KeyedVectorModel(BrainModel, TaskModel):
+import numpy as np
+from gensim.models.keyedvectors import KeyedVectors
+from numpy.core import defchararray
+
+from brainio.assemblies import NeuroidAssembly, merge_data_arrays
+from brainscore_language.artificial_subject import ArtificialSubject
+
+
+def mean_over_words(sentence_features):
+    sentence_mean = np.mean(sentence_features, axis=0)  # average across words within a sentence
+    return sentence_mean
+
+
+class GensimKeyedVectorsSubject(ArtificialSubject):
     """
-    Lookup-table-like models where each word has an embedding.
-    To retrieve the sentence activation, we take the mean of the word embeddings.
+    Lookup-table models in the gensim library using KeyedVectors.
     """
 
-    available_layers = ['projection']
-    default_layers = available_layers
-
-    def __init__(self, identifier, weights_file, random_embeddings=False, random_std=1, binary=False):
-        super().__init__()
+    def __init__(self, identifier: str, weights_file: Union[str, Path], vector_size: int,
+                 weights_file_binary=False, layer_name: str = 'projection',
+                 average_representations=mean_over_words):
+        self._identifier = identifier
         self._logger = logging.getLogger(self.__class__.__name__)
-        from gensim.models.keyedvectors import KeyedVectors
-        self._model = KeyedVectors.load_word2vec_format(weights_file, binary=binary)
-        self._vocab = self._model.vocab
-        self._index2word_set = set(self._model.index2word)
-        if random_embeddings:
-            self._logger.debug(f"Replacing embeddings with random N(0, {random_std})")
-            random_embedding = RandomState(0).randn(len(self._index2word_set), len(self._model['the'])) * random_std
-            self._model = {word: random_embedding[i] for i, word in enumerate(sorted(self._index2word_set))}
-        self._extractor = ActivationsExtractorHelper(identifier=identifier, get_activations=self._get_activations,
-                                                     reset=lambda: None)
-        self._extractor.insert_attrs(self)
+        self._model = KeyedVectors.load_word2vec_format(weights_file, binary=weights_file_binary)
+        self._vector_size = vector_size
+        self._layer_name = layer_name
+        self._average_representations = average_representations
+        self.neural_recordings: List[Tuple] = []  # list of `(recording_target, recording_type)` tuples to record
 
-    def __call__(self, stimuli, *args, average_sentence=True, **kwargs):
-        if self.mode == BrainModel.Modes.recording:
-            return _call_conditional_average(stimuli, *args, extractor=self._extractor,
-                                             average_sentence=average_sentence, sentence_averaging=word_mean, **kwargs)
-        elif self.mode == TaskModel.Modes.tokens_to_features:
-            stimuli = " ".join(self._model.index2word[index] for index in stimuli)
-            return self._encode_sentence(stimuli, *args, **kwargs)
+    def identifier(self):
+        return self._identifier
 
-    def _get_activations(self, sentences, layers):
-        np.testing.assert_array_equal(layers, ['projection'])
-        encoding = [np.array(self._encode_sentence(sentence)) for sentence in sentences]
-        # expand "batch" dimension for compatibility with transformers (for sentence-word-aggregation)
-        encoding = [np.expand_dims(sentence_encodings, 0) for sentence_encodings in encoding]
-        return {'projection': encoding}
+    def perform_behavioral_task(self, task: ArtificialSubject.Task):
+        raise NotImplementedError()
 
-    def _encode_sentence(self, sentence):
-        words = sentence.split()
+    def perform_neural_recording(self, recording_target: ArtificialSubject.RecordingTarget,
+                                 recording_type: ArtificialSubject.RecordingType):
+        self.neural_recordings.append((recording_target, recording_type))
+
+    def digest_text(self, text: Union[str, List[str]]) -> Dict[str, NeuroidAssembly]:
+        assert len(self.neural_recordings) > 0, "Unspecified what to output when not recording"
+
+        if type(text) == str:
+            text = [text]
+
+        output = {'behavior': [], 'neural': []}
+        for part_number, text_part in enumerate(text):
+            representations = self._encode_sentence(text_part)  # encode every word
+            representations = self._average_representations(representations)  # reduce to single representation
+            # package
+            stimuli_coords = {'context': ('presentation', [text_part]),
+                              'part_number': ('presentation', [part_number])}
+            neural_assembly = self.package_representations(representations, stimuli_coords=stimuli_coords)
+            output['neural'].append(neural_assembly)
+        output['neural'] = merge_data_arrays(output['neural']).sortby('part_number') if output['neural'] else None
+        return output
+
+    def _encode_sentence(self, text_part: str) -> np.ndarray:
+        words = text_part.split()
         feature_vectors = []
         for word in words:
-            if word in self._index2word_set:
+            try:
                 feature_vectors.append(self._model[word])
-            else:
+            except KeyError:  # not in vocabulary
                 self._logger.warning(f"Word {word} not present in model")
-                feature_vectors.append(np.zeros((300,)))
-        return feature_vectors
+                feature_vectors.append(np.zeros((self._vector_size,)))
+        return np.array(feature_vectors)
 
-    def tokenize(self, text, vocab_size=None):
-        vocab_size = vocab_size or self.vocab_size
-        tokens = [self._vocab[word].index for word in text.split() if word in self._vocab
-                  and self._vocab[word].index < vocab_size]  # only top-k vocab words
-        return np.array(tokens)
-
-    def _sent_mean(self, sentence_features):
-        sent_mean = np.mean(sentence_features, axis=0)  # average across words within a sentence
-        return sent_mean
-
-    def glue_dataset(self, examples, label_list, output_mode):
-        import torch
-        from torch.utils.data import TensorDataset
-        label_map = {label: i for i, label in enumerate(label_list)}
-        features = []
-
-        if examples[0].text_b is not None:
-            text_a = [example.text_a for example in examples]
-            text_b = [example.text_b for example in examples]
-            sents1 = [self._sent_mean(self._encode_sentence(sent)) for sent in tqdm(text_a)]
-            sents2 = [self._sent_mean(self._encode_sentence(sent)) for sent in tqdm(text_b)]
-            for sent1, sent2 in zip(sents1, sents2):
-                sent1 = torch.tensor(sent1, dtype=torch.float64)
-                sent2 = torch.tensor(sent2, dtype=torch.float64)
-                if np.isnan(sent1).all():
-                    sent1 = torch.ones(sent2.shape, dtype=sent1.dtype)
-                if np.isnan(sent2).all():
-                    sent2 = torch.ones(sent1.shape, dtype=sent2.dtype)
-                f = torch.cat([sent1, sent2, torch.abs(sent1 - sent2), sent1 * sent2], -1)
-                features.append(PytorchWrapper._tensor_to_numpy(f))
-            all_features = torch.tensor(features).float()
-        else:
-            text_a = [example.text_a for example in examples]
-            sents = [self._sent_mean(self._encode_sentence(sent)) for sent in tqdm(text_a)]
-            for sent in sents:
-                sent = torch.tensor(sent)
-                features.append(PytorchWrapper._tensor_to_numpy(sent))
-            all_features = torch.tensor(features).float()
-
-        if output_mode == "classification":
-            all_labels = torch.tensor([label_map[example.label] for example in examples], dtype=torch.long)
-        elif output_mode == "regression":
-            all_labels = torch.tensor([float(example.label) for example in examples], dtype=torch.float)
-
-        dataset = TensorDataset(all_features, all_labels)
-        return dataset
-
-    @property
-    def vocab_size(self):
-        return len(self._vocab)
-
-    @property
-    def features_size(self):
-        return 300
+    def package_representations(self, representation_values: np.ndarray, stimuli_coords):
+        num_units = representation_values.shape[-1]
+        neuroid_coords = {
+            'layer': ('neuroid', [self._layer_name] * len(representation_values)),
+            'neuron_number_in_layer': ('neuroid', np.arange(num_units)),
+        }
+        neuroid_coords['neuroid_id'] = 'neuroid', functools.reduce(defchararray.add, [
+            neuroid_coords['layer'][1], '--', neuroid_coords['neuron_number_in_layer'][1].astype(str)])
+        layer_representations = NeuroidAssembly(
+            [representation_values],
+            coords={**stimuli_coords, **neuroid_coords},
+            dims=['presentation', 'neuroid'])
+        # repeat layer representations for every recording
+        representations = []
+        for recording_target, recording_type in self.neural_recordings:
+            current_representations = copy.deepcopy(layer_representations)
+            current_representations['recording_target'] = 'neuroid', [recording_target] * num_units
+            current_representations['recording_type'] = 'neuroid', [recording_type] * num_units
+            current_representations = type(current_representations)(current_representations)  # reindex
+            representations.append(current_representations)
+        representations = merge_data_arrays(representations)
+        return representations

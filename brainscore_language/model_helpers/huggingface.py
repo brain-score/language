@@ -118,23 +118,26 @@ class HuggingfaceSubject(ArtificialSubject):
         for (recording_target, recording_type) in self.neural_recordings:
             layer_name = self.region_layer_mapping[recording_target]
             layer = self._get_layer(layer_name)
-            hook = self._register_hook(layer, name=(recording_target, layer_name),
+            hook = self._register_hook(layer, key=(recording_target, recording_type, layer_name),
                                        target_dict=layer_representations)
             hooks.append(hook)
         return hooks, layer_representations
 
-    def output_to_representations(self, layer_representations, stimuli_coords):
+    def output_to_representations(self, layer_representations: Dict[Tuple[str, str, str], np.ndarray], stimuli_coords):
         representation_values = np.concatenate([
             # Choose to use last token (-1) of values[batch, token, unit] to represent passage.
             values[:, -1:, :].squeeze(0) for values in layer_representations.values()],
             axis=-1)  # concatenate along neuron axis
         neuroid_coords = {
             'layer': ('neuroid', np.concatenate([[layer] * values.shape[-1]
-                                                 for (recording_target, layer), values in
-                                                 layer_representations.items()])),
+                                                 for (recording_target, recording_type, layer), values
+                                                 in layer_representations.items()])),
             'region': ('neuroid', np.concatenate([[recording_target] * values.shape[-1]
-                                                  for (recording_target, layer), values in
-                                                  layer_representations.items()])),
+                                                  for (recording_target, recording_type, layer), values
+                                                  in layer_representations.items()])),
+            'recording_type': ('neuroid', np.concatenate([[recording_type] * values.shape[-1]
+                                                          for (recording_target, recording_type, layer), values
+                                                          in layer_representations.items()])),
             'neuron_number_in_layer': ('neuroid', np.concatenate(
                 [np.arange(values.shape[-1]) for values in layer_representations.values()])),
         }
@@ -204,11 +207,11 @@ class HuggingfaceSubject(ArtificialSubject):
 
     def _register_hook(self,
                        layer: torch.nn.Module,
-                       name: Union[str, Tuple[str, str]],
+                       key: Tuple[str, str, str],
                        target_dict: dict) -> RemovableHandle:
-
-        def hook_function(_layer: torch.nn.Module, _input, output: torch.Tensor, name: str = name):
-            target_dict[name] = self._tensor_to_numpy(output)
+        # instantiate parameters to function defaults; otherwise they would change on next function call
+        def hook_function(_layer: torch.nn.Module, _input, output: torch.Tensor, key=key):
+            target_dict[key] = self._tensor_to_numpy(output)
 
         hook = layer.register_forward_hook(hook_function)
         return hook
