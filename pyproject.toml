@@ -55,5 +55,7 @@ filterwarnings = [
 ]
 
 markers = [
-    "memory_intense"
+    "memory_intense",
+    "travis_slow",
+    "slow",
 ]

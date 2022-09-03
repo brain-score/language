@@ -2,8 +2,10 @@ import numpy as np
 
 from brainscore_language import load_model
 from brainscore_language.artificial_subject import ArtificialSubject
+import pytest
 
 
+@pytest.mark.travis_slow
 def test_neural():
     model_identifier = 'glove-840b'
     expected_feature_size = 300
