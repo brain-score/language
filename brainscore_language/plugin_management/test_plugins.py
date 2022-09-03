@@ -30,7 +30,7 @@ class PluginTestRunner:
         completed_process = subprocess.run(f"bash {Path(__file__).parent}/run_plugin.sh \
 			{self.plugin_directory} {self.plugin_name} \
 			{str(self.has_requirements).lower()}", shell=True)
-        check.equal(completed_process, 0)
+        check.equal(completed_process.returncode, 0)
         return completed_process
 
     def teardown(self):
@@ -39,7 +39,7 @@ class PluginTestRunner:
         if completed_process.returncode != 0:  # directly remove env dir if conda fails
             try:
                 shutil.rmtree(self.plugin_env_path)
-                completed_process = 0
+                completed_process.returncode = 0
             except Exception as e:
                 warnings.warn(f"conda env {self.plugin_name} removal failed and must be manually deleted.")
         return completed_process
