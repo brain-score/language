@@ -19,12 +19,10 @@ def _prepare_weights(name):
         zip_filename = f"{name}.zip"
         url = f'https://nlp.stanford.edu/data/{zip_filename}'
         _logger.info(f"Downloading weights zip from {url} to {zip_filename}")
-        print(f"Downloading weights zip from {url} to {zip_filename}")
         urlretrieve(url, zip_filename)
 
         # unzip
         _logger.debug(f"Unzipping {zip_filename}")
-        print(f"Unzipping {zip_filename}")
         weights_base_directory = Path(__file__).parent
         with zipfile.ZipFile(zip_filename, 'r') as zip_ref:
             zip_ref.extractall(weights_base_directory)
@@ -33,11 +31,9 @@ def _prepare_weights(name):
         # convert format
         weights_file = weights_base_directory / f"{name}.txt"
         _logger.debug(f"Converting weights {weights_file} to word2vec format")
-        print(f"Converting weights {weights_file} to word2vec format")
         glove2word2vec(weights_file, word2vec_weightsfile)
         os.remove(weights_file)
     _logger.info(f"Using weights {word2vec_weightsfile}")
-    print(f"Using weights {word2vec_weightsfile}")
     return word2vec_weightsfile
 
 
