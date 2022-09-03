@@ -5,7 +5,7 @@ from brainscore_language.artificial_subject import ArtificialSubject
 
 
 def test_neural():
-    model_identifier = 'glove'
+    model_identifier = 'glove-840b'
     expected_feature_size = 300
     model = load_model(model_identifier)
     text = ['the quick brown fox', 'jumps over', 'the lazy', 'dog']
