@@ -8,12 +8,13 @@ PLUGIN_TYPES = ['benchmarks', 'data', 'metrics', 'models']
 
 
 class PluginTestRunner:
-    def __init__(self, plugin_directory):
+    def __init__(self, plugin_directory, results):
         self.plugin_directory = plugin_directory
         self.plugin_type = Path(self.plugin_directory).parent.name
         self.plugin_name = self.plugin_type + '_' + Path(self.plugin_directory).name
         self.plugin_env_path = Path(self.get_conda_base()) / 'envs' / self.plugin_name
         self.has_requirements = (self.plugin_directory / 'requirements.txt').is_file()
+        self.results = results
 
     def __call__(self):
         self.validate_plugin()
@@ -31,6 +32,8 @@ class PluginTestRunner:
 			{self.plugin_directory} {self.plugin_name} \
 			{str(self.has_requirements).lower()}", shell=True)
         check.equal(completed_process.returncode, 0)
+        self.results.append(completed_process.returncode)
+
         return completed_process
 
     def teardown(self):
@@ -48,9 +51,13 @@ class PluginTestRunner:
 if __name__ == '__main__':
     # run tests for each plugin
     # requires test file ("test.py")
+    results = []
+
     for plugin_type in PLUGIN_TYPES:
         plugins_dir = Path(Path(__file__).parents[1], plugin_type)
         for plugin in plugins_dir.glob('[!._]*'):
             if plugin.is_dir():
-                plugin_test_runner = PluginTestRunner(plugin)
+                plugin_test_runner = PluginTestRunner(plugin, results)
                 plugin_test_runner()
+
+    assert sum(results) == 0

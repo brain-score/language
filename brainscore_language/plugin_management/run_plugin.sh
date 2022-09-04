@@ -19,3 +19,4 @@ fi
 
 output=`python -m pip install -e ".[test]" 2>&1` || echo $output
 pytest $PLUGIN_TEST_PATH
+exit $?
