@@ -60,4 +60,5 @@ if __name__ == '__main__':
                 plugin_test_runner = PluginTestRunner(plugin, results)
                 plugin_test_runner()
 
-    assert sum(results) == 0
+    num_failed = sum(results)
+    assert num_failed == 0, f"{num_failed} plugin tests failed"
