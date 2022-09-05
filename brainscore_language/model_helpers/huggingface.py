@@ -38,7 +38,8 @@ class HuggingfaceSubject(ArtificialSubject):
         self._logger = logging.getLogger(fullname(self))
         self.model_id = model_id
         self.region_layer_mapping = region_layer_mapping
-        self.basemodel = model if model is not None else AutoModelForCausalLM.from_pretrained(self.model_id)
+        self.basemodel = (model if model is not None else AutoModelForCausalLM.from_pretrained(self.model_id))
+        self.basemodel.to('cuda' if torch.cuda.is_available() else 'cpu')
         self.tokenizer = tokenizer if tokenizer is not None else AutoTokenizer.from_pretrained(self.model_id)
         self.current_tokens = None  # keep track of current tokens
 
@@ -74,10 +75,12 @@ class HuggingfaceSubject(ArtificialSubject):
         output = {'behavior': [], 'neural': []}
         number_of_tokens = 0
 
-        for part_number, text_part in enumerate(text):
+        from tqdm import tqdm
+        for part_number, text_part in enumerate(tqdm(text)):
             # tokenize
             context = ' '.join(text[:part_number + 1])  # build up context over items in the text
             context_tokens = self.tokenizer(context, truncation=True, return_tensors="pt")
+            context_tokens.to('cuda' if torch.cuda.is_available() else 'cpu')
             # keep track of tokens in current `text_part`
             self.current_tokens = {key: value[..., number_of_tokens:] for key, value in context_tokens.items()}
             number_of_tokens = context_tokens['input_ids'].shape[-1]
@@ -179,7 +182,7 @@ class HuggingfaceSubject(ArtificialSubject):
         # Note that this implementation similarly sums over the surprisal of multiple words,
         # e.g. for the surprisal of an entire sentence.
         cross_entropy = F.cross_entropy(predicted_logits, actual_tokens, reduction='sum') / np.log(2)
-        return cross_entropy
+        return cross_entropy.to('cpu')
 
     def predict_next_word(self, base_output: CausalLMOutput):
         """
