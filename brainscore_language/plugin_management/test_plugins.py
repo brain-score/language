@@ -56,10 +56,10 @@ if __name__ == '__main__':
     for plugin_type in PLUGIN_TYPES:
         plugins_dir = Path(Path(__file__).parents[1], plugin_type)
         for plugin in plugins_dir.glob('[!._]*'):
-            if plugin.is_dir() and str(plugin) == 'brainscore_language/models/gpt':
+            if plugin.is_dir():
                 plugin_test_runner = PluginTestRunner(plugin, results)
                 plugin_test_runner()
 
     plugins_with_errors = {k:v for k,v in results.items() if v == 1}
-    num_failed = len(plugins_with_errors)
-    assert num_failed == 0, f"\n{num_failed} plugin tests failed\n{plugins_with_errors}"
+    num_plugins_failed = len(plugins_with_errors)
+    assert num_plugins_failed == 0, f"\n{num_plugins_failed} plugin tests failed\n{plugins_with_errors}"
