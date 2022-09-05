@@ -1,4 +1,5 @@
 import functools
+import logging
 from collections import OrderedDict
 from typing import Union, List, Tuple, Dict, Callable
 
@@ -11,6 +12,7 @@ from transformers.modeling_outputs import CausalLMOutput
 
 from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly, merge_data_arrays
 from brainscore_language.artificial_subject import ArtificialSubject
+from brainscore_language.utils import fullname
 
 
 class HuggingfaceSubject(ArtificialSubject):
@@ -33,7 +35,7 @@ class HuggingfaceSubject(ArtificialSubject):
                 requested task output, given the basemodel's base output
                 (:class:`~transformers.modeling_outputs.CausalLMOutput`).
         """
-
+        self._logger = logging.getLogger(fullname(self))
         self.model_id = model_id
         self.region_layer_mapping = region_layer_mapping
         self.basemodel = model if model is not None else AutoModelForCausalLM.from_pretrained(self.model_id)
@@ -75,7 +77,7 @@ class HuggingfaceSubject(ArtificialSubject):
         for part_number, text_part in enumerate(text):
             # tokenize
             context = ' '.join(text[:part_number + 1])  # build up context over items in the text
-            context_tokens = self.tokenizer(context, return_tensors="pt")
+            context_tokens = self.tokenizer(context, truncation=True, return_tensors="pt")
             # keep track of tokens in current `text_part`
             self.current_tokens = {key: value[..., number_of_tokens:] for key, value in context_tokens.items()}
             number_of_tokens = context_tokens['input_ids'].shape[-1]
@@ -107,6 +109,7 @@ class HuggingfaceSubject(ArtificialSubject):
                 output['neural'].append(representations)
 
         # merge over text parts
+        self._logger.debug("Merging outputs")
         output['behavior'] = merge_data_arrays(output['behavior']).sortby('part_number') if output['behavior'] else None
         output['neural'] = merge_data_arrays(output['neural']).sortby('part_number') if output['neural'] else None
         return output
