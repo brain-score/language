@@ -11,7 +11,7 @@ DUMMY_PLUGIN_PATH = Path(__file__).parent / DUMMY_PLUGIN
 DUMMY_TYPE = Path(__file__).parent.name
 DUMMY_TESTFILE = DUMMY_PLUGIN_PATH / "test.py"
 DUMMY_REQUIREMENTS = DUMMY_PLUGIN_PATH / "requirements.txt"
-DUMMY_RESULTS = []
+DUMMY_RESULTS = {}
 
 
 class TestPluginTestRunner:

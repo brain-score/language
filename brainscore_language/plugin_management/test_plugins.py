@@ -32,7 +32,7 @@ class PluginTestRunner:
 			{self.plugin_directory} {self.plugin_name} \
 			{str(self.has_requirements).lower()}", shell=True)
         check.equal(completed_process.returncode, 0)
-        self.results.append(completed_process.returncode)
+        self.results[self.plugin_name] = (completed_process.returncode)
 
         return completed_process
 
@@ -51,7 +51,7 @@ class PluginTestRunner:
 if __name__ == '__main__':
     # run tests for each plugin
     # requires test file ("test.py")
-    results = []
+    results = {}
 
     for plugin_type in PLUGIN_TYPES:
         plugins_dir = Path(Path(__file__).parents[1], plugin_type)
@@ -60,5 +60,6 @@ if __name__ == '__main__':
                 plugin_test_runner = PluginTestRunner(plugin, results)
                 plugin_test_runner()
 
-    num_failed = sum(results)
-    assert num_failed == 0, f"{num_failed} plugin tests failed"
+    plugins_with_errors = [k for k,v in results.items() if v !=0]
+    num_failed = len(plugins_with_errors)
+    assert num_failed == 0, f"\n{num_failed} plugin tests failed:\n{plugins_with_errors}"
