@@ -18,5 +18,5 @@ else
 fi
 
 output=`python -m pip install -e ".[test]" 2>&1` || echo $output
-pytest $PLUGIN_TEST_PATH
+pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow" $PLUGIN_TEST_PATH
 exit $?
