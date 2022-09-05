@@ -73,8 +73,7 @@ class HuggingfaceSubject(ArtificialSubject):
         output = {'behavior': [], 'neural': []}
         number_of_tokens = 0
 
-        from tqdm import tqdm
-        for part_number, text_part in enumerate(tqdm(text)):
+        for part_number, text_part in enumerate(text):
             # tokenize
             context = ' '.join(text[:part_number + 1])  # build up context over items in the text
             context_tokens = self.tokenizer(context, return_tensors="pt")
