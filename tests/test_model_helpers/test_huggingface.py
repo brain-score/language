@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 import pytest
+from pytest import approx
 
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.model_helpers.huggingface import HuggingfaceSubject
@@ -69,7 +70,7 @@ class TestReadingTimes:
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
         model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_time = model.digest_text('the quick brown fox')['behavior']
-        assert reading_time == 44.06524
+        assert reading_time == approx(44.06524, abs=0.001)
 
     def test_list_input(self):
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
