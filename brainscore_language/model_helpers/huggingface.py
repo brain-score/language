@@ -80,11 +80,7 @@ class HuggingfaceSubject(ArtificialSubject):
         for part_number, text_part in enumerate(text):
             # tokenize
             context = ' '.join(text[:part_number + 1])  # build up context over items in the text
-            context_tokens = self.tokenizer(context, truncation=True, return_tensors="pt")
-            context_tokens.to('cuda' if torch.cuda.is_available() else 'cpu')
-            # keep track of tokens in current `text_part`
-            self.current_tokens = {key: value[..., number_of_tokens:] for key, value in context_tokens.items()}
-            number_of_tokens = context_tokens['input_ids'].shape[-1]
+            context_tokens, number_of_tokens = self._tokenize(context, number_of_tokens)
 
             # prepare recording hooks
             hooks, layer_representations = self._setup_hooks()
@@ -119,6 +115,21 @@ class HuggingfaceSubject(ArtificialSubject):
         output['neural'] = xr.concat(output['neural'], dim='presentation').sortby('part_number') \
             if output['neural'] else None
         return output
+
+    def _tokenize(self, context, num_previous_context_tokens):
+        """
+        Tokenizes the context, keeping track of the newly added tokens in `self.current_tokens`
+        """
+        context_tokens = self.tokenizer(context, truncation=True, return_tensors="pt")
+        context_tokens.to('cuda' if torch.cuda.is_available() else 'cpu')
+        # keep track of tokens in current `text_part`
+        overflowing_encoding: list = np.array(context_tokens.encodings).item().overflowing
+        num_overflowing = 0 if not overflowing_encoding else sum(len(overflow) for overflow in overflowing_encoding)
+        self.current_tokens = {key: value[..., num_previous_context_tokens - num_overflowing:]
+                               for key, value in context_tokens.items()}
+        assert all(torch.numel(value) > 0 for value in self.current_tokens.values()), "lost track of context tokens"
+        num_new_context_tokens = context_tokens['input_ids'].shape[-1] + num_overflowing
+        return context_tokens, num_new_context_tokens
 
     def _setup_hooks(self):
         """ set up the hooks for recording internal neural activity from the model (aka layer activations) """
