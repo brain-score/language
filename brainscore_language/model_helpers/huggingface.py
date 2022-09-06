@@ -5,12 +5,13 @@ from typing import Union, List, Tuple, Dict, Callable
 
 import numpy as np
 import torch
+import xarray as xr
 from numpy.core import defchararray
 from torch.utils.hooks import RemovableHandle
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.modeling_outputs import CausalLMOutput
 
-from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly, merge_data_arrays
+from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.utils import fullname
 
@@ -113,8 +114,10 @@ class HuggingfaceSubject(ArtificialSubject):
 
         # merge over text parts
         self._logger.debug("Merging outputs")
-        output['behavior'] = merge_data_arrays(output['behavior']).sortby('part_number') if output['behavior'] else None
-        output['neural'] = merge_data_arrays(output['neural']).sortby('part_number') if output['neural'] else None
+        output['behavior'] = xr.concat(output['behavior'], dim='presentation').sortby('part_number') \
+            if output['behavior'] else None
+        output['neural'] = xr.concat(output['neural'], dim='presentation').sortby('part_number') \
+            if output['neural'] else None
         return output
 
     def _setup_hooks(self):
