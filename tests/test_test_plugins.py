@@ -11,6 +11,7 @@ DUMMY_PLUGIN_PATH = Path(__file__).parent / DUMMY_PLUGIN
 DUMMY_TYPE = Path(__file__).parent.name
 DUMMY_TESTFILE = DUMMY_PLUGIN_PATH / "test.py"
 DUMMY_REQUIREMENTS = DUMMY_PLUGIN_PATH / "requirements.txt"
+DUMMY_RESULTS = {}
 
 
 class TestPluginTestRunner:
@@ -28,32 +29,32 @@ class TestPluginTestRunner:
 		shutil.rmtree(DUMMY_PLUGIN_PATH)
 
 	def test_plugin_name(self):
-		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH)
+		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH, DUMMY_RESULTS)
 		assert plugin_test_runner.plugin_name == DUMMY_TYPE + '_' + DUMMY_PLUGIN
 		
 	def test_get_conda_base(self):
-		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH)
+		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH, DUMMY_RESULTS)
 		conda_base = plugin_test_runner.get_conda_base()
 		assert 'conda' in conda_base
 
 	def test_has_testfile(self):
 		DUMMY_TESTFILE.unlink()
-		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH)
+		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH, DUMMY_RESULTS)
 		with pytest.raises(Exception):
 			plugin_test_runner.validate_plugin()
 
 	def test_has_requirements(self):
 		DUMMY_REQUIREMENTS.unlink()
-		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH)
+		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH, DUMMY_RESULTS)
 		assert plugin_test_runner.has_requirements == False
 
 	def test_run_tests(self):
-		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH)
+		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH, DUMMY_RESULTS)
 		completed_process = plugin_test_runner.run_tests()
 		assert completed_process.returncode == 0
 
 	def test_teardown(self):
-		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH)
+		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH, DUMMY_RESULTS)
 		subprocess.run(f"conda create -n {DUMMY_PLUGIN} python=3.8 -y", shell=True)
 		assert plugin_test_runner.plugin_env_path.is_dir() == True
 		plugin_test_runner.teardown()
