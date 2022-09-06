@@ -26,7 +26,8 @@ test = [
     "pytest",
     "pytest-check",
     "transformers>=4.11.3",
-    "torch>=1.9.1"
+    "torch>=1.9.1",
+    "gensim",
 ]
 
 [build-system]
@@ -55,5 +56,7 @@ filterwarnings = [
 ]
 
 markers = [
-    "memory_intense"
+    "memory_intense",
+    "travis_slow",
+    "slow",
 ]
