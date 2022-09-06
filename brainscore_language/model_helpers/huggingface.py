@@ -93,7 +93,8 @@ class HuggingfaceSubject(ArtificialSubject):
 
             # format output
             stimuli_coords = {
-                'context': ('presentation', [text_part]),
+                'stimulus': ('presentation', [text_part]),
+                'context': ('presentation', [context]),
                 'part_number': ('presentation', [part_number]),
             }
             if self.behavioral_task:
