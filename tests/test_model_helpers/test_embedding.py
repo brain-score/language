@@ -26,7 +26,7 @@ class TestNeural:
                                        recording_type=ArtificialSubject.RecordingType.fMRI)
         representations = model.digest_text(word)['neural']
         assert len(representations['presentation']) == 1
-        assert representations['context'].squeeze() == word
+        assert representations['stimulus'].squeeze() == word
         assert len(representations['neuroid']) == 3
 
     def test_multi_word(self):
@@ -37,7 +37,7 @@ class TestNeural:
                                        recording_type=ArtificialSubject.RecordingType.fMRI)
         representations = model.digest_text(text)['neural']
         assert len(representations['presentation']) == 1
-        assert representations['context'].squeeze() == text
+        assert representations['stimulus'].squeeze() == text
         assert len(representations['neuroid']) == 3
 
     def test_list_input(self):
@@ -48,7 +48,7 @@ class TestNeural:
                                        recording_type=ArtificialSubject.RecordingType.fMRI)
         representations = model.digest_text(text)['neural']
         assert len(representations['presentation']) == 4
-        np.testing.assert_array_equal(representations['context'], text)
+        np.testing.assert_array_equal(representations['stimulus'], text)
         assert len(representations['neuroid']) == 3
 
     def test_one_text_two_targets(self):
@@ -63,7 +63,7 @@ class TestNeural:
             recording_type=ArtificialSubject.RecordingType.fMRI)
         representations = model.digest_text(text)['neural']
         assert len(representations['presentation']) == 1
-        assert representations['context'].squeeze() == text
+        assert representations['stimulus'].squeeze() == text
         assert len(representations['neuroid']) == 3 * 2
         assert set(representations['recording_target'].values) == {
             ArtificialSubject.RecordingTarget.language_system_left_hemisphere,
