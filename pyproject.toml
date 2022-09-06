@@ -24,6 +24,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest",
+    "pytest-check",
     "transformers>=4.11.3",
     "torch>=1.9.1",
     "gensim",
