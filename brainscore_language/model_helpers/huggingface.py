@@ -40,7 +40,8 @@ class HuggingfaceSubject(ArtificialSubject):
         self.region_layer_mapping = region_layer_mapping
         self.basemodel = (model if model is not None else AutoModelForCausalLM.from_pretrained(self.model_id))
         self.basemodel.to('cuda' if torch.cuda.is_available() else 'cpu')
-        self.tokenizer = tokenizer if tokenizer is not None else AutoTokenizer.from_pretrained(self.model_id)
+        self.tokenizer = tokenizer if tokenizer is not None else AutoTokenizer.from_pretrained(self.model_id,
+                                                                                               truncation_side='left')
         self.current_tokens = None  # keep track of current tokens
 
         self.neural_recordings: List[Tuple] = []  # list of `(recording_target, recording_type)` tuples to record
