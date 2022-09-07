@@ -6,7 +6,7 @@ HAS_REQUIREMENTS=$3
 PLUGIN_REQUIREMENTS_PATH=$PLUGIN_PATH/requirements.txt
 PLUGIN_TEST_PATH=$PLUGIN_PATH/test.py
 
-echo $PLUGIN_NAME
+echo "${PLUGIN_NAME/_//}"   
 
 if $HAS_REQUIREMENTS; then
 	eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
