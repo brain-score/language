@@ -127,7 +127,6 @@ class HuggingfaceSubject(ArtificialSubject):
         num_overflowing = 0 if not overflowing_encoding else sum(len(overflow) for overflow in overflowing_encoding)
         self.current_tokens = {key: value[..., num_previous_context_tokens - num_overflowing:]
                                for key, value in context_tokens.items()}
-        assert all(torch.numel(value) > 0 for value in self.current_tokens.values()), "lost track of context tokens"
         num_new_context_tokens = context_tokens['input_ids'].shape[-1] + num_overflowing
         return context_tokens, num_new_context_tokens
 
