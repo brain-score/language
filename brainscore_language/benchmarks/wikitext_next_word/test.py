@@ -11,7 +11,7 @@ class TestBenchmark:
         def digest_text(self, stimuli):
             return {'behavior': BehavioralAssembly(
                 ['the' for passage in stimuli],
-                coords={'context': ('presentation', stimuli), 'stimulus_id': ('presentation', np.arange(len(stimuli)))},
+                coords={'stimulus': ('presentation', stimuli), 'stimulus_id': ('presentation', np.arange(len(stimuli)))},
                 dims=['presentation'])}
 
         def perform_behavioral_task(self, task: ArtificialSubject.Task):

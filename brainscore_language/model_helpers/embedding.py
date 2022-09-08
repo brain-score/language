@@ -55,7 +55,7 @@ class GensimKeyedVectorsSubject(ArtificialSubject):
             representations = self._encode_sentence(text_part)  # encode every word
             representations = self._average_representations(representations)  # reduce to single representation
             # package
-            stimuli_coords = {'context': ('presentation', [text_part]),
+            stimuli_coords = {'stimulus': ('presentation', [text_part]),
                               'part_number': ('presentation', [part_number])}
             neural_assembly = self.package_representations(representations, stimuli_coords=stimuli_coords)
             output['neural'].append(neural_assembly)
