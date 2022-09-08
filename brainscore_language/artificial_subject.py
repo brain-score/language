@@ -20,7 +20,7 @@ class ArtificialSubject:
         next_word = 'next_word'
         """ 
         Predict the next word from the preceding context. Output a :class:`~brainio.assemblies.BehavioralAssembly` with 
-        next-word predictions as the values and preceding context in the `context` coordinate.
+        next-word predictions as the values and preceding stimulus in the `stimulus` coordinate.
 
         Example:
 
@@ -32,7 +32,7 @@ class ArtificialSubject:
                         array(['fox']), # the actual next word
                         Coordinates:
                           * presentation  (presentation) MultiIndex
-                          - context       (presentation) object 'the quick brown'
+                          - stimulus      (presentation) object 'the quick brown'
                           - stimulus_id   (presentation) int64 0}
 
         Example:
@@ -45,7 +45,7 @@ class ArtificialSubject:
                         array(['fox', 'over', 'dog']), # the actual next words
                         Coordinates:
                           * presentation  (presentation) MultiIndex
-                          - context       (presentation) object 'the quick brown' 'fox jumps', 'over the lazy'
+                          - stimulus      (presentation) object 'the quick brown' 'fox jumps', 'over the lazy'
                           - stimulus_id   (presentation) int64 0 1 2}
         """
 
@@ -53,7 +53,7 @@ class ArtificialSubject:
         """ 
         Output how long it took to read a given text, in milliseconds. 
         Output a :class:`~brainio.assemblies.BehavioralAssembly` with reading times in milliseconds as the values and 
-        text in the `context` coordinate.
+        text in the `stimulus` coordinate.
 
         Example:
 
@@ -65,7 +65,7 @@ class ArtificialSubject:
                         array([329.15]), # reading time in milliseconds
                         Coordinates:
                           * presentation  (presentation) MultiIndex
-                          - context       (presentation) object 'the quick brown'
+                          - stimulus      (presentation) object 'the quick brown'
                           - stimulus_id   (presentation) int64 0}
 
         Example:
@@ -78,7 +78,7 @@ class ArtificialSubject:
                         array([329.15, 337.53, 341.13]), # reading times in milliseconds
                         Coordinates:
                           * presentation  (presentation) MultiIndex
-                          - context       (presentation) object 'the quick brown' 'fox jumps', 'over the lazy'
+                          - stimulus      (presentation) object 'the quick brown' 'fox jumps', 'over the lazy'
                           - stimulus_id   (presentation) int64 0 1 2}
         """
 
@@ -125,8 +125,8 @@ class ArtificialSubject:
             :meth:`~brainscore_language.artificial_subject.ArtificialSubject.perform_behavioral_task` and/or
             :meth:`~brainscore_language.artificial_subject.ArtificialSubject.perform_neural_recording` respectively.
             The :class:`~brainio.assemblies.DataAssembly` always contains a `presentation` dimension, corresponding to
-            the presentation of text stimuli (including a `context` coordinate for the text,
-            and a `stimulus_id` coordinate that uniquely identifies each context).
+            the presentation of text stimuli (including a `stimulus` coordinate for the text,
+            and a `stimulus_id` coordinate that uniquely identifies each stimulus).
             Values along the `presentation` dimension are ordered in the same way as the input.
             The `behavior` output has no other dimension, while the `neural` output has a `neuroid` dimension
             (including a `neuroid_id` coordinate to uniquely identify each recording unit), and sometimes a

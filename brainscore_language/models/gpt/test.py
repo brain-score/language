@@ -45,5 +45,5 @@ def test_neural(model_identifier, feature_size):
                                    recording_type=ArtificialSubject.RecordingType.fMRI)
     representations = model.digest_text(text)['neural']
     assert len(representations['presentation']) == 3
-    np.testing.assert_array_equal(representations['context'], text)
+    np.testing.assert_array_equal(representations['stimulus'], text)
     assert len(representations['neuroid']) == feature_size

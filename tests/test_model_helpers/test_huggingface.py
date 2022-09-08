@@ -135,7 +135,7 @@ class TestNeural:
                                        recording_type=ArtificialSubject.RecordingType.fMRI)
         representations = model.digest_text(text)['neural']
         assert len(representations['presentation']) == 3
-        np.testing.assert_array_equal(representations['context'], text)
+        np.testing.assert_array_equal(representations['stimulus'], text)
         assert len(representations['neuroid']) == 768
 
     @pytest.mark.memory_intense
@@ -153,7 +153,7 @@ class TestNeural:
                                        recording_type=ArtificialSubject.RecordingType.fMRI)
         representations = model.digest_text(text)['neural']
         assert len(representations['presentation']) == 1
-        assert representations['context'].squeeze() == text
+        assert representations['stimulus'].squeeze() == text
         assert len(representations['neuroid']) == 768
         logging.info(f'representation shape is correct: {representations.shape}')
 
@@ -172,7 +172,7 @@ class TestNeural:
             recording_type=ArtificialSubject.RecordingType.fMRI)
         representations = model.digest_text(text)['neural']
         assert len(representations['presentation']) == 1
-        assert representations['context'].squeeze() == text
+        assert representations['stimulus'].squeeze() == text
         assert len(representations['neuroid']) == 768 * 2
         assert set(representations['region'].values) == {
             ArtificialSubject.RecordingTarget.language_system_left_hemisphere,
