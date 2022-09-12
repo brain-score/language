@@ -152,7 +152,7 @@ A simple metric could be the pearson correlation of two measurements:
     class PearsonCorrelation(Metric):
         def __call__(self, assembly1: DataAssembly, assembly2: DataAssembly) -> Score:
             rvalue, pvalue = pearsonr(assembly1, assembly2)
-            score = Score(np.abs(rvalue))
+            score = Score(np.abs(rvalue))  # similarity score between 0 and 1 indicating alignment of the two assemblies
             return score
 
     metric_registry['pearsonr'] = PearsonCorrelation
