@@ -55,7 +55,7 @@ The following is an excerpt from the
 
     from brainio.assemblies import BehavioralAssembly
 
-    reading_times = parse_experiment_data(...)
+    reading_times = parse_experiment_data(...)  # load the experimental data, e.g. from .csv files
     # ... obtain as much metadata as we can ...
 
     assembly = BehavioralAssembly(reading_times, coords={
@@ -77,10 +77,10 @@ The following is an excerpt from the
 
     from brainio.assemblies import NeuroidAssembly
 
-    reading_times = parse_experiment_data(...)
+    neural_recordings = parse_experiment_data(...)  # load the experimental data, e.g. from .mat files
     # ... obtain as much metadata as we can ...
 
-    assembly = NeuroidAssembly(assembly, coords={
+    assembly = NeuroidAssembly(neural_recordings, coords={
            'stimulus': ('presentation', sentences),
            'stimulus_id': ('presentation', stimulus_id),
            ...
