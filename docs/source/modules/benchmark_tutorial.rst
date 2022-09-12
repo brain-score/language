@@ -71,7 +71,7 @@ Neural data
 -----------
 
 The following is an excerpt from the
-`Pereira2018 data packaging <https://github.com/brain-score/language/blob/3e6fff2fda528f06cf5ffb3c5474f81acfa91ffe/brainscore_language/data/futrell2018/data_packaging.py>`_.
+`Pereira2018 data packaging <https://github.com/brain-score/language/blob/189eed0c2396756fc419115e57633410d0347e59/brainscore_language/data/pereira2018/data_packaging.py>`_.
 
 .. code-block:: python
 
