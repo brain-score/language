@@ -36,6 +36,8 @@ For instance, the following is an excerpt from adding
 
 .. code-block:: python
 
+    from brainscore_language.model_helpers.huggingface import HuggingfaceSubject
+
     model_registry['distilgpt2'] = lambda: HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={
         ArtificialSubject.RecordingTarget.language_system: 'transformer.h.5.mlp.dropout'})
 
@@ -47,6 +49,8 @@ For instance, the following is an excerpt from the
 `tests for gpt2-xl <https://github.com/brain-score/language/blob/5e948f0be90327aefe5e2938b2b3a193d0109af2/brainscore_language/models/gpt/test.py>`_:
 
 .. code-block:: python
+
+    from brainscore_language import load_model
 
     def test_next_word(model_identifier, ):
         model = load_model('gpt2-xl')
@@ -68,6 +72,8 @@ passing in the desired benchmark identifier(s) and the identifier for your model
 For instance, you might run:
 
 .. code-block:: python
+
+    from brainscore_language import score
 
     model_score = score(model_identifier='distilgpt2', benchmark_identifier='Futrell2018-pearsonr')
 

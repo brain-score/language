@@ -53,6 +53,8 @@ The following is an excerpt from the
 
 .. code-block:: python
 
+    from brainio.assemblies import BehavioralAssembly
+
     reading_times = parse_experiment_data(...)
     # ... obtain as much metadata as we can ...
 
@@ -72,6 +74,8 @@ The following is an excerpt from the
 `Pereira2018 data packaging <https://github.com/brain-score/language/blob/3e6fff2fda528f06cf5ffb3c5474f81acfa91ffe/brainscore_language/data/futrell2018/data_packaging.py>`_.
 
 .. code-block:: python
+
+    from brainio.assemblies import NeuroidAssembly
 
     reading_times = parse_experiment_data(...)
     # ... obtain as much metadata as we can ...
@@ -94,6 +98,8 @@ For instance, if your data is on S3, the plugin might look as follows:
 
 .. code-block:: python
 
+    from brainscore_language.utils.s3 import load_from_s3
+
     def load_assembly() -> BehavioralAssembly:
         assembly = load_from_s3(
             identifier="Futrell2018",
@@ -113,6 +119,8 @@ For instance, here is a small unit test example validating the dimensions of a r
 
 
 .. code-block:: python
+
+    from brainscore_language import load_dataset
 
     def test_shape(self):
         assembly = load_dataset('Futrell2018')
@@ -136,6 +144,11 @@ A simple metric could be the pearson correlation of two measurements:
 
 .. code-block:: python
 
+    import numpy as np
+    from scipy.stats import pearsonr
+    from brainio.assemblies import DataAssembly
+    from brainscore_core.metrics import Metric, Score
+
     class PearsonCorrelation(Metric):
         def __call__(self, assembly1: DataAssembly, assembly2: DataAssembly) -> Score:
             rvalue, pvalue = pearsonr(assembly1, assembly2)
@@ -155,6 +168,8 @@ For instance, the following is an excerpt from the
 `pearson correlation tests <https://github.com/brain-score/language/blob/3e6fff2fda528f06cf5ffb3c5474f81acfa91ffe/brainscore_language/metrics/pearson_correlation/test.py>`_.
 
 .. code-block:: python
+
+    from brainscore_language import load_metric
 
     def test_weak_correlation():
         a1 = [1, 2, 3, 4, 5]
@@ -181,6 +196,9 @@ All interactions with the model are via methods defined in the :doc:`ArtificialS
 For example:
 
 .. code-block:: python
+
+    from brainscore_core.benchmarks import BenchmarkBase
+    from brainscore_language import load_dataset, load_metric, ArtificialSubject
 
     class MyBenchmark(BenchmarkBase):
         def __init__(self):
@@ -277,6 +295,8 @@ For instance, you might run:
 
 .. code-block:: python
 
+    from brainscore_language import score
+
     model_score = score(model_identifier='distilgpt2', benchmark_identifier='benchmarkid-metricid')
 
 Unit tests
@@ -287,6 +307,8 @@ For instance, the following is an excerpt from the
 `Futrell2018 tests <https://github.com/brain-score/language/blob/85afdae5294d0613fb51c33333aa76c52fc0849e/brainscore_language/benchmarks/futrell2018/test.py>`_:
 
 .. code-block:: python
+
+    from brainscore_language import ArtificialSubject, load_benchmark
 
     class DummyModel(ArtificialSubject):
         def __init__(self, reading_times):
