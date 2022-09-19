@@ -71,8 +71,8 @@ class _Pereira2018ExperimentLinear(BenchmarkBase):
 
     def __init__(self, experiment: str, ceiling_s3_kwargs: dict):
         self.data = self._load_data(experiment)
-        self.metric = load_metric('linear_pearsonr')
-        identifier = f'Pereira2018.{experiment}-linear'
+        self.metric = load_metric('linreg_pearsonr')
+        identifier = f'Pereira2018.{experiment}-linear' # GT: did not change this identifier to not mess up ceiling loading
         ceiling = self._load_ceiling(identifier=identifier, **ceiling_s3_kwargs)
         super(_Pereira2018ExperimentLinear, self).__init__(
             identifier=identifier,
@@ -106,5 +106,5 @@ class _Pereira2018ExperimentLinear(BenchmarkBase):
         return score
 
 
-benchmark_registry['Pereira2018.243sentences-linear'] = Pereira2018_243sentences
-benchmark_registry['Pereira2018.384sentences-linear'] = Pereira2018_384sentences
+benchmark_registry['Pereira2018.243sentences-linreg_pearsonr'] = Pereira2018_243sentences
+benchmark_registry['Pereira2018.384sentences-linreg_pearsonr'] = Pereira2018_384sentences
