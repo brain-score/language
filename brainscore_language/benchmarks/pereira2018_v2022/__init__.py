@@ -24,11 +24,11 @@ BIBTEX = """@article{pereira2018toward,
 
 
 def Pereira2018_243sentences():
-    return _Pereira2018LinregPearsonr(experiment="PereiraE2_96pass")
+    return _Pereira2018LinregPearsonr(experiment="PereiraE3_72pass")
 
 
 def Pereira2018_384sentences():
-    return _Pereira2018LinregPearsonr(experiment="PereiraE3_72pass")
+    return _Pereira2018LinregPearsonr(experiment="PereiraE2_96pass")
 
 
 class _Pereira2018LinregPearsonr(BenchmarkBase):
@@ -54,20 +54,33 @@ class _Pereira2018LinregPearsonr(BenchmarkBase):
         # ceiling_s3_kwargs: dict = None,
     ):
         self.data = self._load_data(experiment)
-        self.metric = load_metric("linear_pearsonr")
-        identifier = f"Pereira2018.{experiment}-linear"
+        self.metric = load_metric(
+            "linreg_pearsonr",
+            crossvalidation_kwargs={
+                "split_coord": "sentence",
+            },
+            regression_kwargs={
+                "stimulus_coord": "sentence",
+            },
+            correlation_kwargs={
+                "correlation_coord": "sentence",
+                "neuroid_coord": "neuroid",
+            },
+        )
+        identifier = f"Pereira2018.{experiment}-linreg_pearsonr"
         # ceiling = self._load_ceiling(identifier=identifier, **ceiling_s3_kwargs)
         super(_Pereira2018LinregPearsonr, self).__init__(
             identifier=identifier,
             version=1,
             parent="Pereira2018-linear",
-            ceiling=None,  # ceiling,
+            ceiling_func=None,  # ceiling,
             bibtex=BIBTEX,
         )
 
     def _load_data(self, experiment: str) -> NeuroidAssembly:
         data = load_dataset("Pereira2018_v2022.language")
-        data = data.sel(experiment=experiment)  # filter experiment
+        # data = data.sel(experiment=experiment)  # filter experiment
+        data.loc[data.experiment == experiment, :, :]
         data = data.dropna(
             "neuroid"
         )  # not all subjects have done both experiments, drop those that haven't
@@ -105,11 +118,18 @@ class _Pereira2018LinregPearsonr(BenchmarkBase):
         )
         stimuli = self.data["sentence"]
         predictions = candidate.digest_text(stimuli.values)["neural"]
-        predictions["stimulus_id"] = "presentation", stimuli["stimulus_id"].values
-        raw_score = self.metric(predictions, self.data)
+        predictions["presentation"] = "presentation", stimuli["sentence"].values
+        raw_score = self.metric(
+            predictions,
+            self.data,
+        )
         score = raw_score  # ceiling_normalize(raw_score, self.ceiling)
         return score
 
 
-benchmark_registry["Pereira2018_v2022.243sentences-linear"] = Pereira2018_243sentences
-benchmark_registry["Pereira2018_v2022.384sentences-linear"] = Pereira2018_384sentences
+benchmark_registry[
+    "Pereira2018_v2022.243sentences-linreg_pearsonr"
+] = Pereira2018_243sentences
+benchmark_registry[
+    "Pereira2018_v2022.384sentences-linreg_pearsonr"
+] = Pereira2018_384sentences

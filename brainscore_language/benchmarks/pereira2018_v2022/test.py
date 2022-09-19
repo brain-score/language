@@ -66,11 +66,16 @@ class TestBenchmark:
         benchmark = load_benchmark(
             f"Pereira2018_v2022.{experiment}sentences-linreg_pearsonr"
         )
-        exact_data = copy.deepcopy(benchmark.data).reset_index("presentation")
-        del exact_data["presentation"], exact_data["sentence"]
-        exact_data = exact_data.set_index(
-            presentation=list(exact_data["presentation"].coords)
-        )
+
+        # TODO: we are lazy-dropping benchark.data timeid dim, but drop in packaging or accommodate donwstream later?
+        benchmark.data = benchmark.data.squeeze(dim="time", drop=True)
+
+        exact_data = copy.deepcopy(benchmark.data)  # .reset_index("presentation")
+        # exact_data = exact_data.drop_vars("sentence")
+        del (exact_data["presentation"],)
+        # exact_data = exact_data.set_index(
+        #     presentation=list(exact_data["presentation"].coords)
+        # )
         dummy_model = TestBenchmark.DummyModel(neural_activity=exact_data)
         score = benchmark(dummy_model)
         print(score)
@@ -102,3 +107,8 @@ class TestBenchmark:
     #         "split",
     #         "neuroid",
     #     }
+
+
+if __name__ == "__main__":
+    test = TestBenchmark()
+    test.test_exact(243)

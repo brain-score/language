@@ -20,21 +20,37 @@ model_registry: Dict[str, Type[ArtificialSubject]] = {}
 
 def load_dataset(identifier: str) -> Union[DataAssembly, Any]:
     # imports to load plugins until plugin system is implemented
-    from brainscore_language.data import wikitext, futrell2018, pereira2018, fedorenko2016, blank2014
+    from brainscore_language.data import (
+        wikitext,
+        futrell2018,
+        pereira2018,
+        fedorenko2016,
+        blank2014,
+        pereira2018_v2022,
+    )
 
     return data_registry[identifier]()
 
 
 def load_metric(identifier: str, *args, **kwargs) -> Metric:
     # imports to load plugins until plugin system is implemented
-    from brainscore_language.metrics import accuracy, pearson_correlation, linear_predictivity
+    from brainscore_language.metrics import (
+        accuracy,
+        pearson_correlation,
+        linear_predictivity,
+    )
 
     return metric_registry[identifier](*args, **kwargs)
 
 
 def load_benchmark(identifier: str) -> Benchmark:
     # imports to load plugins until plugin system is implemented
-    from brainscore_language.benchmarks import wikitext_next_word, futrell2018, pereira2018
+    from brainscore_language.benchmarks import (
+        wikitext_next_word,
+        futrell2018,
+        pereira2018,
+        pereira2018_v2022,
+    )
 
     return benchmark_registry[identifier]()
 
