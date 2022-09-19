@@ -171,10 +171,10 @@ def pearsonr_correlation(xarray_kwargs=None):
     return XarrayCorrelation(scipy.stats.pearsonr, **xarray_kwargs)
 
 
-def linear_pearsonr(*args, regression_kwargs=None, correlation_kwargs=None, **kwargs):
+def linreg_pearsonr(*args, regression_kwargs=None, correlation_kwargs=None, **kwargs):
     regression = linear_regression(regression_kwargs or {})
     correlation = pearsonr_correlation(correlation_kwargs or {})
     return CrossRegressedCorrelation(*args, regression=regression, correlation=correlation, **kwargs)
 
 
-metric_registry['linear_pearsonr'] = linear_pearsonr
+metric_registry['linreg_pearsonr'] = linreg_pearsonr
