@@ -8,6 +8,7 @@ import torch
 import xarray as xr
 from numpy.core import defchararray
 from torch.utils.hooks import RemovableHandle
+from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.modeling_outputs import CausalLMOutput
 
@@ -77,7 +78,8 @@ class HuggingfaceSubject(ArtificialSubject):
         output = {'behavior': [], 'neural': []}
         number_of_tokens = 0
 
-        for part_number, text_part in enumerate(text):
+        text_iterator = tqdm(text, desc='digest text') if len(text) > 1 else text  # show progress bar if multiple parts
+        for part_number, text_part in enumerate(text_iterator):
             # tokenize
             context = ' '.join(text[:part_number + 1])  # build up context over items in the text
             context_tokens, number_of_tokens = self._tokenize(context, number_of_tokens)
