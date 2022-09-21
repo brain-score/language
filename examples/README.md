@@ -1,4 +1,4 @@
-# Example code snippets
+# Notebook examples
 
 [score](https://github.com/brain-score/language/blob/main/examples/score.ipynb): 
     score an existing model on an existing benchmark.
