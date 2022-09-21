@@ -1,4 +1,4 @@
-from datasets import load_data
+from datasets import load_dataset
 
 from brainscore_language import data_registry
 
