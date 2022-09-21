@@ -35,6 +35,7 @@ extensions = [
     'recommonmark',
     'sphinx.ext.viewcode',
     'sphinx_rtd_theme',
+    'sphinxcontrib.bibtex'
 ]
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
 
@@ -52,6 +53,9 @@ master_doc = 'index'
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
+
+# allows BibTeX citations to be inserted into docs
+bibtex_bibfiles = ['refs.bib']
 
 
 # -- Options for HTML output -------------------------------------------------
