@@ -1,11 +1,11 @@
 import numpy as np
 
-from brainscore_language import load_dataset
+from brainscore_language import load_data
 
 
 class TestData:
     def test_shape(self):
-        assembly = load_dataset('Futrell2018')
+        assembly = load_data('Futrell2018')
 
         assert len(assembly['word']) == 10256
         assert len(set(assembly['stimulus_id'].values)) == len(assembly['presentation'])

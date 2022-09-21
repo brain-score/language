@@ -18,7 +18,7 @@ model_registry: Dict[str, Type[ArtificialSubject]] = {}
 """ Pool of available models """
 
 
-def load_dataset(identifier: str) -> Union[DataAssembly, Any]:
+def load_data(identifier: str) -> Union[DataAssembly, Any]:
     # imports to load plugins until plugin system is implemented
     from brainscore_language.data import wikitext, futrell2018, pereira2018, fedorenko2016, blank2014
 

@@ -6,7 +6,7 @@ from numpy.random import RandomState
 from brainio.assemblies import DataAssembly
 from brainscore_core.benchmarks import BenchmarkBase
 from brainscore_core.metrics import Score, Metric
-from brainscore_language import load_dataset, load_metric, benchmark_registry
+from brainscore_language import load_data, load_metric, benchmark_registry
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.utils import attach_presentation_meta
 from brainscore_language.utils.ceiling import ceiling_normalize
@@ -26,7 +26,7 @@ class Futrell2018Pearsonr(BenchmarkBase):
     """
 
     def __init__(self):
-        self.data = load_dataset('Futrell2018')
+        self.data = load_data('Futrell2018')
         self.metric = load_metric('pearsonr')
         ceiler = SplitHalvesConsistency(num_splits=10, split_coordinate='subject_id', consistency_metric=self.metric)
         ceiling = ceiler(self.data)

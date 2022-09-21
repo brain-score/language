@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from brainscore_language import benchmark_registry, data_registry, metric_registry, model_registry
-from brainscore_language import load_benchmark, load_dataset, load_metric, load_model
+from brainscore_language import load_benchmark, load_data, load_metric, load_model
 
 PLUGIN_TYPES = ['benchmarks', 'data', 'metrics', 'models']
 

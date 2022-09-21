@@ -3,7 +3,7 @@ import logging
 from brainio.assemblies import NeuroidAssembly
 from brainscore_core.benchmarks import BenchmarkBase
 from brainscore_core.metrics import Score
-from brainscore_language import load_dataset, load_metric, benchmark_registry
+from brainscore_language import load_data, load_metric, benchmark_registry
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.utils.ceiling import ceiling_normalize
 from brainscore_language.utils.s3 import load_from_s3
@@ -82,7 +82,7 @@ class _Pereira2018ExperimentLinear(BenchmarkBase):
             bibtex=BIBTEX)
 
     def _load_data(self, experiment: str) -> NeuroidAssembly:
-        data = load_dataset('Pereira2018.language')
+        data = load_data('Pereira2018.language')
         data = data.sel(experiment=experiment)  # filter experiment
         data = data.dropna('neuroid')  # not all subjects have done both experiments, drop those that haven't
         data.attrs['identifier'] = f"{data.identifier}.{experiment}"

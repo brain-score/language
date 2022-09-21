@@ -1,10 +1,10 @@
 import numpy as np
 
-from brainscore_language import load_dataset
+from brainscore_language import load_data
 
 
 def test_data():
-    assembly = load_dataset('Blank2014.fROI')
+    assembly = load_data('Blank2014.fROI')
     assert len(assembly['presentation']) == 1317
     assert "".join(
         assembly.sel(story='Boar').sortby(['sentence_number_in_story', 'part_number_in_sentence'])

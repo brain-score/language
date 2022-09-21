@@ -1,10 +1,10 @@
 import numpy as np
 
-from brainscore_language import load_dataset
+from brainscore_language import load_data
 
 
 def test_data():
-    assembly = load_dataset('Fedorenko2016.language')
+    assembly = load_data('Fedorenko2016.language')
     assert len(assembly['presentation']) == 416
     assert len(set(assembly['stimulus'].values)) == len(set(assembly['word'].values)) == 255
     assert ' '.join(assembly.sel(sentence_id=0)['stimulus'].values) == 'ALEX WAS TIRED SO HE TOOK A NAP'
