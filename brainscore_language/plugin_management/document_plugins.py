@@ -121,6 +121,7 @@ def add_new_bibtex(new_plugins:Dict[str,str], plugin_type='refs'):
         _record_bibtex(bibtex_to_add, plugins_bib_fp)
 
 def _stripped_line(line:str) -> str:
+    """Returns plugin type match to rst type header (e.g. '_Benchmarks\n' -> benchmarks) """
     return line.strip().lower()
 
 def _parse_rst() -> Dict[str, List[List[str]]]:
@@ -155,11 +156,11 @@ def _infotype_idx(info_list:List[str], search_string:str) -> int:
     """ Returns index of plugin info string that matches search_string """
     return [i for i in info_list if search_string in i][0]
 
-def _clean_existing_plugins(existing_plugins:Dict[str, List[List]]) -> Dict[str, List[List]]:
+def _clean_existing_plugins(existing_plugins:Dict[str, List[List]]) -> Dict[str,Dict[str,Dict[str,str]]]:
     """Cleans and formats dict of plugins read from plugins.rst
 
     Returns a dict where key is plugin type, value is a dict
-    of plugin names (str) mapped to a list of their info
+    of plugin names (str) mapped to a dict of their info strings
 
     NOTE: info is currently just BiBTeX citation, but could expand
     e.g. include description
@@ -177,7 +178,7 @@ def _clean_new_plugins(new_plugins:Dict[str, List[List]]) -> Dict[str, List[List
     """Cleans and formats dict of new plugins
 
     Returns a dict where key is plugin type, value is a dict
-    of plugin names (str) mapped to a list of their info
+    of plugin names (str) mapped to a dict of their info strings
 
     NOTE: info is currently just BiBTeX citation, but could expand
     e.g. include description
@@ -191,6 +192,7 @@ def _clean_new_plugins(new_plugins:Dict[str, List[List]]) -> Dict[str, List[List
     return cleaned_new_plugins
 
 def _write_to_rst(all_plugins:Dict[str,Dict]):
+    """ Writes plugin info to readthedocs plugins.rst """
     with open(PLUGINS_DOC_FP, 'w+') as f:
         doc = RstCloth(f)
         doc.ref_target(name="plugins")
@@ -224,7 +226,7 @@ def update_readthedocs(new_plugin_info:Dict[str,Dict]):
     except:
         all_plugins = cleaned_new_plugins
 
-    # write plugin info to rst file
+    # write plugin info to readthedocs
     _write_to_rst(all_plugins)
 
 def update_plugins_list(all_plugins):
@@ -248,4 +250,4 @@ if __name__ == '__main__':
             add_new_bibtex(plugin_info, plugin_type) # plugin type .bib file
     add_new_bibtex(new_plugin_info) # one .bib file to rule them all
     update_readthedocs(new_plugin_info)
-    # update_plugins_list(all_plugins)
+    update_plugins_list(all_plugins)
