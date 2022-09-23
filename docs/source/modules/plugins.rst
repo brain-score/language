@@ -57,16 +57,6 @@ linear_pearsonr
 +++++++++++++++
 
 
-accuracy
-++++++++
-
-
-Models
-~~~~~~
-distilgpt2
-++++++++++
-
-
 Bibliography
 ------------
 .. bibliography::

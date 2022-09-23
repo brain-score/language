@@ -2,12 +2,15 @@
 
 import bibtexparser
 import json
+import logging
 from pathlib import Path
 import re
 from rstcloth import RstCloth
 from typing import Callable, Dict, List, Union
 
 from brainscore_language import benchmark_registry, data_registry, metric_registry, model_registry
+
+_logger = logging.getLogger(__name__)
 
 BIBS_DIR = 'docs/source/bibtex/'
 PLUGINS_DOC_FP = 'docs/source/modules/plugins.rst'
@@ -149,10 +152,18 @@ def _parse_rst() -> Dict[str, List[List[str]]]:
     return plugins
 
 def _clean_existing_plugins(existing_plugins:Dict[str, List[List]]) -> Dict[str, List[List]]:
+    """Cleans and formats dict of plugins read from plugins.rst
+
+    Returns a dict where key is plugin type, value is a dict
+    of plugin names (str) mapped to a list of their info
+
+    NOTE: info is currently just citation, but could expand in future
+    e.g. include description
+    """
     cleaned_existing_plugins = {}
     for plugin_type in existing_plugins:
         cleaned_plugin_info = [[info.strip() for info in l] for l in existing_plugins[plugin_type]]
-        cleaned_existing_plugins[plugin_type.strip()] = {v[0]:v[1] for v in cleaned_plugin_info if len(v)>0}
+        cleaned_existing_plugins[plugin_type.strip()] = {info[0]:info[2] for info in cleaned_plugin_info if len(info)>2}
 
     return cleaned_existing_plugins
 
