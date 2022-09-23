@@ -151,27 +151,41 @@ def _parse_rst() -> Dict[str, List[List[str]]]:
 
     return plugins
 
+def _infotype_idx(info_list:List[str], search_string:str) -> int:
+    """ Returns index of plugin info string that matches search_string """
+    return [i for i in info_list if search_string in i][0]
+
 def _clean_existing_plugins(existing_plugins:Dict[str, List[List]]) -> Dict[str, List[List]]:
     """Cleans and formats dict of plugins read from plugins.rst
 
     Returns a dict where key is plugin type, value is a dict
     of plugin names (str) mapped to a list of their info
 
-    NOTE: info is currently just citation, but could expand in future
+    NOTE: info is currently just BiBTeX citation, but could expand
     e.g. include description
     """
     cleaned_existing_plugins = {}
     for plugin_type in existing_plugins:
         cleaned_plugin_info = [[info.strip() for info in l] for l in existing_plugins[plugin_type]]
-        cleaned_existing_plugins[plugin_type.strip()] = {info[0]:info[2] for info in cleaned_plugin_info if len(info)>2}
+        cleaned_existing_plugins[plugin_type.strip()] = {info[0]:({'citation':info[_infotype_idx(info,':cite:')]} 
+                                                            if len(info)>2 else {'citation':None}) 
+                                                            for info in cleaned_plugin_info}
 
     return cleaned_existing_plugins
 
 def _clean_new_plugins(new_plugins:Dict[str, List[List]]) -> Dict[str, List[List]]:
+    """Cleans and formats dict of new plugins
+
+    Returns a dict where key is plugin type, value is a dict
+    of plugin names (str) mapped to a list of their info
+
+    NOTE: info is currently just BiBTeX citation, but could expand
+    e.g. include description
+    """
     cleaned_new_plugins = {}
     for plugin_type in new_plugins:
-        cleaned_new_plugins[plugin_type.capitalize()] = {k:(':cite:label:`' + v['bibtex_id'] +'`'
-                                                            if 'bibtex_id' in v.keys() else '') 
+        cleaned_new_plugins[plugin_type.capitalize()] = {k:({'citation':':cite:label:`' + v['bibtex_id'] +'`'}
+                                                            if 'bibtex_id' in v.keys() else {'citation':None}) 
                                                             for k,v in new_plugins[plugin_type].items()}
     
     return cleaned_new_plugins
@@ -186,7 +200,8 @@ def _write_to_rst(all_plugins:Dict[str,Dict]):
             doc.h3(plugin_type)
             for plugin in all_plugins[plugin_type]:
                 doc.h4(plugin)
-                doc.content(all_plugins[plugin_type][plugin])
+                if all_plugins[plugin_type][plugin]['citation']:
+                    doc.content(all_plugins[plugin_type][plugin]['citation'])
                 doc.newline()
         doc.h2('Bibliography')
         doc.directive(name="bibliography", fields=[('all','')])
