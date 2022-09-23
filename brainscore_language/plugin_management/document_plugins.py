@@ -181,7 +181,7 @@ def _write_to_rst(all_plugins:Dict[str,Dict]):
         doc.directive(name="bibliography", fields=[('all','')])
 
 
-def update_rst(new_plugin_info:Dict[str,Dict]):
+def update_readthedocs(new_plugin_info:Dict[str,Dict]):
     """ For all new plugins, add name and info to readthedocs (plugins.rst) """
     # clean and format data
     cleaned_new_plugins = _clean_new_plugins(new_plugin_info)
@@ -219,7 +219,7 @@ if __name__ == '__main__':
             print(*new_plugins, sep='\n')
             plugin_info = get_plugin_info(new_plugins)
             new_plugin_info[plugin_type] = plugin_info
-            add_new_bibtex(plugin_info, plugin_type)
-    add_new_bibtex(new_plugin_info) # one BiBTeX to rule them all
-    update_rst(new_plugin_info)
+            add_new_bibtex(plugin_info, plugin_type) # plugin type .bib file
+    add_new_bibtex(new_plugin_info) # one .bib file to rule them all
+    update_readthedocs(new_plugin_info)
     # update_plugins_list(all_plugins)
