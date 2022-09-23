@@ -25,3 +25,4 @@ The `score` function is the primary entry point to score a model on a benchmark.
    modules/model_tutorial
    modules/benchmark_tutorial
    modules/api_reference
+   modules/plugins
