@@ -6,12 +6,12 @@ from numpy.random import RandomState
 from pytest import approx
 
 from brainio.assemblies import NeuroidAssembly
-from brainscore_language import load_data, ArtificialSubject, load_benchmark
+from brainscore_language import load_dataset, ArtificialSubject, load_benchmark
 
 
 class TestData:
     def test_language(self):
-        assembly = load_data('Pereira2018.language')
+        assembly = load_dataset('Pereira2018.language')
         assert set(assembly['experiment'].values) == {'243sentences', '384sentences'}
         assert len(assembly['presentation']) == 243 + 384
         assert len(set(assembly['stimulus'].values)) == 243 + 384
@@ -21,7 +21,7 @@ class TestData:
         assert np.nansum(assembly.values) == approx(1935595.263162177)
 
     def test_auditory(self):
-        assembly = load_data('Pereira2018.auditory')
+        assembly = load_dataset('Pereira2018.auditory')
         assert set(assembly['experiment'].values) == {'243sentences', '384sentences'}
         assert len(assembly['presentation']) == 243 + 384
         assert len(set(assembly['stimulus'].values)) == 243 + 384

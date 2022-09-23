@@ -4,7 +4,7 @@ import string
 
 from brainscore_core.benchmarks import BenchmarkBase
 from brainscore_core.metrics import Score
-from brainscore_language import load_data, load_metric, benchmark_registry
+from brainscore_language import load_dataset, load_metric, benchmark_registry
 from brainscore_language.artificial_subject import ArtificialSubject
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ class WikitextAccuracy(BenchmarkBase):
             parent='engineering',
             ceiling=None,
             bibtex=BIBTEX)  # TODO: I think this should go into the data plugin somehow
-        self.data = load_data('wikitext-2/test')
+        self.data = load_dataset('wikitext-2/test')
         self.metric = load_metric('accuracy')
 
     def __call__(self, candidate: ArtificialSubject) -> Score:
