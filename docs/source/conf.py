@@ -55,7 +55,7 @@ master_doc = 'index'
 exclude_patterns = []
 
 # allows BibTeX citations to be inserted into docs
-bibtex_bibfiles = ['refs.bib']
+bibtex_bibfiles = ['bibtex/refs.bib']
 
 
 # -- Options for HTML output -------------------------------------------------
