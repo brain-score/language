@@ -1,22 +1,73 @@
+.. _plugins:
 =======
 Plugins
 =======
 
 Benchmarks
-----------
-:cite:p:`pereira2018toward`
+~~~~~~~~~~
+Pereira2018.243sentences-linear
++++++++++++++++++++++++++++++++
+:cite:label:`pereira2018toward`
 
-:cite:p:`pereira2018toward`
+Pereira2018.384sentences-linear
++++++++++++++++++++++++++++++++
+:cite:label:`pereira2018toward`
 
-:cite:p:`futrell2018natural`
+Futrell2018-pearsonr
+++++++++++++++++++++
+:cite:label:`futrell2018natural`
 
-:cite:p:`merity2017pointer`
+Wikitext-accuracy
++++++++++++++++++
+:cite:label:`merity2017pointer`
 
 Data
-----
-:cite:p:`futrell2018natural`
+~~~~
+Futrell2018
++++++++++++
+:cite:label:`futrell2018natural`
+
+Blank2014.fROI
+++++++++++++++
+
+
+Pereira2018.language
+++++++++++++++++++++
+
+
+Pereira2018.auditory
+++++++++++++++++++++
+
+
+Fedorenko2016.language
+++++++++++++++++++++++
+
+
+wikitext-2/test
++++++++++++++++
+
 
 Metrics
--------
+~~~~~~~
+pearsonr
+++++++++
+
+
+linear_pearsonr
++++++++++++++++
+
+
+accuracy
+++++++++
+
+
 Models
-------
+~~~~~~
+distilgpt2
+++++++++++
+
+
+Bibliography
+------------
+.. bibliography::
+   :all:
