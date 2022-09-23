@@ -120,10 +120,10 @@ For instance, here is a small unit test example validating the dimensions of a r
 
 .. code-block:: python
 
-    from brainscore_language import load_data
+    from brainscore_language import load_dataset
 
     def test_shape(self):
-        assembly = load_data('Futrell2018')
+        assembly = load_dataset('Futrell2018')
         assert len(assembly['presentation']) == 10256
         assert len(assembly['subject']) == 180
 
@@ -198,11 +198,11 @@ For example:
 .. code-block:: python
 
     from brainscore_core.benchmarks import BenchmarkBase
-    from brainscore_language import load_data, load_metric, ArtificialSubject
+    from brainscore_language import load_dataset, load_metric, ArtificialSubject
 
     class MyBenchmark(BenchmarkBase):
         def __init__(self):
-            self.data = load_data('mydata')
+            self.data = load_dataset('mydata')
             self.metric = load_metric('pearsonr')
             ...
 
