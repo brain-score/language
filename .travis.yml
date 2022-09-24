@@ -15,3 +15,4 @@ install:
 script:
   - pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow"
   - python brainscore_language/plugin_management/test_plugins.py
+  - python brainscore_language/plugin_management/document_plugins.py
