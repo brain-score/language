@@ -30,12 +30,6 @@ test = [
     "gensim",
 ]
 
-readthedocs = [
-    "sphinxcontrib-bibtex",
-    "bibtexparser",
-    "rstcloth"
-]
-
 [build-system]
 requires = [
     "setuptools>=65.*",
