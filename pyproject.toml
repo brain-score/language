@@ -30,6 +30,11 @@ test = [
     "gensim",
 ]
 
+readthedocs = [
+    "bibtexparser",
+    "rstcloth"
+]
+
 [build-system]
 requires = [
     "setuptools>=65.*",
