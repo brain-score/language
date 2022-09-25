@@ -98,10 +98,12 @@ def _remove_duplicate_bibs(plugin_info:Dict[str,Dict], plugins_bib_fp:str) -> Li
 def _record_bibtex(bibtex_to_add:List[str], plugins_bib_fp:str):
     """ insert new BibTeX into respective .bib files """
     if plugins_bib_fp.exists():
-        open_condition = "a"
+        mode = "a"
     else:
-        open_condition = "w+"
-    with open(plugins_bib_fp, open_condition) as f:
+        if not Path(BIBS_DIR).exists():
+            Path(BIBS_DIR).mkdir(parents=True)
+        mode = "w+"
+    with open(plugins_bib_fp, mode) as f:
         if plugins_bib_fp.stat().st_size > 0:
             f.write('\n')
         for i, bibtex in enumerate(bibtex_to_add):
@@ -248,8 +250,9 @@ if __name__ == '__main__':
             plugin_info = get_plugin_info(new_plugins)
             new_plugin_info[plugin_type] = plugin_info
             add_new_bibtex(plugin_info, plugin_type) # plugin type .bib file
-        else:
-            print('No new plugins identified.')
-    add_new_bibtex(new_plugin_info) # one .bib file to rule them all
-    update_readthedocs(new_plugin_info)
-    update_plugins_list(all_plugins)
+    if len(new_plugin_info) > 0:
+        add_new_bibtex(new_plugin_info) # one .bib file to rule them all
+        update_readthedocs(new_plugin_info)
+        update_plugins_list(all_plugins)
+    else:
+        print('No new plugins identified.')
