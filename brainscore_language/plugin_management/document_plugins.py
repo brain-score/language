@@ -248,6 +248,8 @@ if __name__ == '__main__':
             plugin_info = get_plugin_info(new_plugins)
             new_plugin_info[plugin_type] = plugin_info
             add_new_bibtex(plugin_info, plugin_type) # plugin type .bib file
+        else:
+            print('No new plugins identified.')
     add_new_bibtex(new_plugin_info) # one .bib file to rule them all
     update_readthedocs(new_plugin_info)
     update_plugins_list(all_plugins)
