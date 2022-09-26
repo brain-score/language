@@ -117,8 +117,8 @@ def _write_to_rst(plugin_info:Dict[str,Dict]):
     """ Writes plugin info to readthedocs plugins.rst """
     with open(PLUGINS_DOC_FP, 'w+') as f:
         doc = RstCloth(f)
-        doc.newline()
         doc.ref_target(name="plugins")
+        doc.newline()
         doc.title('Plugins')
         doc.newline()
         for plugin_type in plugin_info:
