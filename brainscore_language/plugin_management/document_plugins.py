@@ -22,7 +22,7 @@ def _get_module_plugin_names(plugin_type:str, plugin_dir:Path) -> List[str]:
     with open(init_fp, 'r') as f:
         text = f.read()
         registered_plugins = re.findall(registry+'\[(.*)\]', text)
-        cleaned_plugin_names = [name.replace('"', '') for name in registered_plugins]
+        cleaned_plugin_names = [name.replace('"', '').replace('\'', '') for name in registered_plugins]
     
     return cleaned_plugin_names
 
@@ -117,6 +117,7 @@ def _write_to_rst(plugin_info:Dict[str,Dict]):
     """ Writes plugin info to readthedocs plugins.rst """
     with open(PLUGINS_DOC_FP, 'w+') as f:
         doc = RstCloth(f)
+        doc.newline()
         doc.ref_target(name="plugins")
         doc.title('Plugins')
         doc.newline()
@@ -125,6 +126,7 @@ def _write_to_rst(plugin_info:Dict[str,Dict]):
             for plugin in plugin_info[plugin_type]:
                 doc.h4(plugin)
                 doc.content(plugin_info[plugin_type][plugin]['dirname'])
+                doc.newline()
                 if plugin_info[plugin_type][plugin]['citation']:
                     doc.content(plugin_info[plugin_type][plugin]['citation'])
                 doc.newline()
@@ -133,17 +135,8 @@ def _write_to_rst(plugin_info:Dict[str,Dict]):
 
 def update_readthedocs(all_plugin_info:Dict[str,Dict]):
     """ For all plugins, add name and info to readthedocs (plugins.rst) """
-    # clean and format data
-    prepared_plugin_info = _prepare_content(all_plugin_info)
-
-    # write plugin info to readthedocs
+    prepared_plugin_info = _prepare_content(all_plugin_info) # rst formatting
     _write_to_rst(prepared_plugin_info)
-
-def update_plugins_list(all_plugin_info):
-    """ Update master list to include any new plugins """
-    plugins_lists = {k:list(v) for k,v in all_plugins.items()}
-    with open(PLUGINS_LIST_FP, 'w+') as f:
-        json.dump(plugins_lists, f, indent=2) 
 
 if __name__ == '__main__':
     all_plugin_info = get_all_plugin_info()
@@ -151,4 +144,3 @@ if __name__ == '__main__':
         create_bibfile(all_plugin_info[plugin_type], plugin_type) # plugin type .bib file
     create_bibfile(all_plugin_info) # one .bib file to rule them all
     update_readthedocs(all_plugin_info)
-    # update_plugins_list(all_plugin_info)
