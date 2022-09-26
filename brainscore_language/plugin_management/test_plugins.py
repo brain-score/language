@@ -73,7 +73,7 @@ if __name__ == '__main__':
         assert plugin_type in PLUGIN_TYPES, "Filepath not recognized as plugin test file."
         plugin_test_runner = PluginTestRunner(plugin, results, test=args.test)
         plugin_test_runner()
-    elif not args.file:
+    elif not args.test_file:
         for plugin_type in PLUGIN_TYPES:
             plugins_dir = Path(Path(__file__).parents[1], plugin_type)
             for plugin in plugins_dir.glob('[!._]*'):
@@ -83,6 +83,6 @@ if __name__ == '__main__':
     else:
         warnings.warn("Filepath does not exist or is not recognized as plugin test file.")
 
-    # plugins_with_errors = {k:v for k,v in results.items() if v == 1}
-    # num_plugins_failed = len(plugins_with_errors)
-    # assert num_plugins_failed == 0, f"\n{num_plugins_failed} plugin tests failed\n{plugins_with_errors}"
+    plugins_with_errors = {k:v for k,v in results.items() if v == 1}
+    num_plugins_failed = len(plugins_with_errors)
+    assert num_plugins_failed == 0, f"\n{num_plugins_failed} plugin tests failed\n{plugins_with_errors}"
