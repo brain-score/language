@@ -50,12 +50,30 @@ class PluginTestRunner:
         return completed_process
 
 def arg_parser():
-    parser = argparse.ArgumentParser(description='Run single specified test or tests for each plugin')
-    parser.add_argument('test_file', type=str, nargs='?',help='Optional: full path of test file')
+    parser = argparse.ArgumentParser(description='Run single specified test or all tests for each plugin')
+    parser.add_argument('test_file', type=str, nargs='?',help='Optional: path of target test file')
     parser.add_argument('--test', type=str, help='Optional: name of test to run', required=False)
     args = parser.parse_args()
 
     return args
+
+def run_specified_tests(args, results):
+    filename = args.test_file.split('/')[-1]
+    plugin_dirname = args.test_file.split('/')[-2]
+    plugin_type = args.test_file.split('/')[-3]
+    plugin = Path(Path(__file__).parents[1], plugin_type) / plugin_dirname
+    assert filename == "test.py", "Filepath not recognized as test file, must be 'test.py'."
+    assert plugin_type in PLUGIN_TYPES, "Filepath not recognized as plugin test file."
+    plugin_test_runner = PluginTestRunner(plugin, results, test=args.test)
+    plugin_test_runner()
+
+def run_all_tests(results):
+    for plugin_type in PLUGIN_TYPES:
+        plugins_dir = Path(Path(__file__).parents[1], plugin_type)
+        for plugin in plugins_dir.glob('[!._]*'):
+            if plugin.is_dir():
+                plugin_test_runner = PluginTestRunner(plugin, results)
+                plugin_test_runner()
 
 
 if __name__ == '__main__':
@@ -63,25 +81,12 @@ if __name__ == '__main__':
     results = {}
 
     args = arg_parser()
-    if args.test_file and Path(args.test_file).exists():
-        filename = args.test_file.split('/')[-1]
-        plugin_dirname = args.test_file.split('/')[-2]
-        plugin_type = args.test_file.split('/')[-3]
-        plugins_dir = Path(Path(__file__).parents[1], plugin_type)
-        plugin = plugins_dir / plugin_dirname
-        assert filename == "test.py", "Filepath not recognized as test file, must be 'test.py'."
-        assert plugin_type in PLUGIN_TYPES, "Filepath not recognized as plugin test file."
-        plugin_test_runner = PluginTestRunner(plugin, results, test=args.test)
-        plugin_test_runner()
-    elif not args.test_file:
-        for plugin_type in PLUGIN_TYPES:
-            plugins_dir = Path(Path(__file__).parents[1], plugin_type)
-            for plugin in plugins_dir.glob('[!._]*'):
-                if plugin.is_dir():
-                    plugin_test_runner = PluginTestRunner(plugin, results)
-                    plugin_test_runner()
+    if not args.test_file:
+        run_all_tests(results)
+    elif args.test_file and Path(args.test_file).exists():
+        run_specified_tests(args, results)
     else:
-        warnings.warn("Filepath does not exist or is not recognized as plugin test file.")
+        warnings.warn("Test file not found.")
 
     plugins_with_errors = {k:v for k,v in results.items() if v == 1}
     num_plugins_failed = len(plugins_with_errors)
