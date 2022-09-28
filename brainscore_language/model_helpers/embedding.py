@@ -1,6 +1,7 @@
 import copy
 import functools
 import logging
+import re
 from pathlib import Path
 from typing import Union, List, Dict, Tuple
 
@@ -38,7 +39,7 @@ class GensimKeyedVectorsSubject(ArtificialSubject):
         return self._identifier
 
     def perform_behavioral_task(self, task: ArtificialSubject.Task):
-        raise NotImplementedError()
+        raise NotImplementedError("Embedding models do not support behavioral tasks")
 
     def perform_neural_recording(self, recording_target: ArtificialSubject.RecordingTarget,
                                  recording_type: ArtificialSubject.RecordingType):
@@ -66,8 +67,11 @@ class GensimKeyedVectorsSubject(ArtificialSubject):
         words = text_part.split()
         feature_vectors = []
         for word in words:
+            word = remove_punctuation(word)
+            word = word.rstrip("'s")
             try:
-                feature_vectors.append(self._model[word])
+                features = self._model[word]
+                feature_vectors.append(features)
             except KeyError:  # not in vocabulary
                 self._logger.warning(f"Word {word} not present in model")
                 feature_vectors.append(np.zeros((self._vector_size,)))
@@ -95,3 +99,8 @@ class GensimKeyedVectorsSubject(ArtificialSubject):
             representations.append(current_representations)
         representations = merge_data_arrays(representations)
         return representations
+
+
+def remove_punctuation(word):
+    """ Remove dots, question marks, exclamation marks, and commas (`.?!,`) from the word """
+    return re.sub(r'[\.\?\!,:]', '', word)
