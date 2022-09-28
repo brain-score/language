@@ -3,7 +3,6 @@ python:
   - "3.7"
   - "3.8"
   - "3.9"
-  - "3.10"
 install:
   - python -m pip install -e ".[test]"
   # install conda for plugin runner
@@ -14,7 +13,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-
+  - pip list
 script:
   - pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow"
   - python brainscore_language/plugin_management/test_plugins.py
