@@ -103,4 +103,4 @@ class GensimKeyedVectorsSubject(ArtificialSubject):
 
 def remove_punctuation(word):
     """ Remove dots, question marks, exclamation marks, and commas (`.?!,`) from the word """
-    return re.sub(r'[\.\?\!,]', '', word)
+    return re.sub(r'[\.\?\!,:]', '', word)
