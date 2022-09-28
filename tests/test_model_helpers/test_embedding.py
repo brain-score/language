@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from brainscore_language.artificial_subject import ArtificialSubject
-from brainscore_language.model_helpers.embedding import GensimKeyedVectorsSubject
+from brainscore_language.model_helpers.embedding import GensimKeyedVectorsSubject, remove_punctuation
 
 logging.basicConfig(level=logging.INFO)
 
@@ -68,3 +68,29 @@ class TestNeural:
         assert set(representations['recording_target'].values) == {
             ArtificialSubject.RecordingTarget.language_system_left_hemisphere,
             ArtificialSubject.RecordingTarget.language_system_right_hemisphere}
+
+
+class TestPunctuation:
+    def test_removes_dot_at_end(self):
+        assert remove_punctuation('word.') == 'word'
+
+    def test_removes_dot_middle(self):
+        assert remove_punctuation('wor.d') == 'word'
+
+    def test_removes_comma_at_end(self):
+        assert remove_punctuation('word,') == 'word'
+
+    def test_removes_colon_at_end(self):
+        assert remove_punctuation('word:') == 'word'
+
+    def test_removes_questionmark_at_end(self):
+        assert remove_punctuation('word?') == 'word'
+
+    def test_removes_exclamationmark_at_end(self):
+        assert remove_punctuation('word!') == 'word'
+
+    def test_not_removes_dash(self):
+        assert remove_punctuation('wo-rd') == 'wo-rd'
+
+    def test_not_removes_apostrophe(self):
+        assert remove_punctuation("they're") == "they're"
