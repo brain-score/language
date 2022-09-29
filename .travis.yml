@@ -5,6 +5,7 @@ python:
   - "3.9"
 install:
   # fix setuptools for python 3.7, error in other versions https://github.com/pypa/setuptools/issues/3293
+  - echo $TRAVIS_PYTHON_VERSION
   - if [ $TRAVIS_PYTHON_VERSION == "3.7*" ]; then
     pip install "setuptools==60.5.0";
     fi
