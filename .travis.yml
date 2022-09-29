@@ -4,6 +4,7 @@ python:
   - "3.8"
   - "3.9"
 install:
+  - pip install "setuptools==60.5.0,>=62.3.1"  # error in other versions https://github.com/pypa/setuptools/issues/3293
   - python -m pip install -e ".[test]"
   # install conda for plugin runner
   - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
