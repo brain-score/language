@@ -25,4 +25,4 @@ def test_data():
                                                  '06_LH_AngG', '02_LH_AntTemp', '08_RH_AntTemp', '05_LH_MFG'}
 
     mean_assembly = assembly.groupby('subject_id').mean()
-    assert not np.isnan(mean_assembly).any()
+    assert not np.isnan(mean_assembly).any(), "Each stimulus should have at least one subject's data"
