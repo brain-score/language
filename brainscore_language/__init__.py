@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Dict, Any, Type, Union
 
 from brainio.assemblies import DataAssembly
@@ -18,30 +19,34 @@ model_registry: Dict[str, Type[ArtificialSubject]] = {}
 """ Pool of available models """
 
 
+def import_plugins(plugin_type: str) -> str:
+    plugins_dir = Path(__file__).with_name(plugin_type)
+    plugins = [x.name for x in plugins_dir.iterdir() if x.is_dir()]
+
+    for plugin in plugins:
+        __import__(f'brainscore_language.{plugin_type}.{plugin}')
+
+
 def load_dataset(identifier: str) -> Union[DataAssembly, Any]:
-    # imports to load plugins until plugin system is implemented
-    from brainscore_language.data import wikitext, futrell2018, pereira2018, fedorenko2016, blank2014
+    import_plugins('data')
 
     return data_registry[identifier]()
 
 
 def load_metric(identifier: str, *args, **kwargs) -> Metric:
-    # imports to load plugins until plugin system is implemented
-    from brainscore_language.metrics import accuracy, pearson_correlation, linear_predictivity
+    import_plugins('metrics')
 
     return metric_registry[identifier](*args, **kwargs)
 
 
 def load_benchmark(identifier: str) -> Benchmark:
-    # imports to load plugins until plugin system is implemented
-    from brainscore_language.benchmarks import wikitext_next_word, futrell2018, pereira2018
+    import_plugins('benchmarks')
 
     return benchmark_registry[identifier]()
 
 
 def load_model(identifier: str) -> ArtificialSubject:
-    # imports to load plugins until plugin system is implemented
-    from brainscore_language.models import gpt, glove
+    import_plugins('models')
 
     model = model_registry[identifier]()
     model.identifier = identifier
