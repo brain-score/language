@@ -21,7 +21,7 @@ model_registry: Dict[str, Type[ArtificialSubject]] = {}
 
 def import_plugins(plugin_type: str) -> str:
     plugins_dir = Path(__file__).with_name(plugin_type)
-    plugins = [x.name for x in plugins_dir.iterdir() if x.is_dir()]
+    plugins = [d.name for d in plugins_dir.iterdir() if d.is_dir()]
 
     for plugin in plugins:
         __import__(f'brainscore_language.{plugin_type}.{plugin}')
