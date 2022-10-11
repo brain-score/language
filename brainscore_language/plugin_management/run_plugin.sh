@@ -5,8 +5,9 @@ PLUGIN_NAME=$2
 HAS_REQUIREMENTS=$3
 PLUGIN_REQUIREMENTS_PATH=$PLUGIN_PATH/requirements.txt
 PLUGIN_TEST_PATH=$PLUGIN_PATH/test.py
+SINGLE_TEST=$4
 
-echo "${PLUGIN_NAME/_//}"   
+echo "${PLUGIN_NAME/_//}"
 
 if $HAS_REQUIREMENTS; then
 	eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
@@ -18,5 +19,12 @@ else
 fi
 
 output=`python -m pip install -e ".[test]" 2>&1` || echo $output
-pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow" $PLUGIN_TEST_PATH
+
+if [ "$SINGLE_TEST" != False ]; then
+	echo "Running ${SINGLE_TEST}" 
+	pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow" "-vv" $PLUGIN_TEST_PATH "-k" $SINGLE_TEST "--log-cli-level=INFO"
+else
+	pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow" $PLUGIN_TEST_PATH
+fi
+
 exit $?

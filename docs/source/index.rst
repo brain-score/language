@@ -23,5 +23,6 @@ The `score` function is the primary entry point to score a model on a benchmark.
    modules/artificial_subject
    modules/model_tutorial
    modules/benchmark_tutorial
+   examples
    modules/api_reference
    modules/plugins
