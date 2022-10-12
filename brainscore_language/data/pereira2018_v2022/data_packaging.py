@@ -76,7 +76,7 @@ def package_Pereira2018ROI():
         effect_sizes_placeholder.reshape(*effect_sizes_placeholder.shape, 1),
         dims=("presentation", "neuroid", "time"),  # ? added time
         coords={
-            "sentence": ("presentation", presentation_arr),
+            "stimuli": ("presentation", presentation_arr),
             "experiment": ("presentation", experiment_arr),
             "subject": ("neuroid", subject_arr),
             "roi": ("neuroid", neuroid_arr),
