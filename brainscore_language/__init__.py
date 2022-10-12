@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 from typing import Dict, Any, Type, Union
 
 from brainio.assemblies import DataAssembly
@@ -24,8 +25,19 @@ def import_plugins(plugin_type: str) -> str:
     plugins = [d.name for d in plugins_dir.iterdir() if d.is_dir()]
 
     for plugin in plugins:
-        __import__(f'brainscore_language.{plugin_type}.{plugin}')
-
+        requirements_file = plugins_dir / plugin / "requirements.txt"
+        if not requirements_file.is_file():
+            __import__(f'brainscore_language.{plugin_type}.{plugin}')
+        else:
+            # register plugin id but do not init unless being used
+            init_file = plugins_dir / plugin / "__init__.py"
+            registry_name = plugin_type.strip('s') + '_registry'
+            with open(init_file, 'r') as f:
+                plugin_registrations = [line for line in f if registry_name + '[' in line]
+                registered_plugins = [re.findall(r'\[.*?\]', line)[0].strip('[]\'') for line in plugin_registrations]
+                for plugin_id in registered_plugins:
+                    registry = globals()[registry_name]
+                    registry[plugin_id] = None
 
 def load_dataset(identifier: str) -> Union[DataAssembly, Any]:
     import_plugins('data')
