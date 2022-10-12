@@ -2,7 +2,7 @@ import logging
 
 from brainscore_language import data_registry
 
-# from brainscore_language.utils.s3 import load_from_s3
+from brainscore_language.utils.s3 import load_from_s3
 from brainscore_language.utils.local import load_from_disk
 
 _logger = logging.getLogger(__name__)
@@ -20,4 +20,9 @@ BIBTEX = """@article{pereira2018toward,
 }"""
 
 
-data_registry["Pereira2018_v2022.language"] = lambda: load_from_disk("Pereira2018ROI")
+# data_registry["Pereira2018_v2022.language"] = lambda: load_from_disk("Pereira2018ROI")
+data_registry["Pereira2018_v2022.language"] = lambda: load_from_s3(
+    identifier="Pereira2018ROI",
+    version_id="8kEzAXaWnxjMIC95MrhSJ3gtP2a1W.Y7",
+    sha1="235ecf1f2abc38cb892c0a7b5c9c465434f153c5",
+)
