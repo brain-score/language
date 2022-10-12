@@ -67,7 +67,7 @@ class _Pereira2018LinregPearsonr(BenchmarkBase):
                 "neuroid_coord": "neuroid",
             },
         )
-        identifier = f"Pereira2018.{experiment}-linreg_pearsonr"
+        identifier = f"Pereira2018_v2022.{experiment}-linreg_pearsonr"
         # ceiling = self._load_ceiling(identifier=identifier, **ceiling_s3_kwargs)
         super(_Pereira2018LinregPearsonr, self).__init__(
             identifier=identifier,
@@ -85,31 +85,33 @@ class _Pereira2018LinregPearsonr(BenchmarkBase):
             "neuroid"
         )  # not all subjects have done both experiments, drop those that haven't
         data.attrs["identifier"] = f"{data.identifier}.{experiment}"
+        if "time" in data.dims:
+            data = data.drop("time").squeeze("time")
         return data
 
-    # def _load_ceiling(
-    #     self,
-    #     identifier: str,
-    #     version_id: str,
-    #     sha1: str,
-    #     assembly_prefix="ceiling_",
-    #     raw_kwargs=None,
-    # ):
-    #     ceiling = load_from_s3(
-    #         identifier,
-    #         cls=Score,
-    #         assembly_prefix=assembly_prefix,
-    #         version_id=version_id,
-    #         sha1=sha1,
-    #     )
-    #     if raw_kwargs:  # recursively load raw attributes
-    #         raw = self._load_ceiling(
-    #             identifier=identifier,
-    #             assembly_prefix=assembly_prefix + "raw_",
-    #             **raw_kwargs,
-    #         )
-    #         ceiling.attrs["raw"] = raw
-    #     return ceiling
+    def _load_ceiling(
+        self,
+        identifier: str,
+        version_id: str,
+        sha1: str,
+        assembly_prefix="ceiling_",
+        raw_kwargs=None,
+    ):
+        ceiling = load_from_s3(
+            identifier,
+            cls=Score,
+            assembly_prefix=assembly_prefix,
+            version_id=version_id,
+            sha1=sha1,
+        )
+        if raw_kwargs:  # recursively load raw attributes
+            raw = self._load_ceiling(
+                identifier=identifier,
+                assembly_prefix=assembly_prefix + "raw_",
+                **raw_kwargs,
+            )
+            ceiling.attrs["raw"] = raw
+        return ceiling
 
     def __call__(self, candidate: ArtificialSubject) -> Score:
         candidate.perform_neural_recording(
