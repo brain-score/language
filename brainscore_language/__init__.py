@@ -50,25 +50,25 @@ def import_plugins(plugin_type: str, identifier: str) -> str:
 
 
 def load_dataset(identifier: str) -> Union[DataAssembly, Any]:
-    register_plugins('data', identifier)
+    import_plugins('data', identifier)
 
     return data_registry[identifier]()
 
 
 def load_metric(identifier: str, *args, **kwargs) -> Metric:
-    register_plugins('metrics', identifier)
+    import_plugins('metrics', identifier)
 
     return metric_registry[identifier](*args, **kwargs)
 
 
 def load_benchmark(identifier: str) -> Benchmark:
-    register_plugins('benchmarks', identifier)
+    import_plugins('benchmarks', identifier)
 
     return benchmark_registry[identifier]()
 
 
 def load_model(identifier: str) -> ArtificialSubject:
-    register_plugins('models', identifier)
+    import_plugins('models', identifier)
 
     model = model_registry[identifier]()
     model.identifier = identifier
