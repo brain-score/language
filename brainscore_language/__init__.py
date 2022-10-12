@@ -22,10 +22,10 @@ model_registry: Dict[str, Type[ArtificialSubject]] = {}
 
 def create_registry_preview(plugin_type: str, identifier: str) -> Path:
     plugins_dir = Path(__file__).with_name(plugin_type)
-    plugins = [d.name for d in plugins_dir.iterdir() if d.is_dir()]
+    plugin_dirs = [d.name for d in plugins_dir.iterdir() if d.is_dir()]
     specified_plugin_dir = None
 
-    for plugin_dirname in plugins:
+    for plugin_dirname in plugin_dirs:
         plugin_dirpath = plugins_dir / plugin_dirname
         init_file = plugin_dirpath / "__init__.py"
         with open(init_file, 'r') as f:
@@ -41,7 +41,7 @@ def create_registry_preview(plugin_type: str, identifier: str) -> Path:
     return specified_plugin_dir
 
 
-def import_plugins(plugin_type: str, identifier: str) -> str:
+def import_plugins(plugin_type: str):
     plugins_dir = Path(__file__).with_name(plugin_type)
     plugins = [d.name for d in plugins_dir.iterdir() if d.is_dir()]
 
@@ -50,25 +50,25 @@ def import_plugins(plugin_type: str, identifier: str) -> str:
 
 
 def load_dataset(identifier: str) -> Union[DataAssembly, Any]:
-    import_plugins('data', identifier)
+    import_plugins('data')
 
     return data_registry[identifier]()
 
 
 def load_metric(identifier: str, *args, **kwargs) -> Metric:
-    import_plugins('metrics', identifier)
+    import_plugins('metrics')
 
     return metric_registry[identifier](*args, **kwargs)
 
 
 def load_benchmark(identifier: str) -> Benchmark:
-    import_plugins('benchmarks', identifier)
+    import_plugins('benchmarks')
 
     return benchmark_registry[identifier]()
 
 
 def load_model(identifier: str) -> ArtificialSubject:
-    import_plugins('models', identifier)
+    import_plugins('models')
 
     model = model_registry[identifier]()
     model.identifier = identifier
