@@ -8,7 +8,7 @@ from brainscore_language import create_registry_preview
 plugins_to_run: Dict[str, Dict[str, str]] = {}
 """ ID and location of model, benchmark, data, and metric to score """
 
-run_requirements: List = []
+run_requirements: Dict[str, List] = {}
 """ requirements for all plugins in plugins_to_run """
 
 
@@ -17,12 +17,13 @@ def score():
 
 
 def _get_plugin_requirements():
-    for plugin in plugins_to_run:
-        plugin_path = plugins_to_run[plugin]['dir']
+    for plugin_type in plugins_to_run:
+        plugin_path = plugins_to_run[plugin_type]['dir']
+        plugin_id = plugins_to_run[plugin_type]['id']
         requirements_file = plugin_path / "requirements.txt"
         if requirements_file.is_file():
             with open(requirements_file, 'r') as f:
-                run_requirements.append([line.strip() for line in f])
+                run_requirements[plugin_id] = [line.strip() for line in f]
 
 
 def check_requirement_conflicts():
