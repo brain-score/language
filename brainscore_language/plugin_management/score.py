@@ -29,7 +29,7 @@ def check_requirement_conflicts():
     _get_plugin_requirements()
     flattened_requirements = [req.split('=><', 1)[0] for l in run_requirements for req in l]
     if len(flattened_requirements) != len(set(flattened_requirements)):
-        warnings.warn("Warning: duplicate requirements found.")
+        warnings.warn("Warning: duplicate requirements found. May produce unexpected results.")
 
 
 def preview_benchmark(identifier: str):
