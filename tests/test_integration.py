@@ -19,6 +19,7 @@ def test_score(model_identifier, benchmark_identifier, expected_score):
     assert actual_score == expected_score
 
 
+@pytest.mark.travis_slow
 def test_commandline_score():
     process = subprocess.run([sys.executable, "brainscore_language", "score",
                               "--model_identifier=distilgpt2",
