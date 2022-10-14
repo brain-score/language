@@ -1,15 +1,15 @@
 import argparse
-import pytest_check as check
 import shutil
-import subprocess
 from typing import Dict, List
 import warnings
 from pathlib import Path
 
+from environment_manager import EnvironmentManager
+
 PLUGIN_TYPES = ['benchmarks', 'data', 'metrics', 'models']
 
 
-class PluginTestRunner:
+class PluginTestRunner(EnvironmentManager):
     """Runs plugin tests (requires "test.py" for each plugin)
     
     Usage examples:
@@ -25,44 +25,16 @@ class PluginTestRunner:
 
     """
     def __init__(self, plugin_directory:Path, results:Dict, test=False):
+        EnvironmentManager.__init__(self, 'test')
+
         self.plugin_directory = plugin_directory
         self.plugin_type = Path(self.plugin_directory).parent.name
         self.plugin_name = self.plugin_type + '_' + Path(self.plugin_directory).name
-        self.plugin_env_path = Path(self.get_conda_base()) / 'envs' / self.plugin_name
+        self.plugin_env_path = self.envs_dir / self.plugin_name
         self.has_requirements = (self.plugin_directory / 'requirements.txt').is_file()
         self.test = test if test else False
         self.results = results
 
-    def __call__(self):
-        self.validate_plugin()
-        self.run_tests()
-        self.teardown()
-
-    def get_conda_base(self):
-        return subprocess.check_output("conda info --base", shell=True).strip().decode('utf-8')
-
-    def validate_plugin(self):
-        assert (self.plugin_directory / 'test.py').is_file(), "'test.py' not found"
-
-    def run_tests(self):
-        completed_process = subprocess.run(f"bash {Path(__file__).parent}/test_plugin.sh \
-			{self.plugin_directory} {self.plugin_name} \
-			{str(self.has_requirements).lower()} {self.test}", shell=True)
-        check.equal(completed_process.returncode, 0)
-        self.results[self.plugin_name] = (completed_process.returncode)
-
-        return completed_process
-
-    def teardown(self):
-        completed_process = subprocess.run(f"output=`conda env remove -n {self.plugin_name} 2>&1` || echo $output",
-                                           shell=True)
-        if completed_process.returncode != 0:  # directly remove env dir if conda fails
-            try:
-                shutil.rmtree(self.plugin_env_path)
-                completed_process.returncode = 0
-            except Exception as e:
-                warnings.warn(f"conda env {self.plugin_name} removal failed and must be manually deleted.")
-        return completed_process
 
 def arg_parser() -> List[str]:
     parser = argparse.ArgumentParser(description='Run single specified test or all tests for each plugin')

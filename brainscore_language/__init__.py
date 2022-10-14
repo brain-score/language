@@ -1,5 +1,8 @@
 from pathlib import Path
 import re
+import subprocess
+import sys
+import types
 from typing import Dict, Any, Type, Union
 
 from brainio.assemblies import DataAssembly
@@ -20,55 +23,57 @@ model_registry: Dict[str, Type[ArtificialSubject]] = {}
 """ Pool of available models """
 
 
-def create_registry_preview(plugin_type: str, identifier: str) -> Path:
-    plugins_dir = Path(__file__).with_name(plugin_type)
-    plugin_dirs = [d.name for d in plugins_dir.iterdir() if d.is_dir()]
-    specified_plugin_dir = None
-
-    for plugin_dirname in plugin_dirs:
-        plugin_dirpath = plugins_dir / plugin_dirname
-        init_file = plugin_dirpath / "__init__.py"
-        with open(init_file, 'r') as f:
-            registry_name = plugin_type.strip('s') + '_registry'
-            plugin_registrations = [line for line in f if registry_name + '[' in line]
-            registered_plugins = [re.findall(r'\[.*?\]', line)[0].strip('[]\'') for line in plugin_registrations]
-            for plugin_id in registered_plugins:
-                registry = globals()[registry_name]
-                registry[plugin_id] = None
-                if plugin_id == identifier:
-                    specified_plugin_dir = plugin_dirpath
-
-    return specified_plugin_dir
-
-
-def import_plugins(plugin_type: str):
+def locate_plugin(plugin_type: str, identifier: str) -> str:
     plugins_dir = Path(__file__).with_name(plugin_type)
     plugins = [d.name for d in plugins_dir.iterdir() if d.is_dir()]
 
+    specified_plugin_dirname = None
+
     for plugin_dirname in plugins:
-        __import__(f'brainscore_language.{plugin_type}.{plugin_dirname}')
+        plugin_dirpath = plugins_dir / plugin_dirname
+        init_file = plugin_dirpath / "__init__.py"
+        with open(init_file) as f:
+            registry_name = plugin_type.strip('s') + '_registry'
+            plugin_registrations = [line for line in f if registry_name in line 
+                                    and f'\'{identifier}\'' in line.replace('\"', '\'')]
+            if len(plugin_registrations) == 1:
+                specified_plugin_dirname = plugin_dirname
+
+    return specified_plugin_dirname
+
+
+def _install_requirements(plugin_type:str, plugin_dirname: str):
+    plugins_dir = Path(__file__).with_name(plugin_type)
+    requirements_file = plugins_dir / plugin_dirname / 'requirements.txt'
+    subprocess.run(f"pip install {requirements_file}", shell=True)
+
+
+def import_plugin(plugin_type: str, identifier: str):
+    plugin_dirname = locate_plugin(plugin_type, identifier)
+    _install_requirements(plugin_type, plugin_dirname)
+    __import__(f'brainscore_language.{plugin_type}.{plugin_dirname}')
 
 
 def load_dataset(identifier: str) -> Union[DataAssembly, Any]:
-    import_plugins('data')
+    import_plugin('data', identifier)
 
     return data_registry[identifier]()
 
 
 def load_metric(identifier: str, *args, **kwargs) -> Metric:
-    import_plugins('metrics')
+    import_plugin('metrics', identifier)
 
     return metric_registry[identifier](*args, **kwargs)
 
 
 def load_benchmark(identifier: str) -> Benchmark:
-    import_plugins('benchmarks')
+    import_plugin('benchmarks', identifier)
 
     return benchmark_registry[identifier]()
 
 
 def load_model(identifier: str) -> ArtificialSubject:
-    import_plugins('models')
+    import_plugin('models', identifier)
 
     model = model_registry[identifier]()
     model.identifier = identifier
