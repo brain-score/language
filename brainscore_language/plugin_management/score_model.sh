@@ -13,9 +13,7 @@ output=`conda create -n $ENV_NAME python=3.8 -y 2>&1` || echo $output
 conda activate $ENV_NAME
 output=`python -m pip install "." 2>&1` || echo $output
 
-echo "$(pwd)"
-
 echo "Scoring ${MODEL_ID} on ${BENCHMARK_ID}"
-python brainscore_language score --model_identifier=$MODEL_ID --benchmark_identifier=$BENCHMARK_ID
+python brainscore_language score --model_identifier=$MODEL_ID --benchmark_identifier=$BENCHMARK_ID --create_env=False
 
 exit $?

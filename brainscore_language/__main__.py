@@ -1,11 +1,12 @@
 import fire
+import os
 
 from brainscore_language import score as _score_function
 from brainscore_language.plugin_management.environment_manager import EnvironmentManager
 
 
-def score(model_identifier: str, benchmark_identifier: str):
-    if True:
+def score(model_identifier: str, benchmark_identifier: str, create_env=True):
+    if create_env:
         identifiers = {'model':model_identifier, 'benchmark':benchmark_identifier}
         environment_manager = EnvironmentManager('score', identifiers=identifiers)
 
