@@ -1,4 +1,7 @@
 import pytest
+import subprocess
+import sys
+from pathlib import Path
 from pytest import approx
 
 from brainscore_language import score
@@ -14,3 +17,20 @@ from brainscore_language import score
 def test_score(model_identifier, benchmark_identifier, expected_score):
     actual_score = score(model_identifier=model_identifier, benchmark_identifier=benchmark_identifier)
     assert actual_score == expected_score
+
+
+@pytest.mark.travis_slow
+def test_commandline_score():
+    process = subprocess.run([sys.executable, "brainscore_language", "score",
+                              "--model_identifier=distilgpt2",
+                              "--benchmark_identifier=Pereira2018.243sentences-linear"],
+                             cwd=Path(__file__).parent.parent,
+                             capture_output=True, text=True)
+    assert process.returncode == 0, "Process failed"
+    assert "error" not in process.stderr.lower()
+    output = process.stdout
+    assert "Score" in output
+    assert "0.723" in output
+    assert output.startswith("<xarray.Score ()>\narray(0.72309996)")
+    assert "model_identifier:      distilgpt2" in output
+    assert "benchmark_identifier:  Pereira2018.243sentences-linear" in output
