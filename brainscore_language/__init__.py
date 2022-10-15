@@ -31,9 +31,9 @@ def locate_plugin(plugin_type: str, identifier: str) -> str:
         init_file = plugin_dirpath / "__init__.py"
         with open(init_file) as f:
             registry_name = plugin_type.strip('s') + '_registry'
-            plugin_registrations = [line for line in f if registry_name in line 
-                                    and f'\'{identifier}\'' in line.replace('\"', '\'')]
-            if len(plugin_registrations) == 1:
+            plugin_registrations = [line for line in f if f'{registry_name}[\'{identifier}\']'
+                                        in line.replace('\"', '\'')]
+            if len(plugin_registrations) > 0:
                 specified_plugin_dirname = plugin_dirname
 
     return specified_plugin_dirname
