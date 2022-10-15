@@ -18,7 +18,11 @@ class EnvironmentManager:
 
     def get_conda_base(self) -> str:
         """ return location of conda directory """
-        return subprocess.check_output("conda info --base", shell=True).strip().decode('utf-8')
+        try:
+            return subprocess.check_output("conda info --base", shell=True).strip().decode('utf-8')
+        except Exception as e:
+            warnings.warn(f"{e}. Please ensure that conda is properly installed " \
+                "(https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html).")
 
     def _run_tests(self) -> int:
         """ 
