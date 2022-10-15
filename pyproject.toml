@@ -15,19 +15,16 @@ dependencies = [
     "tqdm",
     "fire",
     "numpy>=1.21",
+    "torch>=1.9.1",
+    "transformers>=4.11.3",
     "brainscore_core@git+https://github.com/brain-score/core.git@main",
     "brainio@git+https://github.com/brain-score/brainio.git@main",
-    "datasets==2.*", # necessary for wikitext -- remove once plugin system works
-    "scipy", # necessary for accuracy metric -- remove once plugin system works
-    "scikit-learn", # necessary for neural predictivity -- remove once plugin system works
 ]
 
 [project.optional-dependencies]
 test = [
     "pytest",
     "pytest-check",
-    "transformers>=4.11.3",
-    "torch>=1.9.1",
     "gensim",
 ]
 
@@ -61,3 +58,14 @@ markers = [
     "travis_slow",
     "slow",
 ]
+
+
+################################################################
+#### setuptools packaging config ####
+################################################################
+
+[tool.setuptools.package-data]
+"brainscore_language.benchmarks" = ["**"]
+"brainscore_language.data" = ["**"]
+"brainscore_language.metrics" = ["**"]
+"brainscore_language.models" = ["**"]

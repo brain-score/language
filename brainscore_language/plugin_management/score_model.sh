@@ -1,10 +1,8 @@
 #!/bin/bash
 
-# MODEL_ID=$1
-# BENCHMARK_ID=$2
-MODEL_ID='distilgpt2'
-BENCHMARK_ID='Futrell2018-pearsonr'
-ENV_NAME="${MODEL_ID}_${BENCHMARK_ID}"
+MODEL_ID=$1
+BENCHMARK_ID=$2
+ENV_NAME=$3
 
 
 echo "Setting up conda environment: ${ENV_NAME}"

@@ -45,7 +45,8 @@ def locate_plugin(plugin_type: str, identifier: str) -> str:
 def _install_requirements(plugin_type:str, plugin_dirname: str):
     plugins_dir = Path(__file__).with_name(plugin_type)
     requirements_file = plugins_dir / plugin_dirname / 'requirements.txt'
-    subprocess.run(f"pip install {requirements_file}", shell=True)
+    if requirements_file.is_file():
+        subprocess.run(f"pip install -r {requirements_file}", shell=True)
 
 
 def import_plugin(plugin_type: str, identifier: str):
