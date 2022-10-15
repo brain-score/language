@@ -1,5 +1,4 @@
 import fire
-import os
 
 from brainscore_language import score as _score_function
 from brainscore_language.plugin_management.environment_manager import EnvironmentManager
