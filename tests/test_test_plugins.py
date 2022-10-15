@@ -25,17 +25,9 @@ class TestPluginTestRunner:
 				assert True        
 			'''))
 
-	def teardown_method(self):
-		shutil.rmtree(DUMMY_PLUGIN_PATH)
-
 	def test_plugin_name(self):
 		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH, DUMMY_RESULTS)
 		assert plugin_test_runner.plugin_name == DUMMY_TYPE + '_' + DUMMY_PLUGIN
-		
-	def test_get_conda_base(self):
-		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH, DUMMY_RESULTS)
-		conda_base = plugin_test_runner.get_conda_base()
-		assert 'conda' in conda_base
 
 	def test_has_testfile(self):
 		DUMMY_TESTFILE.unlink()
@@ -50,12 +42,5 @@ class TestPluginTestRunner:
 
 	def test_run_tests(self):
 		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH, DUMMY_RESULTS)
-		completed_process = plugin_test_runner.run_tests()
-		assert completed_process.returncode == 0
-
-	def test_teardown(self):
-		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH, DUMMY_RESULTS)
-		subprocess.run(f"conda create -n {DUMMY_PLUGIN} python=3.8 -y", shell=True)
-		assert plugin_test_runner.plugin_env_path.is_dir() == True
-		plugin_test_runner.teardown()
-		assert plugin_test_runner.plugin_env_path.is_dir() == False
+		plugin_test_runner.run_tests()
+		assert plugin_test_runner.results[plugin_test_runner.plugin_name] == 0

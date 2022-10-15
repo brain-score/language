@@ -1,14 +1,15 @@
 import fire
 
 from brainscore_language import score as _score_function
-from brainscore_language.plugin_management.environment_manager import EnvironmentManager
+from brainscore_language.plugin_management.conda_score import CondaScore
 
 
 def score(model_identifier: str, benchmark_identifier: str, create_env=False):
     if create_env:
+        # create conda environment from which score() is called
         plugin_ids = {'model':model_identifier, 'benchmark':benchmark_identifier}
-        environment_manager = EnvironmentManager('score', plugin_ids=plugin_ids)
-        result = environment_manager().results
+        conda_score = CondaScore(plugin_ids)
+        result = conda_score().results
     else:
         result = _score_function(model_identifier, benchmark_identifier)
     

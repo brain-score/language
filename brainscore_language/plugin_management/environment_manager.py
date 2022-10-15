@@ -1,4 +1,5 @@
 from pathlib import Path
+import pytest_check as check
 import subprocess
 import warnings
 
@@ -6,11 +7,8 @@ import warnings
 class EnvironmentManager:
     """ Runs plugins in conda environments """
 
-    def __init__(self, runtype=str, plugin_ids=None):
-        self.runtype = runtype
-        self.plugin_ids = plugin_ids
+    def __init__(self):
         self.envs_dir = Path(self.get_conda_base()) / 'envs'
-        self.results = None
 
     def __call__(self):
         self.run(self.runtype)
@@ -24,47 +22,14 @@ class EnvironmentManager:
             warnings.warn(f"{e}. Please ensure that conda is properly installed " \
                 "(https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html).")
 
-    def _run_tests(self) -> int:
-        """ 
-        calls bash script to create conda environment, then
-        runs all tests or selected test for specified plugin
-        requires "test.py" file in plugin directory 
-        """
-        import pytest_check as check
+    def run_in_env(self, run_command=str) -> int:
 
-        assert (self.plugin_directory / 'test.py').is_file(), "'test.py' not found"
-
-        completed_process = subprocess.run(f"bash {Path(__file__).parent}/test_plugin.sh \
-            {self.plugin_directory} {self.plugin_name} \
-            {str(self.has_requirements).lower()} {self.test}", shell=True)
+        print(run_command)
+        completed_process = subprocess.run({run_command}, shell=True)
+        print(completed_process)
         check.equal(completed_process.returncode, 0)
-        self.results[self.plugin_name] = (completed_process.returncode)
-
+        
         return completed_process
-
-    def _score_model(self) -> int:
-        """ 
-        calls bash script to create conda environment, then
-        hands execution back to score a model on a benchmark
-        """
-        self.model = self.plugin_ids['model']
-        self.benchmark = self.plugin_ids['benchmark']
-        self.env_name = f'{self.model}_{self.benchmark}'
-        self.plugin_env_path = self.envs_dir / self.env_name
-
-        completed_process = subprocess.run(f"bash {Path(__file__).parent}/score_model.sh \
-                {self.model} {self.benchmark} {self.env_name}", shell=True)
-
-        return completed_process
-
-    def run(self, runtype=str):
-        """ create env for either testing or scoring """
-        if runtype == 'test':
-            self._run_tests()
-        elif runtype == 'score':
-            self._score_model()
-        else:
-            assert False; f'runtype {runtype} not recognized. Must be either "test" or "score".'
 
     def teardown(self) -> int:
         """ 

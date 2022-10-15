@@ -1,10 +1,10 @@
 import argparse
+from pathlib import Path
 import shutil
 from typing import Dict, List
 import warnings
-from pathlib import Path
 
-from environment_manager import EnvironmentManager
+from brainscore_language.plugin_management.environment_manager import EnvironmentManager
 
 PLUGIN_TYPES = ['benchmarks', 'data', 'metrics', 'models']
 
@@ -25,15 +25,39 @@ class PluginTestRunner(EnvironmentManager):
 
     """
     def __init__(self, plugin_directory:Path, results:Dict, test=False):
-        EnvironmentManager.__init__(self, 'test')
+        EnvironmentManager.__init__(self)
 
         self.plugin_directory = plugin_directory
         self.plugin_type = Path(self.plugin_directory).parent.name
         self.plugin_name = self.plugin_type + '_' + Path(self.plugin_directory).name
+        self.env_name = self.plugin_name
         self.plugin_env_path = self.envs_dir / self.plugin_name
         self.has_requirements = (self.plugin_directory / 'requirements.txt').is_file()
         self.test = test if test else False
         self.results = results
+        self.script_path = f'{Path(__file__).parent}/test_plugin.sh'
+
+    def __call__(self):
+        self.validate_plugin()
+        self.run_tests()
+        self.teardown()
+
+    def validate_plugin(self):
+        """ requires "test.py" file in plugin directory """
+        assert (self.plugin_directory / 'test.py').is_file(), "'test.py' not found"
+
+    def run_tests(self) -> int:
+        """ 
+        calls bash script to create conda environment, then
+        runs all tests or selected test for specified plugin
+        """
+        run_command = f"bash {self.script_path} \
+            {self.plugin_directory} {self.plugin_name} \
+            {str(self.has_requirements).lower()} {self.test}"
+
+        completed_process = self.run_in_env(run_command)
+
+        self.results[self.plugin_name] = (completed_process.returncode)
 
 
 def arg_parser() -> List[str]:
