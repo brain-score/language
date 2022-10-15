@@ -6,7 +6,7 @@ import warnings
 class EnvironmentManager:
     """ Runs plugins in conda environments """
 
-    def __init__(self, runtype, plugin_ids=None):
+    def __init__(self, runtype=str, plugin_ids=None):
         self.runtype = runtype
         self.plugin_ids = plugin_ids
         self.envs_dir = Path(self.get_conda_base()) / 'envs'
@@ -57,7 +57,7 @@ class EnvironmentManager:
 
         return completed_process
 
-    def run(self, runtype):
+    def run(self, runtype=str):
         """ create env for either testing or scoring """
         if runtype == 'test':
             self._run_tests()
