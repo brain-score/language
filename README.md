@@ -18,6 +18,16 @@ This repository is under active development, and should be considered to be in a
 Code is likely to change substantially, without backwards compatibility.
 Please let us know of any problems by [creating an issue](https://github.com/brain-score/language/issues/new).
 
+## Setup
+
+```bash
+python -m pip install -e "." # change "." to ".[test]" to include testing dependencies
+```
+
+Please note that plugins (models, benchmarks, data, and metrics) may require additional dependencies beyond those installed here. Default behavior will install these dependencies directly into the runtime environment. 
+
+To avoid conflicts, we encourage either using an environment manager or passing the optional `--create-env=True` flag to `brainscore_language score`, which will create a `conda` environment for the duration of the run. If you would like to use this option and do not already have `conda` installed, you can follow the installation instructions [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). 
+
 ## Usage
 
 Score an existing model on an existing benchmark:
