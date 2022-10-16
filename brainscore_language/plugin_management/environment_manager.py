@@ -1,18 +1,15 @@
 from pathlib import Path
-import pytest_check as check
 import subprocess
 import warnings
 
 
-class EnvironmentManager:
+class EnvironmentManager():
     """ Runs plugins in conda environments """
 
     def __init__(self):
         self.envs_dir = Path(self.get_conda_base()) / 'envs'
-
-    def __call__(self):
-        self.run(self.runtype)
-        self.teardown()
+        self.env_name = 'brainscore-language'
+        self.env_path = self.envs_dir / self.env_name
 
     def get_conda_base(self) -> str:
         """ return location of conda directory """
@@ -22,12 +19,12 @@ class EnvironmentManager:
             warnings.warn(f"{e}. Please ensure that conda is properly installed " \
                 "(https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html).")
 
-    def run_in_env(self, run_command=str) -> int:
-
-        print(run_command)
+    def run_in_env(self, run_command=str):
+        """ 
+        run specified command in bash shell
+        tests a plugin or scores a model in a conda environment
+        """
         completed_process = subprocess.run({run_command}, shell=True)
-        print(completed_process)
-        check.equal(completed_process.returncode, 0)
         
         return completed_process
 
@@ -40,7 +37,7 @@ class EnvironmentManager:
                                            shell=True)
         if completed_process.returncode != 0:  # directly remove env dir if conda fails
             try:
-                shutil.rmtree(self.plugin_env_path)
+                shutil.rmtree(self.env_path)
                 completed_process.returncode = 0
             except Exception as e:
                 warnings.warn(f"conda env {self.env_name} removal failed and must be manually deleted.")

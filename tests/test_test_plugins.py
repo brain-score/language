@@ -25,6 +25,9 @@ class TestPluginTestRunner:
 				assert True        
 			'''))
 
+	def teardown_method(self):
+		shutil.rmtree(DUMMY_PLUGIN_PATH)
+
 	def test_plugin_name(self):
 		plugin_test_runner = PluginTestRunner(DUMMY_PLUGIN_PATH, DUMMY_RESULTS)
 		assert plugin_test_runner.plugin_name == DUMMY_TYPE + '_' + DUMMY_PLUGIN

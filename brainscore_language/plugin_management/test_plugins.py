@@ -1,5 +1,6 @@
 import argparse
 from pathlib import Path
+import pytest_check as check
 import shutil
 from typing import Dict, List
 import warnings
@@ -25,13 +26,12 @@ class PluginTestRunner(EnvironmentManager):
 
     """
     def __init__(self, plugin_directory:Path, results:Dict, test=False):
-        EnvironmentManager.__init__(self)
+        super(PluginTestRunner, self).__init__()
 
         self.plugin_directory = plugin_directory
         self.plugin_type = Path(self.plugin_directory).parent.name
         self.plugin_name = self.plugin_type + '_' + Path(self.plugin_directory).name
         self.env_name = self.plugin_name
-        self.plugin_env_path = self.envs_dir / self.plugin_name
         self.has_requirements = (self.plugin_directory / 'requirements.txt').is_file()
         self.test = test if test else False
         self.results = results
@@ -56,6 +56,7 @@ class PluginTestRunner(EnvironmentManager):
             {str(self.has_requirements).lower()} {self.test}"
 
         completed_process = self.run_in_env(run_command)
+        check.equal(completed_process.returncode, 0)
 
         self.results[self.plugin_name] = (completed_process.returncode)
 
