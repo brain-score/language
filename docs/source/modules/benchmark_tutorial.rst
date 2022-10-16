@@ -207,8 +207,8 @@ For example:
             ...
 
         def __call__(self, candidate: ArtificialSubject) -> Score:
-            candidate.perform_behavioral_task(ArtificialSubject.Task.reading_times)  # or any other task
-            # or e.g. candidate.perform_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
+            candidate.start_behavioral_task(ArtificialSubject.Task.reading_times)  # or any other task
+            # or e.g. candidate.start_start_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
             #                                            recording_type=ArtificialSubject.RecordingType.fMRI)
             predictions = candidate.digest_text(stimuli)['behavior']
             raw_score = self.metric(predictions, self.data)
@@ -233,7 +233,7 @@ comparing reading times:
         ...
 
         def __call__(self, candidate: ArtificialSubject) -> Score:
-            candidate.perform_behavioral_task(ArtificialSubject.Task.reading_times)
+            candidate.start_behavioral_task(ArtificialSubject.Task.reading_times)
             stimuli = self.data['stimulus']
             predictions = candidate.digest_text(stimuli.values)['behavior']
             raw_score = self.metric(predictions, self.data)
@@ -260,7 +260,7 @@ linearly comparing fMRI activity:
         ...
 
         def __call__(self, candidate: ArtificialSubject) -> Score:
-            candidate.perform_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
+            candidate.start_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
                                                recording_type=ArtificialSubject.RecordingType.fMRI)
             stimuli = self.data['stimulus']
             predictions = candidate.digest_text(stimuli.values)['neural']
@@ -320,7 +320,7 @@ For instance, the following is an excerpt from the
                                         'stimulus_id': ('presentation', np.arange(len(stimuli)))},
                                     dims=['presentation'])}
 
-        def perform_behavioral_task(self, task: ArtificialSubject.Task):
+        def start_behavioral_task(self, task: ArtificialSubject.Task):
             if task != ArtificialSubject.Task.reading_times:
                 raise NotImplementedError()
 
