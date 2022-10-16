@@ -24,7 +24,7 @@ class EnvironmentManager():
         run specified command in bash shell
         tests a plugin or scores a model in a conda environment
         """
-        completed_process = subprocess.run({run_command}, shell=True)
+        completed_process = subprocess.run({run_command}, shell=True, capture_output=True)
         
         return completed_process
 
