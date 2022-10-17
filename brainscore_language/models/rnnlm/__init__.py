@@ -3,7 +3,7 @@ from brainscore_language.model_helpers.container import ContainerSubject
 
 
 model_registry["rnn-lm-ptb"] = lambda: ContainerSubject(
-    container="benlipkin/rnng:b3c1f7972ec1a278337b951e0e7b07671e7f3e40",
+    container="benlipkin/rnng:6f6825d1c4a8c58c844b4b82123b967bb0bab6ce",
     entrypoint="cd /app && source activate rnng && python -m brainscore",
     identifier="rnn-lm-ptb",
     region_layer_mapping={

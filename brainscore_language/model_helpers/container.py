@@ -1,14 +1,17 @@
+import functools
 import json
 import logging
 import re
 import subprocess
 import sys
+from collections import OrderedDict
 from pathlib import Path
 from typing import List, Tuple, Dict, Union, Callable
 
 import numpy as np
 import torch
 import xarray as xr
+from numpy.core import defchararray
 from tqdm import tqdm
 
 from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly
@@ -143,7 +146,7 @@ class ContainerSubject(ArtificialSubject):
         self, context: str, text: str, representation: str
     ) -> np.ndarray:
         output = self._evaluate_container(context, text, representation)
-        return output["measure"]
+        return np.array(output["measure"])
 
     def digest_text(self, text: Union[str, List[str]]) -> Dict[str, DataAssembly]:
         if type(text) == str:
@@ -169,12 +172,15 @@ class ContainerSubject(ArtificialSubject):
                 output["behavior"].append(behavior)
 
             if self._neural_recordings:
+                representations = OrderedDict()
                 for recording_target, recording_type in self._neural_recordings:
-                    representation = self._region_layer_mapping[recording_target]
-                    recording = self._record_representation(
-                        context, text_part, representation
-                    )
-                    raise NotImplementedError("UNDER DEVELOPMENT.")
+                    measure = self._region_layer_mapping[recording_target]
+                    recording = self._record_representation(context, text_part, measure)
+                    representations[
+                        (recording_target, recording_type, measure)
+                    ] = recording
+                neural = self._build_neural_assembly(representations, stimuli_coords)
+                output["neural"].append(neural)
 
         self._logger.debug("Merging outputs")
         output["behavior"] = (
@@ -188,3 +194,58 @@ class ContainerSubject(ArtificialSubject):
             else None
         )
         return output
+
+    @staticmethod
+    def _build_neural_assembly(representations, stimuli_coords):
+        representation_values = np.concatenate(
+            [values for values in representations.values()], axis=-1
+        )
+        neuroid_coords = {
+            "layer": (
+                "neuroid",
+                np.concatenate(
+                    [
+                        [measure] * values.shape[-1]
+                        for (_, _, measure), values in representations.items()
+                    ]
+                ),
+            ),
+            "region": (
+                "neuroid",
+                np.concatenate(
+                    [
+                        [target] * values.shape[-1]
+                        for (target, _, _), values in representations.items()
+                    ]
+                ),
+            ),
+            "recording_type": (
+                "neuroid",
+                np.concatenate(
+                    [
+                        [rtype] * values.shape[-1]
+                        for (_, rtype, _), values in representations.items()
+                    ]
+                ),
+            ),
+            "neuron_number_in_layer": (
+                "neuroid",
+                np.concatenate(
+                    [np.arange(values.shape[-1]) for values in representations.values()]
+                ),
+            ),
+        }
+        neuroid_coords["neuroid_id"] = "neuroid", functools.reduce(
+            defchararray.add,
+            [
+                neuroid_coords["layer"][1],
+                "--",
+                neuroid_coords["neuron_number_in_layer"][1].astype(str),
+            ],
+        )
+        neural = NeuroidAssembly(
+            representation_values,
+            coords={**stimuli_coords, **neuroid_coords},
+            dims=["presentation", "neuroid"],
+        )
+        return neural
