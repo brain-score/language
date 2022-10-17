@@ -19,10 +19,9 @@ def test_score(model_identifier, benchmark_identifier, expected_score):
     assert actual_score == expected_score
 
 
-@pytest.mark.travis_slow
 def test_commandline_score():
     process = subprocess.run([sys.executable, "brainscore_language", "score",
-                              "--model_identifier=distilgpt2",
+                              "--model_identifier=randomembedding-100",
                               "--benchmark_identifier=Pereira2018.243sentences-linear"],
                              cwd=Path(__file__).parent.parent,
                              capture_output=True, text=True)
@@ -30,7 +29,7 @@ def test_commandline_score():
     assert "error" not in process.stderr.lower()
     output = process.stdout
     assert "Score" in output
-    assert "0.723" in output
-    assert output.startswith("<xarray.Score ()>\narray(0.72309996)")
-    assert "model_identifier:      distilgpt2" in output
+    assert "0.0285" in output
+    assert output.startswith("<xarray.Score ()>\narray(0.0285022)")
+    assert "model_identifier:      randomembedding-100" in output
     assert "benchmark_identifier:  Pereira2018.243sentences-linear" in output

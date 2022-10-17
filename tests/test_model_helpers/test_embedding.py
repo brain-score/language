@@ -10,7 +10,7 @@ from brainscore_language.model_helpers.embedding import GensimKeyedVectorsSubjec
 logging.basicConfig(level=logging.INFO)
 
 
-class TestNeural:
+class TestGensimNeural:
     @pytest.mark.parametrize('word, expected_vector', [
         ('the', [-0.082752, 0.67204, -0.149879]),
         ('quick', [1, 2, 3]),
