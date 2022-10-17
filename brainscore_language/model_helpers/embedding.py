@@ -38,11 +38,11 @@ class GensimKeyedVectorsSubject(ArtificialSubject):
     def identifier(self):
         return self._identifier
 
-    def perform_behavioral_task(self, task: ArtificialSubject.Task):
+    def start_behavioral_task(self, task: ArtificialSubject.Task):
         raise NotImplementedError("Embedding models do not support behavioral tasks")
 
-    def perform_neural_recording(self, recording_target: ArtificialSubject.RecordingTarget,
-                                 recording_type: ArtificialSubject.RecordingType):
+    def start_neural_recording(self, recording_target: ArtificialSubject.RecordingTarget,
+                               recording_type: ArtificialSubject.RecordingType):
         self.neural_recordings.append((recording_target, recording_type))
 
     def digest_text(self, text: Union[str, List[str]]) -> Dict[str, NeuroidAssembly]:
