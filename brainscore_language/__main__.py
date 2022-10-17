@@ -12,7 +12,7 @@ def score(model_identifier: str, benchmark_identifier: str, create_env=False):
     else:
         result = _score_function(model_identifier, benchmark_identifier)
     
-    # print(result)  # print instead of return because fire has issues with xarray objects
+    print(result)  # print instead of return because fire has issues with xarray objects
 
 
 if __name__ == '__main__':
