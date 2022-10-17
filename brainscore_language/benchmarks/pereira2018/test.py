@@ -18,8 +18,8 @@ class TestBenchmark:
             neural_activity = self.activity_for_text(stimuli)
             return {'neural': neural_activity}
 
-        def perform_neural_recording(self, recording_target: ArtificialSubject.RecordingTarget,
-                                     recording_type: ArtificialSubject.RecordingType):
+        def start_neural_recording(self, recording_target: ArtificialSubject.RecordingTarget,
+                                   recording_type: ArtificialSubject.RecordingType):
             assert recording_target == ArtificialSubject.RecordingTarget.language_system
             assert recording_type == ArtificialSubject.RecordingType.fMRI
 

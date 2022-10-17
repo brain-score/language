@@ -56,7 +56,7 @@ For instance, the following is an excerpt from the
         model = load_model('gpt2-xl')
         text = ['the quick brown fox', 'jumps over', 'the lazy']
         expected_next_words = ['jumps', 'the', 'dog']
-        model.perform_behavioral_task(task=ArtificialSubject.Task.next_word)
+        model.start_behavioral_task(task=ArtificialSubject.Task.next_word)
         next_word_predictions = model.digest_text(text)['behavior']
         np.testing.assert_array_equal(next_word_predictions, expected_next_words)
 

@@ -98,8 +98,8 @@ class _Pereira2018ExperimentLinear(BenchmarkBase):
         return ceiling
 
     def __call__(self, candidate: ArtificialSubject) -> Score:
-        candidate.perform_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
-                                           recording_type=ArtificialSubject.RecordingType.fMRI)
+        candidate.start_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
+                                         recording_type=ArtificialSubject.RecordingType.fMRI)
         stimuli = self.data['stimulus']
         passages = self.data['passage_label'].values
         predictions = []
