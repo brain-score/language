@@ -35,6 +35,6 @@ def save_score(score: Score):
     with open(SCORE_PATH, 'wb') as f:
         pickle.dump(score, f, pickle.HIGHEST_PROTOCOL)
 
-def get_score():
+def read_score():
     with open(SCORE_PATH, 'rb') as f:
         return pickle.load(f)
