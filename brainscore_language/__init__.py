@@ -7,7 +7,7 @@ from brainio.assemblies import DataAssembly
 from brainscore_core.benchmarks import Benchmark
 from brainscore_core.metrics import Score, Metric
 from brainscore_language.artificial_subject import ArtificialSubject
-from brainscore_language.plugin_management.conda_score import CondaScore, get_score, save_score
+from brainscore_language.plugin_management.conda_score import CondaScore, save_score, read_score
 
 data_registry: Dict[str, Type[Union[DataAssembly, Any]]] = {}
 """ Pool of available data """
