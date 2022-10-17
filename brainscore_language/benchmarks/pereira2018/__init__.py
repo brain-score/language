@@ -1,4 +1,5 @@
 import logging
+import xarray as xr
 
 from brainio.assemblies import NeuroidAssembly
 from brainscore_core.benchmarks import BenchmarkBase
@@ -21,6 +22,7 @@ BIBTEX = """@article{pereira2018toward,
   year={2018},
   publisher={Nature Publishing Group}
 }"""
+
 
 def Pereira2018_243sentences():
     return _Pereira2018ExperimentLinear(experiment='243sentences', ceiling_s3_kwargs=dict(
@@ -99,8 +101,15 @@ class _Pereira2018ExperimentLinear(BenchmarkBase):
         candidate.perform_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
                                            recording_type=ArtificialSubject.RecordingType.fMRI)
         stimuli = self.data['stimulus']
-        predictions = candidate.digest_text(stimuli.values)['neural']
-        predictions['stimulus_id'] = 'presentation', stimuli['stimulus_id'].values
+        passages = self.data['passage_label'].values
+        predictions = []
+        for passage in sorted(set(passages)):  # go over individual passages, sorting to keep consistency across runs
+            passage_indexer = [stimulus_passage == passage for stimulus_passage in passages]
+            passage_stimuli = stimuli[passage_indexer]
+            passage_predictions = candidate.digest_text(passage_stimuli.values)['neural']
+            passage_predictions['stimulus_id'] = 'presentation', passage_stimuli['stimulus_id'].values
+            predictions.append(passage_predictions)
+        predictions = xr.concat(predictions, dim='presentation')
         raw_score = self.metric(predictions, self.data)
         score = ceiling_normalize(raw_score, self.ceiling)
         return score
