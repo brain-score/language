@@ -22,6 +22,42 @@ from brainscore_language.utils import fullname
 
 
 class ContainerSubject(ArtificialSubject):
+    """
+    Evaluation interface for arbitary containerized models.
+    User must install either 'Singularity' or 'Docker' to evaluate container models.
+
+    To add new model, build a container with an entry point that supports the following interface:
+
+    $CONTAINER_BACKEND run $CONTAINER_NAME $ENTRYPOINT \
+    --model <model_identifier> --measure <measure> --context <context> --text <text>
+
+    The entrypoint must return a JSON string to stdout with the following format based on the following tasks:
+
+    Task: predict next word
+    Input: --measure "next-word"
+    Output: {"measure": NEXT_WORD} 
+    where NEXT_WORD is a string
+
+    Task: estimate reading times
+    Input: --measure "token-logits"
+    Output: {"tokens": TOKENS, "measure": LOGITS} 
+    where LOGITS are the logits predicting the target tokens for each token in the text 
+    and TOKENS are the corresponding true token indices
+    LOGITS are thus generated using the text up until the current token whereas TOKENS are the true tokens
+    Both LOGITS and TOKENS should have the same shape[0], and shape[1] should be the vocabulary size for the LOGITS
+    Objects should be returned as lists, e.g., object.cpu().numpy().tolist() for pytorch tensors
+
+    Task: extract representation
+    Input: --measure MEASURE
+    Output: {"measure": REPRESENTATION}
+    where MEASURE is the name of the representation as supported by your container 
+    and REPRESENTATION is an array of shape (1, representation_size) cast to a list
+
+    Note: While the internals of any containerized model are not restricted, the interface must be as described above. 
+    It is highly recommended to raise detailed error messages from inside the container, so they can be escalated here.
+    It is also recommended to include a list of supported measures in the container's documentation.
+    """
+
     def __init__(
         self,
         container: str,
@@ -86,6 +122,10 @@ class ContainerSubject(ArtificialSubject):
         return f
 
     def _download_container(self):
+        """
+        Download container to cache directory if it does not exist yet.
+        """
+
         if self._backend == "docker":
             cmd = ["docker", "pull", f"{self._container}"]
         elif self._backend == "singularity":
@@ -105,6 +145,11 @@ class ContainerSubject(ArtificialSubject):
             )
 
     def _evaluate_container(self, context: str, text: str, measure: str) -> np.ndarray:
+        """
+        Pass arguments to container and return results if interface is followed.
+        If the container fails, the error message is escalated.
+        """
+
         def prep(s):
             return re.sub(r"\s+", " ", s).replace('"', "'").replace("'", r"'\''")
 
@@ -134,7 +179,9 @@ class ContainerSubject(ArtificialSubject):
 
     def _predict_next_word(self, context: str, text: str) -> str:
         output = self._evaluate_container(context, text, "next-word")
-        return output["measure"]
+        next_word = output["measure"]
+        assert isinstance(next_word, str)
+        return next_word
 
     def _estimate_reading_times(self, context: str, text: str) -> float:
         import torch.nn.functional as F
@@ -142,15 +189,24 @@ class ContainerSubject(ArtificialSubject):
         output = self._evaluate_container(context, text, "token-logits")
         shifted_logits = torch.Tensor(output["measure"])
         tokens = torch.Tensor(output["tokens"]).long()
+        assert shifted_logits.shape[0] == tokens.shape[0]
         return F.cross_entropy(shifted_logits, tokens, reduction="sum") / np.log(2)
 
     def _record_representation(
         self, context: str, text: str, representation: str
     ) -> np.ndarray:
         output = self._evaluate_container(context, text, representation)
-        return np.array(output["measure"])
+        representation = np.array(output["measure"])
+        assert representation.shape[0] == 1
+        return representation
 
     def digest_text(self, text: Union[str, List[str]]) -> Dict[str, DataAssembly]:
+        """
+        Same high-level structure as HuggingFace models,
+        but parallelized over text parts for efficiency,
+        due to longer delays associated with container evaluation.
+        """
+
         def _build_assembly(part_number, text_part):
             context = " ".join(text[: part_number + 1])
             stimuli_coords = {

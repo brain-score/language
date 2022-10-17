@@ -7,6 +7,6 @@ model_registry["rnn-lm-ptb"] = lambda: ContainerSubject(
     entrypoint="cd /app && source activate rnng && python -m brainscore",
     identifier="rnn-lm-ptb",
     region_layer_mapping={
-        ArtificialSubject.RecordingTarget.language_system: "lstm-last"
+        ArtificialSubject.RecordingTarget.language_system: "lstm-mean"
     },
 )
