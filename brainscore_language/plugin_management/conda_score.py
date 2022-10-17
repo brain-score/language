@@ -17,7 +17,7 @@ class CondaScore(EnvironmentManager):
         self.script_path = f'{Path(__file__).parent}/conda_score.sh'
         self.result = self.score_in_env()
 
-    def score_in_env(self):
+    def score_in_env(self) -> int:
         """ 
         calls bash script to create conda environment, then
         hands execution back to score()
