@@ -23,6 +23,11 @@ model_registry: Dict[str, Type[ArtificialSubject]] = {}
 
 
 def locate_plugin(plugin_type: str, identifier: str) -> str:
+    """ 
+    Searches all plugin_type __init.py__ files for identifier.
+    If a match is found of format {plugin_type}_registry[{identifier}],
+    returns name of directory where __init.py__ is located 
+    """
     plugins_dir = Path(__file__).with_name(plugin_type)
     plugins = [d.name for d in plugins_dir.iterdir() if d.is_dir()]
 
@@ -108,7 +113,8 @@ def score(model_identifier: str, benchmark_identifier: str) -> Score:
 
 
 def get_score(model_identifier: str, benchmark_identifier: str, create_env=False) -> Score:
-    if create_env: # create conda environment
+    """ if create_env, runs score() in a conda environment """
+    if create_env:
         plugin_ids = {'model':model_identifier, 'benchmark':benchmark_identifier}
         CondaScore(plugin_ids)
         result = read_score()

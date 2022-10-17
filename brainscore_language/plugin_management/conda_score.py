@@ -1,5 +1,6 @@
 from pathlib import Path
 import pickle
+import tempfile
 
 from brainscore_core.metrics import Score
 from brainscore_language.plugin_management.environment_manager import EnvironmentManager
