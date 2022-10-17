@@ -7,7 +7,7 @@ from brainio.assemblies import NeuroidAssembly
 from brainscore_language import load_metric
 from brainscore_language.utils.ceiling import ceiling_normalize
 from brainscore_language.benchmarks.futrell2018 import Futrell2018Pearsonr
-from brainscore_language.plugin_management.conda_score import CondaScore, save_score, get_score, SCORE_PATH
+from brainscore_language.plugin_management.conda_score import CondaScore, save_score, read_score, SCORE_PATH
 
 
 def _make_assembly():
