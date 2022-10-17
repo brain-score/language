@@ -1,6 +1,7 @@
 import functools
 import json
 import logging
+import multiprocessing
 import re
 import subprocess
 import sys
@@ -11,6 +12,7 @@ from typing import List, Tuple, Dict, Union, Callable
 import numpy as np
 import torch
 import xarray as xr
+from joblib import Parallel, delayed, parallel_backend
 from numpy.core import defchararray
 from tqdm import tqdm
 
@@ -149,28 +151,19 @@ class ContainerSubject(ArtificialSubject):
         return np.array(output["measure"])
 
     def digest_text(self, text: Union[str, List[str]]) -> Dict[str, DataAssembly]:
-        if type(text) == str:
-            text = [text]
-
-        output = {"behavior": [], "neural": []}
-
-        text_iterator = tqdm(text, desc="digest text") if len(text) > 1 else text
-        for part_number, text_part in enumerate(text_iterator):
+        def _build_assembly(part_number, text_part):
             context = " ".join(text[: part_number + 1])
-
             stimuli_coords = {
                 "stimulus": ("presentation", [text_part]),
                 "context": ("presentation", [context]),
                 "part_number": ("presentation", [part_number]),
             }
-
             if self._behavioral_task:
                 behavioral_output = self._behavioral_function(context, text_part)
                 behavior = BehavioralAssembly(
                     [behavioral_output], coords=stimuli_coords, dims=["presentation"]
                 )
-                output["behavior"].append(behavior)
-
+                return ("behavior", behavior)
             if self._neural_recordings:
                 representations = OrderedDict()
                 for recording_target, recording_type in self._neural_recordings:
@@ -180,9 +173,21 @@ class ContainerSubject(ArtificialSubject):
                         (recording_target, recording_type, measure)
                     ] = recording
                 neural = self._build_neural_assembly(representations, stimuli_coords)
-                output["neural"].append(neural)
+                return ("neural", neural)
+
+        if type(text) == str:
+            text = [text]
+        text_iterator = tqdm(text, desc="digest text") if len(text) > 1 else text
+        with parallel_backend("loky", n_jobs=multiprocessing.cpu_count()):
+            assemblies = Parallel()(
+                delayed(_build_assembly)(part_number, text_part)
+                for part_number, text_part in enumerate(text_iterator)
+            )
 
         self._logger.debug("Merging outputs")
+        output = {"behavior": [], "neural": []}
+        for assembly in assemblies:
+            output[assembly[0]].append(assembly[1])
         output["behavior"] = (
             xr.concat(output["behavior"], dim="presentation").sortby("part_number")
             if output["behavior"]
