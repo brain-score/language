@@ -15,9 +15,7 @@ class CondaScore(EnvironmentManager):
         self.benchmark = plugin_ids['benchmark']
         self.env_name = f'{self.model}_{self.benchmark}'
         self.script_path = f'{Path(__file__).parent}/conda_score.sh'
-
-    def __init__():
-        self.score_in_env()
+        self.result = self.score_in_env()
 
     def score_in_env(self):
         """ 
@@ -29,6 +27,8 @@ class CondaScore(EnvironmentManager):
 
         completed_process = self.run_in_env(run_command)
         assert completed_process.returncode == 0
+
+        return completed_process
 
 
 def save_score(score: Score):
