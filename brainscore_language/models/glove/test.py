@@ -11,8 +11,8 @@ def test_neural():
     expected_feature_size = 300
     model = load_model(model_identifier)
     text = ['the quick brown fox', 'jumps over', 'the lazy', 'dog']
-    model.perform_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
-                                   recording_type=ArtificialSubject.RecordingType.fMRI)
+    model.start_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
+                                 recording_type=ArtificialSubject.RecordingType.fMRI)
     representations = model.digest_text(text)['neural']
     assert len(representations['presentation']) == 4
     np.testing.assert_array_equal(representations['stimulus'], text)
