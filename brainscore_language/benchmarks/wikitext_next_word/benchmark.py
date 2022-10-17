@@ -25,7 +25,7 @@ class WikitextAccuracy(BenchmarkBase):
             version=1,
             parent='engineering',
             ceiling=None,
-            bibtex=BIBTEX)  # TODO: I think this should go into the data plugin somehow
+            bibtex=BIBTEX)
         self.data = load_dataset('wikitext-2/test')
         self.metric = load_metric('accuracy')
 
