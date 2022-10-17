@@ -32,10 +32,10 @@ def test_save_score():
 	save_score(output)
 	assert Path(SCORE_PATH).is_file()
 
-def test_get_score():
+def test_read_score():
 	output = _create_dummy_score()
 	save_score(output)
-	result = get_score()
+	result = read_score()
 	assert output == result
 
 @pytest.mark.memory_intense
