@@ -7,7 +7,7 @@ from brainscore_language.plugin_management.conda_score import CondaScore, get_sc
 def score(model_identifier: str, benchmark_identifier: str, create_env=False):
     if create_env: # create conda environment
         plugin_ids = {'model':model_identifier, 'benchmark':benchmark_identifier}
-        CondaScore(plugin_ids).score
+        CondaScore(plugin_ids)
         result = get_score()
     else:
         result = _score_function(model_identifier, benchmark_identifier)
