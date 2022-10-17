@@ -9,13 +9,11 @@ SINGLE_TEST=$4
 
 echo "${PLUGIN_NAME/_//}"
 
+eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
+output=`conda create -n $PLUGIN_NAME python=3.8 -y 2>&1` || echo $output
+conda activate $PLUGIN_NAME
 if $HAS_REQUIREMENTS; then
-	eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
-	output=`conda create -n $PLUGIN_NAME python=3.8 -y 2>&1` || echo $output
-	conda activate $PLUGIN_NAME
 	output=`pip install -r $PLUGIN_REQUIREMENTS_PATH 2>&1` || echo $output
-else
-	echo "Warning: no requirements.txt found. Running in base environment."
 fi
 
 output=`python -m pip install -e ".[test]" 2>&1` || echo $output
