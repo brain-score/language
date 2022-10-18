@@ -65,6 +65,7 @@ markers = [
 ################################################################
 
 [tool.setuptools.package-data]
+# include non-python files (e.g. 'requirements.txt') in package install
 "brainscore_language.benchmarks" = ["**"]
 "brainscore_language.data" = ["**"]
 "brainscore_language.metrics" = ["**"]
