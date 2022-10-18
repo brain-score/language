@@ -1,5 +1,5 @@
-import numpy as np
 from numpy.random import RandomState
+import numpy as np
 import pytest
 from pathlib import Path
 

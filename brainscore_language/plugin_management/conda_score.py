@@ -5,7 +5,8 @@ import tempfile
 from brainscore_core.metrics import Score
 from brainscore_language.plugin_management.environment_manager import EnvironmentManager
 
-SCORE_PATH = 'brainscore_language/score.pkl'
+TMP_DIR = tempfile.TemporaryDirectory()
+SCORE_PATH = f'{TMP_DIR.name}_score.pkl'
 
 class CondaScore(EnvironmentManager):
     """ run scoring in conda environment """
@@ -39,3 +40,4 @@ def save_score(score: Score):
 def read_score():
     with open(SCORE_PATH, 'rb') as f:
         return pickle.load(f)
+    shutil.rmtree(TMP_DIR)
