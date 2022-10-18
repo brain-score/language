@@ -82,7 +82,7 @@ class ArtificialSubject:
                           - stimulus_id   (presentation) int64 0 1 2}
         """
 
-    def perform_behavioral_task(self, task: Task):
+    def start_behavioral_task(self, task: Task):
         """
         Instruct the subject to output behavior when queried with
         :meth:`~brainscore_language.artificial_subject.ArtificialSubject.digest_text`. Calling
@@ -105,7 +105,7 @@ class ArtificialSubject:
         fMRI = "fMRI"
         """ functional magnetic resonance imaging """
 
-    def perform_neural_recording(self, recording_target: RecordingTarget, recording_type: RecordingType):
+    def start_neural_recording(self, recording_target: RecordingTarget, recording_type: RecordingType):
         """
         Begin neural recordings from this subject. Calling
         :meth:`~brainscore_language.artificial_subject.ArtificialSubject.digest_text` will then output a
@@ -122,8 +122,8 @@ class ArtificialSubject:
             or a list of strings (e.g. `["the quick", "brown fox jumped"]`)
         :return: a dictionary mapping from `'behavior'` and `'neural'` to a :class:`~brainio.assemblies.DataAssembly`,
             if the subject was instructed to
-            :meth:`~brainscore_language.artificial_subject.ArtificialSubject.perform_behavioral_task` and/or
-            :meth:`~brainscore_language.artificial_subject.ArtificialSubject.perform_neural_recording` respectively.
+            :meth:`~brainscore_language.artificial_subject.ArtificialSubject.start_behavioral_task` and/or
+            :meth:`~brainscore_language.artificial_subject.ArtificialSubject.start_neural_recording` respectively.
             The :class:`~brainio.assemblies.DataAssembly` always contains a `presentation` dimension, corresponding to
             the presentation of text stimuli (including a `stimulus` coordinate for the text,
             and a `stimulus_id` coordinate that uniquely identifies each stimulus).

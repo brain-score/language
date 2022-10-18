@@ -14,7 +14,7 @@ class TestBenchmark:
                 coords={'stimulus': ('presentation', stimuli), 'stimulus_id': ('presentation', np.arange(len(stimuli)))},
                 dims=['presentation'])}
 
-        def perform_behavioral_task(self, task: ArtificialSubject.Task):
+        def start_behavioral_task(self, task: ArtificialSubject.Task):
             if task != ArtificialSubject.Task.next_word:
                 raise NotImplementedError()
 
