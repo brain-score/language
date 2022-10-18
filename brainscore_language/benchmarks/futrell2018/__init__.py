@@ -39,7 +39,7 @@ class Futrell2018Pearsonr(BenchmarkBase):
 
     def __call__(self, candidate: ArtificialSubject) -> Score:
         # run experiment
-        candidate.perform_behavioral_task(ArtificialSubject.Task.reading_times)
+        candidate.start_behavioral_task(ArtificialSubject.Task.reading_times)
         stimuli = self.data['word'].values
         predictions = candidate.digest_text(stimuli)['behavior']
         attach_presentation_meta(predictions, self.data['presentation'])

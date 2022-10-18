@@ -1,20 +1,20 @@
-from typing import Dict, Any, Type, Union
+from typing import Dict, Any, Union, Callable
 
 from brainio.assemblies import DataAssembly
 from brainscore_core.benchmarks import Benchmark
 from brainscore_core.metrics import Score, Metric
 from brainscore_language.artificial_subject import ArtificialSubject
 
-data_registry: Dict[str, Type[Union[DataAssembly, Any]]] = {}
+data_registry: Dict[str, Callable[[], Union[DataAssembly, Any]]] = {}
 """ Pool of available data """
 
-metric_registry: Dict[str, Type[Metric]] = {}
+metric_registry: Dict[str, Callable[[], Metric]] = {}
 """ Pool of available metrics """
 
-benchmark_registry: Dict[str, Type[Benchmark]] = {}
+benchmark_registry: Dict[str, Callable[[], Benchmark]] = {}
 """ Pool of available benchmarks """
 
-model_registry: Dict[str, Type[ArtificialSubject]] = {}
+model_registry: Dict[str, Callable[[], ArtificialSubject]] = {}
 """ Pool of available models """
 
 
@@ -55,7 +55,7 @@ def load_benchmark(identifier: str) -> Benchmark:
 
 def load_model(identifier: str) -> ArtificialSubject:
     # imports to load plugins until plugin system is implemented
-    from brainscore_language.models import gpt, glove, rnnlm
+    from brainscore_language.models import gpt, glove, rnnlm, random_embedding
 
     model = model_registry[identifier]()
     model.identifier = identifier

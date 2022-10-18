@@ -1,13 +1,12 @@
 import copy
 import functools
 import logging
-import re
-from pathlib import Path
-from typing import Union, List, Dict, Tuple
-
 import numpy as np
+import re
 from gensim.models.keyedvectors import KeyedVectors
 from numpy.core import defchararray
+from pathlib import Path
+from typing import Union, List, Dict, Tuple
 
 from brainio.assemblies import NeuroidAssembly, merge_data_arrays
 from brainscore_language.artificial_subject import ArtificialSubject
@@ -18,19 +17,16 @@ def mean_over_words(sentence_features):
     return sentence_mean
 
 
-class GensimKeyedVectorsSubject(ArtificialSubject):
+class EmbeddingSubject(ArtificialSubject):
     """
-    Lookup-table models in the gensim library using KeyedVectors.
+    Lookup-table for word inputs.
     """
 
-    def __init__(self, identifier: str, weights_file: Union[str, Path], vector_size: int,
-                 weights_file_binary: bool = False, weights_file_no_header: bool = False,
+    def __init__(self, identifier: str, lookup,
                  layer_name: str = 'projection', average_representations=mean_over_words):
         self._identifier = identifier
         self._logger = logging.getLogger(self.__class__.__name__)
-        self._model = KeyedVectors.load_word2vec_format(weights_file,
-                                                        binary=weights_file_binary, no_header=weights_file_no_header)
-        self._vector_size = vector_size
+        self._lookup = lookup
         self._layer_name = layer_name
         self._average_representations = average_representations
         self.neural_recordings: List[Tuple] = []  # list of `(recording_target, recording_type)` tuples to record
@@ -38,11 +34,11 @@ class GensimKeyedVectorsSubject(ArtificialSubject):
     def identifier(self):
         return self._identifier
 
-    def perform_behavioral_task(self, task: ArtificialSubject.Task):
+    def start_behavioral_task(self, task: ArtificialSubject.Task):
         raise NotImplementedError("Embedding models do not support behavioral tasks")
 
-    def perform_neural_recording(self, recording_target: ArtificialSubject.RecordingTarget,
-                                 recording_type: ArtificialSubject.RecordingType):
+    def start_neural_recording(self, recording_target: ArtificialSubject.RecordingTarget,
+                               recording_type: ArtificialSubject.RecordingType):
         self.neural_recordings.append((recording_target, recording_type))
 
     def digest_text(self, text: Union[str, List[str]]) -> Dict[str, NeuroidAssembly]:
@@ -69,12 +65,8 @@ class GensimKeyedVectorsSubject(ArtificialSubject):
         for word in words:
             word = remove_punctuation(word)
             word = word.rstrip("'s")
-            try:
-                features = self._model[word]
-                feature_vectors.append(features)
-            except KeyError:  # not in vocabulary
-                self._logger.warning(f"Word {word} not present in model")
-                feature_vectors.append(np.zeros((self._vector_size,)))
+            features = self._lookup[word]
+            feature_vectors.append(features)
         return np.array(feature_vectors)
 
     def package_representations(self, representation_values: np.ndarray, stimuli_coords):
@@ -99,6 +91,36 @@ class GensimKeyedVectorsSubject(ArtificialSubject):
             representations.append(current_representations)
         representations = merge_data_arrays(representations)
         return representations
+
+
+class _GensimLookup(dict):
+    def __init__(self, model: KeyedVectors, vector_size: int):
+        super(_GensimLookup, self).__init__()
+        self._model = model
+        self._vector_size = vector_size
+        self._logger = logging.getLogger(self.__class__.__name__)
+
+    def __getitem__(self, word):
+        try:
+            return self._model[word]
+        except KeyError:  # not in vocabulary
+            self._logger.warning(f"Word {word} not present in model")
+            return np.zeros((self._vector_size,))
+
+
+class GensimKeyedVectorsSubject(EmbeddingSubject):
+    """
+    Lookup-table models in the gensim library using KeyedVectors.
+    """
+
+    def __init__(self, identifier: str, weights_file: Union[str, Path], vector_size: int,
+                 weights_file_binary: bool = False, weights_file_no_header: bool = False,
+                 layer_name: str = 'projection', average_representations=mean_over_words):
+        model = KeyedVectors.load_word2vec_format(weights_file,
+                                                  binary=weights_file_binary, no_header=weights_file_no_header)
+        lookup = _GensimLookup(model=model, vector_size=vector_size)
+        super(GensimKeyedVectorsSubject, self).__init__(identifier=identifier, lookup=lookup, layer_name=layer_name,
+                                                        average_representations=average_representations)
 
 
 def remove_punctuation(word):
