@@ -21,7 +21,7 @@ class SyntaxGymTSE(BenchmarkBase):
         region_totals = {}
         predictions = []
         item_dict_plus_results = []
-# SyntaxGym logic wrapper around digest_text
+        # SyntaxGym logic wrapper around digest_text
         for item_num, item in enumerate(self.data.items):
             for condition_num, condition in enumerate(self.data.condition_names):
                 text = suite_regions[item_num * len(self.data.condition_names) + condition_num]
