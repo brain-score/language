@@ -32,7 +32,7 @@ class SyntaxGymTSE(BenchmarkBase):
                 item_pred_results = pred.apply_prediction_formula(region_totals)
                 predictions.append(item_pred_results)
             item_dict_plus_results.append([region_totals, predictions])
-# The final score is the percentage of predictions that are "True"
+       # The final score is the percentage of predictions that are "True"
         targets = [True] * len(predictions)
         score = self.metric(predictions, targets)
         return score
