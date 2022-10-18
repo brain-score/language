@@ -46,7 +46,8 @@ def locate_plugin(plugin_type: str, identifier: str) -> str:
     return specified_plugin_dirname
 
 
-def _install_requirements(plugin_type:str, plugin_dirname: str):
+def _install_requirements(plugin_type: str, plugin_dirname: str):
+    """ Install all the requirements of the given plugin directory. This is done via `pip install` in the current interpreter. """
     plugins_dir = Path(__file__).with_name(plugin_type)
     requirements_file = plugins_dir / plugin_dirname / 'requirements.txt'
     if requirements_file.is_file():
