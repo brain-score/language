@@ -41,9 +41,8 @@ class ContainerSubject(ArtificialSubject):
     Task: estimate reading times
     Input: --measure "token-logits"
     Output: {"tokens": TOKENS, "measure": LOGITS} 
-    where LOGITS are the logits predicting the target tokens for each token in the text 
-    and TOKENS are the corresponding true token indices
-    LOGITS are thus generated using the text up until the current token whereas TOKENS are the true tokens
+    where LOGITS are the logits predicting the target tokens and TOKENS are the corresponding true token indices
+    LOGITS are thus generated using the text up until the last token whereas TOKENS are the true tokens
     Both LOGITS and TOKENS should have the same shape[0], and shape[1] should be the vocabulary size for the LOGITS
     Objects should be returned as lists, e.g., object.cpu().numpy().tolist() for pytorch tensors
 
@@ -66,6 +65,13 @@ class ContainerSubject(ArtificialSubject):
         region_layer_mapping: dict,
         task_heads: Union[None, Dict[ArtificialSubject.Task, Callable]] = None,
     ):
+        """
+        :param container: Container name, e.g., "USERNAME/CONTAINER:TAG"
+        :param entrypoint: Entrypoint to run inside container, e.g., "python /path/to/entrypoint.py"
+        :param identifier: Model identifer passed to entrypoint, e.g., "model_name"
+        :param region_layer_mapping: Mapping from brain region to requested measure, e.g., {"language_system": "model_layer_name"}
+        :param task_heads: Mapping from task to callable that takes the output of the container and returns a score, e.g., {ArtificialSubject.Task.next_word: predict_next_word_function}
+        """
         self._logger = logging.getLogger(fullname(self))
         self._container: str = container
         self._entrypoint: str = entrypoint
