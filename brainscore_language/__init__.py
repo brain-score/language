@@ -34,7 +34,7 @@ def load_metric(identifier: str, *args, **kwargs) -> Metric:
 
 def load_benchmark(identifier: str) -> Benchmark:
     # imports to load plugins until plugin system is implemented
-    from brainscore_language.benchmarks import wikitext_next_word, futrell2018, pereira2018
+    from brainscore_language.benchmarks import wikitext_next_word, futrell2018, pereira2018, syntaxgym
 
     return benchmark_registry[identifier]()
 
