@@ -119,7 +119,7 @@ def score(model_identifier: str, benchmark_identifier: str) -> Score:
 def get_score(model_identifier: str, benchmark_identifier: str, create_env=False) -> Score:
     """ if create_env, runs :meth:`~brainscore_language.score` in a conda environment """
     if create_env:
-        plugin_ids = {'model':model_identifier, 'benchmark':benchmark_identifier}
+        plugin_ids = {'model': model_identifier, 'benchmark': benchmark_identifier}
         CondaScore(plugin_ids)
         result = read_score()
     else:
