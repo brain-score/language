@@ -52,6 +52,8 @@ def _install_requirements(plugin_type: str, plugin_dirname: str):
     requirements_file = plugins_dir / plugin_dirname / 'requirements.txt'
     if requirements_file.is_file():
         subprocess.run(f"pip install -r {requirements_file}", shell=True)
+    else:
+        logger.debug(f"Plugin {plugin_dirname} has no requirements file {requirements_file}")
 
 
 def import_plugin(plugin_type: str, identifier: str):
