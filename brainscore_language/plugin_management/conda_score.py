@@ -10,11 +10,11 @@ SCORE_PATH = f'{TMP_DIR.name}_score.pkl'
 
 class CondaScore(EnvironmentManager):
     """ run scoring in conda environment """
-    def __init__(self, plugin_ids):
+    def __init__(self, model_identifier: str, benchmark_identifier: str):
         super(CondaScore, self).__init__()
 
-        self.model = plugin_ids['model']
-        self.benchmark = plugin_ids['benchmark']
+        self.model = model_identifier
+        self.benchmark = benchmark_identifier
         self.env_name = f'{self.model}_{self.benchmark}'
         self.script_path = f'{Path(__file__).parent}/conda_score.sh'
         self.result = self.score_in_env()
