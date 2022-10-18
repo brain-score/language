@@ -24,7 +24,7 @@ model_registry: Dict[str, Type[ArtificialSubject]] = {}
 
 def locate_plugin(plugin_type: str, identifier: str) -> str:
     """ 
-    Searches all plugin_type __init.py__ files for identifier.
+    Searches all `plugin_type` __init.py__ files for the plugin denoted with `identifier`.
     If a match is found of format {plugin_type}_registry[{identifier}],
     returns name of directory where __init.py__ is located 
     """
