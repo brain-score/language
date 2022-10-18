@@ -57,6 +57,7 @@ def _install_requirements(plugin_type: str, plugin_dirname: str):
 
 
 def import_plugin(plugin_type: str, identifier: str):
+    """ Install the dependencies of the given plugin and imports its base package. """
     plugin_dirname = locate_plugin(plugin_type, identifier)
     _install_requirements(plugin_type, plugin_dirname)
     __import__(f'brainscore_language.{plugin_type}.{plugin_dirname}')
