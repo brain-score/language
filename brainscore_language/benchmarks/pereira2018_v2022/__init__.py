@@ -51,7 +51,7 @@ class _Pereira2018LinregPearsonr(BenchmarkBase):
     def __init__(
         self,
         experiment: str,
-        # ceiling_s3_kwargs: dict = None,
+        ceiling_s3_kwargs: dict = None,
     ):
         self.data = self._load_data(experiment)
         self.metric = load_metric(
@@ -68,12 +68,12 @@ class _Pereira2018LinregPearsonr(BenchmarkBase):
             },
         )
         identifier = f"Pereira2018_v2022.{experiment}-linreg_pearsonr"
-        # ceiling = self._load_ceiling(identifier=identifier, **ceiling_s3_kwargs)
+        ceiling = self._load_ceiling(identifier=identifier, **ceiling_s3_kwargs)
         super(_Pereira2018LinregPearsonr, self).__init__(
             identifier=identifier,
+            ceiling_func=ceiling,
             version=1,
             parent="Pereira2018-linear",
-            ceiling_func=None,  # ceiling,
             bibtex=BIBTEX,
         )
 
