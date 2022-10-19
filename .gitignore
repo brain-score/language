@@ -149,3 +149,4 @@ cache
 .cache
 .idea/
 wandb/
+**/resources

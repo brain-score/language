@@ -41,7 +41,7 @@ def load_benchmark(identifier: str) -> Benchmark:
 
 def load_model(identifier: str) -> ArtificialSubject:
     # imports to load plugins until plugin system is implemented
-    from brainscore_language.models import gpt, glove, random_embedding
+    from brainscore_language.models import gpt, glove, random_embedding, lm1b
 
     model = model_registry[identifier]()
     model.identifier = identifier
