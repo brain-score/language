@@ -7,7 +7,7 @@ from brainio.assemblies import NeuroidAssembly
 from brainscore_language import load_metric
 from brainscore_language.utils.ceiling import ceiling_normalize
 from brainscore_language.benchmarks.futrell2018 import Futrell2018Pearsonr
-from brainscore_language.plugin_management.conda_score import CondaScore, save_score, read_score, SCORE_PATH
+from brainscore_language.plugin_management.conda_score import CondaScore, SCORE_PATH
 
 
 def _make_assembly():
@@ -27,15 +27,12 @@ def _create_dummy_score():
 	score = ceiling_normalize(raw_score, Futrell2018Pearsonr().ceiling)
 	return score
 
-def test_save_score():
+def test_save_and_read_score():
 	output = _create_dummy_score()
-	save_score(output)
+	CondaScore.save_score(output)
 	assert Path(SCORE_PATH).is_file()
-
-def test_read_score():
-	output = _create_dummy_score()
-	save_score(output)
-	result = read_score()
+	result = CondaScore.read_score()
+	assert not Path(SCORE_PATH).is_file()
 	assert output == result
 
 @pytest.mark.memory_intense
@@ -43,3 +40,4 @@ def test_score_in_env():
 	plugin_ids = {'model': 'distilgpt2', 'benchmark':'Futrell2018-pearsonr'}
 	result = CondaScore(plugin_ids).score
 	assert score == approx(0.3614471, abs=0.001)
+

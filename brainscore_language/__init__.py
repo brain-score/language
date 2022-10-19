@@ -8,7 +8,7 @@ from brainscore_core.benchmarks import Benchmark
 from brainscore_core.metrics import Score, Metric
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.plugin_management.import_plugin import ImportPlugin
-from brainscore_language.plugin_management.conda_score import CondaScore, save_score, read_score
+from brainscore_language.plugin_management.conda_score import CondaScore
 
 data_registry: Dict[str, Type[Union[DataAssembly, Any]]] = {}
 """ Pool of available data """
@@ -71,7 +71,7 @@ def _run_score(model_identifier: str, benchmark_identifier: str) -> Score:
     score: Score = benchmark(model)
     score.attrs['model_identifier'] = model_identifier
     score.attrs['benchmark_identifier'] = benchmark_identifier
-    save_score(score)
+    CondaScore.save_score(score)
     
     return score
 
@@ -79,8 +79,7 @@ def _run_score(model_identifier: str, benchmark_identifier: str) -> Score:
 def score(model_identifier: str, benchmark_identifier: str, create_env=False) -> Score:
     """ if create_env, runs score() in a conda environment """
     if create_env:
-        CondaScore(model_identifier, benchmark_identifier)
-        result = read_score()
+        result = CondaScore(model_identifier, benchmark_identifier).score
     else:
         result = _run_score(model_identifier, benchmark_identifier)
 

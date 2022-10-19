@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import pickle
 import tempfile
@@ -5,8 +6,8 @@ import tempfile
 from brainscore_core.metrics import Score
 from brainscore_language.plugin_management.environment_manager import EnvironmentManager
 
-TMP_DIR = tempfile.TemporaryDirectory()
-SCORE_PATH = f'{TMP_DIR.name}_score.pkl'
+SCORE_PATH = tempfile.NamedTemporaryFile(delete=False).name
+
 
 class CondaScore(EnvironmentManager):
     """ run scoring in conda environment """
@@ -18,6 +19,7 @@ class CondaScore(EnvironmentManager):
         self.env_name = f'{self.model}_{self.benchmark}'
         self.script_path = f'{Path(__file__).parent}/conda_score.sh'
         self.result = self.score_in_env()
+        self.score = self.read_score()
 
     def score_in_env(self) -> 'subprocess.CompletedProcess[bytes]':
         """ 
@@ -32,12 +34,15 @@ class CondaScore(EnvironmentManager):
 
         return completed_process
 
+    @staticmethod
+    def read_score():
+        with open(SCORE_PATH, 'rb') as f:
+            score = pickle.load(f)
+            os.remove(SCORE_PATH)
+            return score
 
-def save_score(score: Score):
-    with open(SCORE_PATH, 'wb') as f:
-        pickle.dump(score, f, pickle.HIGHEST_PROTOCOL)
+    @staticmethod
+    def save_score(score:Score):
+        with open(SCORE_PATH, 'wb') as f:
+            pickle.dump(score, f, pickle.HIGHEST_PROTOCOL)
 
-def read_score():
-    with open(SCORE_PATH, 'rb') as f:
-        return pickle.load(f)
-    shutil.rmtree(TMP_DIR)
