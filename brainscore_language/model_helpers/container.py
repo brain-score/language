@@ -142,13 +142,14 @@ class ContainerSubject(ArtificialSubject):
             cmd = ["singularity", "pull", f"docker://{self._container}"]
         else:
             raise RuntimeError(f"Unknown container backend {self._backend}")
-        process = subprocess.Popen(cmd, cwd=self._cachedir, stdout=subprocess.PIPE)
-        for line in iter(process.stdout.readline, b""):
-            self._logger.debug(line)
-        if not f.exists():
+        try:
+            process = subprocess.Popen(cmd, cwd=self._cachedir, stdout=subprocess.PIPE)
+            for line in iter(process.stdout.readline, b""):
+                self._logger.debug(line)
+        except subprocess.CalledProcessError as e:
             raise RuntimeError(
                 f"Could not pull container {self._container} using {self._backend}. Error message above traceback."
-            )
+            ) from e
 
     def _evaluate_container(self, context: str, text: str, measure: str) -> np.ndarray:
         """
