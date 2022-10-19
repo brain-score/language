@@ -14,7 +14,7 @@ class ImportPlugin:
         self.identifier = identifier
         self.plugin_dirname = self.locate_plugin()
         self.install_requirements()
-        self.plugin = __import__(f'brainscore_language.{self.plugin_type}.{self.plugin_dirname}')
+        __import__(f'brainscore_language.{self.plugin_type}.{self.plugin_dirname}')
 
 
     def locate_plugin(self) -> str:
@@ -25,6 +25,7 @@ class ImportPlugin:
         """
         plugins = [d.name for d in self.plugins_dir.iterdir() if d.is_dir()]
 
+        specified_plugin_dirname = None
         plugin_registrations_count = 0
         for plugin_dirname in plugins:
             plugin_dirpath = self.plugins_dir / plugin_dirname
@@ -34,10 +35,13 @@ class ImportPlugin:
                 plugin_registrations = [line for line in f if f"{registry_name}['{self.identifier}']"
                                         in line.replace('\"', '\'')]
                 if len(plugin_registrations) > 0:
-                    self.plugin_dirname = plugin_dirname
+                    specified_plugin_dirname = plugin_dirname
                     plugin_registrations_count += 1
 
+        assert plugin_registrations_count > 0, f"No registrations found for {self.identifier}"
         assert plugin_registrations_count == 1, f"More than one registration found for {self.identifier}"
+
+        return specified_plugin_dirname
 
 
     def install_requirements(self):
