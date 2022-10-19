@@ -19,7 +19,7 @@ def _load_suite(suite_ref: Union[str, Path, TextIO, Dict, Suite]) -> Suite:
          suite = suite_ref
     return Suite.from_dict(suite)
 
-class Suite(object):
+class Suite:
     """
     A test suite represents a targeted syntactic evaluation experiment.
 
