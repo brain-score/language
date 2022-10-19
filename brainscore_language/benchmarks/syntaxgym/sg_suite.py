@@ -7,7 +7,6 @@ import pandas as pd
 from brainscore_language.benchmarks.syntaxgym.sg_prediction import Prediction
 
 def _load_suite(suite_ref: Union[str, Path, TextIO, Dict, Suite]) -> Suite:
-    pass
     if isinstance(suite_ref, Suite):
          return suite_ref
     # Load from dict / JSON file / JSON path
