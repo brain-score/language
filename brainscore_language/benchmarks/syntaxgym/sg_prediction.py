@@ -27,7 +27,7 @@ rpar = Suppress(")")
 region = lpar + (Word(nums) | "*") + Suppress(";%") + Word(alphanums + "_-") + Suppress("%") + rpar
 literal_float = pyparsing_common.number
 
-class Region(object):
+class Region:
     def __init__(self, tokens):
         self.region_number = tokens[0]
         self.condition_name = tokens[1]

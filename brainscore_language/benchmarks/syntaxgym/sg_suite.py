@@ -7,7 +7,6 @@ import pandas as pd
 from brainscore_language.benchmarks.syntaxgym.sg_prediction import Prediction
 
 def _load_suite(suite_ref: Union[str, Path, TextIO, Dict, Suite]) -> Suite:
-    pass
     if isinstance(suite_ref, Suite):
          return suite_ref
     # Load from dict / JSON file / JSON path
@@ -19,7 +18,7 @@ def _load_suite(suite_ref: Union[str, Path, TextIO, Dict, Suite]) -> Suite:
          suite = suite_ref
     return Suite.from_dict(suite)
 
-class Suite(object):
+class Suite:
     """
     A test suite represents a targeted syntactic evaluation experiment.
 
@@ -34,7 +33,7 @@ class Suite(object):
         suite JSON representation. See :ref:`suite_json` for more information.
     """
 
-    def __init__(self, condition_names, region_names, items, predictions, meta):
+    def __init__(self, condition_names: List[str], region_names: List[str], items: List[dict], predictions: Prediction, meta: dict):
         self.condition_names = condition_names
         self.region_names = region_names
         self.items = items
@@ -171,60 +170,6 @@ class Suite(object):
 
     def __eq__(self, other):
         return isinstance(other, Suite) and json.dumps(self.as_dict()) == json.dumps(other.as_dict())
-
-
-# class Sentence:
-#     def __init__(self, tokens, unks=None, item_num=None,
-#                  condition_name='', regions=None):
-#         self.tokens = tokens
-#         self.unks = unks
-#         self.item_num = item_num
-#         self.condition_name = condition_name
-#         self.regions = [Region(**r) for r in regions]
-#         self.content = ' '.join(r.content for r in self.regions)
-#         self.oovs = {region["region_number"]: [] for region in regions}
-#
-#     def __eq__(self, other):
-#         return hash(self) == hash(other)
-#
-#     def __hash__(self):
-#         return hash((tuple(self.tokens),
-#                      tuple(self.unks) if self.unks is not None else None,
-#                      self.item_num,
-#                      self.condition_name,
-#                      tuple(self.regions),
-#                      self.content,
-#                      tuple((r_number, tuple(oovs))
-#                            for r_number, oovs in self.oovs.items())))
-#
-#     def compute_region2tokens(self, spec: dict):
-#         """
-#         Infer the mapping between sentence tokens and regions based on
-#         heuristic algorithm.
-#
-#         Used as backup when model tokenizers do not provide a detokenization
-#         procedure.
-#         """
-#
-#         self.region2tokens = self.tokenize_regions(spec)
-#         for i, r in enumerate(self.regions):
-#             r.tokens = self.region2tokens[r.region_number]
-#             self.regions[i] = r
-#
-#     def get_next_region(self, r_idx):
-#         """
-#         Basic helper function for tokenize_regions.
-#         """
-#         r = self.regions[r_idx]
-#         return r, r.content
-#
-#     def tokenize_regions(self, spec):
-#         """
-#         Converts self.tokens (list of tokens) to dictionary of
-#         <region_number, token list> pairs.
-#         """
-#         pass
-
 
 class Region(object):
     boundary_space_re = re.compile(r"^\s|\s$")

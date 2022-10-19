@@ -5,6 +5,9 @@ from brainscore_language import load_metric, benchmark_registry
 from brainscore_language.benchmarks.syntaxgym.sg_suite import _load_suite
 
 class SyntaxGymTSE(BenchmarkBase):
+# A benchmark to perform SyntaxGym Targeted Syntactic Evaluations (TSE).
+# See the SyntaxGym website for information about structuring test_suites:
+# https://cpllab.github.io/syntaxgym-core/architecture.html
     def __init__(self):
         super(SyntaxGymTSE, self).__init__(
             identifier='syntaxgym',
@@ -13,7 +16,7 @@ class SyntaxGymTSE(BenchmarkBase):
             ceiling=None,
             bibtex=None)
         self.metric = load_metric('accuracy')
-        self.data = _load_suite('brainscore_language/benchmarks/syntaxgym/test_suite.json')
+        self.data = _load_suite(Path(__file__).parent / 'test_suite.json'
 
     def __call__(self, candidate: ArtificialSubject)-> Score:
         suite_regions = list(self.data.iter_regions())
@@ -38,7 +41,3 @@ class SyntaxGymTSE(BenchmarkBase):
         return score
 
 benchmark_registry['syntaxgym'] = SyntaxGymTSE
-
-
-
-
