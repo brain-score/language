@@ -50,7 +50,7 @@ def load_model(identifier: str) -> ArtificialSubject:
     return model
 
 
-def score(model_identifier: str, benchmark_identifier: str) -> Score:
+def _run_score(model_identifier: str, benchmark_identifier: str) -> Score:
     """
     Score the model referenced by the `model_identifier` on the benchmark referenced by the `benchmark_identifier`.
     The model needs to implement the :class:`~brainscore_language.artificial_subject.ArtificialSubject` interface
@@ -76,12 +76,12 @@ def score(model_identifier: str, benchmark_identifier: str) -> Score:
     return score
 
 
-def get_score(model_identifier: str, benchmark_identifier: str, create_env=False) -> Score:
+def score(model_identifier: str, benchmark_identifier: str, create_env=False) -> Score:
     """ if create_env, runs score() in a conda environment """
     if create_env:
         CondaScore(model_identifier, benchmark_identifier)
         result = read_score()
     else:
-        result = score(model_identifier, benchmark_identifier)
+        result = _run_score(model_identifier, benchmark_identifier)
 
     return result

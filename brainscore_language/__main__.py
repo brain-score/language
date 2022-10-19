@@ -1,6 +1,6 @@
 import fire
 
-from brainscore_language import get_score as _score_function
+from brainscore_language import score as _score_function
 
 
 def score(model_identifier: str, benchmark_identifier: str, create_env=False):
