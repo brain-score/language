@@ -7,6 +7,7 @@ from brainio.assemblies import DataAssembly
 from brainscore_core.benchmarks import Benchmark
 from brainscore_core.metrics import Score, Metric
 from brainscore_language.artificial_subject import ArtificialSubject
+from brainscore_language.plugin_management.import_plugin import ImportPlugin
 from brainscore_language.plugin_management.conda_score import CondaScore, save_score, read_score
 
 data_registry: Dict[str, Type[Union[DataAssembly, Any]]] = {}
@@ -22,63 +23,26 @@ model_registry: Dict[str, Type[ArtificialSubject]] = {}
 """ Pool of available models """
 
 
-def locate_plugin(plugin_type: str, identifier: str) -> str:
-    """ 
-    Searches all plugin_type __init.py__ files for identifier.
-    If a match is found of format {plugin_type}_registry[{identifier}],
-    returns name of directory where __init.py__ is located 
-    """
-    plugins_dir = Path(__file__).with_name(plugin_type)
-    plugins = [d.name for d in plugins_dir.iterdir() if d.is_dir()]
-
-    specified_plugin_dirname = None
-
-    for plugin_dirname in plugins:
-        plugin_dirpath = plugins_dir / plugin_dirname
-        init_file = plugin_dirpath / "__init__.py"
-        with open(init_file) as f:
-            registry_name = plugin_type.strip('s') + '_registry'
-            plugin_registrations = [line for line in f if f'{registry_name}[\'{identifier}\']'
-                                        in line.replace('\"', '\'')]
-            if len(plugin_registrations) > 0:
-                specified_plugin_dirname = plugin_dirname
-
-    return specified_plugin_dirname
-
-
-def _install_requirements(plugin_type:str, plugin_dirname: str):
-    plugins_dir = Path(__file__).with_name(plugin_type)
-    requirements_file = plugins_dir / plugin_dirname / 'requirements.txt'
-    if requirements_file.is_file():
-        subprocess.run(f"pip install -r {requirements_file}", shell=True)
-
-
-def import_plugin(plugin_type: str, identifier: str):
-    plugin_dirname = locate_plugin(plugin_type, identifier)
-    _install_requirements(plugin_type, plugin_dirname)
-    __import__(f'brainscore_language.{plugin_type}.{plugin_dirname}')
-
-
 def load_dataset(identifier: str) -> Union[DataAssembly, Any]:
-    import_plugin('data', identifier)
+    ImportPlugin('data', identifier)
 
     return data_registry[identifier]()
 
 
 def load_metric(identifier: str, *args, **kwargs) -> Metric:
-    import_plugin('metrics', identifier)
+    ImportPlugin('metrics', identifier)
 
     return metric_registry[identifier](*args, **kwargs)
 
 
 def load_benchmark(identifier: str) -> Benchmark:
-    import_plugin('benchmarks', identifier)
+    ImportPlugin('benchmarks', identifier)
 
     return benchmark_registry[identifier]()
 
 
 def load_model(identifier: str) -> ArtificialSubject:
-    import_plugin('models', identifier)
+    ImportPlugin('models', identifier)
 
     model = model_registry[identifier]()
     model.identifier = identifier
