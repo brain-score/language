@@ -13,7 +13,7 @@ class SyntaxGymTSE(BenchmarkBase):
             ceiling=None,
             bibtex=None)
         self.metric = load_metric('accuracy')
-        self.data = _load_suite('brainscore_language/benchmarks/syntaxgym/test_suite.json')
+        self.data = _load_suite(Path(__file__).parent / 'test_suite.json')
 
     def __call__(self, candidate: ArtificialSubject)-> Score:
         suite_regions = list(self.data.iter_regions())
