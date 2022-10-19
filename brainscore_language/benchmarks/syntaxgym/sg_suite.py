@@ -33,7 +33,7 @@ class Suite:
         suite JSON representation. See :ref:`suite_json` for more information.
     """
 
-    def __init__(self, condition_names, region_names, items, predictions, meta):
+    def __init__(self, condition_names: List[str], region_names: List[str], items: List[dict], predictions: Prediction, meta: dict):
         self.condition_names = condition_names
         self.region_names = region_names
         self.items = items
