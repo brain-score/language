@@ -25,8 +25,7 @@ class ImportPlugin:
         """
         plugins = [d.name for d in self.plugins_dir.iterdir() if d.is_dir()]
 
-        specified_plugin_dirname = None
-
+        plugin_registrations_count = 0
         for plugin_dirname in plugins:
             plugin_dirpath = self.plugins_dir / plugin_dirname
             init_file = plugin_dirpath / "__init__.py"
@@ -35,7 +34,10 @@ class ImportPlugin:
                 plugin_registrations = [line for line in f if f"{registry_name}['{self.identifier}']"
                                         in line.replace('\"', '\'')]
                 if len(plugin_registrations) > 0:
-                    return plugin_dirname
+                    self.plugin_dirname = plugin_dirname
+                    plugin_registrations_count += 1
+
+        assert plugin_registrations_count == 1, f"More than one registration found for {self.identifier}"
 
 
     def install_requirements(self):
