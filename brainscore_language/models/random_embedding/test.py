@@ -38,8 +38,8 @@ def test_neural():
     model = load_model('randomembedding-1600')
     expected_feature_size = 1600
     text = ['the quick brown fox', 'jumps over', 'the lazy', 'dog', 'the lazy']
-    model.perform_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
-                                   recording_type=ArtificialSubject.RecordingType.fMRI)
+    model.start_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
+                                 recording_type=ArtificialSubject.RecordingType.fMRI)
     representations = model.digest_text(text)['neural']
     assert len(representations['presentation']) == 5
     np.testing.assert_array_equal(representations['stimulus'], text)
