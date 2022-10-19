@@ -38,7 +38,3 @@ class SyntaxGymTSE(BenchmarkBase):
         return score
 
 benchmark_registry['syntaxgym'] = SyntaxGymTSE
-
-
-
-
