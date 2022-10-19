@@ -173,57 +173,6 @@ class Suite(object):
         return isinstance(other, Suite) and json.dumps(self.as_dict()) == json.dumps(other.as_dict())
 
 
-# class Sentence:
-#     def __init__(self, tokens, unks=None, item_num=None,
-#                  condition_name='', regions=None):
-#         self.tokens = tokens
-#         self.unks = unks
-#         self.item_num = item_num
-#         self.condition_name = condition_name
-#         self.regions = [Region(**r) for r in regions]
-#         self.content = ' '.join(r.content for r in self.regions)
-#         self.oovs = {region["region_number"]: [] for region in regions}
-#
-#     def __eq__(self, other):
-#         return hash(self) == hash(other)
-#
-#     def __hash__(self):
-#         return hash((tuple(self.tokens),
-#                      tuple(self.unks) if self.unks is not None else None,
-#                      self.item_num,
-#                      self.condition_name,
-#                      tuple(self.regions),
-#                      self.content,
-#                      tuple((r_number, tuple(oovs))
-#                            for r_number, oovs in self.oovs.items())))
-#
-#     def compute_region2tokens(self, spec: dict):
-#         """
-#         Infer the mapping between sentence tokens and regions based on
-#         heuristic algorithm.
-#
-#         Used as backup when model tokenizers do not provide a detokenization
-#         procedure.
-#         """
-#
-#         self.region2tokens = self.tokenize_regions(spec)
-#         for i, r in enumerate(self.regions):
-#             r.tokens = self.region2tokens[r.region_number]
-#             self.regions[i] = r
-#
-#     def get_next_region(self, r_idx):
-#         """
-#         Basic helper function for tokenize_regions.
-#         """
-#         r = self.regions[r_idx]
-#         return r, r.content
-#
-#     def tokenize_regions(self, spec):
-#         """
-#         Converts self.tokens (list of tokens) to dictionary of
-#         <region_number, token list> pairs.
-#         """
-#         pass
 
 
 class Region(object):
