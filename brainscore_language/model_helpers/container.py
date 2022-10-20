@@ -118,7 +118,7 @@ class ContainerSubject(ArtificialSubject):
         options = ["docker", "singularity"]
         for option in options:
             try:
-                subprocess.run([option, "--version"], stdout=subprocess.DEVNULL)
+                subprocess.run([option, "--version"], stdout=subprocess.DEVNULL)  # attempt to run the container backend, try another on error
                 return option
             except:
                 self._logger.info(f"{option} backend not found. Testing next option.")
@@ -136,6 +136,7 @@ class ContainerSubject(ArtificialSubject):
         Download container to cache directory if it does not exist yet.
         """
 
+        # build command
         if self._backend == "docker":
             cmd = ["docker", "pull", f"{self._container}"]
         elif self._backend == "singularity":
@@ -146,6 +147,8 @@ class ContainerSubject(ArtificialSubject):
             cmd = ["singularity", "pull", f"docker://{self._container}"]
         else:
             raise RuntimeError(f"Unknown container backend {self._backend}")
+
+        # run command
         try:
             process = subprocess.Popen(cmd, cwd=self._cachedir, stdout=subprocess.PIPE)
             for line in iter(process.stdout.readline, b""):
@@ -253,8 +256,8 @@ class ContainerSubject(ArtificialSubject):
 
         self._logger.debug("Merging outputs")
         output = {"behavior": [], "neural": []}
-        for assembly in assemblies:
-            output[assembly[0]].append(assembly[1])
+        for output_type, assembly in assemblies:
+            output[output_type].append(assembly)
         output["behavior"] = (
             xr.concat(output["behavior"], dim="presentation").sortby("part_number")
             if output["behavior"]
