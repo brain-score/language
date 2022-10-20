@@ -3,7 +3,7 @@ import subprocess
 import warnings
 
 
-class EnvironmentManager():
+class EnvironmentManager:
     """ Runs plugins in conda environments """
 
     def __init__(self):
