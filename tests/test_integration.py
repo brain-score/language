@@ -15,7 +15,7 @@ from brainscore_language import score
     ('gpt2-xl', 'Futrell2018-pearsonr', approx(0.31825621, abs=.0005)),
 ])
 def test_score(model_identifier, benchmark_identifier, expected_score):
-    actual_score = score(model_identifier=model_identifier, benchmark_identifier=benchmark_identifier)
+    actual_score = score(model_identifier=model_identifier, benchmark_identifier=benchmark_identifier, install_dependencies='newenv')
     assert actual_score == expected_score
 
 
@@ -23,7 +23,8 @@ def test_score(model_identifier, benchmark_identifier, expected_score):
 def test_commandline_score():
     process = subprocess.run([sys.executable, "brainscore_language", "score",
                               "--model_identifier=distilgpt2",
-                              "--benchmark_identifier=Pereira2018.243sentences-linear"],
+                              "--benchmark_identifier=Pereira2018.243sentences-linear",
+                              "--install_dependencies=newenv"],
                              cwd=Path(__file__).parent.parent,
                              capture_output=True, text=True)
     assert process.returncode == 0, "Process failed"
