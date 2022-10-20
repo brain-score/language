@@ -3,6 +3,7 @@ import os
 import pytest
 from numpy.random import RandomState
 from pathlib import Path
+from pytest import approx
 
 from brainio.assemblies import NeuroidAssembly
 from brainscore_language import load_metric
@@ -42,6 +43,6 @@ def test_save_and_read_score():
 
 @pytest.mark.memory_intense
 def test_score_in_env():
-    plugin_ids = {'model': 'distilgpt2', 'benchmark': 'Futrell2018-pearsonr'}
-    result = CondaScore(plugin_ids).score
+    result = CondaScore(model_identifier='distilgpt2', benchmark_identifier='Futrell2018-pearsonr')
+    score = result.score
     assert score == approx(0.3614471, abs=0.001)
