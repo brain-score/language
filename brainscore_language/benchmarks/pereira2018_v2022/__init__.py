@@ -24,7 +24,13 @@ BIBTEX = """@article{pereira2018toward,
 
 
 def Pereira2018_243sentences():
-    return _Pereira2018LinregPearsonr(experiment="PereiraE3_72pass")
+    return _Pereira2018LinregPearsonr(
+        experiment="PereiraE3_72pass",
+        ceiling_s3_kwargs=dict(
+            version_id=None,
+            sha1=None,
+        ),
+    )
 
 
 def Pereira2018_384sentences():
@@ -51,7 +57,7 @@ class _Pereira2018LinregPearsonr(BenchmarkBase):
     def __init__(
         self,
         experiment: str,
-        ceiling_s3_kwargs: dict = None,
+        ceiling_s3_kwargs: dict,
     ):
         self.data = self._load_data(experiment)
         self.metric = load_metric(
@@ -68,7 +74,8 @@ class _Pereira2018LinregPearsonr(BenchmarkBase):
             },
         )
         identifier = f"Pereira2018_v2022.{experiment}-linreg_pearsonr"
-        ceiling = self._load_ceiling(identifier=identifier, **ceiling_s3_kwargs)
+        # ceiling = self._load_ceiling(identifier=identifier, **ceiling_s3_kwargs)
+        ceiling = None
         super(_Pereira2018LinregPearsonr, self).__init__(
             identifier=identifier,
             ceiling_func=ceiling,
