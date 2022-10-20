@@ -3,10 +3,7 @@
 
 First, the model is set-up as a `HuggingfaceSubject` instance. 
 
-
-
 Next, the model is instructed what kind of behavioral or neural recording task needs to be done using 
-
 
 New `task` and `recording_type` should be defined both in the `ArtificialSubject` class' `Task` class inside `artificial_subject.py`, and inside `self.task_function_mapping_dict` in `HuggingfaceSubject`'s `__init__` to be accessed during inference.  
 
@@ -17,3 +14,7 @@ to get outputs of the task, or using
 to get the reprensetation behind the task. 
 
 For more examples of usage of these models, refer to the unit tests in `tests/test_models/test_huggingface.py`. 
+
+### How-to work with `ContainerSubject`:
+
+See docstring under class definition for details on supported interface.

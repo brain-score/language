@@ -29,6 +29,7 @@ test = [
     "transformers>=4.11.3",
     "torch>=1.9.1",
     "gensim",
+    "joblib",
 ]
 
 [build-system]
