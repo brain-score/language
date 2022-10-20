@@ -132,6 +132,7 @@ class ContainerSubject(ArtificialSubject):
         Download container to cache directory if it does not exist yet.
         """
 
+        # build command
         if self._backend == "docker":
             cmd = ["docker", "pull", f"{self._container}"]
         elif self._backend == "singularity":
