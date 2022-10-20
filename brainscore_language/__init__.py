@@ -5,7 +5,7 @@ from brainio.assemblies import DataAssembly
 from brainscore_core.benchmarks import Benchmark
 from brainscore_core.metrics import Score, Metric
 from brainscore_language.artificial_subject import ArtificialSubject
-from brainscore_language.plugin_management.import_plugin import ImportPlugin
+from brainscore_language.plugin_management.import_plugin import import_plugin
 from brainscore_language.plugin_management.conda_score import CondaScore
 
 data_registry: Dict[str, Callable[[], Union[DataAssembly, Any]]] = {}
@@ -22,25 +22,25 @@ model_registry: Dict[str, Callable[[], ArtificialSubject]] = {}
 
 
 def load_dataset(identifier: str) -> Union[DataAssembly, Any]:
-    ImportPlugin('data', identifier)
+    import_plugin('data', identifier)
 
     return data_registry[identifier]()
 
 
 def load_metric(identifier: str, *args, **kwargs) -> Metric:
-    ImportPlugin('metrics', identifier)
+    import_plugin('metrics', identifier)
 
     return metric_registry[identifier](*args, **kwargs)
 
 
 def load_benchmark(identifier: str) -> Benchmark:
-    ImportPlugin('benchmarks', identifier)
+    import_plugin('benchmarks', identifier)
 
     return benchmark_registry[identifier]()
 
 
 def load_model(identifier: str) -> ArtificialSubject:
-    ImportPlugin('models', identifier)
+    import_plugin('models', identifier)
 
     model = model_registry[identifier]()
     model.identifier = identifier
