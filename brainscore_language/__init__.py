@@ -74,7 +74,7 @@ def _run_score(model_identifier: str, benchmark_identifier: str) -> Score:
     return score
 
 
-def score(model_identifier: str, benchmark_identifier: str, install_dependencies='yes') -> Score:
+def score(model_identifier: str, benchmark_identifier: str, install_dependencies: str = 'yes') -> Score:
     """ 
     install_dependencies='yes' installs dependencies directly into runtime environment
     install_dependencies='newenv' runs score() in an auto-generated conda environment
