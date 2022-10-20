@@ -20,28 +20,42 @@ model_registry: Dict[str, Callable[[], ArtificialSubject]] = {}
 
 def load_dataset(identifier: str) -> Union[DataAssembly, Any]:
     # imports to load plugins until plugin system is implemented
-    from brainscore_language.data import wikitext, futrell2018, pereira2018, fedorenko2016, blank2014
+    from brainscore_language.data import (
+        wikitext,
+        futrell2018,
+        pereira2018,
+        fedorenko2016,
+        blank2014,
+    )
 
     return data_registry[identifier]()
 
 
 def load_metric(identifier: str, *args, **kwargs) -> Metric:
     # imports to load plugins until plugin system is implemented
-    from brainscore_language.metrics import accuracy, pearson_correlation, linear_predictivity
+    from brainscore_language.metrics import (
+        accuracy,
+        pearson_correlation,
+        linear_predictivity,
+    )
 
     return metric_registry[identifier](*args, **kwargs)
 
 
 def load_benchmark(identifier: str) -> Benchmark:
     # imports to load plugins until plugin system is implemented
-    from brainscore_language.benchmarks import wikitext_next_word, futrell2018, pereira2018
+    from brainscore_language.benchmarks import (
+        wikitext_next_word,
+        futrell2018,
+        pereira2018,
+    )
 
     return benchmark_registry[identifier]()
 
 
 def load_model(identifier: str) -> ArtificialSubject:
     # imports to load plugins until plugin system is implemented
-    from brainscore_language.models import gpt, glove, random_embedding
+    from brainscore_language.models import gpt, glove, rnnlm, random_embedding
 
     model = model_registry[identifier]()
     model.identifier = identifier
@@ -67,6 +81,6 @@ def score(model_identifier: str, benchmark_identifier: str) -> Score:
     model: ArtificialSubject = load_model(model_identifier)
     benchmark: Benchmark = load_benchmark(benchmark_identifier)
     score: Score = benchmark(model)
-    score.attrs['model_identifier'] = model_identifier
-    score.attrs['benchmark_identifier'] = benchmark_identifier
+    score.attrs["model_identifier"] = model_identifier
+    score.attrs["benchmark_identifier"] = benchmark_identifier
     return score
