@@ -252,8 +252,8 @@ class ContainerSubject(ArtificialSubject):
 
         self._logger.debug("Merging outputs")
         output = {"behavior": [], "neural": []}
-        for assembly in assemblies:
-            output[assembly[0]].append(assembly[1])
+        for output_type, assembly in assemblies:
+            output[output_type].append(assembly)
         output["behavior"] = (
             xr.concat(output["behavior"], dim="presentation").sortby("part_number")
             if output["behavior"]
