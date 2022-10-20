@@ -76,9 +76,7 @@ def _run_score(model_identifier: str, benchmark_identifier: str) -> Score:
 
 def score(model_identifier: str, benchmark_identifier: str, install_dependencies: str = 'yes') -> Score:
     """ 
-    install_dependencies='yes' installs dependencies directly into runtime environment
-    install_dependencies='newenv' runs score() in an auto-generated conda environment
-    install_dependencies='no' leaves dependency installation to the user
+    :param install_dependencies: specify how to handle dependency installation for plugins. 'yes' installs dependencies directly into runtime environment, 'newenv' creates a new conda environment to install dependencies into, 'no' does not install dependencies.
     """
     if install_dependencies == 'newenv':
         result = CondaScore(model_identifier, benchmark_identifier).score
