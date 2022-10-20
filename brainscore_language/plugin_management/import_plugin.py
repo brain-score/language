@@ -20,7 +20,7 @@ class ImportPlugin:
 
     def locate_plugin(self) -> str:
         """ 
-        Searches all plugin_type __init.py__ files for identifier.
+        Searches all `plugin_type` __init.py__ files for the plugin denoted with `identifier`.
         If a match is found of format {plugin_type}_registry[{identifier}],
         returns name of directory where __init.py__ is located 
         """
@@ -32,9 +32,9 @@ class ImportPlugin:
             plugin_dirpath = self.plugins_dir / plugin_dirname
             init_file = plugin_dirpath / "__init__.py"
             with open(init_file) as f:
-                registry_name = self.plugin_type.strip('s') + '_registry'
+                registry_name = plugin_type.strip('s') + '_registry'  # remove plural and determine variable name, e.g. "models" -> "model_registry"
                 plugin_registrations = [line for line in f if f"{registry_name}['{self.identifier}']"
-                                        in line.replace('\"', '\'')]
+                                            in line.replace('\"', '\'')]
                 if len(plugin_registrations) > 0:
                     specified_plugin_dirname = plugin_dirname
                     plugin_registrations_count += 1
@@ -46,6 +46,7 @@ class ImportPlugin:
 
 
     def install_requirements(self):
+        """ Install all the requirements of the given plugin directory. This is done via `pip install` in the current interpreter. """
         if os.environ['BSL_DEPENDENCY_INSTALL'] != 'no':
             requirements_file = self.plugins_dir / self.plugin_dirname / 'requirements.txt'
             if requirements_file.is_file():
