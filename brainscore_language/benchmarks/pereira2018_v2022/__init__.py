@@ -27,14 +27,36 @@ def Pereira2018_243sentences():
     return _Pereira2018LinregPearsonr(
         experiment="PereiraE3_72pass",
         ceiling_s3_kwargs=dict(
-            version_id=None,
-            sha1=None,
+            sha1="64ebaded266506df698ed249685ffadabf017951",
+            version_id="H8Apri0513nJ8Qy54dp3IitpuLOL9UyK",
+            raw_kwargs=dict(
+                version_id="ws6mzNrk9AkN2rFP3vVzBcSSgF3n0J5O",
+                sha1="a72adbc813e1eaff5fbb3e4fcb9c1b202d3cdbf2",
+                raw_kwargs=dict(
+                    version_id="LYWHrqobBWLYYKMwMz4bEUsB2s..9QTY",
+                    sha1="0b5477ead370939a65b824629f72fad40da0543f",
+                ),
+            ),
         ),
     )
 
 
 def Pereira2018_384sentences():
-    return _Pereira2018LinregPearsonr(experiment="PereiraE2_96pass")
+    return _Pereira2018LinregPearsonr(
+        experiment="PereiraE2_96pass",
+        ceiling_s3_kwargs=dict(
+            sha1="638b7a0d7a08a851ace19af9489801c9c1a4c05b",
+            version_id="OFu.5imbaIbrJvD6xny_G55XfEzOU37o",
+            raw_kwargs=dict(
+                sha1="3348a8c489f5d091c5f4ded9d50f0c895e2368f4",
+                version_id="c6zAAvSRxerQ3kHRf0I7WnSoFZDSd3kG",
+                raw_kwargs=dict(
+                    sha1="75a88348f30135bb0453459ba8eddf33eabf49ff",
+                    version_id="cA3D7oKIcpx.qZz9tLOFO_kAkOduht4W",
+                ),
+            ),
+        ),
+    )
 
 
 class _Pereira2018LinregPearsonr(BenchmarkBase):
@@ -74,8 +96,7 @@ class _Pereira2018LinregPearsonr(BenchmarkBase):
             },
         )
         identifier = f"Pereira2018_v2022.{experiment}-linreg_pearsonr"
-        # ceiling = self._load_ceiling(identifier=identifier, **ceiling_s3_kwargs)
-        ceiling = None
+        ceiling = self._load_ceiling(identifier=identifier, **ceiling_s3_kwargs)
         super(_Pereira2018LinregPearsonr, self).__init__(
             identifier=identifier,
             ceiling_func=ceiling,
