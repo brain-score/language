@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import pickle
 import subprocess
@@ -76,11 +77,17 @@ def _run_score(model_identifier: str, benchmark_identifier: str) -> Score:
     return score
 
 
-def score(model_identifier: str, benchmark_identifier: str, create_env=False) -> Score:
-    """ if create_env, runs score() in a conda environment """
-    if create_env:
+def score(model_identifier: str, benchmark_identifier: str, install_dependencies='yes') -> Score:
+    """ 
+    install_dependencies='yes' installs dependencies directly into runtime environment
+    install_dependencies='newenv' runs score() in an auto-generated conda environment
+    install_dependencies='no' leaves dependency installation to the user
+    """
+    if install_dependencies == 'newenv':
+        os.environ['BSL_DEPENDENCY_INSTALL'] = os.getenv('BSL_DEPENDENCY_INSTALL', 'yes')
         result = CondaScore(model_identifier, benchmark_identifier).score
     else:
+        os.environ['BSL_DEPENDENCY_INSTALL'] = os.getenv('BSL_DEPENDENCY_INSTALL', install_dependencies)
         result = _run_score(model_identifier, benchmark_identifier)
 
     return result

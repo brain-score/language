@@ -1,5 +1,6 @@
 from numpy.random import RandomState
 import numpy as np
+import os
 import pytest
 from pathlib import Path
 
@@ -28,6 +29,7 @@ def _create_dummy_score():
 	return score
 
 def test_save_and_read_score():
+	os.environ['BSL_DEPENDENCY_INSTALL'] = os.getenv('BSL_DEPENDENCY_INSTALL', 'no')
 	output = _create_dummy_score()
 	CondaScore.save_score(output)
 	assert Path(SCORE_PATH).is_file()

@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 import subprocess
 
@@ -45,8 +46,9 @@ class ImportPlugin:
 
 
     def install_requirements(self):
-        requirements_file = self.plugins_dir / self.plugin_dirname / 'requirements.txt'
-        if requirements_file.is_file():
-            subprocess.run(f"pip install -r {requirements_file}", shell=True)
-        else:
-            logger.debug(f"Plugin {self.plugin_dirname} has no requirements file {requirements_file}")
+        if os.environ['BSL_DEPENDENCY_INSTALL'] != 'no':
+            requirements_file = self.plugins_dir / self.plugin_dirname / 'requirements.txt'
+            if requirements_file.is_file():
+                subprocess.run(f"pip install -r {requirements_file}", shell=True)
+            else:
+                logger.debug(f"Plugin {self.plugin_dirname} has no requirements file {requirements_file}")

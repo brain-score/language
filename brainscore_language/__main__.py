@@ -3,8 +3,8 @@ import fire
 from brainscore_language import score as _score_function
 
 
-def score(model_identifier: str, benchmark_identifier: str, create_env=False):
-    result = _score_function(model_identifier, benchmark_identifier, create_env)
+def score(model_identifier: str, benchmark_identifier: str, install_dependencies='yes'):
+    result = _score_function(model_identifier, benchmark_identifier, install_dependencies)
     print(result)  # print instead of return because fire has issues with xarray objects
 
 
