@@ -1,8 +1,4 @@
-import os
-from pathlib import Path
-import pickle
-import subprocess
-from typing import Dict, Any, Type, Union
+from typing import Dict, Any, Union, Callable
 
 from brainio.assemblies import DataAssembly
 from brainscore_core.benchmarks import Benchmark
@@ -11,16 +7,16 @@ from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.plugin_management.import_plugin import ImportPlugin
 from brainscore_language.plugin_management.conda_score import CondaScore
 
-data_registry: Dict[str, Type[Union[DataAssembly, Any]]] = {}
+data_registry: Dict[str, Callable[[], Union[DataAssembly, Any]]] = {}
 """ Pool of available data """
 
-metric_registry: Dict[str, Type[Metric]] = {}
+metric_registry: Dict[str, Callable[[], Metric]] = {}
 """ Pool of available metrics """
 
-benchmark_registry: Dict[str, Type[Benchmark]] = {}
+benchmark_registry: Dict[str, Callable[[], Benchmark]] = {}
 """ Pool of available benchmarks """
 
-model_registry: Dict[str, Type[ArtificialSubject]] = {}
+model_registry: Dict[str, Callable[[], ArtificialSubject]] = {}
 """ Pool of available models """
 
 
