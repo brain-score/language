@@ -22,8 +22,7 @@ def test_score(model_identifier, benchmark_identifier, expected_score):
 def test_commandline_score():
     process = subprocess.run([sys.executable, "brainscore_language", "score",
                               "--model_identifier=randomembedding-100",
-                              "--benchmark_identifier=Pereira2018.243sentences-linear",
-                              "--install_dependencies=newenv"],
+                              "--benchmark_identifier=Pereira2018.243sentences-linear"],
                              cwd=Path(__file__).parent.parent,
                              capture_output=True, text=True)
     assert process.returncode == 0, "Process failed"
@@ -31,6 +30,6 @@ def test_commandline_score():
     output = process.stdout
     assert "Score" in output
     assert "0.0285" in output
-    assert output.startswith("<xarray.Score ()>\narray(0.0285022)")
+    assert "<xarray.Score ()>\narray(0.0285022)" in output
     assert "model_identifier:      randomembedding-100" in output
     assert "benchmark_identifier:  Pereira2018.243sentences-linear" in output

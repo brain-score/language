@@ -1,3 +1,4 @@
+import os
 from typing import Dict, Any, Union, Callable
 
 from brainio.assemblies import DataAssembly
