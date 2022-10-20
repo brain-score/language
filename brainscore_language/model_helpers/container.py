@@ -114,7 +114,7 @@ class ContainerSubject(ArtificialSubject):
         options = ["docker", "singularity"]
         for option in options:
             try:
-                subprocess.run([option, "--version"], stdout=subprocess.DEVNULL)
+                subprocess.run([option, "--version"], stdout=subprocess.DEVNULL)  # attempt to run the container backend, try another on error
                 return option
             except:
                 self._logger.info(f"{option} backend not found. Testing next option.")
