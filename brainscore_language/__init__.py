@@ -49,21 +49,7 @@ def load_model(identifier: str) -> ArtificialSubject:
 
 
 def _run_score(model_identifier: str, benchmark_identifier: str) -> Score:
-    """
-    Score the model referenced by the `model_identifier` on the benchmark referenced by the `benchmark_identifier`.
-    The model needs to implement the :class:`~brainscore_language.artificial_subject.ArtificialSubject` interface
-    so that the benchmark can interact with it.
-    The benchmark will be looked up from the :data:`~brainscore_language.benchmarks` and evaluates the model on how
-    brain-like it is under that benchmark's experimental paradigm, primate measurements, comparison metric, and ceiling
-    This results in a quantitative
-    `Score <https://brain-score-core.readthedocs.io/en/latest/modules/metrics.html#brainscore_core.metrics.Score>`_
-    ranging from 0 (least brain-like) to 1 (most brain-like under this benchmark).
-
-    :param model_identifier: the identifier for the model
-    :param benchmark_identifier: the identifier for the benchmark to test the model against
-    :return: a Score of how brain-like the candidate model is under this benchmark. The score is normalized by
-        this benchmark's ceiling such that 1 means the model matches the data to ceiling level.
-    """
+    """ Score the model referenced by the `model_identifier` on the benchmark referenced by the `benchmark_identifier`. """
     model: ArtificialSubject = load_model(model_identifier)
     benchmark: Benchmark = load_benchmark(benchmark_identifier)
     score: Score = benchmark(model)
@@ -75,8 +61,25 @@ def _run_score(model_identifier: str, benchmark_identifier: str) -> Score:
 
 
 def score(model_identifier: str, benchmark_identifier: str, install_dependencies: str = 'yes') -> Score:
-    """ 
-    :param install_dependencies: specify how to handle dependency installation for plugins. 'yes' installs dependencies directly into runtime environment, 'newenv' creates a new conda environment to install dependencies into, 'no' does not install dependencies.
+    """
+    Score the model referenced by the `model_identifier` on the benchmark referenced by the `benchmark_identifier`.
+    The model needs to implement the :class:`~brainscore_language.artificial_subject.ArtificialSubject` interface
+    so that the benchmark can interact with it.
+    The benchmark will be looked up from the :data:`~brainscore_language.benchmarks` and evaluates the model on how
+    brain-like it is under that benchmark's experimental paradigm, primate measurements, comparison metric, and ceiling
+    This results in a quantitative
+    `Score <https://brain-score-core.readthedocs.io/en/latest/modules/metrics.html#brainscore_core.metrics.Score>`_
+    ranging from 0 (least brain-like) to 1 (most brain-like under this benchmark).
+    
+    :param install_dependencies: specify how to handle dependency installation for plugins. 
+    'yes' installs dependencies directly into runtime environment, 
+    'newenv' creates a new conda environment to install dependencies into, 
+    'no' does not install dependencies.
+    
+    :param model_identifier: the identifier for the model
+    :param benchmark_identifier: the identifier for the benchmark to test the model against
+    :return: a Score of how brain-like the candidate model is under this benchmark. The score is normalized by
+        this benchmark's ceiling such that 1 means the model matches the data to ceiling level.
     """
     if install_dependencies == 'newenv':
         result = CondaScore(model_identifier, benchmark_identifier).score
