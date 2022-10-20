@@ -143,6 +143,8 @@ class ContainerSubject(ArtificialSubject):
             cmd = ["singularity", "pull", f"docker://{self._container}"]
         else:
             raise RuntimeError(f"Unknown container backend {self._backend}")
+
+        # run command
         try:
             process = subprocess.Popen(cmd, cwd=self._cachedir, stdout=subprocess.PIPE)
             for line in iter(process.stdout.readline, b""):
