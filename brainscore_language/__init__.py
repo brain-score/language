@@ -81,7 +81,6 @@ def score(model_identifier: str, benchmark_identifier: str, install_dependencies
     install_dependencies='no' leaves dependency installation to the user
     """
     if install_dependencies == 'newenv':
-        os.environ['BSL_DEPENDENCY_INSTALL'] = os.getenv('BSL_DEPENDENCY_INSTALL', 'yes')
         result = CondaScore(model_identifier, benchmark_identifier).score
     else:
         os.environ['BSL_DEPENDENCY_INSTALL'] = os.getenv('BSL_DEPENDENCY_INSTALL', install_dependencies)
