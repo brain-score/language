@@ -55,6 +55,10 @@ class ContainerSubject(ArtificialSubject):
     Note: While the internals of any containerized model are not restricted, the interface must be as described above. 
     It is highly recommended to raise detailed error messages from inside the container, so they can be escalated here.
     It is also recommended to include a list of supported measures in the container's documentation.
+
+    Note: To add new tasks to this interface, open a PR to update the task mapping in the constructor of this class.
+    The new entry to the task dict should map the task to a function that takes the output of the container and returns a score.
+    See current task implementations for examples.
     """
 
     def __init__(
