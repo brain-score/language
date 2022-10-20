@@ -1,9 +1,8 @@
 import argparse
-from pathlib import Path
 import pytest_check as check
-import shutil
-from typing import Dict, List
 import warnings
+from pathlib import Path
+from typing import Dict, List
 
 from brainscore_language.plugin_management.environment_manager import EnvironmentManager
 
@@ -25,7 +24,8 @@ class PluginTestRunner(EnvironmentManager):
     python brainscore_language/plugin_management/test_plugins.py 
 
     """
-    def __init__(self, plugin_directory:Path, results:Dict, test=False):
+
+    def __init__(self, plugin_directory: Path, results: Dict, test=False):
         super(PluginTestRunner, self).__init__()
 
         self.plugin_directory = plugin_directory
@@ -63,13 +63,14 @@ class PluginTestRunner(EnvironmentManager):
 
 def arg_parser() -> List[str]:
     parser = argparse.ArgumentParser(description='Run single specified test or all tests for each plugin')
-    parser.add_argument('test_file', type=str, nargs='?',help='Optional: path of target test file')
+    parser.add_argument('test_file', type=str, nargs='?', help='Optional: path of target test file')
     parser.add_argument('--test', type=str, help='Optional: name of test to run', required=False)
     args = parser.parse_args()
 
     return args
 
-def run_specified_tests(args:List[str], results:Dict):
+
+def run_specified_tests(args: List[str], results: Dict):
     """ Runs either a single test or all tests in a specified test.py """
     filename = args.test_file.split('/')[-1]
     plugin_dirname = args.test_file.split('/')[-2]
@@ -80,7 +81,8 @@ def run_specified_tests(args:List[str], results:Dict):
     plugin_test_runner = PluginTestRunner(plugin, results, test=args.test)
     plugin_test_runner()
 
-def run_all_tests(results:Dict):
+
+def run_all_tests(results: Dict):
     """ Runs tests for all plugins """
     for plugin_type in PLUGIN_TYPES:
         plugins_dir = Path(Path(__file__).parents[1], plugin_type)
@@ -101,6 +103,6 @@ if __name__ == '__main__':
     else:
         warnings.warn("Test file not found.")
 
-    plugins_with_errors = {k:v for k,v in results.items() if v == 1}
+    plugins_with_errors = {k: v for k, v in results.items() if v == 1}
     num_plugins_failed = len(plugins_with_errors)
     assert num_plugins_failed == 0, f"\n{num_plugins_failed} plugin tests failed\n{plugins_with_errors}"

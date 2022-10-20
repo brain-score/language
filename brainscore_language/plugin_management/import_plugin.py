@@ -1,20 +1,20 @@
 import logging
 import os
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 
 class ImportPlugin:
     """ import plugin and (optionally) install dependencies """
+
     def __init__(self, plugin_type: str, identifier: str):
 
         self.plugin_type = plugin_type
         self.plugins_dir = Path(__file__).parent.with_name(plugin_type)
         self.identifier = identifier
         self.plugin_dirname = self.locate_plugin()
-
 
     def locate_plugin(self) -> str:
         """ 
@@ -30,9 +30,10 @@ class ImportPlugin:
             plugin_dirpath = self.plugins_dir / plugin_dirname
             init_file = plugin_dirpath / "__init__.py"
             with open(init_file) as f:
-                registry_name = self.plugin_type.strip('s') + '_registry'  # remove plural and determine variable name, e.g. "models" -> "model_registry"
+                registry_name = self.plugin_type.strip(
+                    's') + '_registry'  # remove plural and determine variable name, e.g. "models" -> "model_registry"
                 plugin_registrations = [line for line in f if f"{registry_name}['{self.identifier}']"
-                                            in line.replace('\"', '\'')]
+                                        in line.replace('\"', '\'')]
                 if len(plugin_registrations) > 0:
                     specified_plugin_dirname = plugin_dirname
                     plugin_registrations_count += 1
@@ -43,9 +44,13 @@ class ImportPlugin:
         return specified_plugin_dirname
 
     def install_requirements(self):
-        """ Install all the requirements of the given plugin directory. This is done via `pip install` in the current interpreter. """
+        """
+        Install all the requirements of the given plugin directory.
+        This is done via `pip install` in the current interpreter.
+        """
         install_dependencies = "BSL_DEPENDENCY_INSTALL"
-        if (install_dependencies in os.environ and os.environ[install_dependencies] == 'yes') or (install_dependencies not in os.environ):
+        if (install_dependencies in os.environ and os.environ[install_dependencies] == 'yes') or (
+                install_dependencies not in os.environ):
             requirements_file = self.plugins_dir / self.plugin_dirname / 'requirements.txt'
             if requirements_file.is_file():
                 subprocess.run(f"pip install -r {requirements_file}", shell=True)
@@ -59,8 +64,8 @@ def import_plugin(plugin_type: str, identifier: str):
     Given the identifier `Futrell2018-pearsonr`,
     :meth:`~brainscore_language.plugin_management.ImportPlugin.locate_plugin` sets
     :attribute plugin_dirname: directory of plugin denoted by :param identifier:, then
-    :meth:`~brainscore_language.plugin_management.ImportPlugin.install_requirements` installs all requirements in that directory's requirements.txt, and
-    the plugin base package is imported
+    :meth:`~brainscore_language.plugin_management.ImportPlugin.install_requirements` installs all requirements
+        in that directory's requirements.txt, and the plugin base package is imported
     """
     import_plugin = ImportPlugin(plugin_type, identifier)
     import_plugin.install_requirements()

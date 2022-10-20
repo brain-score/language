@@ -9,20 +9,20 @@ SINGLE_TEST=$4
 
 echo "${PLUGIN_NAME/_//}"
 
-eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
-output=`conda create -n $PLUGIN_NAME python=3.8 -y 2>&1` || echo $output
+eval "$(command conda 'shell.bash' 'hook' 2>/dev/null)"
+output=$(conda create -n $PLUGIN_NAME python=3.8 -y 2>&1) || echo $output
 conda activate $PLUGIN_NAME
 if $HAS_REQUIREMENTS; then
-	output=`pip install -r $PLUGIN_REQUIREMENTS_PATH 2>&1` || echo $output
+  output=$(pip install -r $PLUGIN_REQUIREMENTS_PATH 2>&1) || echo $output
 fi
 
-output=`python -m pip install -e ".[test]" 2>&1` || echo $output
+output=$(python -m pip install -e ".[test]" 2>&1) || echo $output
 
 if [ "$SINGLE_TEST" != False ]; then
-	echo "Running ${SINGLE_TEST}" 
-	pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow" "-vv" $PLUGIN_TEST_PATH "-k" $SINGLE_TEST "--log-cli-level=INFO"
+  echo "Running ${SINGLE_TEST}"
+  pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow" "-vv" $PLUGIN_TEST_PATH "-k" $SINGLE_TEST "--log-cli-level=INFO"
 else
-	pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow" $PLUGIN_TEST_PATH
+  pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow" $PLUGIN_TEST_PATH
 fi
 
 exit $?

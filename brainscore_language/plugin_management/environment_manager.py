@@ -1,6 +1,6 @@
-from pathlib import Path
 import subprocess
 import warnings
+from pathlib import Path
 
 
 class EnvironmentManager:
@@ -16,8 +16,8 @@ class EnvironmentManager:
         try:
             return subprocess.check_output("conda info --base", shell=True).strip().decode('utf-8')
         except Exception as e:
-            warnings.warn(f"{e}. Please ensure that conda is properly installed " \
-                "(https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html).")
+            warnings.warn(f"{e}. Please ensure that conda is properly installed "
+                          "(https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html).")
 
     def run_in_env(self, run_command=str):
         """ 
@@ -25,7 +25,7 @@ class EnvironmentManager:
         tests a plugin or scores a model in a conda environment
         """
         completed_process = subprocess.run({run_command}, shell=True)
-        
+
         return completed_process
 
     def teardown(self) -> int:
@@ -41,5 +41,5 @@ class EnvironmentManager:
                 completed_process.returncode = 0
             except Exception as e:
                 warnings.warn(f"conda env {self.env_name} removal failed and must be manually deleted.")
-        
+
         return completed_process
