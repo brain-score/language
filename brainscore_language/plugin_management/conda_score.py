@@ -6,7 +6,7 @@ from pathlib import Path
 from brainscore_core.metrics import Score
 from brainscore_language.plugin_management.environment_manager import EnvironmentManager
 
-SCORE_PATH = tempfile.NamedTemporaryFile(delete=False).name
+SCORE_PATH = tempfile.NamedTemporaryFile(delete=False).name  # file for sub-process to write the score to, and for us to read back in
 
 
 class CondaScore(EnvironmentManager):
