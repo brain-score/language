@@ -27,6 +27,7 @@ test = [
     "pytest",
     "pytest-check",
     "gensim",
+    "joblib",
 ]
 
 [build-system]
