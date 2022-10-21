@@ -81,7 +81,7 @@ def score(model_identifier: str, benchmark_identifier: str) -> Score:
     :return: a Score of how brain-like the candidate model is under this benchmark. The score is normalized by
         this benchmark's ceiling such that 1 means the model matches the data to ceiling level.
     """
-    if os.environ['BSL_INSTALL_DEPENDENCIES'] == 'newenv':
+    if ('BSL_INSTALL_DEPENDENCIES' in os.environ and os.environ['BSL_INSTALL_DEPENDENCIES'] == 'newenv'):
         result = CondaScore(model_identifier, benchmark_identifier).score
     else:
         result = _run_score(model_identifier, benchmark_identifier)
