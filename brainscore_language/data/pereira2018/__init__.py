@@ -17,11 +17,15 @@ BIBTEX = """@article{pereira2018toward,
   publisher={Nature Publishing Group}
 }"""
 
-data_registry['Pereira2018.language'] = lambda: load_from_s3(
+data_registry["Pereira2018.language"] = lambda: load_from_s3(
     identifier="Pereira2018.language",
     version_id="fq0gh.P7ThLu6DWUulho5W_F.YTEhDqJ",
-    sha1="f8434b4022f5b2c862f0ff2854d5b3f5f2a7fb96")
-data_registry['Pereira2018.auditory'] = lambda: load_from_s3(
+    sha1="f8434b4022f5b2c862f0ff2854d5b3f5f2a7fb96",
+    assembly_prefix="assy_",
+)
+data_registry["Pereira2018.auditory"] = lambda: load_from_s3(
     identifier="Pereira2018.auditory",
     version_id=".lCMuSrGBlsEgLtZDOApLlr3h2szCmoC",
-    sha1="08e576bd3b8caf64850bb879abf07ae228ff1f5f")
+    sha1="08e576bd3b8caf64850bb879abf07ae228ff1f5f",
+    assembly_prefix="assy_",
+)

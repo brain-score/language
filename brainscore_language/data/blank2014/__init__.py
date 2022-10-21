@@ -16,7 +16,9 @@ BIBTEX = """@article{blank2014functional,
   publisher={American Physiological Society Bethesda, MD}
 }"""
 
-data_registry['Blank2014.fROI'] = lambda: load_from_s3(
+data_registry["Blank2014.fROI"] = lambda: load_from_s3(
     identifier="Blank2014.fROI",
     version_id="qM.uLV8ltOHM297r2SaGteYMX4Vy.oHB",
-    sha1="af1e868821b897cb1684e4c8dcd33977121ef552")
+    sha1="af1e868821b897cb1684e4c8dcd33977121ef552",
+    assembly_prefix="assy_",
+)
