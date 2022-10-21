@@ -109,10 +109,10 @@ def upload_data_assembly(assembly, assembly_identifier, bucket_name):
     # write to disk and upload
     netcdf_kf_sha1 = write_netcdf(assembly, target_netcdf_path)
     _logger.debug(f"Wrote file to {target_netcdf_path}.")
-    # upload_to_s3(target_netcdf_path, bucket_name, s3_key)
-    # _logger.debug(
-    #     f"Uploaded assembly {assembly_identifier} to S3: {s3_key} (SHA1 hash {netcdf_kf_sha1})"
-    # )
+    upload_to_s3(target_netcdf_path, bucket_name, s3_key)
+    _logger.debug(
+        f"Uploaded assembly {assembly_identifier} to S3: {s3_key} (SHA1 hash {netcdf_kf_sha1})"
+    )
 
 
 if __name__ == "__main__":
