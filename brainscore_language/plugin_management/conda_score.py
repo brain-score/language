@@ -31,7 +31,7 @@ class CondaScore(EnvironmentManager):
                 {self.model} {self.benchmark} {self.env_name}"
 
         completed_process = self.run_in_env(run_command)
-        assert completed_process.returncode == 0
+        completed_process.check_returncode()
 
         return completed_process
 

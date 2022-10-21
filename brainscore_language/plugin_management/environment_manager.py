@@ -20,7 +20,7 @@ class EnvironmentManager:
             warnings.warn(f"{e}. Please ensure that conda is properly installed "
                           "(https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html).")
 
-    def run_in_env(self, run_command=str):
+    def run_in_env(self, run_command=str) -> 'subprocess.CompletedProcess[bytes]':
         """ 
         run specified command in bash shell
         tests a plugin or scores a model in a conda environment
@@ -29,7 +29,7 @@ class EnvironmentManager:
 
         return completed_process
 
-    def teardown(self) -> int:
+    def teardown(self) -> 'subprocess.CompletedProcess[bytes]':
         """ 
         delete conda environment after use
         shutil removal if deletion fails (not uncommon if build was interrupted)
