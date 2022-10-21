@@ -32,7 +32,6 @@ def _create_dummy_score():
 
 
 def test_save_and_read_score():
-    os.environ['BSL_DEPENDENCY_INSTALL'] = os.getenv('BSL_DEPENDENCY_INSTALL', 'no')
     output = _create_dummy_score()
     CondaScore.save_score(output)
     assert Path(SCORE_PATH).is_file()

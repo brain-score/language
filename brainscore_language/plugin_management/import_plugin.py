@@ -48,14 +48,11 @@ class ImportPlugin:
         Install all the requirements of the given plugin directory.
         This is done via `pip install` in the current interpreter.
         """
-        install_dependencies = "BSL_DEPENDENCY_INSTALL"
-        if (install_dependencies in os.environ and os.environ[install_dependencies] == 'yes') or (
-                install_dependencies not in os.environ):
-            requirements_file = self.plugins_dir / self.plugin_dirname / 'requirements.txt'
-            if requirements_file.is_file():
-                subprocess.run(f"pip install -r {requirements_file}", shell=True)
-            else:
-                logger.debug(f"Plugin {self.plugin_dirname} has no requirements file {requirements_file}")
+        requirements_file = self.plugins_dir / self.plugin_dirname / 'requirements.txt'
+        if requirements_file.is_file():
+            subprocess.run(f"pip install -r {requirements_file}", shell=True)
+        else:
+            logger.debug(f"Plugin {self.plugin_dirname} has no requirements file {requirements_file}")
 
 
 def import_plugin(plugin_type: str, identifier: str):
@@ -68,5 +65,9 @@ def import_plugin(plugin_type: str, identifier: str):
         in that directory's requirements.txt, and the plugin base package is imported
     """
     import_plugin = ImportPlugin(plugin_type, identifier)
-    import_plugin.install_requirements()
+    
+    install_dependencies = "BSL_INSTALL_DEPENDENCIES"
+    if (install_dependencies in os.environ and os.environ[install_dependencies] == 'yes') or (install_dependencies not in os.environ):
+        import_plugin.install_requirements()
+    
     __import__(f'brainscore_language.{plugin_type}.{import_plugin.plugin_dirname}')

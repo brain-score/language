@@ -1,3 +1,4 @@
+import random
 import subprocess
 import warnings
 from pathlib import Path
@@ -8,7 +9,7 @@ class EnvironmentManager:
 
     def __init__(self):
         self.envs_dir = Path(self.get_conda_base()) / 'envs'
-        self.env_name = 'brainscore-language'
+        self.env_name = f'brainscore-language_{str(random.randint(100, 999))}'
         self.env_path = self.envs_dir / self.env_name
 
     def get_conda_base(self) -> str:

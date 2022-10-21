@@ -60,7 +60,7 @@ def _run_score(model_identifier: str, benchmark_identifier: str) -> Score:
     return score
 
 
-def score(model_identifier: str, benchmark_identifier: str, install_dependencies: str = 'yes') -> Score:
+def score(model_identifier: str, benchmark_identifier: str) -> Score:
     """
     Score the model referenced by the `model_identifier` on the benchmark referenced by the `benchmark_identifier`.
     The model needs to implement the :class:`~brainscore_language.artificial_subject.ArtificialSubject` interface
@@ -81,10 +81,9 @@ def score(model_identifier: str, benchmark_identifier: str, install_dependencies
     :return: a Score of how brain-like the candidate model is under this benchmark. The score is normalized by
         this benchmark's ceiling such that 1 means the model matches the data to ceiling level.
     """
-    if install_dependencies == 'newenv':
+    if os.environ['BSL_INSTALL_DEPENDENCIES'] == 'newenv':
         result = CondaScore(model_identifier, benchmark_identifier).score
     else:
-        os.environ['BSL_DEPENDENCY_INSTALL'] = os.getenv('BSL_DEPENDENCY_INSTALL', install_dependencies)
         result = _run_score(model_identifier, benchmark_identifier)
 
     return result
