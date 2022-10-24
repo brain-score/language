@@ -6,7 +6,7 @@ from brainscore_core.benchmarks import Benchmark
 from brainscore_core.metrics import Score, Metric
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.plugin_management.conda_score import CondaScore
-from brainscore_language.plugin_management.import_plugin import import_plugin
+from brainscore_language.plugin_management.import_plugin import import_plugin, installation_preference
 
 data_registry: Dict[str, Callable[[], Union[DataAssembly, Any]]] = {}
 """ Pool of available data """
@@ -81,7 +81,7 @@ def score(model_identifier: str, benchmark_identifier: str) -> Score:
     :return: a Score of how brain-like the candidate model is under this benchmark. The score is normalized by
         this benchmark's ceiling such that 1 means the model matches the data to ceiling level.
     """
-    if ('BSL_INSTALL_DEPENDENCIES' in os.environ and os.environ['BSL_INSTALL_DEPENDENCIES'] == 'newenv'):
+    if installation_preference == 'newenv':
         result = CondaScore(model_identifier, benchmark_identifier).score
     else:
         result = _run_score(model_identifier, benchmark_identifier)

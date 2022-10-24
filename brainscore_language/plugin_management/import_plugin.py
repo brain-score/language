@@ -55,6 +55,12 @@ class ImportPlugin:
             logger.debug(f"Plugin {self.plugin_dirname} has no requirements file {requirements_file}")
 
 
+def installation_preference():
+        pref_options = ['yes', 'no', 'newenv']
+        pref = os.getenv('BS_INSTALL_DEPENDENCIES', 'yes')
+        assert pref in pref_options, f"BS_INSTALL_DEPENDENCIES value {pref} not recognized. Must be one of {pref_options}."
+        return pref
+
 def import_plugin(plugin_type: str, identifier: str):
     """ 
     Installs the dependencies of the given plugin and imports its base package: 
@@ -66,8 +72,7 @@ def import_plugin(plugin_type: str, identifier: str):
     """
     import_plugin = ImportPlugin(plugin_type, identifier)
     
-    install_dependencies = "BSL_INSTALL_DEPENDENCIES"
-    if (install_dependencies in os.environ and os.environ[install_dependencies] == 'yes') or (install_dependencies not in os.environ):
+    if not installation_preference() == 'no':
         import_plugin.install_requirements()
     
     __import__(f'brainscore_language.{plugin_type}.{import_plugin.plugin_dirname}')
