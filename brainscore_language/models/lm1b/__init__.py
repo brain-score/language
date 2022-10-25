@@ -4,7 +4,7 @@ import urllib.request
 from typing import Tuple, Union, List, Dict
 
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # Disable verbose TF C++ output
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = os.getenv('TF_CPP_MIN_LOG_LEVEL', '3')  # Disable verbose TF C++ output
 
 import numpy as np
 import tensorflow.compat.v1 as tf
@@ -231,7 +231,7 @@ class LM1B(ArtificialSubject):
             neuroid_coords['layer'][1], '--', neuroid_coords['neuron_number_in_layer'][1].astype(str)])
         
         representations = NeuroidAssembly(
-            representation_values, # 1024
+            representation_values,
             coords={**stimuli_coords, **neuroid_coords},
             dims=['presentation', 'neuroid'])
         return representations
