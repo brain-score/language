@@ -63,11 +63,11 @@ class LM1B(ArtificialSubject):
     def identifier(self):
         return self.model_id
 
-    def perform_behavioral_task(self, task: ArtificialSubject.Task):
+    def start_behavioral_task(self, task: ArtificialSubject.Task):
         self.behavioral_task = task
         self.output_to_behavior = self.task_function_mapping_dict[task]
 
-    def perform_neural_recording(self,
+    def start_neural_recording(self,
                                  recording_target: ArtificialSubject.RecordingTarget,
                                  recording_type: ArtificialSubject.RecordingType):
         self.neural_recordings.append((recording_target, recording_type))
