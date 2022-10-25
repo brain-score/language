@@ -19,8 +19,10 @@ class CondaScore(EnvironmentManager):
         self.benchmark = benchmark_identifier
         self.env_name = f'{self.model}_{self.benchmark}'
         self.script_path = f'{Path(__file__).parent}/conda_score.sh'
+
+    def __call__(self):
         self.result = self.score_in_env()
-        self.score = self.read_score()
+        return self.read_score()
 
     def score_in_env(self) -> 'subprocess.CompletedProcess[bytes]':
         """ 

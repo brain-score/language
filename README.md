@@ -26,7 +26,9 @@ python -m pip install -e "." # change "." to ".[test]" to include testing depend
 
 Please note that plugins (models, benchmarks, data, and metrics) may require additional dependencies beyond those installed here. Default behavior will install these dependencies directly into the runtime environment. 
 
-To avoid conflicts, we encourage either using an environment manager or passing the optional `install_dependencies` flag to `brainscore_language score`. `install_dependencies=newenv` will create a `conda` environment for the duration of the run. If you would like to use this option and do not already have `conda` installed, you can follow the installation instructions [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). `install_dependencies=no` will leave all dependency installation up to the user.
+To avoid conflicts, we encourage either using an environment manager or setting the `BS_INSTALL_DEPENDENCIES` environment variable to either `no` or `newenv` (e.g. `export BS_INSTALL_DEPENDENCIES=newenv`). 
+
+`no` will leave all dependency installation up to the user, whereas `newenv` will create a new `conda` environment for the duration of the run. If you would like to use the `newenv` option and do not already have `conda` installed, you can follow the installation instructions [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html).
 
 ## Usage
 
