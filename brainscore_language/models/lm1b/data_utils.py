@@ -1,5 +1,8 @@
-# Copyright 2016 The TensorFlow Authors. All Rights Reserved.
-"""A library for loading 1B word benchmark dataset."""
+"""
+A library for loading 1B word benchmark dataset.
+Source: https://github.com/tensorflow/models/
+Commit: 2a5a559689128e6618bd64a8f0b223413a0e57fc
+"""
 
 import numpy as np
 import tensorflow.compat.v1 as tf

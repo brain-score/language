@@ -149,4 +149,4 @@ cache
 .cache
 .idea/
 wandb/
-**/resources
+**/models/lm1b/resources
