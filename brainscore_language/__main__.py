@@ -10,3 +10,4 @@ def score(model_identifier: str, benchmark_identifier: str):
 
 if __name__ == '__main__':
     fire.Fire()
+    

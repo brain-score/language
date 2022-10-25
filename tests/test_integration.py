@@ -26,9 +26,7 @@ from brainscore_language import score
     ],
 )
 def test_score(model_identifier, benchmark_identifier, expected_score):
-    actual_score = score(
-        model_identifier=model_identifier, benchmark_identifier=benchmark_identifier
-    )
+    actual_score = score(model_identifier=model_identifier, benchmark_identifier=benchmark_identifier, install_dependencies="newenv")
     assert actual_score == expected_score
 
 
@@ -50,6 +48,6 @@ def test_commandline_score():
     output = process.stdout
     assert "Score" in output
     assert "0.0285" in output
-    assert output.startswith("<xarray.Score ()>\narray(0.0285022)")
+    assert "<xarray.Score ()>\narray(0.0285022)" in output
     assert "model_identifier:      randomembedding-100" in output
     assert "benchmark_identifier:  Pereira2018.243sentences-linear" in output
