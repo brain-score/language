@@ -231,7 +231,7 @@ class LM1B(ArtificialSubject):
             neuroid_coords['layer'][1], '--', neuroid_coords['neuron_number_in_layer'][1].astype(str)])
         
         representations = NeuroidAssembly(
-            representation_values, # 1024
+            representation_values,
             coords={**stimuli_coords, **neuroid_coords},
             dims=['presentation', 'neuroid'])
         return representations
