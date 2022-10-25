@@ -4,7 +4,7 @@ import urllib.request
 from typing import Tuple, Union, List, Dict
 
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # Disable verbose TF C++ output
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = os.getenv('TF_CPP_MIN_LOG_LEVEL', '3')  # Disable verbose TF C++ output
 
 import numpy as np
 import tensorflow.compat.v1 as tf
