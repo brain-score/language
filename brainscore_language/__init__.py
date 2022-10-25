@@ -71,11 +71,6 @@ def score(model_identifier: str, benchmark_identifier: str) -> Score:
     `Score <https://brain-score-core.readthedocs.io/en/latest/modules/metrics.html#brainscore_core.metrics.Score>`_
     ranging from 0 (least brain-like) to 1 (most brain-like under this benchmark).
     
-    :param install_dependencies: specify how to handle dependency installation for plugins. 
-    'yes' installs dependencies directly into runtime environment, 
-    'newenv' creates a new conda environment to install dependencies into, 
-    'no' does not install dependencies.
-    
     :param model_identifier: the identifier for the model
     :param benchmark_identifier: the identifier for the benchmark to test the model against
     :return: a Score of how brain-like the candidate model is under this benchmark. The score is normalized by
