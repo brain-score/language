@@ -146,7 +146,7 @@ class _Pereira2018LinregPearsonr(BenchmarkBase):
             recording_target=ArtificialSubject.RecordingTarget.language_system,
             recording_type=ArtificialSubject.RecordingType.fMRI,
         )
-        stimuli = self.data["sentence"]
+        stimuli = self.data["stimuli"]
         predictions = candidate.digest_text(stimuli.values)["neural"]
         predictions["presentation"] = "presentation", stimuli["sentence"].values
         raw_score = self.metric(

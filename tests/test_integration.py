@@ -27,3 +27,11 @@ def test_score(model_identifier, benchmark_identifier, expected_score):
         model_identifier=model_identifier, benchmark_identifier=benchmark_identifier
     )
     assert actual_score == expected_score
+
+
+if __name__ == "__main__":
+    test_score(
+        "distilgpt2",
+        "Pereira2018_v2022.243sentences-linreg_pearsonr",
+        approx(0.72309996, abs=0.0005),
+    )
