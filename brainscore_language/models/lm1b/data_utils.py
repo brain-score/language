@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow.compat.v1 as tf
 
 
-class Vocabulary(object):
+class Vocabulary:
   """Class that holds a vocabulary for the dataset."""
 
   def __init__(self, filename):
