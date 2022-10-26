@@ -2,9 +2,8 @@ import numpy as np
 from pprint import pprint
 import pytest
 
-from brainscore_language import load_benchmark
 from brainscore_language.artificial_subject import ArtificialSubject
-from brainscore_language.benchmarks.syntaxgym import SyntaxGymTSE
+from brainscore_language.benchmarks.syntaxgym import SyntaxGymSingleTSE
 from brainscore_language.model_helpers.huggingface import HuggingfaceSubject
 
 
@@ -475,14 +474,18 @@ GPT2_SUBORDINATION_SRC_REFERENCE = \
   ('sub_no-matrix', 5): 4.819862633503057}]
 
 
-def test_subordination_match(self):
+@pytest.fixture
+def subordination_orc_benchmark():
+    return SyntaxGymSingleTSE("subordination_orc-orc")
+
+
+def test_subordination_match(subordination_orc_benchmark):
     """
     The region-level surprisals computed on the subordination_src-src
     test suite should match those of the reference implementation.
     """
 
-    benchmark: SyntaxGymTSE = load_benchmark("syntaxgym")
-    # TODO how to specify test suite?
+    benchmark = subordination_orc_benchmark
     subject = HuggingfaceSubject(model_id="gpt2")
 
     region_totals = benchmark.get_region_totals(subject)
@@ -500,6 +503,6 @@ def test_subordination_match(self):
     np.testing.assert_allclose(result_ndarray, reference_ndarray, atol=1e-3)
 
 
-def test_syntaxgym2020_data(self):
+def test_syntaxgym2020_data():
     # TODO: Load SyntaxGym 2020 dataset and verify e.g. number of suites
     pass

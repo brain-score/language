@@ -1,6 +1,6 @@
 from pathlib import Path
 import statistics
-import numpy
+import numpy as np
 from typing import Dict, Tuple, List
 
 from brainscore_core.benchmarks import BenchmarkBase
@@ -24,55 +24,78 @@ class SyntaxGymTSE(BenchmarkBase):
 # A benchmark to perform SyntaxGym Targeted Syntactic Evaluations (TSE).
 # See the SyntaxGym website for information about structuring test_suites:
 # https://cpllab.github.io/syntaxgym-core/architecture.html
-    def __init__(self):
+    def __init__(self, suite_ref_list):
         super(SyntaxGymTSE, self).__init__(
             identifier='syntaxgym',
             version=1,
             parent='engineering',
             ceiling=None,
             bibtex=None)
+
+        self.sub_benchmarks = [
+            SyntaxGymSingleTSE(suite_ref) for suite_ref in suite_ref_list]
+
+    def __call__(self, candidate: ArtificialSubject) -> Score:
+        return np.mean([
+            sub_benchmark(candidate) for sub_benchmark in self.sub_benchmarks
+        ])
+
+
+class SyntaxGymSingleTSE(BenchmarkBase):
+    def __init__(self, suite_ref):
+        super(SyntaxGymSingleTSE, self).__init__(
+            identifier='syntaxgym-single',
+            version=1,
+            parent='engineering',
+            ceiling=None,
+            bibtex=None)
+
         self.metric = load_metric('accuracy')
+        # TODO support non-path ref
+        self.suite = _load_suite(suite_ref)
 
     def _get_region_totals(self, candidate: ArtificialSubject
                            ) -> Dict[Tuple[str, int], float]:
         """
         Compute region-level surprisal totals for the given subject.
         """
-        raise NotImplementedError()
+        suite_regions = list(self.suite.iter_regions())
+        candidate.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
+        region_totals = {}
 
-    def _evaluate_predictions(self, region_totals: Dict[Tuple[str, int], float]
+        # SyntaxGym logic wrapper around digest_text
+        for item_num, item in enumerate(self.suite.items):
+            for condition_num, condition in enumerate(self.suite.condition_names):
+                text = suite_regions[item_num * len(self.suite.condition_names) + condition_num]
+                surprisals = candidate.digest_text(text)['behavior']
+                for i, region in enumerate(self.suite.region_names):
+                    region_totals[(condition, i + 1)] = surprisals[i].values
+        
+        return region_totals
+
+    def _evaluate_predictions(self, region_totals: List[Dict[Tuple[str, int], float]]
                               ) -> List[List[bool]]:
         """
         Compute prediction results for each item.
         """
-        raise NotImplementedError()
+        prediction_results = []
+        for item_region_totals in region_totals:
+            prediction_results.append([
+                pred.apply_prediction_formula(item_region_totals)
+                for pred in self.suite.predictions
+            ])
+
+        return prediction_results
 
     def __call__(self, candidate: ArtificialSubject)-> Score:
-        all_scores = []
-        for suite_num, suite in enumerate(suite_list):
-            self.data = _load_suite(suite)
-            suite_regions = list(self.data.iter_regions())
-            candidate.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
-            region_totals = {}
-            predictions = []
-            item_dict_plus_results = []
-        # SyntaxGym logic wrapper around digest_text
-            for item_num, item in enumerate(self.data.items):
-                for condition_num, condition in enumerate(self.data.condition_names):
-                    text = suite_regions[item_num * len(self.data.condition_names) + condition_num]
-                    surprisals = candidate.digest_text(text)['behavior']
-                    for i, region in enumerate(self.data.region_names):
-                        region_totals[(condition, i + 1)] = surprisals[i].values
-                for pred in self.data.predictions:
-                    item_pred_results = pred.apply_prediction_formula(region_totals)
-                    predictions.append(item_pred_results)
-                item_dict_plus_results.append([region_totals, predictions])
-           # The final score is the percentage of predictions that are "True"
-            targets = [True] * len(predictions)
-            score = self.metric(predictions, targets)
-            all_scores.append(score.values.tolist())
-        final_score = statistics.mean(all_scores)
-        score.values=numpy.array(final_score)
+        region_totals = self._get_region_totals(candidate)
+        prediction_results = self._evaluate_predictions([region_totals])
+
+        # Compute conjunction of all predictions within-item.
+        conj_predictions = np.array(prediction_results).all(axis=1)
+        targets = [True] * len(conj_predictions)
+        score = self.metric(conj_predictions, targets)
+
         return score
 
 benchmark_registry['syntaxgym'] = SyntaxGymTSE
