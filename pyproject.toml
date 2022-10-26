@@ -20,6 +20,9 @@ dependencies = [
     # model_helpers dependencies
     "torch>=1.9.1",
     "transformers>=4.11.3",
+    # FIXME
+    "boto3==1.25.0",
+    "botocore==1.28.0",
 ]
 
 [project.optional-dependencies]
