@@ -27,7 +27,7 @@ class TestNextWord:
         model = load_model(model_identifier)
         text = "the quick brown fox jumps"
         logging.info(f'Running {model_identifier} with text "{text}"')
-        model.perform_behavioral_task(task=ArtificialSubject.Task.next_word)
+        model.start_behavioral_task(task=ArtificialSubject.Task.next_word)
         next_word = model.digest_text(text)["behavior"].values
         assert next_word == expected_next_word
 
@@ -48,7 +48,7 @@ class TestNextWord:
         model = load_model(model_identifier)
         text = ["the quick brown fox jumps", "over", "the lazy dog"]
         logging.info(f'Running {model_identifier} with text "{text}"')
-        model.perform_behavioral_task(task=ArtificialSubject.Task.next_word)
+        model.start_behavioral_task(task=ArtificialSubject.Task.next_word)
         next_words = model.digest_text(text)["behavior"]
         np.testing.assert_array_equal(next_words, expected_next_words)
 
@@ -56,20 +56,20 @@ class TestNextWord:
 class TestReadingTimes:
     def test_single_word(self):
         model = load_model("rnn-lm-ptb")
-        model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
+        model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_time = model.digest_text("the")["behavior"]
         assert not np.isnan(reading_time)  # predicts first token from <s> token
 
     def test_multiple_words(self):
         model = load_model("rnn-lm-ptb")
-        model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
+        model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_time = model.digest_text("the quick brown fox")["behavior"]
         assert reading_time == approx(46.92789, abs=0.01)
 
     def test_list_input(self):
         model = load_model("rnn-lm-ptb")
         text = ["the", "quick", "brown", "fox", "jumps", "over", "the", "lazy"]
-        model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
+        model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)["behavior"]
         np.testing.assert_allclose(
             reading_times,
@@ -81,7 +81,7 @@ class TestReadingTimes:
         # (other) will be split to 3 tokens ["-LRB-","other","-RRB-"]
         model = load_model("rnn-lm-ptb")
         text = ["I", "saw", "the", "(other)", "dog"]
-        model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
+        model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)["behavior"]
         np.testing.assert_allclose(
             reading_times, [7.395, 7.759, 2.702, 27.936, 13.640], atol=0.01
@@ -90,14 +90,14 @@ class TestReadingTimes:
     def test_multiword_list_input(self):
         model = load_model("rnn-lm-ptb")
         text = ["the quick brown fox", "jumps over", "the lazy"]
-        model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
+        model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)["behavior"]
         np.testing.assert_allclose(reading_times, [46.928, 22.178, 17.140], atol=0.01)
 
     def test_punct(self):
         model = load_model("rnn-lm-ptb")
         text = 'The fox, "Brian", is quick. (too quick?)'
-        model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
+        model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)["behavior"]
         np.testing.assert_allclose(reading_times, [81.160], atol=0.01)
 
@@ -111,7 +111,7 @@ class TestNeural:
         """
         model = load_model("rnn-lm-ptb")
         text = ["the quick brown fox", "jumps over", "the lazy dog"]
-        model.perform_neural_recording(
+        model.start_neural_recording(
             recording_target=ArtificialSubject.RecordingTarget.language_system,
             recording_type=ArtificialSubject.RecordingType.fMRI,
         )
@@ -129,7 +129,7 @@ class TestNeural:
         """
         model = load_model("rnn-lm-ptb")
         text = "the quick brown fox"
-        model.perform_neural_recording(
+        model.start_neural_recording(
             recording_target=ArtificialSubject.RecordingTarget.language_system,
             recording_type=ArtificialSubject.RecordingType.fMRI,
         )
@@ -150,11 +150,11 @@ class TestNeural:
             },
         )
         text = "the quick brown fox"
-        model.perform_neural_recording(
+        model.start_neural_recording(
             recording_target=ArtificialSubject.RecordingTarget.language_system_left_hemisphere,
             recording_type=ArtificialSubject.RecordingType.fMRI,
         )
-        model.perform_neural_recording(
+        model.start_neural_recording(
             recording_target=ArtificialSubject.RecordingTarget.language_system_right_hemisphere,
             recording_type=ArtificialSubject.RecordingType.fMRI,
         )

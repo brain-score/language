@@ -103,11 +103,11 @@ class ContainerSubject(ArtificialSubject):
     def identifier(self):
         return self._identifier
 
-    def perform_behavioral_task(self, task: ArtificialSubject.Task):
+    def start_behavioral_task(self, task: ArtificialSubject.Task):
         self._behavioral_task = task
         self._behavioral_function = self._task_function_mapping_dict[task]
 
-    def perform_neural_recording(
+    def start_neural_recording(
         self,
         recording_target: ArtificialSubject.RecordingTarget,
         recording_type: ArtificialSubject.RecordingType,
@@ -118,7 +118,9 @@ class ContainerSubject(ArtificialSubject):
         options = ["docker", "singularity"]
         for option in options:
             try:
-                subprocess.run([option, "--version"], stdout=subprocess.DEVNULL)  # attempt to run the container backend, try another on error
+                subprocess.run(
+                    [option, "--version"], stdout=subprocess.DEVNULL
+                )  # attempt to run the container backend, try another on error
                 return option
             except:
                 self._logger.info(f"{option} backend not found. Testing next option.")
