@@ -52,29 +52,46 @@ class SyntaxGymSingleTSE(BenchmarkBase):
 
         self.metric = load_metric('accuracy')
         # TODO support non-path ref
-        self.suite = _load_suite(suite_ref)
+        self.suite = self._load_suite(suite_ref)
 
-    def _get_region_totals(self, candidate: ArtificialSubject
-                           ) -> Dict[Tuple[str, int], float]:
+    def _load_suite(self, suite_ref):
+        if isinstance(suite_ref, (str, Path)):
+            suite_ref = Path(suite_ref)
+            if not suite_ref.exists():
+                # Specify relative to package path.
+                suite_ref = Path(__file__).parent / "suites" / "syntaxgym-2020" / suite_ref
+                if not suite_ref.exists():
+                    # Try adding extension
+                    suite_ref = suite_ref.with_suffix(".json")
+                    if not suite_ref.exists():
+                        raise FileNotFoundError(f'Could not find suite at {suite_ref}')
+
+        return _load_suite(suite_ref)
+
+    def get_region_totals(self, candidate: ArtificialSubject
+                          ) -> List[Dict[Tuple[str, int], float]]:
         """
         Compute region-level surprisal totals for the given subject.
         """
         suite_regions = list(self.suite.iter_regions())
         candidate.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
-        region_totals = {}
+        region_totals = []
 
         # SyntaxGym logic wrapper around digest_text
         for item_num, item in enumerate(self.suite.items):
+            region_totals_i = {}
             for condition_num, condition in enumerate(self.suite.condition_names):
                 text = suite_regions[item_num * len(self.suite.condition_names) + condition_num]
                 surprisals = candidate.digest_text(text)['behavior']
                 for i, region in enumerate(self.suite.region_names):
-                    region_totals[(condition, i + 1)] = surprisals[i].values
+                    region_totals_i[(condition, i + 1)] = surprisals[i].values
+
+            region_totals.append(region_totals_i)
         
         return region_totals
 
-    def _evaluate_predictions(self, region_totals: List[Dict[Tuple[str, int], float]]
-                              ) -> List[List[bool]]:
+    def evaluate_predictions(self, region_totals: List[Dict[Tuple[str, int], float]]
+                             ) -> List[List[bool]]:
         """
         Compute prediction results for each item.
         """
@@ -88,8 +105,8 @@ class SyntaxGymSingleTSE(BenchmarkBase):
         return prediction_results
 
     def __call__(self, candidate: ArtificialSubject)-> Score:
-        region_totals = self._get_region_totals(candidate)
-        prediction_results = self._evaluate_predictions([region_totals])
+        region_totals = self.get_region_totals(candidate)
+        prediction_results = self.evaluate_predictions([region_totals])
 
         # Compute conjunction of all predictions within-item.
         conj_predictions = np.array(prediction_results).all(axis=1)
