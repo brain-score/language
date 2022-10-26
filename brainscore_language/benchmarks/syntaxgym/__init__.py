@@ -17,8 +17,10 @@ from brainscore_language.benchmarks.syntaxgym.sg_suite import _load_suite
 #NOTE2: If you switch to the case with two suites in the list below (test_suite2.json and test_suite3.json),
 # change the expected value in test_integration.py to 0.5.
 
-#suite_list = [Path(__file__).parent / 'test_suite2.json', Path(__file__).parent / 'test_suite3.json']
-suite_list = [Path(__file__).parent / 'test_suite.json']
+def SyntaxGym2020():
+    suite_paths = list((Path(__file__).parent / "suites" / "syntaxgym-2020").glob("*.json"))
+    return SyntaxGymTSE(suite_paths)
+
 
 class SyntaxGymTSE(BenchmarkBase):
 # A benchmark to perform SyntaxGym Targeted Syntactic Evaluations (TSE).
@@ -115,4 +117,4 @@ class SyntaxGymSingleTSE(BenchmarkBase):
 
         return score
 
-benchmark_registry['syntaxgym'] = SyntaxGymTSE
+benchmark_registry["syntaxgym-2020"] = SyntaxGym2020

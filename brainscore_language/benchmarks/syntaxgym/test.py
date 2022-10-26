@@ -509,5 +509,6 @@ def test_subordination_match(distilgpt2, subordination_src_benchmark):
 
 
 def test_syntaxgym2020_data():
-    # TODO: Load SyntaxGym 2020 dataset and verify e.g. number of suites
-    pass
+    from brainscore_language.benchmarks.syntaxgym import SyntaxGym2020
+
+    assert len(SyntaxGym2020().sub_benchmarks) == 31
