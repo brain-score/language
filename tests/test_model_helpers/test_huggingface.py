@@ -47,6 +47,14 @@ class TestNextWord:
         next_words = model.digest_text(text)['behavior']
         np.testing.assert_array_equal(next_words, expected_next_words)
 
+    def test_context_cleaning(self):
+        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
+        # model.start_behavioral_task(task=ArtificialSubject.Task.next_word)
+        # next_words = model.digest_text('the quick, and sneaky, brown fox')['behavior']
+        # assert next_words == 'jumps'
+        prepared_context = model._prepare_context(["the quick", ", and sneaky", "brown fox"])
+        assert prepared_context == "the quick, and sneaky brown fox"
+
     def test_over_max_length_input(self):
         # max_input_length of distilgpt2 is 1024 tokens. Prompt it with text longer than this length, the model should
         # handle this case gracefully and not fail (e.g. truncate input)
