@@ -52,11 +52,13 @@ class LM1B(ArtificialSubject):
         :param model_id: the model id i.e. name
         """
         self._logger = logging.getLogger(fullname(self))
-        self.model_id = model_id
-        self.region_layer_mapping = region_layer_mapping
+        self.model_id: str = model_id
+        self.region_layer_mapping: dict = region_layer_mapping
 
         self.sess, self.encoder_t, self.vocab = self._load_encoder()
-        self.ctx_word_ids = None  # keeps track of tokens in context
+        self.ctx_word_ids: Union[
+            None, np.ndarray
+        ] = None  # keeps track of tokens in context
         self.neural_recordings: List[
             Tuple
         ] = []  # list of `(recording_target, recording_type)` tuples to record
@@ -67,7 +69,7 @@ class LM1B(ArtificialSubject):
             ArtificialSubject.Task.reading_times: self.estimate_reading_times,
         }
 
-    def identifier(self):
+    def identifier(self) -> str:
         return self.model_id
 
     def start_behavioral_task(self, task: ArtificialSubject.Task):
@@ -185,7 +187,7 @@ class LM1B(ArtificialSubject):
         )
         return output
 
-    def estimate_reading_times(self, logits):
+    def estimate_reading_times(self, logits: np.ndarray) -> float:
         """
         :param logits: the neural network's softmax output (seq_len, vocab_size)
         :return: surprisal (in bits) as a proxy for reading times, following Smith & Levy 2013
@@ -207,7 +209,7 @@ class LM1B(ArtificialSubject):
         surprisal = -np.sum(actual_tokens * np.log2(predicted_logits))
         return surprisal.item()
 
-    def predict_next_word(self, logits):
+    def predict_next_word(self, logits: np.ndarray) -> str:
         """
         :param logits: the neural network's softmax output (seq_len, vocab_size)
         :return: predicted next word
@@ -225,7 +227,11 @@ class LM1B(ArtificialSubject):
         next_word = next_word.strip()
         return next_word
 
-    def output_to_representations(self, layer_representations, stimuli_coords):
+    def output_to_representations(
+        self,
+        layer_representations: Tuple[np.ndarray],
+        stimuli_coords: Dict[str, Tuple[str, List]],
+    ) -> NeuroidAssembly:
         """Format layer representations as a neuroid assembly"""
 
         # Re-format layer_representations to contain region, recording type, and layer
@@ -383,7 +389,7 @@ class LM1B(ArtificialSubject):
             file_path = target_directory / file_name
             urllib.request.urlretrieve(resource, file_path)
 
-    def _vector_to_one_hot(self, v, vocab_size):
+    def _vector_to_one_hot(self, v: np.ndarray, vocab_size: int) -> np.ndarray:
         """
         Given a vector of indices and a vocab size, returns a one-hot representation of the indices
         as vocab_size-long vectors
