@@ -83,3 +83,22 @@ class TestBenchmark:
         assert ceiling.raw.median() == ceiling
         assert hasattr(ceiling.raw, 'raw')
         assert set(ceiling.raw.raw.dims) == {'sub_subject', 'num_subjects', 'split', 'neuroid'}
+
+
+if __name__ == '__main__':
+    print(">> test_dummy")
+    test_dummy()
+
+    print(">> test_sometimeout")
+    test_sometimeout()
+
+    test_benchmark = TestBenchmark()
+
+    print(">> test_dummy_bad")
+    test_benchmark.test_dummy_bad(243, approx(0.0017534 / .35378928, abs=0.001))
+
+    print(">> test_exact")
+    test_benchmark.test_exact(243)
+
+    print(">> test_ceiling")
+    test_benchmark.test_ceiling(243)
