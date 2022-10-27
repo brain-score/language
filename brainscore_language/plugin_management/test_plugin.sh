@@ -22,7 +22,7 @@ if [ "$SINGLE_TEST" != False ]; then
   echo "Running ${SINGLE_TEST}"
   pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow" "-vv" $PLUGIN_TEST_PATH "-k" $SINGLE_TEST "--log-cli-level=INFO"
 else
-  pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow" $PLUGIN_TEST_PATH
+  pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow" "-vv" $PLUGIN_TEST_PATH
 fi
 
 exit $?
