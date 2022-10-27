@@ -10,13 +10,13 @@ SINGLE_TEST=$4
 echo "${PLUGIN_NAME/_//}"
 
 eval "$(command conda 'shell.bash' 'hook' 2>/dev/null)"
-output=$(conda create -n $PLUGIN_NAME python=3.8 -y 2>&1) || echo $output
+conda create -n $PLUGIN_NAME python=3.8 -y
 conda activate $PLUGIN_NAME
 if $HAS_REQUIREMENTS; then
-  output=$(pip install -r $PLUGIN_REQUIREMENTS_PATH 2>&1) || echo $output
+  pip install -r $PLUGIN_REQUIREMENTS_PATH
 fi
 
-output=$(python -m pip install -e ".[test]" 2>&1) || echo $output
+python -m pip install -e ".[test]"
 
 if [ "$SINGLE_TEST" != False ]; then
   echo "Running ${SINGLE_TEST}"
