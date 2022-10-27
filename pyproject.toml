@@ -21,6 +21,7 @@ dependencies = [
     "torch>=1.9.1",
     "transformers>=4.11.3",
     # FIXME
+    "scikit-learn==1.1.2",
     "boto3==1.25.0",
     "botocore==1.28.0",
 ]
