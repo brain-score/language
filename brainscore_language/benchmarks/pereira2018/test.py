@@ -1,3 +1,5 @@
+import time
+
 import copy
 import numpy as np
 import pytest
@@ -6,6 +8,16 @@ from pytest import approx
 
 from brainio.assemblies import NeuroidAssembly
 from brainscore_language import ArtificialSubject, load_benchmark
+
+
+def test_dummy():
+    print("I'm alive")
+    assert True
+
+
+def test_sometimeout():
+    time.sleep(10)
+    print("Still here")
 
 
 class TestBenchmark:
