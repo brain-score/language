@@ -108,7 +108,7 @@ class SyntaxGymSingleTSE(BenchmarkBase):
 
     def __call__(self, candidate: ArtificialSubject)-> Score:
         region_totals = self.get_region_totals(candidate)
-        prediction_results = self.evaluate_predictions([region_totals])
+        prediction_results = self.evaluate_predictions(region_totals)
 
         # Compute conjunction of all predictions within-item.
         conj_predictions = np.array(prediction_results).all(axis=1)
