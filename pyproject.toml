@@ -15,7 +15,7 @@ dependencies = [
     "tqdm",
     "numpy>=1.21",
     "brainscore_core@git+https://github.com/brain-score/core.git@main",
-    "brainio@git+https://github.com/brain-score/brainio.git@main",
+    "brainio@git+https://github.com/brain-score/brainio.git@c60ed99",
     "fire",
     # model_helpers dependencies
     "torch>=1.9.1",
