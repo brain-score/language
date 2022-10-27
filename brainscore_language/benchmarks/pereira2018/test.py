@@ -101,4 +101,4 @@ if __name__ == '__main__':
     test_benchmark.test_exact(243)
 
     print(">> test_ceiling")
-    test_benchmark.test_ceiling(243)
+    test_benchmark.test_ceiling(243, .35378928)
