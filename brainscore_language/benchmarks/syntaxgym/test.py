@@ -512,3 +512,15 @@ def test_syntaxgym2020_data():
     from brainscore_language.benchmarks.syntaxgym import SyntaxGym2020
 
     assert len(SyntaxGym2020().sub_benchmarks) == 31
+
+
+def test_cleft_match(distilgpt2):
+    """
+    Test that cleft numbers match. Cleft is a good special case because there are
+    intervening empty regions. These need to be tracked correctly.
+    """
+    tse = SyntaxGymSingleTSE("cleft")
+    from pprint import pprint
+    pprint(tse.get_region_totals(distilgpt2))
+    print(tse(distilgpt2))
+    assert False, "TODO get numbers and compare with reference implementation"

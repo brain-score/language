@@ -115,17 +115,15 @@ class Suite:
                 sentence = " ".join(regions)
                 yield sentence
 
-    def iter_regions(self) -> Iterator[str]:
+    def iter_regions(self) -> Iterator[List[str]]:
         """
-        Iterate over all sentences in the suite in fixed order.
+        TODO document
         """
         for item in self.items:
             for cond in item["conditions"]:
                 regions = [region["content"].lstrip()
-                           for region in cond["regions"]
-                           if region["content"].strip() != ""]
-                sentence = regions
-                yield sentence
+                           for region in cond["regions"]]
+                yield regions
 
     def iter_region_edges(self) -> Iterator[List[int]]:
         """
