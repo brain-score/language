@@ -21,7 +21,7 @@ Glossary
 
     Model
         A model usually refers to a computational model,
-        but we generally try to be more explicit in what we refer to with the  ArtificialSubject term
+        but we generally try to be more explicit in what we refer to with the ArtificialSubject term
         (which can be viewed as an umbrella term for computational models).
 
     ArtificialSubject
