@@ -19,10 +19,13 @@ Glossary
         or correlation of e.g., human and model reading times.
         `Metric specification <https://brain-score-core.readthedocs.io/en/latest/modules/metrics.html>`
 
-    Model
-        A model usually refers to a computational model,
-        but we generally try to be more explicit in what we refer to with the ArtificialSubject term
-        (which can be viewed as an umbrella term for computational models).
+    Benchmark
+        A benchmark runs an experiment on an ArtificialSubject,
+        and compares the resulting measurements (often model predictions) to biological measurements
+        using a particular metric, resulting in a similarity score.
+        Benchmarks typically use a dataset and a metric,
+        and additionally specify the experimental paradigm for running subjects.
+        :doc:`Benchmarks <https://brain-score-core.readthedocs.io/en/latest/modules/_autosummary/brainscore_core.benchmarks.html#module-brainscore_core.benchmarks>`
 
     ArtificialSubject
         An ArtificialSubject implements a set of interface functions that benchmarks can interact with.
@@ -33,14 +36,15 @@ Glossary
         and a method to digest stimuli.
         :doc:`ArtificialSubject <./artificial_subject>`
 
-    Benchmark
-        A benchmark runs an experiment on an ArtificialSubject,
-        and compares the resulting measurements (often model predictions) to biological measurements using a particular metric,
-        resulting in a similarity score.
-        :doc:`Benchmarks <https://brain-score-core.readthedocs.io/en/latest/modules/_autosummary/brainscore_core.benchmarks.html#module-brainscore_core.benchmarks>`
+    Model
+        A model usually refers to a computational model,
+        but we generally try to be more explicit in what we refer to with the ArtificialSubject term
+        (which can be viewed as an umbrella term for computational models).
 
     Plug-in
-        Plug-ins are ways of flexibly adding new data, metrics, benchmarks, or models to the Brain-Score platform.
+        New data, metrics, benchmarks, and models can be added to the Brain-Score platform as standalone modules
+        called "plug-ins". Plug-ins are designed to be easily submitted by the community and can have their own set of
+        dependencies beyond those included in the main Brain-Score codebase.
 
     Xarray
         `Xarray <https://docs.xarray.dev/en/stable/>` DataArrays are multidimensional pandas dataframes.
