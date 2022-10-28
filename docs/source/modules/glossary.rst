@@ -47,7 +47,7 @@ Glossary
         DataArrays enable us to retain metadata along several dimensions of the data at once (often needed in neuroscience data, e.g., keeping track of stimuli and neural dimensions).
 
     Target
-        A target is a term for the data that is to-be predicted in regression-based metrics;
+        A target is a term for the data that is to be predicted in regression-based metrics;
         the target would be what the regression model is fitted to predict.
 
     Source
