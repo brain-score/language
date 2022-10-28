@@ -26,7 +26,7 @@ from brainscore_language import score
     ],
 )
 def test_score(model_identifier, benchmark_identifier, expected_score):
-    actual_score = score(model_identifier=model_identifier, benchmark_identifier=benchmark_identifier, install_dependencies="newenv")
+    actual_score = score(model_identifier=model_identifier, benchmark_identifier=benchmark_identifier)
     assert actual_score == expected_score
 
 
