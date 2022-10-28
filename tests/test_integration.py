@@ -15,7 +15,7 @@ from brainscore_language import score
         (
             "distilgpt2",
             "Pereira2018.243sentences-linear",
-            approx(0.72309996, abs=0.0005),
+            approx(0.73772422, abs=0.0005),
         ),
         (
             "glove-840b",
