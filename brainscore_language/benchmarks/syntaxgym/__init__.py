@@ -1,34 +1,37 @@
 from pathlib import Path
-import statistics
+import json
 import numpy as np
 from typing import Dict, Tuple, List
-
 from brainscore_core.benchmarks import BenchmarkBase
 from brainscore_core.metrics import Score
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language import load_metric, benchmark_registry
-from brainscore_language.benchmarks.syntaxgym.sg_suite import _load_suite
+from brainscore_language.benchmarks.syntaxgym.sg_suite import _load_suite, Suite
 
-
-#NOTE1: The following lines are to test the benchmark's ability to run the single large case it was already running
-# which it does if the second line is used.  If the first line is used, the benchmark will run both the cases in
-# the list and return the average of the scores.  This second case returns the average of the scores by replacing
-# the score value in the Score assembly for the final test suite in the list with the average score for all the suites.
-#NOTE2: If you switch to the case with two suites in the list below (test_suite2.json and test_suite3.json),
-# change the expected value in test_integration.py to 0.5.
-
-def SyntaxGym2020():
-    suite_paths = list((Path(__file__).parent / "suites" / "syntaxgym-2020").glob("*.json"))
-    return SyntaxGymTSE(suite_paths)
-
-
-class SyntaxGymTSE(BenchmarkBase):
-# A benchmark to perform SyntaxGym Targeted Syntactic Evaluations (TSE).
+# This is a Brain-Score Language benchmark to perform SyntaxGym Targeted Syntactic Evaluations (TSE).
+#
 # See the SyntaxGym website for information about structuring test_suites:
 # https://cpllab.github.io/syntaxgym-core/architecture.html
+#
+# The following are options for loading test_suites:
+# EXAMPLE #1: (Loading a single test_suite) suite_list = [Path(__file__).parent / 'test_suite.json']
+# EXAMPLE #2: (Loading multiple test_suites as a list): suite_list = [Path(__file__).parent / 'test_suite2.json', Path(__file__).parent / 'test_suite3.json']
+# EXAMPLE #3: (Using a URL to load a test_suite directly from GitHub): suite_list = ['https://raw.githubusercontent.com/cpllab/syntactic-generalization/nextflow/test_suites/json/center_embed.json']
+# EXAMPLE #4: (Loading one of the test suites in test_suites.py/test_suites.json.  This method also works for multiple suites.):
+#               with open(Path(__file__).parent / 'test_suites.json') as json_file:
+#                   test_suite_dict = json.load(json_file)
+#                   suite_list = [test_suite_dict['center_embed']]
+
+def SyntaxGym2020():
+    with open(Path(__file__).parent / 'test_suites.json') as json_file:
+      test_suite_dict = json.load(json_file)
+      suite_paths = [test_suite_dict['fgd_subject']]
+    return SyntaxGymTSE(suite_paths)
+
+class SyntaxGymTSE(BenchmarkBase):
     def __init__(self, suite_ref_list):
         super(SyntaxGymTSE, self).__init__(
-            identifier='syntaxgym',
+            identifier='syntaxgym-2020',
             version=1,
             parent='engineering',
             ceiling=None,
@@ -38,10 +41,9 @@ class SyntaxGymTSE(BenchmarkBase):
             SyntaxGymSingleTSE(suite_ref) for suite_ref in suite_ref_list]
 
     def __call__(self, candidate: ArtificialSubject) -> Score:
-        return np.mean([
-            sub_benchmark(candidate) for sub_benchmark in self.sub_benchmarks
-        ])
-
+        final_score = Score()
+        final_score.values = np.mean([sub_benchmark(candidate) for sub_benchmark in self.sub_benchmarks])
+        return final_score
 
 class SyntaxGymSingleTSE(BenchmarkBase):
     def __init__(self, suite_ref):
@@ -57,6 +59,9 @@ class SyntaxGymSingleTSE(BenchmarkBase):
         self.suite = self._load_suite(suite_ref)
 
     def _load_suite(self, suite_ref):
+        if str(suite_ref)[0:5] == "https":
+            suite = requests.get(suite_ref).json()
+            return Suite.from_dict(suite)
         if isinstance(suite_ref, (str, Path)):
             suite_ref = Path(suite_ref)
             if not suite_ref.exists():
