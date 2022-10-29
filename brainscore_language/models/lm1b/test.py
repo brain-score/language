@@ -5,7 +5,7 @@ from brainscore_language import load_model
 from brainscore_language.artificial_subject import ArtificialSubject
 
 
-# @pytest.mark.memory_intense
+@pytest.mark.memory_intense
 @pytest.mark.parametrize(
     "model_identifier, expected_reading_times",
     [
@@ -32,7 +32,7 @@ def test_reading_times(model_identifier, expected_reading_times):
     np.testing.assert_allclose(reading_times, expected_reading_times, atol=0.0001)
 
 
-# @pytest.mark.memory_intense
+@pytest.mark.memory_intense
 @pytest.mark.parametrize(
     "model_identifier, expected_next_words",
     [
@@ -47,7 +47,7 @@ def test_next_word(model_identifier, expected_next_words):
     np.testing.assert_array_equal(next_word_predictions, expected_next_words)
 
 
-# @pytest.mark.memory_intense
+@pytest.mark.memory_intense
 @pytest.mark.parametrize(
     "model_identifier, feature_size",
     [
