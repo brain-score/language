@@ -4,7 +4,7 @@ from brainscore_language.model_helpers.container import ContainerSubject
 
 def make_model(id, rep):
     return ContainerSubject(
-        container="benlipkin/rnng:9c49531c104b65753cc82187f019534b3f110def",
+        container="benlipkin/rnng:1fd71a2df4a89ddd5f2129d2b7df1088e72ec1cb",
         entrypoint="cd /app && source activate rnng && python -m brainscore",
         identifier=id,
         region_layer_mapping={ArtificialSubject.RecordingTarget.language_system: rep},
