@@ -9,8 +9,8 @@ from brainscore_language.artificial_subject import ArtificialSubject
 @pytest.mark.parametrize(
     "model_identifier, feature_size",
     [
-        ("rnn-tdg-ptb", 256),
-        ("rnn-lcg-ptb", 256),
+        ("rnn-tdg-ptb", 512),
+        ("rnn-lcg-ptb", 512),
     ],
 )
 def test_neural(model_identifier, feature_size):
