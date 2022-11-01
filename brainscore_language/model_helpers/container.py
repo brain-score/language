@@ -1,20 +1,20 @@
+from collections import OrderedDict
+
 import functools
 import json
 import logging
 import multiprocessing
+import numpy as np
 import re
 import subprocess
 import sys
-from collections import OrderedDict
-from pathlib import Path
-from typing import List, Tuple, Dict, Union, Callable
-
-import numpy as np
 import torch
 import xarray as xr
 from joblib import Parallel, delayed, parallel_backend
 from numpy.core import defchararray
+from pathlib import Path
 from tqdm import tqdm
+from typing import List, Tuple, Dict, Union, Callable
 
 from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly
 from brainscore_language.artificial_subject import ArtificialSubject
@@ -62,12 +62,12 @@ class ContainerSubject(ArtificialSubject):
     """
 
     def __init__(
-        self,
-        container: str,
-        entrypoint: str,
-        identifier: str,
-        region_layer_mapping: dict,
-        task_heads: Union[None, Dict[ArtificialSubject.Task, Callable]] = None,
+            self,
+            container: str,
+            entrypoint: str,
+            identifier: str,
+            region_layer_mapping: dict,
+            task_heads: Union[None, Dict[ArtificialSubject.Task, Callable]] = None,
     ):
         """
         :param container: Container name, e.g., "USERNAME/CONTAINER:TAG"
@@ -108,9 +108,9 @@ class ContainerSubject(ArtificialSubject):
         self._behavioral_function = self._task_function_mapping_dict[task]
 
     def perform_neural_recording(
-        self,
-        recording_target: ArtificialSubject.RecordingTarget,
-        recording_type: ArtificialSubject.RecordingType,
+            self,
+            recording_target: ArtificialSubject.RecordingTarget,
+            recording_type: ArtificialSubject.RecordingType,
     ):
         self._neural_recordings.append((recording_target, recording_type))
 
@@ -118,7 +118,8 @@ class ContainerSubject(ArtificialSubject):
         options = ["docker", "singularity"]
         for option in options:
             try:
-                subprocess.run([option, "--version"], stdout=subprocess.DEVNULL)  # attempt to run the container backend, try another on error
+                subprocess.run([option, "--version"],
+                               stdout=subprocess.DEVNULL)  # attempt to run the container backend, try another on error
                 return option
             except:
                 self._logger.info(f"{option} backend not found. Testing next option.")
@@ -127,8 +128,8 @@ class ContainerSubject(ArtificialSubject):
         )
 
     @staticmethod
-    def _get_singularity_container(cachedir: Path, container: str) -> str:
-        f = cachedir / f"{container.split('/')[1].replace(':','_')}.sif"
+    def _get_singularity_container(cachedir: Path, container: str) -> Path:
+        f = cachedir / f"{container.split('/')[1].replace(':', '_')}.sif"
         return f
 
     def _download_container(self):
@@ -207,7 +208,7 @@ class ContainerSubject(ArtificialSubject):
         return F.cross_entropy(shifted_logits, tokens, reduction="sum") / np.log(2)
 
     def _record_representation(
-        self, context: str, text: str, representation: str
+            self, context: str, text: str, representation: str
     ) -> np.ndarray:
         output = self._evaluate_container(context, text, representation)
         representation = np.array(output["measure"])
@@ -233,7 +234,7 @@ class ContainerSubject(ArtificialSubject):
                 behavior = BehavioralAssembly(
                     [behavioral_output], coords=stimuli_coords, dims=["presentation"]
                 )
-                return ("behavior", behavior)
+                return "behavior", behavior
             if self._neural_recordings:
                 representations = OrderedDict()
                 for recording_target, recording_type in self._neural_recordings:
