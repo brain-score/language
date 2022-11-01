@@ -562,7 +562,7 @@ def test_region_totals_match(distilgpt2, suite: str):
     benchmark = SyntaxGymSingleTSE(suite)
     subject = distilgpt2
 
-    expected: List[Dict[str, float]] = REFERENCE_DISTILGPT2_REGION_TOTALS[suite]
+    expected: List[Dict[str, float]] = REFERENCE_DISTILGPT2_REGION_TOTALS[suite][:6]
     # Reference may be a subset of actual items. Truncate as necessary.
     benchmark.suite.items = benchmark.suite.items[:len(expected)]
 
@@ -572,13 +572,13 @@ def test_region_totals_match(distilgpt2, suite: str):
     assert set(keys) == set(expected[0].keys())
 
     # Convert to ndarray for easy comparison + easy visualization of mismatches
-    actual_ndarray = np.concatenate([np.array([region_totals_i[key] for key in keys])
-                                     for region_totals_i in actual])
-    expected_ndarray = np.concatenate([np.array([region_totals_i[key] for key in keys])
-                                       for region_totals_i in expected])
-    pprint(sorted(zip(keys, np.abs(expected_ndarray - expected_ndarray)),
-                  key=lambda x: -x[1]))
-    np.testing.assert_allclose(expected_ndarray, expected_ndarray, atol=1e-3)
+    actual_ndarray = np.hstack([np.array([region_totals_i[key] for key in keys])
+                                for region_totals_i in actual])
+    expected_ndarray = np.hstack([np.array([region_totals_i[key] for key in keys])
+                                  for region_totals_i in expected])
+    pprint(sorted(zip(keys, np.abs(actual_ndarray - expected_ndarray)),
+                  key=lambda x: -x[1].sum()))
+    np.testing.assert_allclose(actual_ndarray, expected_ndarray, atol=1e-3)
 
 
 def test_syntaxgym2020_data():
