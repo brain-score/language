@@ -507,7 +507,34 @@ REFERENCE_DISTILGPT2_REGION_TOTALS = {
         ('vp_mismatch', 5): 6.434656585526812,
         ('vp_mismatch', 6): 22.268852971309567,
         ('vp_mismatch', 7): 15.17471377657604}
-    ]
+    ],
+
+    "npz_ambig": [
+        {('ambig_nocomma', 1): 19.327468872070312,
+        ('ambig_nocomma', 2): 18.147207260131836,
+        ('ambig_nocomma', 3): 0,
+        ('ambig_nocomma', 4): 13.048900604248047,
+        ('ambig_nocomma', 5): 15.911623001098633,
+        ('ambig_nocomma', 6): 19.5185489654541,
+        ('unambig_nocomma', 1): 19.327468872070312,
+        ('unambig_nocomma', 2): 18.059558868408203,
+        ('unambig_nocomma', 3): 0,
+        ('unambig_nocomma', 4): 15.915300369262695,
+        ('unambig_nocomma', 5): 17.007373809814453,
+        ('unambig_nocomma', 6): 18.407306671142578,
+        ('ambig_comma', 1): 19.327468872070312,
+        ('ambig_comma', 2): 18.147207260131836,
+        ('ambig_comma', 3): 4.558409214019775,
+        ('ambig_comma', 4): 8.555574417114258,
+        ('ambig_comma', 5): 9.404891014099121,
+        ('ambig_comma', 6): 18.525285720825195,
+        ('unambig_comma', 1): 19.327468872070312,
+        ('unambig_comma', 2): 18.059558868408203,
+        ('unambig_comma', 3): 4.463290214538574,
+        ('unambig_comma', 4): 9.004743576049805,
+        ('unambig_comma', 5): 10.577862739562988,
+        ('unambig_comma', 6): 17.343650817871094},
+    ],
 }
 
 
@@ -527,8 +554,8 @@ REFERENCE_DISTILGPT2_SCORES = {
     "npi_orc_ever": 0.026316,
     "npi_src_any": 0.000000,
     "npi_src_ever": 0.000000,
-    "npz_ambig": 0.791667,
-    "npz_ambig_mod": 0.500000,
+    "npz_ambig": 0.750000,
+    "npz_ambig_mod": 0.583334,
     "npz_obj": 0.916667,
     "npz_obj_mod": 0.791667,
     "number_orc": 0.105263,
