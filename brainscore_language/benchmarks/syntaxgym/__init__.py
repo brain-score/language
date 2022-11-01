@@ -1,7 +1,10 @@
 from pathlib import Path
 import json
-import numpy as np
 from typing import Dict, Tuple, List
+
+import numpy as np
+import requests
+
 from brainscore_core.benchmarks import BenchmarkBase
 from brainscore_core.metrics import Score
 from brainscore_language.artificial_subject import ArtificialSubject
@@ -22,11 +25,13 @@ from brainscore_language.benchmarks.syntaxgym.sg_suite import _load_suite, Suite
 #                   test_suite_dict = json.load(json_file)
 #                   suite_list = [test_suite_dict['center_embed']]
 
+
 def SyntaxGym2020():
     with open(Path(__file__).parent / 'test_suites.json') as json_file:
       test_suite_dict = json.load(json_file)
-      suite_paths = [test_suite_dict['fgd_subject']]
+      suite_paths = list(test_suite_dict.values())
     return SyntaxGymTSE(suite_paths)
+
 
 class SyntaxGymTSE(BenchmarkBase):
     def __init__(self, suite_ref_list):
