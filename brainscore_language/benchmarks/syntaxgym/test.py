@@ -474,6 +474,42 @@ DISTILGPT2_SUBORDINATION_SRC_REFERENCE = \
   ('no-sub_matrix', 5): 60.744979821369654}]
 
 
+# Scores for distilgpt2 computed with the reference implementation
+REFERENCE_DISTILGPT2_SCORES = {
+    "center_embed": 0.964286,
+    "center_embed_mod": 0.928571,
+    "cleft": 1.000000,
+    "cleft_modifier": 0.725000,
+    "fgd_hierarchy": 0.000000,
+    "fgd_object": 0.875000,
+    "fgd_pp": 0.875000,
+    "fgd_subject": 0.541667,
+    "mvrr": 0.821429,
+    "mvrr_mod": 0.785714,
+    "npi_orc_any": 0.026316,
+    "npi_orc_ever": 0.026316,
+    "npi_src_any": 0.000000,
+    "npi_src_ever": 0.000000,
+    "npz_ambig": 0.791667,
+    "npz_ambig_mod": 0.500000,
+    "npz_obj": 0.916667,
+    "npz_obj_mod": 0.791667,
+    "number_orc": 0.105263,
+    "number_prep": 0.578947,
+    "number_src": 0.789474,
+    "reflexive_orc_fem": 0.000000,
+    "reflexive_orc_masc": 0.368421,
+    "reflexive_prep_fem": 0.105263,
+    "reflexive_prep_masc": 0.473684,
+    "reflexive_src_fem": 0.157895,
+    "reflexive_src_masc": 0.526316,
+    "subordination": 0.217391,
+    "subordination_orc-orc": 0.956522,
+    "subordination_pp-pp": 0.478261,
+    "subordination_src-src": 0.565217,
+}
+
+
 @pytest.fixture
 def subordination_src_benchmark():
     return SyntaxGymSingleTSE("subordination_src-src")
@@ -514,13 +550,12 @@ def test_syntaxgym2020_data():
     assert len(SyntaxGym2020().sub_benchmarks) == 31
 
 
-def test_cleft_match(distilgpt2):
+@pytest.mark.parametrize("suite_ref", REFERENCE_DISTILGPT2_SCORES.keys())
+def test_suite_accuracies(distilgpt2: HuggingfaceSubject, suite_ref: str, expected_accuracy: float):
     """
-    Test that cleft numbers match. Cleft is a good special case because there are
-    intervening empty regions. These need to be tracked correctly.
+    Compare distilgpt2 suite accuracies with those of the reference implementation.
     """
-    tse = SyntaxGymSingleTSE("cleft")
-    from pprint import pprint
-    pprint(tse.get_region_totals(distilgpt2))
-    print(tse(distilgpt2))
-    assert False, "TODO get numbers and compare with reference implementation"
+    tse = SyntaxGymSingleTSE(suite_ref)
+    accuracy = tse(distilgpt2)
+    expected_accuracy = REFERENCE_DISTILGPT2_SCORES[suite_ref]
+    np.testing.assert_almost_equal(float(accuracy), expected_accuracy, decimal=3)
