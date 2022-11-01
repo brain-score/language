@@ -125,6 +125,9 @@ class HuggingfaceSubject(ArtificialSubject):
         Prepare a single string representation of a (possibly partial) input context
         for the model.
         """
+        # Drop empty parts.
+        context_parts = [part for part in context_parts if part != ""]
+
         context = ' '.join(context_parts)
 
         # Remove erroneous spaces before punctuation.
