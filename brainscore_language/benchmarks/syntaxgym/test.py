@@ -552,8 +552,8 @@ def distilgpt2():
   return HuggingfaceSubject(model_id="distilgpt2", region_layer_mapping={})
 
 
-@pytest.mark.parametrize("suite, expected", REFERENCE_DISTILGPT2_REGION_TOTALS.items())
-def test_region_totals_match(distilgpt2, suite: str, expected: List[Dict[str, float]]):
+@pytest.mark.parametrize("suite", REFERENCE_DISTILGPT2_REGION_TOTALS.keys())
+def test_region_totals_match(distilgpt2, suite: str):
     """
     The region-level surprisals computed on the subordination_src-src
     test suite should match those of the reference implementation.
@@ -562,6 +562,7 @@ def test_region_totals_match(distilgpt2, suite: str, expected: List[Dict[str, fl
     benchmark = SyntaxGymSingleTSE(suite)
     subject = distilgpt2
 
+    expected: List[Dict[str, float]] = REFERENCE_DISTILGPT2_REGION_TOTALS[suite]
     # Reference may be a subset of actual items. Truncate as necessary.
     benchmark.suite.items = benchmark.suite.items[:len(expected)]
 
