@@ -96,7 +96,10 @@ class SyntaxGymSingleTSE(BenchmarkBase):
                 text = suite_regions[item_num * len(self.suite.condition_names) + condition_num]
                 surprisals = candidate.digest_text(text)['behavior']
                 for i, region in enumerate(self.suite.region_names):
-                    region_totals_i[(condition, i + 1)] = surprisals[i].values
+                    surprisal_i = surprisals[i].values
+                    if np.isnan(surprisal_i):
+                        surprisal_i = 0.
+                    region_totals_i[condition, i + 1] = surprisal_i
 
             region_totals.append(region_totals_i)
         
