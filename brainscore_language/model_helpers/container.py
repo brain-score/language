@@ -248,7 +248,7 @@ class ContainerSubject(ArtificialSubject):
 
         if type(text) == str:
             text = [text]
-        text_iterator = tqdm(text, desc="digest text") if len(text) > 1 else text
+        text_iterator = tqdm(text, desc="digest text") if len(text) > 100 else text
         with parallel_backend("loky", n_jobs=multiprocessing.cpu_count()):
             assemblies = Parallel()(
                 delayed(_build_assembly)(part_number, text_part)
