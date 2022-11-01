@@ -20,30 +20,39 @@ and they will send you the credentials  necessary to configure your AWS access.
 
 After you have received your credentials, you can configure your access in two ways:
 
-## Option 1: configuration via command line
+
+Option 1: configuration via command line
+----------------------------------------
 Use `awscli` to configure your AWS access.
-```shell
-pip install awscli
-aws configure
-```
+
+.. code-block:: console
+
+    pip install awscli
+    aws configure
+
 (use region `us-east-1`, output-format `json`)
 
-## Option 2: configuration via file
+
+Option 2: configuration via file
+----------------------------------------
+
 You can also create the configuration files yourself.
 
 Create your credentials file at `~/.aws/credentials`:
-```
-[default]
-aws_access_key_id = YOUR_ACCESS_KEY_ID
-aws_secret_access_key = YOUR_SECRET_ACCESS_KEY
-```
+
+.. code-block:: console
+
+    [default]
+    aws_access_key_id = YOUR_ACCESS_KEY_ID
+    aws_secret_access_key = YOUR_SECRET_ACCESS_KEY
 
 To configure region and output format, create a config file at `~/.aws/config`:
-```
-[default]
-region = us-east-1
-output-format = json
-```
+
+.. code-block:: console
+
+    [default]
+    region = us-east-1
+    output-format = json
 
 
 2. Uploading Data
@@ -92,7 +101,7 @@ the data assembly easily.
 
 When downloading a data assembly from S3, it must be made **public** by an admin. You can download data 
 assemblies stored in S3 by using the :code:`load_from_s3` method found in the
-`s3 util file <https://github.com/brain-score/language/blob/main/brainscore_language/utils/s3.py>`_. The only information
+`S3 util file <https://github.com/brain-score/language/blob/main/brainscore_language/utils/s3.py>`_. The only information
 needed to download the data assembly are the :code:`identifier`, :code:`version_id`, and :code:`sha1` (seen in the following excerpt),
 which are all outputs if you uploaded the data assembly yourself, or can be received by contacting an admin.
 
