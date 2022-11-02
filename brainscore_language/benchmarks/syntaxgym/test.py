@@ -1127,7 +1127,7 @@ REFERENCE_DISTILGPT2_SCORES = {
     "npz_ambig_mod": 0.583334,
     "npz_obj": 0.916667,
     "npz_obj_mod": 0.875000,
-    "number_orc": 0.263158,
+    "number_orc": 0.105263,
     "number_prep": 0.578947,
     "number_src": 0.789474,
     "reflexive_orc_fem": 0.000000,
@@ -1184,7 +1184,7 @@ def test_region_totals_match(distilgpt2, suite: str):
 def test_syntaxgym2020_data():
     from brainscore_language.benchmarks.syntaxgym import SyntaxGym2020
 
-    assert len(SyntaxGym2020().sub_benchmarks) == 31
+    assert len(SyntaxGym2020().sub_benchmarks) == 32
 
 
 @pytest.mark.parametrize("suite_ref", REFERENCE_DISTILGPT2_SCORES.keys())
