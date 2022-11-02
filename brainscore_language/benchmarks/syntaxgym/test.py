@@ -2,6 +2,7 @@ from pprint import pprint
 from typing import List, Dict
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from brainscore_language.artificial_subject import ArtificialSubject
@@ -1166,14 +1167,18 @@ def test_region_totals_match(distilgpt2, suite: str):
     keys = actual[0].keys()
     assert set(keys) == set(expected[0].keys())
 
-    # Convert to ndarray for easy comparison + easy visualization of mismatches
-    actual_ndarray = np.hstack([np.array([region_totals_i[key] for key in keys])
-                                for region_totals_i in actual])
-    expected_ndarray = np.hstack([np.array([region_totals_i[key] for key in keys])
-                                  for region_totals_i in expected])
-    pprint(sorted(zip(keys, np.abs(actual_ndarray - expected_ndarray)),
-                  key=lambda x: -x[1].sum()))
-    np.testing.assert_allclose(actual_ndarray, expected_ndarray, atol=1e-3)
+    # Convert to dataframe for easy comparison + easy visualization of mismatches
+    def make_item_df(region_totals):
+        return pd.Series(region_totals).unstack() \
+            .rename_axis(index="condition", columns="region_number")
+    actual_df = pd.concat([make_item_df(item_totals) for item_totals in actual],
+                          names=["item_number"],
+                          keys=np.arange(len(actual)) + 1)
+    expected_df = pd.concat([make_item_df(item_totals) for item_totals in expected],
+                            names=["item_number"],
+                            keys=np.arange(len(actual)) + 1)
+    pprint((expected_df - actual_df).round(3))
+    pd.testing.assert_frame_equal(actual_df, expected_df, atol=1e-3, check_exact=False)
 
 
 def test_syntaxgym2020_data():
