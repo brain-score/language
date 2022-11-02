@@ -79,7 +79,7 @@ class HuggingfaceSubject(ArtificialSubject):
         output = {'behavior': [], 'neural': []}
         number_of_tokens = 0
 
-        text_iterator = tqdm(text, desc='digest text') if len(text) > 1 else text  # show progress bar if multiple parts
+        text_iterator = tqdm(text, desc='digest text') if len(text) > 100 else text  # show progress bar if many parts
         for part_number, text_part in enumerate(text_iterator):
             # prepare string representation of context
             context = self._prepare_context(text[:part_number + 1])
