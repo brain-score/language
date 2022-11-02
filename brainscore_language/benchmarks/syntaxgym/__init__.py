@@ -79,7 +79,7 @@ class SyntaxGymSingleTSE(BenchmarkBase):
         self.suite = self._load_suite(suite_ref)
 
     def _load_suite(self, suite_ref: Union[str, Path]):
-        if str(suite_ref)[0:5] == "https":
+        if str(suite_ref).startswith("https"):
             suite = requests.get(suite_ref).json()
             return Suite.from_dict(suite)
         if isinstance(suite_ref, (str, Path)):
