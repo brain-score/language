@@ -1,6 +1,6 @@
 from pathlib import Path
 import json
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Union
 
 import numpy as np
 import requests
@@ -27,10 +27,8 @@ from brainscore_language.benchmarks.syntaxgym.sg_suite import _load_suite, Suite
 
 
 def SyntaxGym2020():
-    with open(Path(__file__).parent / 'test_suites.json') as json_file:
-      test_suite_dict = json.load(json_file)
-      suite_paths = list(test_suite_dict.values())
-    return SyntaxGymTSE(suite_paths)
+    suite_list = list((Path(__file__).parent / "suites" / "syntaxgym-2020").glob("*.json"))
+    return SyntaxGymTSE(suite_list)
 
 
 class SyntaxGymTSE(BenchmarkBase):
@@ -63,7 +61,7 @@ class SyntaxGymSingleTSE(BenchmarkBase):
         # TODO support non-path ref
         self.suite = self._load_suite(suite_ref)
 
-    def _load_suite(self, suite_ref):
+    def _load_suite(self, suite_ref: Union[str, Path]):
         if str(suite_ref)[0:5] == "https":
             suite = requests.get(suite_ref).json()
             return Suite.from_dict(suite)
