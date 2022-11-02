@@ -85,21 +85,21 @@ class SyntaxGymSingleTSE(BenchmarkBase):
         """
         Compute region-level surprisal totals for the given subject.
         """
-        suite_regions = list(self.suite.iter_regions())
         candidate.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
         region_totals = []
 
         # SyntaxGym logic wrapper around digest_text
         for item_num, item in enumerate(self.suite.items):
             region_totals_i = {}
-            for condition_num, condition in enumerate(self.suite.condition_names):
-                text = suite_regions[item_num * len(self.suite.condition_names) + condition_num]
-                surprisals = candidate.digest_text(text)['behavior']
+
+            for condition in item["conditions"]:
+                text_parts = [region["content"] for region in condition["regions"]]
+                surprisals = candidate.digest_text(text_parts)['behavior']
                 for i, region in enumerate(self.suite.region_names):
                     surprisal_i = surprisals[i].values
                     if np.isnan(surprisal_i):
                         surprisal_i = 0.
-                    region_totals_i[condition, i + 1] = surprisal_i
+                    region_totals_i[condition["condition_name"], i + 1] = surprisal_i
 
             region_totals.append(region_totals_i)
         

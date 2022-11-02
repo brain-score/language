@@ -1173,10 +1173,10 @@ def test_region_totals_match(distilgpt2, suite: str):
             .rename_axis(index="condition", columns="region_number")
     actual_df = pd.concat([make_item_df(item_totals) for item_totals in actual],
                           names=["item_number"],
-                          keys=np.arange(len(actual)) + 1)
+                          keys=np.arange(len(actual)) + 1).astype(float)
     expected_df = pd.concat([make_item_df(item_totals) for item_totals in expected],
                             names=["item_number"],
-                            keys=np.arange(len(actual)) + 1)
+                            keys=np.arange(len(actual)) + 1).astype(float)
     pprint((expected_df - actual_df).round(3))
     pd.testing.assert_frame_equal(actual_df, expected_df, atol=1e-3, check_exact=False)
 
