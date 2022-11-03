@@ -16,6 +16,23 @@ from brainscore_language.benchmarks.syntaxgym.sg_suite import _load_suite, Suite
 # See the SyntaxGym website for information about structuring test_suites:
 # https://cpllab.github.io/syntaxgym-core/architecture.html
 #
+# @inproceedings{gauthier-etal-2020-syntaxgym,
+#     title = "{S}yntax{G}ym: An Online Platform for Targeted Evaluation of Language Models",
+#     author = "Gauthier, Jon, etal
+#     booktitle = "Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics: System Demonstrations",
+#     year = "2020",
+#     publisher = "Association for Computational Linguistics",
+#     url = "https://aclanthology.org/2020.acl-demos.10",
+#     abstract = "Targeted syntactic evaluations have yielded insights into the generalizations learned by neural network language
+#     models. However, this line of research requires an uncommon confluence of skills: both the theoretical knowledge needed to
+#     design controlled psycholinguistic experiments, and the technical proficiency needed to train and deploy large-scale language
+#     models. We present SyntaxGym, an online platform designed to make targeted evaluations accessible to both experts in NLP
+#     and linguistics, reproducible across computing environments, and standardized following the norms of psycholinguistic
+#     experimental design. This paper releases two tools of independent value for the computational linguistics
+#     community: 1. A website, syntaxgym.org, which centralizes the process of targeted syntactic evaluation and provides
+#     easy tools for analysis and visualization; 2. Two command-line tools, {`}syntaxgym{`} and {`}lm-zoo{`}, which allow
+#     any user to reproduce targeted syntactic evaluations and general language model inference on their own machine."}
+#
 # The following are options for loading test_suites:
 # EXAMPLE #1: (Loading a single test_suite) suite_list = [Path(__file__).parent / 'test_suite.json']
 # EXAMPLE #2: (Loading multiple test_suites as a list): suite_list = [Path(__file__).parent / 'test_suite2.json', Path(__file__).parent / 'test_suite3.json']
@@ -25,11 +42,11 @@ from brainscore_language.benchmarks.syntaxgym.sg_suite import _load_suite, Suite
 #                   test_suite_dict = json.load(json_file)
 #                   suite_list = [test_suite_dict['center_embed']]
 
-
 def SyntaxGym2020():
-    suite_list = list((Path(__file__).parent / "suites" / "syntaxgym-2020").glob("*.json"))
-    return SyntaxGymTSE(suite_list)
-
+    with open(Path(__file__).parent / 'test_suites.json') as json_file:
+      test_suite_dict = json.load(json_file)
+      suite_paths = [test_suite_dict['number_src']]
+    return SyntaxGymTSE(suite_paths)
 
 class SyntaxGymTSE(BenchmarkBase):
     def __init__(self, suite_ref_list):
@@ -81,7 +98,7 @@ class SyntaxGymSingleTSE(BenchmarkBase):
     def get_region_totals(self, candidate: ArtificialSubject
                           ) -> List[Dict[Tuple[str, int], float]]:
         """
-        Compute region-level surprisal totals for the given subject.
+        Compute region-level surprisals for the given subject.
         """
         candidate.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
         region_totals = []
