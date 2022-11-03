@@ -61,13 +61,8 @@ class SyntaxGymTSE(BenchmarkBase):
             SyntaxGymSingleTSE(suite_ref) for suite_ref in suite_ref_list]
 
     def __call__(self, candidate: ArtificialSubject) -> Score:
-        sub_scores = []
-        for sub_benchmark in self.sub_benchmarks:
-            sub_score = sub_benchmark(candidate)
-            sub_score = sub_score.expand_dims('sub_benchmark')
-            sub_score['sub_benchmark'] = [sub_benchmark.identifier()]
-        sub_scores = Score.merge(*sub_scores)
-        final_score = sub_scores.mean()
+        final_score = Score()
+        final_score.values = np.mean([sub_benchmark(candidate) for sub_benchmark in self.sub_benchmarks])
         return final_score
 
 class SyntaxGymSingleTSE(BenchmarkBase):
