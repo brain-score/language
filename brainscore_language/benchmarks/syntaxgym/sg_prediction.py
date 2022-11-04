@@ -45,7 +45,7 @@ class Region:
 
         return surprisal_dict[self.condition_name, int(self.region_number)]
 
-class LiteralFloat(object):
+class LiteralFloat:
     def __init__(self, tokens):
         self.value = float(tokens[0])
 
@@ -58,7 +58,7 @@ class LiteralFloat(object):
     def __call__(self, surprisal_dict):
         return self.value
 
-class BinaryOp(object):
+class BinaryOp:
     operators: TOptional[TList[str]]
 
     def __init__(self, tokens):
