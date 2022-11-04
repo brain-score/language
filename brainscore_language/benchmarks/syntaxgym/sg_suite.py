@@ -115,16 +115,6 @@ class Suite:
                 sentence = " ".join(regions)
                 yield sentence
 
-    def iter_regions(self) -> Iterator[List[str]]:
-        """
-        TODO document
-        """
-        for item in self.items:
-            for cond in item["conditions"]:
-                regions = [region["content"].lstrip()
-                           for region in cond["regions"]]
-                yield regions
-
     def iter_region_edges(self) -> Iterator[List[int]]:
         """
         For each sentence in the suite, get list of indices of each region's
