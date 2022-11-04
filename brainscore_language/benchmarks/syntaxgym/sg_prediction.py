@@ -36,7 +36,7 @@ class Region:
         return "(%s;%%%s%%)" % (self.region_number, self.condition_name)
 
     def __repr__(self):
-        return "Region(%s,%s)" % (self.condition_name, self.region_number)
+        return f"Region({self.condition_name},{self.region_number})"
 
     def __call__(self, surprisal_dict):
         if self.region_number == "*":
