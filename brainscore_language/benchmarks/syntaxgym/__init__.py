@@ -37,7 +37,7 @@ from brainscore_language.benchmarks.syntaxgym.sg_suite import _load_suite, Suite
 # EXAMPLE #1: (Loading a single test_suite) suite_list = [Path(__file__).parent / 'test_suite.json']
 # EXAMPLE #2: (Loading multiple test_suites as a list): suite_list = [Path(__file__).parent / 'test_suite2.json', Path(__file__).parent / 'test_suite3.json']
 # EXAMPLE #3: (Using a URL to load a test_suite directly from GitHub): suite_list = ['https://raw.githubusercontent.com/cpllab/syntactic-generalization/nextflow/test_suites/json/center_embed.json']
-# EXAMPLE #4: (Loading one of the test suites in test_suites.py/test_suites.json.  This method also works for multiple suites.):
+# EXAMPLE #4: (Loading one of the test suites in test_suites.json.  This method also works for multiple suites.):
 #               with open(Path(__file__).parent / 'test_suites.json') as json_file:
 #                   test_suite_dict = json.load(json_file)
 #                   suite_list = [test_suite_dict['center_embed']]
@@ -47,6 +47,7 @@ def SyntaxGym2020():
         test_suite_dict = json.load(json_file)
         suite_paths = list(test_suite_dict.values())
     return SyntaxGymTSE(suite_paths)
+
 
 class SyntaxGymTSE(BenchmarkBase):
     def __init__(self, suite_ref_list):
