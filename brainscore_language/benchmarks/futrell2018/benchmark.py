@@ -33,9 +33,9 @@ class Futrell2018Pearsonr(BenchmarkBase):
         ceiling = ceiler(self.data)
         super(Futrell2018Pearsonr, self).__init__(
             identifier="Futrell2018-pearsonr",
+            ceiling=ceiling,
             version=1,
             parent="behavior",
-            ceiling_func=ceiling,
             bibtex=self.data.bibtex,
         )
 

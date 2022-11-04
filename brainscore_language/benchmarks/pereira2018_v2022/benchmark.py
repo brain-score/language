@@ -99,7 +99,7 @@ class _Pereira2018LinregPearsonr(BenchmarkBase):
         ceiling = self._load_ceiling(identifier=identifier, **ceiling_s3_kwargs)
         super(_Pereira2018LinregPearsonr, self).__init__(
             identifier=identifier,
-            ceiling_func=ceiling,
+            ceiling=ceiling,
             version=1,
             parent="Pereira2018-linear",
             bibtex=BIBTEX,

@@ -84,9 +84,9 @@ class _Pereira2018ExperimentLinear(BenchmarkBase):
         ceiling = self._load_ceiling(identifier=identifier, **ceiling_s3_kwargs)
         super(_Pereira2018ExperimentLinear, self).__init__(
             identifier=identifier,
+            ceiling=ceiling,
             version=1,
             parent="Pereira2018-linear",
-            ceiling_func=ceiling,
             bibtex=BIBTEX,
         )
 
