@@ -1,9 +1,9 @@
 import logging
 
 from brainscore_language import data_registry
-
 from brainscore_language.utils.s3 import load_from_s3
-from brainscore_language.utils.local import load_from_disk
+
+# from brainscore_language.utils.local import load_from_disk
 
 _logger = logging.getLogger(__name__)
 
