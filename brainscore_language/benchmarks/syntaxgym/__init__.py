@@ -75,7 +75,6 @@ class SyntaxGymSingleTSE(BenchmarkBase):
             bibtex=None)
 
         self.metric = load_metric('accuracy')
-        # TODO support non-path ref
         self.suite = self._load_suite(suite_ref)
 
     def _load_suite(self, suite_ref: Union[str, Path]):
