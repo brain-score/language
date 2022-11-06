@@ -83,7 +83,7 @@ class _Pereira2018LinregPearsonr(BenchmarkBase):
     ):
         self.data = self._load_data(experiment)
         self.metric = load_metric(
-            "linreg_pearsonr",
+            "linear_pearsonr",
             crossvalidation_kwargs={
                 "split_coord": "sentence",
             },
@@ -101,7 +101,7 @@ class _Pereira2018LinregPearsonr(BenchmarkBase):
             identifier=identifier,
             ceiling=ceiling,
             version=1,
-            parent="Pereira2018-linear",
+            parent="Pereira2018-linreg_pearsonr",
             bibtex=BIBTEX,
         )
 
