@@ -17,8 +17,6 @@ on:
       - labeled
       - ready_for_review
       - synchronize
-  check_suite:
-    conclusion: success
 
 permissions: write-all
 
