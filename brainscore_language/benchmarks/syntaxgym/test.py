@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from brainscore_language.artificial_subject import ArtificialSubject
-from brainscore_language.benchmarks.syntaxgym import SyntaxGymSingleTSE
+from brainscore_language.benchmarks.syntaxgym import SyntaxGymTSE, SyntaxGymSingleTSE
 from brainscore_language.model_helpers.huggingface import HuggingfaceSubject
 
 
@@ -1146,6 +1146,20 @@ REFERENCE_DISTILGPT2_SCORES = {
 @pytest.fixture(scope="session")
 def distilgpt2():
   return HuggingfaceSubject(model_id="distilgpt2", region_layer_mapping={})
+
+
+def test_score_aggregate(distilgpt2):
+    suites = ["cleft", "cleft_modifier"]
+    benchmark = SyntaxGymTSE(suites)
+
+    score = benchmark(distilgpt2)
+    sub_scores = {benchmark.suite.meta["name"]: benchmark(distilgpt2)
+                  for benchmark in benchmark.sub_benchmarks}
+
+    assert score == np.mean(sub_scores)
+
+    # TODO assert that we can extract the sub-benchmark names and scores
+    # from the overall score object
 
 
 @pytest.mark.parametrize("suite", REFERENCE_DISTILGPT2_REGION_TOTALS.keys())
