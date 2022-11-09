@@ -11,6 +11,10 @@ from brainscore_language.artificial_subject import ArtificialSubject
     [
         ("rnn-tdg-ptb", 512),
         ("rnn-lcg-ptb", 512),
+        ("rnn-tdg-ptboanc", 512),
+        ("rnn-lcg-ptboanc", 512),
+        ("rnn-tdg-ptboanc-1024", 1024),
+        ("rnn-lcg-ptboanc-1024", 1024),
     ],
 )
 def test_neural(model_identifier, feature_size):
