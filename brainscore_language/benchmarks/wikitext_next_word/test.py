@@ -23,3 +23,5 @@ class TestBenchmark:
         dummy_model = TestBenchmark.DummyModel()
         score = benchmark(dummy_model)
         assert score == approx(0.05945, abs=0.001)
+
+# TRIGGER GITHUB ACTIONS SCORING RUN
