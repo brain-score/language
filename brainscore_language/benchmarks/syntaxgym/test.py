@@ -1156,7 +1156,7 @@ def test_score_aggregate(distilgpt2):
     sub_scores = {benchmark.suite.meta["name"]: benchmark(distilgpt2)
                   for benchmark in benchmark.sub_benchmarks}
 
-    assert score == np.mean(sub_scores)
+    assert score == np.mean(list(sub_scores.values()))
 
     # TODO assert that we can extract the sub-benchmark names and scores
     # from the overall score object

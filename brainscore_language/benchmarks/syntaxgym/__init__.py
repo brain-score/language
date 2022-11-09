@@ -73,9 +73,10 @@ class SyntaxGymTSE(BenchmarkBase):
         from pprint import pprint
         pprint(sub_scores)
 
-        sub_scores = Score.merge(*sub_scores)
+        sub_scores = Score.merge(*sub_scores, ignore_exceptions=True)  # ignore merge errors of raw attributes
 
         final_score = sub_scores.mean()
+        final_score.attrs['sub_scores'] = sub_scores
         return final_score
 
 
