@@ -22,10 +22,10 @@ language_plugins = LanguagePlugins()
 run_scoring_endpoint = RunScoringEndpoint(language_plugins, db_secret=config.get_database_secret())
 
 
-def _get_ids(args_dict: Dict, key: str):
+def _get_ids(args_dict: Dict[str, Union[str, List]], key: str) -> Union[List, str, None]:
     return args_dict[key] if key in args_dict else None
 
-def run_scoring(args_dict):
+def run_scoring(args_dict: Dict[str, Union[str, List]]) -> RunScoringEndpoint:
     new_models = _get_ids(args_dict, 'new_models')
     new_benchmarks = _get_ids(args_dict, 'new_benchmarks')
     all_models = _get_ids(args_dict, 'all_models')
@@ -46,9 +46,9 @@ def run_scoring(args_dict):
     print(new_args)
 
     return run_scoring_endpoint(**new_args)
-    
 
-def parse_args():
+
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('jenkins_id', type=int,
                         help='The id of the current jenkins run')
