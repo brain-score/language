@@ -24,8 +24,7 @@ run_scoring_endpoint = RunScoringEndpoint(language_plugins, db_secret=config.get
 def _not_empty(plugin_list):
     return any(s.strip() for s in plugin_list)
 
-def run_scoring(args):
-    args_dict = vars(args)
+def run_scoring(args_dict):
     new_models = args_dict['new_models']
     new_benchmarks = args_dict['new_benchmarks']
     all_models = args_dict['all_models']
@@ -73,4 +72,4 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-    run_scoring(args)
+    run_scoring(vars(args))
