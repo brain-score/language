@@ -1,11 +1,10 @@
 import argparse
+from typing import List, Union, Dict
 
 from brainscore_core import Score, Benchmark
 from brainscore_core.submission import RunScoringEndpoint, DomainPlugins
 from brainscore_language import load_model, load_benchmark, score
 from brainscore_language.submission import config
-
-from typing import List, Union
 
 
 class LanguagePlugins(DomainPlugins):
@@ -18,32 +17,36 @@ class LanguagePlugins(DomainPlugins):
     def score(self, model_identifier: str, benchmark_identifier: str) -> Score:
         return score(model_identifier, benchmark_identifier)
 
+
 language_plugins = LanguagePlugins()
 run_scoring_endpoint = RunScoringEndpoint(language_plugins, db_secret=config.get_database_secret())
 
-def _not_empty(plugin_list):
-    return any(s.strip() for s in plugin_list)
+
+def _get_ids(args_dict: Dict, key: str):
+    return args_dict[key] if key in args_dict else None
 
 def run_scoring(args_dict):
-    new_models = args_dict['new_models']
-    new_benchmarks = args_dict['new_benchmarks']
-    all_models = args_dict['all_models']
-    all_benchmarks = args_dict['all_benchmarks']
+    new_models = _get_ids(args_dict, 'new_models')
+    new_benchmarks = _get_ids(args_dict, 'new_benchmarks')
+    all_models = _get_ids(args_dict, 'all_models')
+    all_benchmarks = _get_ids(args_dict, 'all_benchmarks')
 
-    if _not_empty(new_models) and _not_empty(new_benchmarks):
+    if new_models and new_benchmarks:
         args_dict['models'] = all_models
         args_dict['benchmarks'] = all_benchmarks
-    elif _not_empty(new_benchmarks):
+    elif new_benchmarks:
         args_dict['models'] = all_models
         args_dict['benchmarks'] = new_benchmarks
-    elif _not_empty(new_models):
+    elif new_models:
         args_dict['models'] = new_models
         args_dict['benchmarks'] = all_benchmarks
 
     remove_keys = ['new_benchmarks', 'new_models', 'all_benchmarks', 'all_models']
     new_args = {k:v for k,v in args_dict.items() if k not in remove_keys}
+    print(new_args)
 
     return run_scoring_endpoint(**new_args)
+    
 
 def parse_args():
     parser = argparse.ArgumentParser()
