@@ -6,6 +6,7 @@ import re
 from gensim.models.keyedvectors import KeyedVectors
 from numpy.core import defchararray
 from pathlib import Path
+from tqdm import tqdm
 from typing import Union, List, Dict, Tuple
 
 from brainio.assemblies import NeuroidAssembly, merge_data_arrays
@@ -48,7 +49,8 @@ class EmbeddingSubject(ArtificialSubject):
             text = [text]
 
         output = {'behavior': [], 'neural': []}
-        for part_number, text_part in enumerate(text):
+        text_iterator = tqdm(text, desc='digest text') if len(text) > 100 else text  # show progress bar if many parts
+        for part_number, text_part in enumerate(text_iterator):
             representations = self._encode_sentence(text_part)  # encode every word
             representations = self._average_representations(representations)  # reduce to single representation
             # package
