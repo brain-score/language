@@ -49,25 +49,22 @@ class TestImportPlugin:
     def teardown_method(self):
         if 'dummy-model' in model_registry:
             del model_registry['dummy-model']
-        subprocess.run('pip uninstall pyaztro -y', shell=True)
+        subprocess.run('pip uninstall pyaztro', shell=True)
         shutil.rmtree(dummy_model_dirpath)
         if current_dependencies_pref:
             os.environ['BS_INSTALL_DEPENDENCIES'] = current_dependencies_pref
 
-    def test_import_plugin(self):
+    def test_yes_dependency_installation(self):
+        os.environ['BS_INSTALL_DEPENDENCIES'] = 'yes'
         assert 'dummy-model' not in model_registry
         import_plugin('models', 'dummy-model')
         assert 'dummy-model' in model_registry
 
     def test_no_dependency_installation(self):
         os.environ['BS_INSTALL_DEPENDENCIES'] = 'no'
+        assert 'dummy-model' not in model_registry
         try:
             print("importing plugin")
             import_plugin('models', 'dummy-model')
         except Exception as e:
             assert "No module named 'pyaztro'" in str(e)
-
-    def test_yes_dependency_installation(self):
-        os.environ['BS_INSTALL_DEPENDENCIES'] = 'yes'
-        import_plugin('models', 'dummy-model')
-        assert 'dummy-model' in model_registry
