@@ -246,7 +246,12 @@ class HuggingfaceSubject(ArtificialSubject):
                        target_dict: dict) -> RemovableHandle:
         # instantiate parameters to function defaults; otherwise they would change on next function call
         def hook_function(_layer: torch.nn.Module, _input, output: torch.Tensor, key=key):
-            target_dict[key] = self._tensor_to_numpy(output)
+            if len(output) > 1:
+                # fix for when taking out only the hidden state, thisis different from droput because of residual state
+                # see :  https://github.com/huggingface/transformers/blob/c06d55564740ebdaaf866ffbbbabf8843b34df4b/src/transformers/models/gpt2/modeling_gpt2.py#L428
+                target_dict[key] = self._tensor_to_numpy(output[0])
+            else:
+                target_dict[key] = self._tensor_to_numpy(output)
 
         hook = layer.register_forward_hook(hook_function)
         return hook
