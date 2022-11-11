@@ -74,7 +74,7 @@ class TestNextWord:
         benchmark.data = benchmark.data[0:2] # test on subset for speed
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
         score = benchmark(model)
-        assert score
+        assert score == 0
 
 
 class TestReadingTimes:
