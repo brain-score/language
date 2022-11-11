@@ -5,6 +5,8 @@ from brainscore_language.plugin_management.import_plugin import import_plugin
 
 
 def test_import_plugin():
+    if 'Wikitext-accuracy' in benchmark_registry.keys():
+        benchmark_registry['Wikitext-accuracy'].pop()
     assert 'Wikitext-accuracy' not in benchmark_registry.keys()
     import_plugin('benchmarks', 'Wikitext-accuracy')
     assert 'Wikitext-accuracy' in benchmark_registry.keys()
