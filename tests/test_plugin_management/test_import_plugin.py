@@ -13,7 +13,7 @@ def test_import_plugin():
 
 
 def test_no_installation():
-    os.environ['BSL_INSTALL_DEPENDENCIES'] = 'no'
+    os.environ['BS_INSTALL_DEPENDENCIES'] = 'no'
     try:
         import_plugin('data', 'wikitext-2/test')
     except Exception as e:
