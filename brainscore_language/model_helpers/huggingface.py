@@ -222,7 +222,7 @@ class HuggingfaceSubject(ArtificialSubject):
         logits = base_output.logits
         pred_id = torch.argmax(logits, axis=2).squeeze()
         # Note that this is currently only predicting the next *token* which might not always be entire words.
-        last_model_token_inference = pred_id[-1].tolist()
+        last_model_token_inference = pred_id[-1].tolist() if len(pred_id.size()) > 0 else pred_id.item()
         next_word = self.tokenizer.decode(last_model_token_inference)
         # `next_word` often includes a space ` ` in front of the actual word. Since the task already tells us to output
         # a word, we can strip the space.
