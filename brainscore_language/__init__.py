@@ -1,12 +1,11 @@
-import os
 from typing import Dict, Any, Union, Callable
 
 from brainio.assemblies import DataAssembly
 from brainscore_core.benchmarks import Benchmark
 from brainscore_core.metrics import Score, Metric
+from brainscore_core.plugin_management.conda_score import CondaScore
+from brainscore_core.plugin_management.import_plugin import import_plugin, installation_preference
 from brainscore_language.artificial_subject import ArtificialSubject
-from brainscore_language.plugin_management.conda_score import CondaScore
-from brainscore_language.plugin_management.import_plugin import import_plugin, installation_preference
 
 data_registry: Dict[str, Callable[[], Union[DataAssembly, Any]]] = {}
 """ Pool of available data """
@@ -22,25 +21,25 @@ model_registry: Dict[str, Callable[[], ArtificialSubject]] = {}
 
 
 def load_dataset(identifier: str) -> Union[DataAssembly, Any]:
-    import_plugin('data', identifier)
+    import_plugin('brainscore_language', 'data', identifier)
 
     return data_registry[identifier]()
 
 
 def load_metric(identifier: str, *args, **kwargs) -> Metric:
-    import_plugin('metrics', identifier)
+    import_plugin('brainscore_language', 'metrics', identifier)
 
     return metric_registry[identifier](*args, **kwargs)
 
 
 def load_benchmark(identifier: str) -> Benchmark:
-    import_plugin('benchmarks', identifier)
+    import_plugin('brainscore_language', 'benchmarks', identifier)
 
     return benchmark_registry[identifier]()
 
 
 def load_model(identifier: str) -> ArtificialSubject:
-    import_plugin('models', identifier)
+    import_plugin('brainscore_language', 'models', identifier)
 
     model = model_registry[identifier]()
     model.identifier = identifier
@@ -49,7 +48,9 @@ def load_model(identifier: str) -> ArtificialSubject:
 
 
 def _run_score(model_identifier: str, benchmark_identifier: str) -> Score:
-    """ Score the model referenced by the `model_identifier` on the benchmark referenced by the `benchmark_identifier`. """
+    """
+    Score the model referenced by the `model_identifier` on the benchmark referenced by the `benchmark_identifier`.
+    """
     model: ArtificialSubject = load_model(model_identifier)
     benchmark: Benchmark = load_benchmark(benchmark_identifier)
     score: Score = benchmark(model)
@@ -77,7 +78,7 @@ def score(model_identifier: str, benchmark_identifier: str) -> Score:
         this benchmark's ceiling such that 1 means the model matches the data to ceiling level.
     """
     if installation_preference() == 'newenv':
-        conda_score = CondaScore(model_identifier, benchmark_identifier)
+        conda_score = CondaScore('brainscore_language', model_identifier, benchmark_identifier)
         result = conda_score()
     else:
         result = _run_score(model_identifier, benchmark_identifier)
