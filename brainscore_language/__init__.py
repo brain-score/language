@@ -3,8 +3,8 @@ from typing import Dict, Any, Union, Callable
 from brainio.assemblies import DataAssembly
 from brainscore_core.benchmarks import Benchmark
 from brainscore_core.metrics import Score, Metric
-from brainscore_core.plugin_management.conda_score import CondaScore
-from brainscore_core.plugin_management.import_plugin import import_plugin, installation_preference
+from brainscore_core.plugin_management.conda_score import wrap_score
+from brainscore_core.plugin_management.import_plugin import import_plugin
 from brainscore_language.artificial_subject import ArtificialSubject
 
 data_registry: Dict[str, Callable[[], Union[DataAssembly, Any]]] = {}
@@ -56,8 +56,6 @@ def _run_score(model_identifier: str, benchmark_identifier: str) -> Score:
     score: Score = benchmark(model)
     score.attrs['model_identifier'] = model_identifier
     score.attrs['benchmark_identifier'] = benchmark_identifier
-    CondaScore.save_score(score)
-
     return score
 
 
@@ -77,10 +75,6 @@ def score(model_identifier: str, benchmark_identifier: str) -> Score:
     :return: a Score of how brain-like the candidate model is under this benchmark. The score is normalized by
         this benchmark's ceiling such that 1 means the model matches the data to ceiling level.
     """
-    if installation_preference() == 'newenv':
-        conda_score = CondaScore('brainscore_language', model_identifier, benchmark_identifier)
-        result = conda_score()
-    else:
-        result = _run_score(model_identifier, benchmark_identifier)
-
-    return result
+    return wrap_score(__file__,
+                      model_identifier=model_identifier, benchmark_identifier=benchmark_identifier,
+                      score_function=_run_score)
