@@ -20,19 +20,10 @@ BIBTEX = """@article{pereira2018toward,
 }"""
 
 
-try:
-    data_registry["Pereira2018_v2022.language"] = lambda: load_from_s3(
-        identifier="Pereira2018ROI",
-        # version_id="8kEzAXaWnxjMIC95MrhSJ3gtP2a1W.Y7",
-        version_id="i1XqPs72b82kfzj9kZ9EQwVZjLltmlSz",
-        # sha1="235ecf1f2abc38cb892c0a7b5c9c465434f153c5",
-        sha1="d1dc23f2157cfcf6f78abf781a92480cd919ad1c",
-        assembly_prefix="assembly_",
-    )
-except Exception as e:
-    # TODO: check what class of Exception is thrown by S3 object not found, and catch that
-    # while we don't know, we will continue to throw the exception rather than handling it
-    raise e
-    data_registry["Pereira2018_v2022.language"] = lambda: load_from_disk(
-        "Pereira2018ROI"
-    )
+
+data_registry["Pereira2018_v2022.language"] = lambda: load_from_s3(
+    identifier="Pereira2018ROI",
+    version_id="pwsEbmuuEc60F2z0Y8xVw7i2RgtjyEf9",
+    sha1="63543362c5e8175efb40721016edb9963b4f7e1e",
+    assembly_prefix="assembly_",
+)

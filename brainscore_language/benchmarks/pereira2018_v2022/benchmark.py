@@ -27,14 +27,14 @@ def Pereira2018_243sentences():
     return _Pereira2018LinregPearsonr(
         experiment="PereiraE3_72pass",
         ceiling_s3_kwargs=dict(
-            sha1="64ebaded266506df698ed249685ffadabf017951",
-            version_id="H8Apri0513nJ8Qy54dp3IitpuLOL9UyK",
+            sha1="f74a68b74568e44257778effc40c56d223cc5219",
+            version_id="g1oQg1J.HBuG2WwD6fwjNsjhMvsbQpjA",
             raw_kwargs=dict(
-                version_id="ws6mzNrk9AkN2rFP3vVzBcSSgF3n0J5O",
-                sha1="a72adbc813e1eaff5fbb3e4fcb9c1b202d3cdbf2",
+                sha1="e64c0c8e73169340f30f7135d1f2f4f1275cb2ad",
+                version_id="8NMVc498YgYz7TZiocfeueCB5uxBt42G",
                 raw_kwargs=dict(
-                    version_id="LYWHrqobBWLYYKMwMz4bEUsB2s..9QTY",
-                    sha1="0b5477ead370939a65b824629f72fad40da0543f",
+                    sha1="5b97b28406e18ea345a254d15562f4d271c6dc59",
+                    version_id="cNV3rCdVCAu2FjbQyoNGtFZNBfkh0q5d",
                 ),
             ),
         ),
@@ -45,14 +45,14 @@ def Pereira2018_384sentences():
     return _Pereira2018LinregPearsonr(
         experiment="PereiraE2_96pass",
         ceiling_s3_kwargs=dict(
-            sha1="638b7a0d7a08a851ace19af9489801c9c1a4c05b",
-            version_id="OFu.5imbaIbrJvD6xny_G55XfEzOU37o",
+            sha1="d4b55d2d7b44a27d45c375b938584b6b2c9b2265",
+            version_id="U_kebareV3iUmbUwg4P1MVJJdj_ImpcP",
             raw_kwargs=dict(
-                sha1="3348a8c489f5d091c5f4ded9d50f0c895e2368f4",
-                version_id="c6zAAvSRxerQ3kHRf0I7WnSoFZDSd3kG",
+                sha1="e64c0c8e73169340f30f7135d1f2f4f1275cb2ad",
+                version_id="yKvtiG3W5FUrzRvi7nXdk7tH2x4C0H_F",
                 raw_kwargs=dict(
-                    sha1="75a88348f30135bb0453459ba8eddf33eabf49ff",
-                    version_id="cA3D7oKIcpx.qZz9tLOFO_kAkOduht4W",
+                    sha1="5b97b28406e18ea345a254d15562f4d271c6dc59",
+                    version_id="2lHr8sfxTfZ25j88on1Wve2mmPnk3Cfp",
                 ),
             ),
         ),
@@ -108,7 +108,7 @@ class _Pereira2018LinregPearsonr(BenchmarkBase):
     def _load_data(self, experiment: str) -> NeuroidAssembly:
         data = load_dataset("Pereira2018_v2022.language")
         # data = data.sel(experiment=experiment)  # filter experiment
-        data.loc[data.experiment == experiment, :, :]
+        data = data.loc[data.experiment == experiment, :, :]
         data = data.dropna(
             "neuroid"
         )  # not all subjects have done both experiments, drop those that haven't
