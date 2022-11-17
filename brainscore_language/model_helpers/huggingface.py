@@ -1,6 +1,7 @@
 import functools
 import logging
 from collections import OrderedDict
+import re
 from typing import Union, List, Tuple, Dict, Callable
 
 import numpy as np
@@ -78,10 +79,10 @@ class HuggingfaceSubject(ArtificialSubject):
         output = {'behavior': [], 'neural': []}
         number_of_tokens = 0
 
-        text_iterator = tqdm(text, desc='digest text') if len(text) > 1 else text  # show progress bar if multiple parts
+        text_iterator = tqdm(text, desc='digest text') if len(text) > 100 else text  # show progress bar if many parts
         for part_number, text_part in enumerate(text_iterator):
-            # tokenize
-            context = ' '.join(text[:part_number + 1])  # build up context over items in the text
+            # prepare string representation of context
+            context = self._prepare_context(text[:part_number + 1])
             context_tokens, number_of_tokens = self._tokenize(context, number_of_tokens)
 
             # prepare recording hooks
@@ -118,6 +119,18 @@ class HuggingfaceSubject(ArtificialSubject):
         output['neural'] = xr.concat(output['neural'], dim='presentation').sortby('part_number') \
             if output['neural'] else None
         return output
+
+    def _prepare_context(self, context_parts):
+        """
+        Prepare a single string representation of a (possibly partial) input context
+        for the model.
+        """
+        context = ' '.join(context_parts)
+
+        # Remove erroneous spaces before punctuation.
+        context = re.sub(r'\s+([.,!?;:])', r'\1', context)
+
+        return context
 
     def _tokenize(self, context, num_previous_context_tokens):
         """
@@ -209,7 +222,7 @@ class HuggingfaceSubject(ArtificialSubject):
         logits = base_output.logits
         pred_id = torch.argmax(logits, axis=2).squeeze()
         # Note that this is currently only predicting the next *token* which might not always be entire words.
-        last_model_token_inference = pred_id[-1].tolist()
+        last_model_token_inference = pred_id[-1].tolist() if len(pred_id.size()) > 0 else pred_id.item()
         next_word = self.tokenizer.decode(last_model_token_inference)
         # `next_word` often includes a space ` ` in front of the actual word. Since the task already tells us to output
         # a word, we can strip the space.
