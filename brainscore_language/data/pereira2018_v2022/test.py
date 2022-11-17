@@ -24,12 +24,12 @@ class TestData:
         assert len(assembly["presentation"]) == 243 + 384
         _logger.info(f'no. of presentation IDs == {len(assembly["presentation"])}')
 
-        assert len(set(assembly["sentence"].values)) == 243 + 384
-        _logger.info(f'no. of stimuli == {len(assembly["sentence"].values)}')
+        assert len(set(assembly["stimuli"].values)) == 243 + 384
+        _logger.info(f'no. of stimuli == {len(assembly["stimuli"].values)}')
 
         assert (
             "The concert pianist went blind in adulthood."
-            in assembly["sentence"].values
+            in assembly["stimuli"].values
         )
         _logger.info(
             f'stimulus "The concert pianist went blind in adulthood." is present!'
