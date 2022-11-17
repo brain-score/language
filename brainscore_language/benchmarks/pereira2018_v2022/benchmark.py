@@ -85,13 +85,13 @@ class _Pereira2018LinregPearsonr(BenchmarkBase):
         self.metric = load_metric(
             "linear_pearsonr",
             crossvalidation_kwargs={
-                "split_coord": "sentence",
+                "split_coord": "stimuli",
             },
             regression_kwargs={
-                "stimulus_coord": "sentence",
+                "stimulus_coord": "stimuli",
             },
             correlation_kwargs={
-                "correlation_coord": "sentence",
+                "correlation_coord": "stimuli",
                 "neuroid_coord": "neuroid",
             },
         )
@@ -148,7 +148,7 @@ class _Pereira2018LinregPearsonr(BenchmarkBase):
         )
         stimuli = self.data["stimuli"]
         predictions = candidate.digest_text(stimuli.values)["neural"]
-        predictions["presentation"] = "presentation", stimuli["sentence"].values
+        predictions["presentation"] = "presentation", stimuli["stimuli"].values
         raw_score = self.metric(
             predictions,
             self.data,
