@@ -1149,6 +1149,10 @@ def distilgpt2():
 
 
 def test_score_aggregate(distilgpt2):
+    """
+    Scores computed with individual benchmark should match exactly those
+    in the combined benchmark class, and be aggregated correctly by mean.
+    """
     suites = ["cleft", "cleft_modifier"]
     benchmark = SyntaxGymTSE(suites)
 
@@ -1156,10 +1160,11 @@ def test_score_aggregate(distilgpt2):
     sub_scores = {benchmark.suite.meta["name"]: benchmark(distilgpt2)
                   for benchmark in benchmark.sub_benchmarks}
 
-    assert score == np.mean(list(sub_scores.values()))
+    np.testing.assert_equal(score.item(), np.mean(list(sub_scores.values())))
 
-    # TODO assert that we can extract the sub-benchmark names and scores
-    # from the overall score object
+    assert score.sub_scores["sub_benchmark"].values.tolist() == suites
+    np.testing.assert_array_equal(score.sub_scores.values,
+                                  np.array([sub_scores[s] for s in suites]))
 
 
 @pytest.mark.parametrize("suite", REFERENCE_DISTILGPT2_REGION_TOTALS.keys())

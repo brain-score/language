@@ -69,10 +69,6 @@ class SyntaxGymTSE(BenchmarkBase):
             sub_score['sub_benchmark'] = [sub_benchmark.suite.meta["name"]]
             sub_scores.append(sub_score)
 
-        # DEV
-        from pprint import pprint
-        pprint(sub_scores)
-
         sub_scores = Score.merge(*sub_scores, ignore_exceptions=True)  # ignore merge errors of raw attributes
 
         final_score = sub_scores.mean()
