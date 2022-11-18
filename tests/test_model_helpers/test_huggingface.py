@@ -66,6 +66,16 @@ class TestNextWord:
         next_words = model.digest_text(text)['behavior']
         assert len(next_words) == 1
 
+    def test_0_dimensional_tensor(self):
+        # Some benchmarks (e.g. Wikitext-accuracy) will incur a 0-dim pred_id
+        # ensure that this is handled gracefully
+        from brainscore_language import load_benchmark
+        benchmark = load_benchmark('Wikitext-accuracy')
+        benchmark.data = benchmark.data[0:2] # test on subset for speed
+        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
+        score = benchmark(model)
+        assert score == 0
+
 
 class TestReadingTimes:
     def test_single_word(self):

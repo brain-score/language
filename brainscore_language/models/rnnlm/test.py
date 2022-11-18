@@ -18,7 +18,7 @@ from brainscore_language.artificial_subject import ArtificialSubject
 def test_reading_times(model_identifier, expected_reading_times):
     model = load_model(model_identifier)
     text = ["the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog"]
-    model.perform_behavioral_task(task=ArtificialSubject.Task.reading_times)
+    model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
     reading_times = model.digest_text(text)["behavior"]
     np.testing.assert_allclose(reading_times, expected_reading_times, atol=0.01)
 
@@ -33,7 +33,7 @@ def test_reading_times(model_identifier, expected_reading_times):
 def test_next_word(model_identifier, expected_next_words):
     model = load_model(model_identifier)
     text = ["the quick", "brown fox jumps over", "the lazy dog"]
-    model.perform_behavioral_task(task=ArtificialSubject.Task.next_word)
+    model.start_behavioral_task(task=ArtificialSubject.Task.next_word)
     next_word_predictions = model.digest_text(text)["behavior"]
     np.testing.assert_array_equal(next_word_predictions, expected_next_words)
 
@@ -48,7 +48,7 @@ def test_next_word(model_identifier, expected_next_words):
 def test_neural(model_identifier, feature_size):
     model = load_model(model_identifier)
     text = ["the quick brown fox", "jumps over", "the lazy dog"]
-    model.perform_neural_recording(
+    model.start_neural_recording(
         recording_target=ArtificialSubject.RecordingTarget.language_system,
         recording_type=ArtificialSubject.RecordingType.fMRI,
     )
