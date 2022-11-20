@@ -3,6 +3,8 @@ python:
   - "3.7"
   - "3.8"
   - "3.9"
+env:
+  - PYTEST_SETTINGS="not requires_gpu and not memory_intense and not slow and not travis_slow"
 install:
   # fix setuptools for python 3.7, error in other versions https://github.com/pypa/setuptools/issues/3293
   - if [[ $TRAVIS_PYTHON_VERSION == 3.7* ]]; then

@@ -2,17 +2,22 @@
 
 PLUGIN_PATH=$1
 PLUGIN_NAME=$2
-HAS_REQUIREMENTS=$3
+SINGLE_TEST=$3
+CONDA_ENV_PATH=$PLUGIN_PATH/environment.yml
 PLUGIN_REQUIREMENTS_PATH=$PLUGIN_PATH/requirements.txt
 PLUGIN_TEST_PATH=$PLUGIN_PATH/test.py
-SINGLE_TEST=$4
+PYTEST_SETTINGS=${PYTEST_SETTINGS:-"not requires_gpu and not memory_intense and not slow"}
 
 echo "${PLUGIN_NAME/_//}"
+echo "Setting up conda environment..."
 
 eval "$(command conda 'shell.bash' 'hook' 2>/dev/null)"
 output=$(conda create -n $PLUGIN_NAME python=3.8 -y 2>&1) || echo $output
 conda activate $PLUGIN_NAME
-if $HAS_REQUIREMENTS; then
+if [ -f "$CONDA_ENV_PATH" ]; then
+  output=$(conda env update --file $CONDA_ENV_PATH 2>&1) || echo $output
+fi
+if [ -f "$PLUGIN_REQUIREMENTS_PATH" ]; then
   output=$(pip install -r $PLUGIN_REQUIREMENTS_PATH 2>&1) || echo $output
 fi
 

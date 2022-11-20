@@ -3,6 +3,7 @@ import pytest_check as check
 import warnings
 from pathlib import Path
 from typing import Dict, List
+import yaml
 
 from brainscore_language.plugin_management.environment_manager import EnvironmentManager
 
@@ -32,7 +33,6 @@ class PluginTestRunner(EnvironmentManager):
         self.plugin_type = Path(self.plugin_directory).parent.name
         self.plugin_name = self.plugin_type + '_' + Path(self.plugin_directory).name
         self.env_name = self.plugin_name
-        self.has_requirements = (self.plugin_directory / 'requirements.txt').is_file()
         self.test = test if test else False
         self.results = results
         self.script_path = f'{Path(__file__).parent}/test_plugin.sh'
@@ -43,8 +43,26 @@ class PluginTestRunner(EnvironmentManager):
         self.teardown()
 
     def validate_plugin(self):
-        """ requires "test.py" file in plugin directory """
         assert (self.plugin_directory / 'test.py').is_file(), "'test.py' not found"
+
+        # if environment.yml is present, ensure no dependency conflicts
+        # checks that environment.yml does not include env name or unsupported python versions
+        conda_yml_path = self.plugin_directory / 'environment.yml'
+        if conda_yml_path.is_file():
+            with open(conda_yml_path, "r") as f:
+                try:
+                    env = yaml.dump(yaml.safe_load(f))
+                    assert 'name' not in env, f"\nenvironment.yml must not specify 'name'"
+                    python_specs = [line for line in env.split("\n") if 'python=' in line]
+                    if len(python_specs) > 0:
+                        if len(python_specs) == 1:
+                            python_spec = python_specs[0]
+                            python_version = python_spec.split('python=')[1]
+                            assert python_version.startswith(('3.7', '3.8', '3.9'))
+                        else:
+                            warnings.warn('multiple versions of python found in environment.yml')
+                except yaml.YAMLError as e:
+                    raise e
 
     def run_tests(self) -> int:
         """ 
@@ -52,8 +70,7 @@ class PluginTestRunner(EnvironmentManager):
         runs all tests or selected test for specified plugin
         """
         run_command = f"bash {self.script_path} \
-            {self.plugin_directory} {self.plugin_name} \
-            {str(self.has_requirements).lower()} {self.test}"
+            {self.plugin_directory} {self.plugin_name} {self.test}"
 
         completed_process = self.run_in_env(run_command)
         check.equal(completed_process.returncode, 0)
