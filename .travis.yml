@@ -23,5 +23,5 @@ install:
   # install singularity for container models
   - conda install -yc conda-forge singularity
 script:
-  - pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow"
+  - pytest -m "$PYTEST_SETTINGS"
   - python brainscore_language/plugin_management/test_plugins.py

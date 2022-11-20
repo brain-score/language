@@ -8,6 +8,7 @@ PLUGIN_REQUIREMENTS_PATH=$PLUGIN_PATH/requirements.txt
 PLUGIN_TEST_PATH=$PLUGIN_PATH/test.py
 PYTEST_SETTINGS=${PYTEST_SETTINGS:-"not requires_gpu and not memory_intense and not slow"}
 
+
 echo "${PLUGIN_NAME/_//}"
 echo "Setting up conda environment..."
 
@@ -25,9 +26,9 @@ output=$(python -m pip install -e ".[test]" 2>&1) || echo $output
 
 if [ "$SINGLE_TEST" != False ]; then
   echo "Running ${SINGLE_TEST}"
-  pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow" "-vv" $PLUGIN_TEST_PATH "-k" $SINGLE_TEST "--log-cli-level=INFO"
+  pytest -m "$PYTEST_SETTINGS" "-vv" $PLUGIN_TEST_PATH "-k" $SINGLE_TEST "--log-cli-level=INFO"
 else
-  pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow" $PLUGIN_TEST_PATH
+  pytest -m "$PYTEST_SETTINGS" $PLUGIN_TEST_PATH
 fi
 
 exit $?
