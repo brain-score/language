@@ -21,6 +21,8 @@ The `score` function is the primary entry point to score a model on a benchmark.
    :caption: Contents:
 
    modules/artificial_subject
+   New Model Tutorial <https://brain-score-core.readthedocs.io/en/latest/modules/model_tutorial.html>
+   New Benchmark Tutorial <https://brain-score-core.readthedocs.io/en/latest/modules/benchmark_tutorial.html>
    examples
    modules/api_reference
    Glossary <https://brain-score-core.readthedocs.io/en/latest/modules/glossary.html>
