@@ -15,7 +15,7 @@ from brainscore_language import score
         ("distilgpt2", "Pereira2018.243sentences-linear", approx(0.73772422, abs=0.0005)),
         ("glove-840b", "Pereira2018.384sentences-linear", approx(0.18385368, abs=0.0005)),
         ("gpt2-xl", "Futrell2018-pearsonr", approx(0.31825621, abs=0.0005)),
-    ],
+    ]
 )
 def test_score(model_identifier, benchmark_identifier, expected_score):
     actual_score = score(model_identifier=model_identifier, benchmark_identifier=benchmark_identifier)

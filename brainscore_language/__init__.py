@@ -64,8 +64,9 @@ def score(model_identifier: str, benchmark_identifier: str) -> Score:
     Score the model referenced by the `model_identifier` on the benchmark referenced by the `benchmark_identifier`.
     The model needs to implement the :class:`~brainscore_language.artificial_subject.ArtificialSubject` interface
     so that the benchmark can interact with it.
-    The benchmark will be looked up from the :data:`~brainscore_language.benchmarks` and evaluates the model on how
-    brain-like it is under that benchmark's experimental paradigm, primate measurements, comparison metric, and ceiling
+    The benchmark will be looked up from the :data:`~brainscore_language.benchmarks` and evaluates the model
+    (looked up from :data:`~brainscore_language.models`) on how brain-like it is under that benchmark's
+    experimental paradigm, primate measurements, comparison metric, and ceiling.
     This results in a quantitative
     `Score <https://brain-score-core.readthedocs.io/en/latest/modules/metrics.html#brainscore_core.metrics.Score>`_
     ranging from 0 (least brain-like) to 1 (most brain-like under this benchmark).
