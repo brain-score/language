@@ -16,6 +16,7 @@ from transformers.modeling_outputs import CausalLMOutput
 from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.utils import fullname
+from brainscore_language.utils.preprocessing import prepare_context
 
 
 class HuggingfaceSubject(ArtificialSubject):
@@ -82,7 +83,7 @@ class HuggingfaceSubject(ArtificialSubject):
         text_iterator = tqdm(text, desc='digest text') if len(text) > 100 else text  # show progress bar if many parts
         for part_number, text_part in enumerate(text_iterator):
             # prepare string representation of context
-            context = self._prepare_context(text[:part_number + 1])
+            context = prepare_context(text[:part_number + 1])
             context_tokens, number_of_tokens = self._tokenize(context, number_of_tokens)
 
             # prepare recording hooks
@@ -119,18 +120,6 @@ class HuggingfaceSubject(ArtificialSubject):
         output['neural'] = xr.concat(output['neural'], dim='presentation').sortby('part_number') \
             if output['neural'] else None
         return output
-
-    def _prepare_context(self, context_parts):
-        """
-        Prepare a single string representation of a (possibly partial) input context
-        for the model.
-        """
-        context = ' '.join(context_parts)
-
-        # Remove erroneous spaces before punctuation.
-        context = re.sub(r'\s+([.,!?;:])', r'\1', context)
-
-        return context
 
     def _tokenize(self, context, num_previous_context_tokens):
         """
