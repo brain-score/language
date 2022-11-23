@@ -1,9 +1,10 @@
 import re
+from typing import List
 
 
 _space_before_punctuation_re = re.compile(r'\s+([.,!?;:])')
 
-def prepare_context(context_parts: list[str]) -> str:
+def prepare_context(context_parts: List[str]) -> str:
     """
     Prepare a context for use in a neural or behavioral task. Joins
     the given list of natural-language context part strings and adjusts
