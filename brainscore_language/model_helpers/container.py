@@ -19,6 +19,7 @@ from typing import List, Tuple, Dict, Union, Callable
 from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.utils import fullname
+from brainscore_language.utils.preprocessing import prepare_context
 
 
 class ContainerSubject(ArtificialSubject):
@@ -224,7 +225,7 @@ class ContainerSubject(ArtificialSubject):
         """
 
         def _build_assembly(part_number, text_part):
-            context = " ".join(text[: part_number + 1])
+            context = prepare_context(text[: part_number + 1])
             stimuli_coords = {
                 "stimulus": ("presentation", [text_part]),
                 "context": ("presentation", [context]),
