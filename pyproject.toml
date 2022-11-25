@@ -25,6 +25,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest",
+    "pytest-check",
     "gensim",
     "joblib",
 ]
