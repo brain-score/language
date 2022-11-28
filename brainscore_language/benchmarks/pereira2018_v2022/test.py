@@ -44,8 +44,8 @@ class TestBenchmark:
         neural_activity = NeuroidAssembly(
             neural_activity,
             coords={
-                "stimulus_seq": ("presentation", np.arange(experiment)),
-                "stimulus_num": ("presentation", np.arange(experiment)),
+                "stimuli": ("presentation", np.arange(experiment)),
+                # "stimuli_id": ("presentation", np.arange(experiment)),
                 "neuroid_id": ("neuroid", np.arange(25)),
                 "region": ("neuroid", ["some_region"] * 25),
             },
