@@ -160,34 +160,15 @@ class SyntaxGymSingleTSE(BenchmarkBase):
 
         return score
 
-
-# Map from test suite tag to high-level circuit.
-circuits = {
-    "Licensing": ["npi", "reflexive"],
-    "Long-Distance Dependencies": ["fgd", "cleft"],
-    "Agreement": ["number"],
-    "Garden-Path Effects": ["npz", "mvrr"],
-    "Gross Syntactic State": ["subordination"],
-    "Center Embedding": ["center"],
-}
-
-tag_to_circuit = {tag: circuit
-                  for circuit, tags in circuits.items()
-                  for tag in tags}
-
-
 benchmark_registry["syntaxgym-2020"] = SyntaxGym2020
 
 with open(Path(__file__).parent / 'test_suites.json') as json_file:
     test_suite_dict = json.load(json_file)
-# Define a suite hierarchy: all suites are nested beneath the SyntaxGym benchmark;
-# with intervening "circuit" structure.
-for circuit, suite_tags in circuits.items():
-    # Create a benchmark with matching suites.
-    matching_suites = [suite_name for suite_name in test_suite_dict.keys()
-                       if suite_name.startswith(tuple(suite_tags))]
-    benchmark_registry[f"syntaxgym-2020/{circuit}"] = lambda: SyntaxGymTSE(matching_suites)
+# # Define a suite hierarchy: all suites are nested beneath the SyntaxGym benchmark;
+# matching_suites = [suite_name for suite_name in test_suite_dict.keys()]
 
-    for suite in matching_suites:
-        # Create a benchmark with a single suite.
-        benchmark_registry[f"syntaxgym-2020/{circuit}/{suite}"] = lambda: SyntaxGymSingleTSE(suite)
+for suite_name in test_suite_dict.keys():
+    # Create a benchmark with a single suite.
+    benchmark_registry[f"{suite_name}"] = lambda: SyntaxGymSingleTSE(suite_name)
+
+print(benchmark_registry)
