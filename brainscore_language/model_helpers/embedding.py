@@ -11,7 +11,7 @@ from typing import Union, List, Dict, Tuple
 
 from brainio.assemblies import NeuroidAssembly, merge_data_arrays
 from brainscore_language.artificial_subject import ArtificialSubject
-from brainscore_language.utils.preprocessing import prepare_context
+from brainscore_language.model_helpers.preprocessing import prepare_context
 
 
 def mean_over_words(sentence_features):

@@ -1,6 +1,6 @@
 import pytest
 
-from brainscore_language.utils import preprocessing
+from brainscore_language.model_helpers import preprocessing
 
 
 @pytest.mark.parametrize(

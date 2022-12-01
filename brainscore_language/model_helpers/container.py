@@ -18,8 +18,8 @@ from typing import List, Tuple, Dict, Union, Callable
 
 from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly
 from brainscore_language.artificial_subject import ArtificialSubject
+from brainscore_language.model_helpers.preprocessing import prepare_context
 from brainscore_language.utils import fullname
-from brainscore_language.utils.preprocessing import prepare_context
 
 
 class ContainerSubject(ArtificialSubject):
