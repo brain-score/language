@@ -27,6 +27,8 @@ class ImportPlugin:
         specified_plugin_dirname = None
         plugin_registrations_count = 0
         for plugin_dirname in plugins:
+            if plugin_dirname.startswith('.') or plugin_dirname.startswith('_'):  # ignore e.g. __pycache__
+                continue
             plugin_dirpath = self.plugins_dir / plugin_dirname
             init_file = plugin_dirpath / "__init__.py"
             with open(init_file) as f:
@@ -56,10 +58,11 @@ class ImportPlugin:
 
 
 def installation_preference():
-        pref_options = ['yes', 'no', 'newenv']
-        pref = os.getenv('BS_INSTALL_DEPENDENCIES', 'yes')
-        assert pref in pref_options, f"BS_INSTALL_DEPENDENCIES value {pref} not recognized. Must be one of {pref_options}."
-        return pref
+    pref_options = ['yes', 'no', 'newenv']
+    pref = os.getenv('BS_INSTALL_DEPENDENCIES', 'yes')
+    assert pref in pref_options, f"BS_INSTALL_DEPENDENCIES value {pref} not recognized. Must be one of {pref_options}."
+    return pref
+
 
 def import_plugin(plugin_type: str, identifier: str):
     """ 
@@ -71,8 +74,8 @@ def import_plugin(plugin_type: str, identifier: str):
         in that directory's requirements.txt, and the plugin base package is imported
     """
     import_plugin = ImportPlugin(plugin_type, identifier)
-    
+
     if not installation_preference() == 'no':
         import_plugin.install_requirements()
-    
+
     __import__(f'brainscore_language.{plugin_type}.{import_plugin.plugin_dirname}')

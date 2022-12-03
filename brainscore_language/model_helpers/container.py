@@ -18,6 +18,7 @@ from typing import List, Tuple, Dict, Union, Callable
 
 from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly
 from brainscore_language.artificial_subject import ArtificialSubject
+from brainscore_language.model_helpers.preprocessing import prepare_context
 from brainscore_language.utils import fullname
 
 
@@ -103,14 +104,14 @@ class ContainerSubject(ArtificialSubject):
     def identifier(self):
         return self._identifier
 
-    def perform_behavioral_task(self, task: ArtificialSubject.Task):
+    def start_behavioral_task(self, task: ArtificialSubject.Task):
         self._behavioral_task = task
         self._behavioral_function = self._task_function_mapping_dict[task]
 
-    def perform_neural_recording(
-            self,
-            recording_target: ArtificialSubject.RecordingTarget,
-            recording_type: ArtificialSubject.RecordingType,
+    def start_neural_recording(
+        self,
+        recording_target: ArtificialSubject.RecordingTarget,
+        recording_type: ArtificialSubject.RecordingType,
     ):
         self._neural_recordings.append((recording_target, recording_type))
 
@@ -118,8 +119,9 @@ class ContainerSubject(ArtificialSubject):
         options = ["docker", "singularity"]
         for option in options:
             try:
-                subprocess.run([option, "--version"],
-                               stdout=subprocess.DEVNULL)  # attempt to run the container backend, try another on error
+                subprocess.run(
+                    [option, "--version"], stdout=subprocess.DEVNULL
+                )  # attempt to run the container backend, try another on error
                 return option
             except:
                 self._logger.info(f"{option} backend not found. Testing next option.")
@@ -223,7 +225,7 @@ class ContainerSubject(ArtificialSubject):
         """
 
         def _build_assembly(part_number, text_part):
-            context = " ".join(text[: part_number + 1])
+            context = prepare_context(text[: part_number + 1])
             stimuli_coords = {
                 "stimulus": ("presentation", [text_part]),
                 "context": ("presentation", [context]),

@@ -15,6 +15,7 @@ from transformers.modeling_outputs import CausalLMOutput
 
 from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly
 from brainscore_language.artificial_subject import ArtificialSubject
+from brainscore_language.model_helpers.preprocessing import prepare_context
 from brainscore_language.utils import fullname
 
 
@@ -82,7 +83,7 @@ class HuggingfaceSubject(ArtificialSubject):
         text_iterator = tqdm(text, desc='digest text') if len(text) > 100 else text  # show progress bar if many parts
         for part_number, text_part in enumerate(text_iterator):
             # prepare string representation of context
-            context = self._prepare_context(text[:part_number + 1])
+            context = prepare_context(text[:part_number + 1])
             context_tokens, number_of_tokens = self._tokenize(context, number_of_tokens)
 
             # prepare recording hooks
@@ -119,18 +120,6 @@ class HuggingfaceSubject(ArtificialSubject):
         output['neural'] = xr.concat(output['neural'], dim='presentation').sortby('part_number') \
             if output['neural'] else None
         return output
-
-    def _prepare_context(self, context_parts):
-        """
-        Prepare a single string representation of a (possibly partial) input context
-        for the model.
-        """
-        context = ' '.join(context_parts)
-
-        # Remove erroneous spaces before punctuation.
-        context = re.sub(r'\s+([.,!?;:])', r'\1', context)
-
-        return context
 
     def _tokenize(self, context, num_previous_context_tokens):
         """
@@ -222,7 +211,7 @@ class HuggingfaceSubject(ArtificialSubject):
         logits = base_output.logits
         pred_id = torch.argmax(logits, axis=2).squeeze()
         # Note that this is currently only predicting the next *token* which might not always be entire words.
-        last_model_token_inference = pred_id[-1].tolist()
+        last_model_token_inference = pred_id[-1].tolist() if len(pred_id.size()) > 0 else pred_id.item()
         next_word = self.tokenizer.decode(last_model_token_inference)
         # `next_word` often includes a space ` ` in front of the actual word. Since the task already tells us to output
         # a word, we can strip the space.
@@ -246,7 +235,10 @@ class HuggingfaceSubject(ArtificialSubject):
                        target_dict: dict) -> RemovableHandle:
         # instantiate parameters to function defaults; otherwise they would change on next function call
         def hook_function(_layer: torch.nn.Module, _input, output: torch.Tensor, key=key):
-            target_dict[key] = self._tensor_to_numpy(output)
+            # fix for when taking out only the hidden state, this is different from dropout because of residual state
+            # see:  https://github.com/huggingface/transformers/blob/c06d55564740ebdaaf866ffbbbabf8843b34df4b/src/transformers/models/gpt2/modeling_gpt2.py#L428
+            output = output[0] if len(output) > 1 else output
+            target_dict[key] = output
 
         hook = layer.register_forward_hook(hook_function)
         return hook
