@@ -1,7 +1,8 @@
 channels:
-  - conda-forge
   - r
 dependencies:
+  - pip
   - r
   - r-mgcv
-  - rpy2
+  - pip:
+    - rpy2
