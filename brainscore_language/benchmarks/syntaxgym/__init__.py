@@ -6,7 +6,6 @@ from .benchmark import SyntaxGymSingleTSE, SyntaxGym2020
 with open(Path(__file__).parent / 'test_suites.json') as json_file:
     test_suite_dict = json.load(json_file)
 
-benchmark_registry["syntaxgym-2020"] = SyntaxGym2020
 benchmark_registry['center_embed'] = lambda: SyntaxGymSingleTSE(test_suite_dict['center_embed'])
 benchmark_registry['center_embed_mod'] = lambda: SyntaxGymSingleTSE(test_suite_dict['center_embed_mod'])
 benchmark_registry['cleft'] = lambda: SyntaxGymSingleTSE(test_suite_dict['cleft'])
