@@ -15,6 +15,7 @@ from transformers.modeling_outputs import CausalLMOutput
 
 from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly
 from brainscore_language.artificial_subject import ArtificialSubject
+from brainscore_language.model_helpers.preprocessing import prepare_context
 from brainscore_language.utils import fullname
 
 
@@ -82,7 +83,7 @@ class HuggingfaceSubject(ArtificialSubject):
         text_iterator = tqdm(text, desc='digest text') if len(text) > 100 else text  # show progress bar if many parts
         for part_number, text_part in enumerate(text_iterator):
             # prepare string representation of context
-            context = self._prepare_context(text[:part_number + 1])
+            context = prepare_context(text[:part_number + 1])
             context_tokens, number_of_tokens = self._tokenize(context, number_of_tokens)
 
             # prepare recording hooks
@@ -249,7 +250,10 @@ class HuggingfaceSubject(ArtificialSubject):
                        target_dict: dict) -> RemovableHandle:
         # instantiate parameters to function defaults; otherwise they would change on next function call
         def hook_function(_layer: torch.nn.Module, _input, output: torch.Tensor, key=key):
-            target_dict[key] = self._tensor_to_numpy(output)
+            # fix for when taking out only the hidden state, this is different from dropout because of residual state
+            # see:  https://github.com/huggingface/transformers/blob/c06d55564740ebdaaf866ffbbbabf8843b34df4b/src/transformers/models/gpt2/modeling_gpt2.py#L428
+            output = output[0] if len(output) > 1 else output
+            target_dict[key] = output
 
         hook = layer.register_forward_hook(hook_function)
         return hook
