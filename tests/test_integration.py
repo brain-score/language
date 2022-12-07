@@ -45,8 +45,7 @@ from brainscore_language import score
         ('distilgpt2', 'subordination', approx(0.2173913, abs=.0005)),
         ('distilgpt2', 'subordination_orc-orc', approx(0.95652174, abs=.0005)),
         ('distilgpt2', 'subordination_pp-pp', approx(0.47826087, abs=.0005)),
-        ('distilgpt2', 'subordination_src-src', approx(0.56521739, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-2020', approx(0.96428571, abs=.0005))
+        ('distilgpt2', 'subordination_src-src', approx(0.56521739, abs=.0005))
     ]
 )
 def test_score(model_identifier, benchmark_identifier, expected_score):
