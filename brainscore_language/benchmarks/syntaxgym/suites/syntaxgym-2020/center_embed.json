@@ -1,0 +1,2014 @@
+{
+    "meta": {
+        "name": "center_embed",
+        "metric": "sum",
+        "comment": "",
+        "reference": "",
+        "author": ""
+    },
+    "region_meta": {
+        "1": "intro",
+        "2": "np_1",
+        "3": "that",
+        "4": "det_2",
+        "5": "np_2",
+        "6": "verb1",
+        "7": "verb2"
+    },
+    "predictions": [
+        {
+            "type": "formula",
+            "formula": "( (6;%plaus%) + (7;%plaus%) ) < ( (6;%implaus%) + (7;%implaus%) )"
+        }
+    ],
+    "items": [
+        {
+            "item_number": 1,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "painting"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "artist"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "painted"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "deteriorated"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "painting"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "artist"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "deteriorated"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "painted"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 2,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "storm"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "captain"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "feared"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "subsided"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "storm"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "captain"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "subsided"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "feared"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 3,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "girl"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "bug"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "frightened"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "shouted"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "girl"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "bug"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "shouted"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "frightened"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 4,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "baby"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "woman"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "held"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "yelled"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "baby"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "woman"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "yelled"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "held"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 5,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "soldier"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "bullet"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "wounded"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "died"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "soldier"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "bullet"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "died"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "wounded"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 6,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "storm"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "scientist"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "predicted"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "intensified"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "storm"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "scientist"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "intensified"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "predicted"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 7,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "convict"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "cop"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "arrested"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "escaped"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "convict"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "cop"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "escaped"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "arrested"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 8,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "computer"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "secretary"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "bought"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "crashed"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "computer"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "secretary"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "crashed"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "bought"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 9,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "floor"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "maid"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "swept"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "cracked"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "floor"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "maid"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "cracked"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "swept"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 10,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "yacht"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "millionaires"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "bought"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "sank"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "yacht"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "millionaires"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "sank"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "bought"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 11,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "shirt"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "man"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "bought"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "ripped"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "shirt"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "man"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "ripped"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "bought"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 12,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "water"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "maid"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "poured"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "evaporated"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "water"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "maid"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "evaporated"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "poured"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 13,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "building"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "workers"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "built"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "collapsed"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "building"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "workers"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "collapsed"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "built"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 14,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "bones"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "doctor"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "examined"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "broke"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "bones"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "doctor"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "broke"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "examined"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 15,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "building"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "workers"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "repaired"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "deteriorated"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "building"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "workers"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "deteriorated"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "repaired"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 16,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "ship"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "workers"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "built"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "sank"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "ship"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "workers"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "sank"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "built"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 17,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "horse"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "boy"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "rode"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "bucked"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "horse"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "boy"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "bucked"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "rode"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 18,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "water"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "chef"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "needed"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "evaporated"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "water"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "chef"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "evaporated"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "needed"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 19,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "tree"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "old man"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "cut"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "fell"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "tree"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "old man"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "fell"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "cut"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 20,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "letter"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "author"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "wrote"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "arrived"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "letter"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "author"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "arrived"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "wrote"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 21,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "glass"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "athlete"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "hit"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "cracked"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "glass"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "athlete"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "cracked"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "hit"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 22,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "bomb"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "terrorist"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "built"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "exploded"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "bomb"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "terrorist"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "exploded"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "built"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 23,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "meat"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "man"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "cooked"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "burned"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "meat"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "man"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "burned"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "cooked"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 24,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "sugar"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "visitor"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "bought"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "dissolved"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "sugar"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "visitor"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "dissolved"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "bought"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 25,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "pants"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "woman"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "bought"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "ripped"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "pants"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "woman"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "ripped"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "bought"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 26,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "toilet"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "worker"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "fixed"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "clogged"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "toilet"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "worker"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "clogged"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "fixed"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 27,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "window"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "boy"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "wiped"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "shattered"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "window"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "boy"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "shattered"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "wiped"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 28,
+            "conditions": [
+                {
+                    "condition_name": "plaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "child"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "shadow"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "frightened"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "yelled"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "implaus",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "child"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "that"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "shadow"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "yelled"
+                        },
+                        {
+                            "region_number": 7,
+                            "content": "frightened"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -121,6 +121,21 @@ class HuggingfaceSubject(ArtificialSubject):
             if output['neural'] else None
         return output
 
+    def _prepare_context(self, context_parts):
+        """
+        Prepare a single string representation of a (possibly partial) input context
+        for the model.
+        """
+        # Drop empty parts.
+        context_parts = [part for part in context_parts if part != ""]
+
+        context = ' '.join(context_parts)
+
+        # Remove erroneous spaces before punctuation.
+        context = re.sub(r'\s+([.,!?;:])', r'\1', context)
+
+        return context
+
     def _tokenize(self, context, num_previous_context_tokens):
         """
         Tokenizes the context, keeping track of the newly added tokens in `self.current_tokens`

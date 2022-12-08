@@ -46,7 +46,6 @@ def load_model(identifier: str) -> ArtificialSubject:
 
     return model
 
-
 def _run_score(model_identifier: str, benchmark_identifier: str) -> Score:
     """
     Score the model referenced by the `model_identifier` on the benchmark referenced by the `benchmark_identifier`.
