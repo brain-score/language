@@ -14,8 +14,12 @@ requires-python = ">=3.7"
 dependencies = [
     "tqdm",
     "numpy>=1.21",
+<<<<<<< HEAD
     "brainscore_core@git+https://github.com/brain-score/core.git@kvf/pr-to-score",
     "brainio@git+https://github.com/brain-score/brainio.git@main",
+=======
+    "brainscore_core@git+https://github.com/brain-score/core.git@main",
+>>>>>>> e38cf43cf05578b4269bf079e096374021bb8896
     "fire",
     # model_helpers dependencies
     "torch>=1.9.1",
