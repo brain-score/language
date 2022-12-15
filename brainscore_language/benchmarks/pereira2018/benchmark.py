@@ -113,3 +113,43 @@ class _Pereira2018ExperimentLinear(BenchmarkBase):
         raw_score = self.metric(predictions, self.data)
         score = ceiling_normalize(raw_score, self.ceiling)
         return score
+
+class _Pereira2018ExperimentLayerwiseLinear(_Pereira2018ExperimentLinear):
+    def __init__(self,experiment: str,sampler:str,ceiling_s3_kwargs: dict):
+        self.data = self._load_data(experiment)
+        self.metric = load_metric('linear_pearsonr')
+        base_identifier = f'Pereira2018.{experiment}-linear'
+        identifier = f'Pereira2018.{experiment}-laywerise-linear'
+        ceiling = self._load_ceiling(identifier=base_identifier, **ceiling_s3_kwargs)
+        super(_Pereira2018ExperimentLayerwiseLinear, self).__init__(
+            experiment=experiment, ceiling_s3_kwargs=ceiling_s3_kwargs)
+
+    def __call__(self, candidate: ArtificialSubject) -> Score:
+        candidate.start_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
+                                         recording_type=ArtificialSubject.RecordingType.fMRI)
+        stimuli = self.data['stimulus']
+        passages = self.data['passage_label'].values
+        predictions = []
+        for passage in sorted(set(passages)):  # go over individual passages, sorting to keep consistency across runs
+            passage_indexer = [stimulus_passage == passage for stimulus_passage in passages]
+            passage_stimuli = stimuli[passage_indexer]
+            passage_predictions = candidate.digest_text(passage_stimuli.values)['neural']
+            passage_predictions['stimulus_id'] = 'presentation', passage_stimuli['stimulus_id'].values
+            predictions.append(passage_predictions)
+        predictions = xr.concat(predictions, dim='presentation')
+        # compute scores layerwise:
+        raw_scores = []
+        for layer_id, prediction in predictions.groupby('layer'):
+            raw_score = self.metric(prediction, self.data)
+            raw_scores.append(raw_score)
+        raw_scores = xr.concat(raw_scores, dim='layer')
+        scores = []
+        for l, sc in raw_scores.groupby('layer'):
+            sc = ceiling_normalize(sc, self.ceiling)
+            scores.append(sc)
+        scores = xr.concat(scores, dim='layer')
+        score = Score([scores.values], coords={'aggregation': ['center'],
+                                               'layer':raw_scores.layer.values},
+                      dims=['aggregation','layer'])
+        score.attrs['raw'] = raw_scores
+        return score

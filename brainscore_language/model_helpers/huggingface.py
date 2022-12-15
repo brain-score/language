@@ -260,3 +260,27 @@ class HuggingfaceSubject(ArtificialSubject):
 
     def _tensor_to_numpy(self, tensor: torch.Tensor) -> np.ndarray:
         return tensor.cpu().data.numpy()
+
+
+class HuggingfaceGroup(HuggingfaceSubject):
+    def __init__(self,model_id: str,
+            region_layer_mapping: dict,model=None,
+            tokenizer=None):
+        super(HuggingfaceGroup, self).__init__(model_id,region_layer_mapping,model,tokenizer)
+
+    def _setup_hooks(self):
+        """ set up a group of hooks for recording internal neural activity from the model (aka layer activations) """
+        hooks = []
+        layer_representations = OrderedDict()
+        for (recording_target, recording_type) in self.neural_recordings:
+            layer_names = self.region_layer_mapping[recording_target]
+            if type(layer_names) == str:
+                layer_names = [layer_names]
+            for layer_name in layer_names:
+                layer = self._get_layer(layer_name)
+                hook = self._register_hook(layer, key=(recording_target, recording_type, layer_name),
+                                       target_dict=layer_representations)
+                hooks.append(hook)
+        return hooks, layer_representations
+
+
