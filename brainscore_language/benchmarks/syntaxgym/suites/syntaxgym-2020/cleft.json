@@ -1,0 +1,4865 @@
+{
+    "meta": {
+        "name": "cleft",
+        "metric": "sum",
+        "comment": "The below prediction is relatively EASY (getting the interaction right) The below prediction is relatively HARD (each mismatch condition has to be more surprising than the corresponding match condition) #Prediction [(6;%np_mismatch%)>(6;%np_match%)]&[[(5;%vp_mismatch%)+(6;%vp_mismatch%)]>[(5;%vp_match%)+(6;%vp_match%)]]",
+        "reference": "",
+        "author": ""
+    },
+    "region_meta": {
+        "1": "intro",
+        "2": "subj",
+        "3": "verb",
+        "4": "passive",
+        "5": "verb.1",
+        "6": "matrix_v"
+    },
+    "predictions": [
+        {
+            "type": "formula",
+            "formula": "((6;%np_mismatch%)-(6;%np_match%))+(((5;%vp_mismatch%)+(6;%vp_mismatch%))-((5;%vp_match%)+(6;%vp_match%)))>0"
+        }
+    ],
+    "items": [
+        {
+            "item_number": 1,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the meal"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "ate"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the meal"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "prepare"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the meal"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "ate"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "prepare"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the meal"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 2,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the young man"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the crops"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the young man"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "planted"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the crops"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the young man"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "plant"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the crops"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the young man"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "planted"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "plant"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the crops"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 3,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the worker"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the plane"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the worker"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "repaired"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the plane"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the worker"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "board"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the plane"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the worker"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "repaired"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "board"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the plane"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 4,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the fan"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the tickets"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the fan"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "sold"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the tickets"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the fan"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "buy"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the tickets"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the fan"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "sold"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "buy"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the tickets"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 5,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the young woman"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the toilet"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the young woman"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "wiped"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the toilet"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the young woman"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "flush"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the toilet"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the young woman"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "wiped"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "flush"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the toilet"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 6,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the fans"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the game"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the fans"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "watched"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the game"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the fans"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "lose"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the game"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the fans"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "watched"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "lose"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the game"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 7,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the gardener"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the tree"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the gardener"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "trimmed"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the tree"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the gardener"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "plant"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the tree"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the gardener"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "trimmed"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "plant"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the tree"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 8,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the old man"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the flag"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the old man"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "bought"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the flag"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the old man"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "raise"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the flag"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the old man"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "bought"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "raise"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the flag"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 9,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the old man"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the chicken"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the old man"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "cooked"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the chicken"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the old man"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "hunt"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the chicken"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the old man"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "cooked"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "hunt"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the chicken"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 10,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the workers"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the sidewalk"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the workers"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "walked down"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the sidewalk"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the workers"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "pave"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the sidewalk"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the workers"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "walked down"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "pave"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the sidewalk"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 11,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the mother"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the baby"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the mother"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "fed"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the baby"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the mother"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "hug"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the baby"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the mother"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "fed"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "hug"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the baby"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 12,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the old woman"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the apartment"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the old woman"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "bought"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the apartment"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the old woman"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "furnish"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the apartment"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the old woman"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "bought"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "furnish"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the apartment"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 13,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the guards"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the plot"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the guards"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "concocted"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the plot"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the guards"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "thwart"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the plot"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the guards"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "concocted"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "thwart"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the plot"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 14,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the senator"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the bill"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the senator"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "sponsored"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the bill"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the senator"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "veto"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the bill"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the senator"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "sponsored"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "veto"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the bill"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 15,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the representatives"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the law"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the representatives"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "wrote"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the law"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the representatives"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "repeal"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the law"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the representatives"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "wrote"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "repeal"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the law"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 16,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the old woman"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the cats"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the old woman"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "fed"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the cats"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the old woman"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "stroke"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the cats"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the old woman"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "fed"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "stroke"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the cats"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 17,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the army"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the country"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the army"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "loved"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the country"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the army"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "invade"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the country"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the army"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "loved"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "invade"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the country"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 18,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the soldier"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the enemy"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the soldier"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "battled"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the enemy"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the soldier"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "attack"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the enemy"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the soldier"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "battled"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "attack"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the enemy"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 19,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the novelist"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the book"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the novelist"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "wrote"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the book"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the novelist"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "borrow"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the book"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the novelist"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "wrote"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "borrow"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the book"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 20,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the worker"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the door"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the worker"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "installed"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the door"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the worker"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "lock"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the door"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the worker"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "installed"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "lock"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the door"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 21,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the workers"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the wall"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the workers"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "painted"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the wall"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the workers"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "reinforce"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the wall"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the workers"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "painted"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "reinforce"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the wall"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 22,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the actor"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the story"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the actor"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "wrote"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the story"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the actor"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "tell"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the story"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the actor"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "wrote"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "tell"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the story"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 23,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the tourists"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the destination"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the tourists"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "traveled towards"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the destination"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the tourists"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "reach"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the destination"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the tourists"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "traveled towards"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "reach"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the destination"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 24,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the men"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the city"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the men"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "repaired"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the city"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the men"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "defend"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the city"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the men"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "repaired"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "defend"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the city"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 25,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the package"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "sent"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the package"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "deliver"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the package"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "sent"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "deliver"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the package"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 26,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "she"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the contract"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "she"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "wrote"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the contract"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "she"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "renew"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the contract"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "she"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "wrote"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "renew"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the contract"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 27,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the rumor"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "spread"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the rumor"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "confirm"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the rumor"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "spread"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "confirm"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the rumor"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 28,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "they"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the politician"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "they"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "rebuked"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the politician"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "they"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "murder"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the politician"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "they"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "rebuked"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "murder"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the politician"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 29,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the police"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the suspect"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the police"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "caught"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the suspect"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the police"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "monitor"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the suspect"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the police"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "caught"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "monitor"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the suspect"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 30,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the people"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the trash"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the people"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "collected"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the trash"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the people"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "remove"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the trash"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the people"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "collected"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "remove"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the trash"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 31,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the teacher"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the subject"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the teacher"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "taught"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the subject"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the teacher"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "write about"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the subject"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the teacher"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "taught"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "write about"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the subject"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 32,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "they"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the drugs"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "they"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "bought"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the drugs"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "they"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "transport"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the drugs"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "they"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "bought"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "transport"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the drugs"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 33,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "his friend"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "called"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "his friend"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "hug"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "his friend"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "called"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "hug"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "his friend"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 34,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "she"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the shipment"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "she"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "bought"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the shipment"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "she"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "transport"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the shipment"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "she"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "bought"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "transport"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the shipment"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 35,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "we"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the argument"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "we"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "won"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the argument"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "we"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "make"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the argument"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "we"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "won"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "make"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the argument"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 36,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "you"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the worker"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "you"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "contracted"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the worker"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "you"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "hire"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the worker"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "you"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "contracted"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "hire"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the worker"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 37,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "a painting"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "created"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "a painting"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "paint"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "a painting"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "he"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "created"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "paint"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "a painting"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 38,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the woman"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the letter"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the woman"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "wrote"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the letter"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the woman"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "mail"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the letter"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the woman"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "wrote"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "mail"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the letter"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 39,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the maid"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the glass"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the maid"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "broke"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the glass"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the maid"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "empty"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the glass"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "What"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the maid"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "broke"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "empty"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the glass"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 40,
+            "conditions": [
+                {
+                    "condition_name": "np_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the judge"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the criminal"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "np_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the judge"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "accused"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the criminal"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_match",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the judge"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "did"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "sentence"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the criminal"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "vp_mismatch",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Who"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "the judge"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "accused"
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "sentence"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the criminal"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

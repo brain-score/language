@@ -11,6 +11,7 @@ from typing import Union, List, Dict, Tuple
 
 from brainio.assemblies import NeuroidAssembly, merge_data_arrays
 from brainscore_language.artificial_subject import ArtificialSubject
+from brainscore_language.model_helpers.preprocessing import prepare_context
 
 
 def mean_over_words(sentence_features):
@@ -62,6 +63,7 @@ class EmbeddingSubject(ArtificialSubject):
         return output
 
     def _encode_sentence(self, text_part: str) -> np.ndarray:
+        text_part = prepare_context([text_part])
         words = text_part.split()
         feature_vectors = []
         for word in words:

@@ -1,0 +1,2929 @@
+{
+    "meta": {
+        "name": "npz_ambig",
+        "metric": "sum",
+        "comment": "Below is a simple two-criterion GP prediction. #Prediction [(5;%ambig_nocomma%) > (5;%ambig_comma%) ] &  [(5;%ambig_nocomma%) > (5;%unambig_nocomma%) ]  Below is the more stringent prediction of the interaction. Below is Ethan's original prediction #Prediction [(5;%ambig_nocomma%) > (5;%ambig_comma%) ] & [(5;%unambig_nocomma%) = (5;%unambig_comma%) ] ",
+        "reference": "",
+        "author": ""
+    },
+    "region_meta": {
+        "1": "Start",
+        "2": "Transitive Verb",
+        "3": "Comma",
+        "4": "NP/Z",
+        "5": "Verb",
+        "6": "Continuation"
+    },
+    "predictions": [
+        {
+            "type": "formula",
+            "formula": "((5;%ambig_nocomma%) > (5;%ambig_comma%) ) &  ((5;%ambig_nocomma%) > (5;%unambig_nocomma%) )  & (((5;%ambig_nocomma%) - (5;%ambig_comma%) ) > ((5;%unambig_nocomma%) - (5;%unambig_comma%) ))"
+        }
+    ],
+    "items": [
+        {
+            "item_number": 1,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the criminal"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "shot"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the woman"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "yelled"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "at the top of her lungs"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the criminal"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "fled"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the woman"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "yelled"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "at the top of her lungs"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the criminal"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "shot"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the woman"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "yelled"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "at the top of her lungs"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the criminal"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "fled"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the woman"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "yelled"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "at the top of her lungs"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 2,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "When the dog"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "bit"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the doctor"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "took off"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the restraint"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "When the dog"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "struggled"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the doctor"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "took off"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the restraint"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "When the dog"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "bit"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the doctor"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "took off"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the restraint"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "When the dog"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "struggled"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the doctor"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "took off"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the restraint"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 3,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the ship"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "crossed"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the waters"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "remained"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "blue and calm"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the ship"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "drifted"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the waters"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "remained"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "blue and calm"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the ship"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "crossed"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the waters"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "remained"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "blue and calm"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the ship"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "drifted"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the waters"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "remained"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "blue and calm"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 4,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the newcomers"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "asked"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the soldiers"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "shared"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "a cigarette"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the newcomers"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "negotiated"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the soldiers"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "shared"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "a cigarette"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the newcomers"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "asked"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the soldiers"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "shared"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "a cigarette"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the newcomers"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "negotiated"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the soldiers"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "shared"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "a cigarette"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 5,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Though the athlete"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "telephoned"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the coach"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "refused"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "to praise him"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Though the athlete"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "complained"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the coach"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "refused"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "to praise him"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Though the athlete"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "telephoned"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the coach"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "refused"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "to praise him"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Though the athlete"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "complained"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the coach"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "refused"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "to praise him"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 6,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the crowd"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "applauded"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the actor"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "relaxed"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "on a chair"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the crowd"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "yelled"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the actor"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "relaxed"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "on a chair"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the crowd"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "applauded"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the actor"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "relaxed"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "on a chair"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the crowd"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "yelled"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the actor"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "relaxed"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "on a chair"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 7,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the audience"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "cheered"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the actor"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "delivered"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "his speech"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the audience"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "arrived"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the actor"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "delivered"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "his speech"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the audience"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "cheered"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the actor"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "delivered"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "his speech"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the audience"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "arrived"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the actor"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "delivered"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "his speech"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 8,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "ate"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the food"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "removed"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "talked"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the food"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "removed"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "ate"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the food"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "removed"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "talked"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the food"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "was"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "removed"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 9,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "When the professor"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "taught"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the visitors"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "lost"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "interest"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "When the professor"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "talked"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the visitors"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "lost"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "interest"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "When the professor"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "taught"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the visitors"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "lost"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "interest"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "When the professor"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "talked"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the visitors"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "lost"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "interest"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 10,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Because the baby"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "grabbed"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the woman"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "stayed"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "until the end"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Because the baby"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "yelled"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the woman"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "stayed"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "until the end"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Because the baby"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "grabbed"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the woman"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "stayed"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "until the end"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Because the baby"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "yelled"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the woman"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "stayed"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "until the end"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 11,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Because the manager"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "applauded"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the comedian"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "began"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "his act"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Because the manager"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "departed"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the comedian"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "began"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "his act"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Because the manager"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "applauded"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the comedian"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "began"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "his act"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Because the manager"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "departed"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the comedian"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "began"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "his act"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 12,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the patient"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "asked"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the nurse"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "told"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "her the news"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the patient"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "arrived"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the nurse"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "told"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "her the news"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the patient"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "asked"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the nurse"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "told"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "her the news"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the patient"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "arrived"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the nurse"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "told"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "her the news"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 13,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the guard"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "visited"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the children"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "jumped"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "into the pool"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the guard"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "departed"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the children"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "jumped"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "into the pool"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the guard"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "visited"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the children"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "jumped"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "into the pool"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the guard"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "departed"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the children"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "jumped"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "into the pool"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 14,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the dog"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "signaled"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the farmer"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "went"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "into the field"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the dog"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "went out"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the farmer"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "went"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "into the field"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the dog"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "signaled"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the farmer"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "went"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "into the field"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the dog"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "went out"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the farmer"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "went"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "into the field"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 15,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "considered"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the teacher"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "asked"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "a question"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "slept"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the teacher"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "asked"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "a question"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "considered"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the teacher"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "asked"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "a question"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "slept"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the teacher"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "asked"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "a question"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 16,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the woman"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "decorated"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the pot"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "sat"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "on the counter"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the woman"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "slept"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the pot"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "sat"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "on the counter"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the woman"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "decorated"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the pot"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "sat"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "on the counter"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the woman"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "slept"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the pot"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "sat"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "on the counter"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 17,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "When the customer"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "interrupted"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the manager"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "changed"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the advertisement"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "When the customer"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "complained"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the manager"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "changed"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the advertisement"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "When the customer"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "interrupted"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the manager"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "changed"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the advertisement"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "When the customer"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "complained"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the manager"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "changed"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the advertisement"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 18,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the young man"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "wiped"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the pipe"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "fell"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "to the floor"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the young man"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "slept"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the pipe"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "fell"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "to the floor"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the young man"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "wiped"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the pipe"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "fell"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "to the floor"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the young man"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "slept"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the pipe"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "fell"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "to the floor"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 19,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the prisoners"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "watched"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the guards"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "refused"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "to negotiate"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the prisoners"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "looked"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the guards"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "refused"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "to negotiate"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the prisoners"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "watched"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the guards"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "refused"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "to negotiate"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the prisoners"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "looked"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the guards"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "refused"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "to negotiate"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 20,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As long as the king"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "governed"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "his subjects"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "feared"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "his anger"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As long as the king"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "yelled"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "his subjects"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "feared"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "his anger"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As long as the king"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "governed"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "his subjects"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "feared"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "his anger"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As long as the king"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "yelled"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "his subjects"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "feared"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "his anger"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 21,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the host"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "interrupted"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the discussion"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "became"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "more interesting"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the host"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "yelled"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the discussion"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "became"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "more interesting"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the host"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "interrupted"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the discussion"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "became"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "more interesting"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the host"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "yelled"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the discussion"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "became"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "more interesting"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 22,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the woman"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "dressed"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "her children"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "thought"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "she looked lovely"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the woman"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "departed"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "her children"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "thought"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "she looked lovely"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the woman"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "dressed"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "her children"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "thought"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "she looked lovely"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the woman"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "departed"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "her children"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "thought"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "she looked lovely"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 23,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the soldier"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "signaled"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the doctor"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "ordered"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "it to stop"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the soldier"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "complained"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the doctor"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "ordered"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "it to stop"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the soldier"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "signaled"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the doctor"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "ordered"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "it to stop"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the soldier"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "complained"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the doctor"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "ordered"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "it to stop"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 24,
+            "conditions": [
+                {
+                    "condition_name": "ambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the guard"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "stopped"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the thieves"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "grabbed"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the money"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_nocomma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the guard"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "slept"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ""
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the thieves"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "grabbed"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the money"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "ambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the guard"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "stopped"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the thieves"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "grabbed"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the money"
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "unambig_comma",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the guard"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "slept"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ","
+                        },
+                        {
+                            "region_number": 4,
+                            "content": "the thieves"
+                        },
+                        {
+                            "region_number": 5,
+                            "content": "grabbed"
+                        },
+                        {
+                            "region_number": 6,
+                            "content": "the money"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
