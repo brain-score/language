@@ -9,22 +9,37 @@
 name: Merge plugin-only PRs
 
 on:
-  pull_request:
-    types:
-      - opened
-      - edited
-      - reopened
-      - labeled
-      - ready_for_review
-      - synchronize
+  check_run:
+    types: [completed]
 
 permissions: write-all
 
 jobs:
+  travissuccess:
+    name: Check if Travis build is successful
+    runs-on: ubuntu-latest
+    if: contains( github.event.pull_request.labels.*.name, 'automerge')
+    outputs:
+      TRAVIS_OK: ${{ steps.istravisok.outputs.TRAVIS_OK }}
+    steps:
+      - id: gettravisstatus
+        run: |
+          echo "TRAVIS_CONCLUSION=$(curl -X GET https://api.github.com/repos/brain-score/language/commits/${GITHUB_SHA}/check-runs | python -c "import sys,json; print(json.load(sys.stdin)['check_runs'][0]['conclusion'])")" >> $GITHUB_ENV
+      - id: istravisok
+        run: |
+          if [ "$TRAVIS_CONCLUSION" == "success" ]
+          then
+              travisok='True'
+          else
+              travisok='False'
+          fi
+          echo "::set-output name=TRAVIS_OK::$travisok"
+
   checkchanges:
     name: Check if PR only changes /benchmarks and/or /models
     runs-on: ubuntu-latest
-    if: contains( github.event.pull_request.labels.*.name, 'automerge')
+    needs: travis_success
+    if: ${{ needs.travissuccess.outputs.TRAVIS_OK == 'True' }}
     outputs:
       PLUGIN_INFO: ${{ steps.getpluginfo.outputs.PLUGIN_INFO }}
       IS_PLUGIN_ONLY: ${{ steps.ispluginonly.outputs.IS_PLUGIN_ONLY }}
