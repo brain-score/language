@@ -1,3 +1,9 @@
+"""
+Modified rule definitions for the NLTK abstract chart rules to work with a probabilistic context-free grammar.
+Added a probabilstic Earley chart parser by applying incremental chart parsing with the probabilistic rules.
+Adapted from: https://www.nltk.org/api/nltk.parse.chart.html
+"""
+
 from nltk.grammar import is_nonterminal, is_terminal
 
 from nltk.parse.pchart import (
@@ -11,6 +17,7 @@ from nltk.parse.pchart import (
 from nltk.parse.chart import Chart
 from nltk.parse import IncrementalChartParser
 from nltk import PCFG
+
 
 class ProbabilisticLeafInitRule(AbstractChartRule):
     NUM_EDGES = 0
@@ -86,25 +93,6 @@ class ProbabilisticScannerRule(CompleteProbabilisticFundamentalRule):
 
 class ProbabilisticTopDownPredictRule(AbstractChartRule):
     r"""
-    A rule licensing edges corresponding to the grammar productions
-    for the nonterminal following an incomplete edge's dot.
-    """
-
-    NUM_EDGES = 1
-
-    def apply(self, chart, grammar, edge):
-        if edge.is_complete():
-            return
-        for prod in grammar.productions(lhs=edge.nextsym()):
-            new_edge = ProbabilisticTreeEdge.from_production(
-                prod, edge.end(), prod.prob()
-            )
-            if chart.insert(new_edge, ()):
-                yield new_edge
-
-
-class CachedProbabilisticTopDownPredictRule(AbstractChartRule):
-    r"""
     A cached rule licensing edges corresponding to the grammar
     productions for the nonterminal following an incomplete edge's
     dot.
@@ -154,22 +142,21 @@ class CachedProbabilisticTopDownPredictRule(AbstractChartRule):
         self._done[nextsym, index] = (chart, grammar)
 
 
-class PredictorRule(CachedProbabilisticTopDownPredictRule):
-    pass    
-    
 PROBABILISTIC_EARLEY_STRATEGY = [
     ProbabilisticLeafInitRule(),
     ProbabilisticTopDownInitRule(),
     ProbabilisticCompleterRule(),
     ProbabilisticScannerRule(),
-    PredictorRule(),
+    ProbabilisticTopDownPredictRule(),
 ]
 
 
-class EarleyChartParser(IncrementalChartParser):
+class ProbabilisticEarleyChartParser(IncrementalChartParser):
     def __init__(self, grammar, **parser_args):
-        IncrementalChartParser.__init__(self, grammar, PROBABILISTIC_EARLEY_STRATEGY, **parser_args)
-    
+        IncrementalChartParser.__init__(
+            self, grammar, PROBABILISTIC_EARLEY_STRATEGY, **parser_args
+        )
+
     def parse(self, tokens):
         chart = self.chart_parse(tokens)
         return iter(chart.parses(self._grammar.start(), tree_class=ProbabilisticTree))
