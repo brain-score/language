@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from brainscore_language.artificial_subject import ArtificialSubject
-from brainscore_language.benchmarks.syntaxgym import SyntaxGymTSE, SyntaxGymSingleTSE
+from brainscore_language.benchmarks.syntaxgym.benchmark import SyntaxGymTSE, SyntaxGymSingleTSE
 from brainscore_language.model_helpers.huggingface import HuggingfaceSubject
 
 
