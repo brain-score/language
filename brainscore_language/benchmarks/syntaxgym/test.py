@@ -71,7 +71,7 @@ def test_region_totals_match(distilgpt2, suite: str):
 def test_syntaxgym2020_data():
     from brainscore_language.benchmarks.syntaxgym import SyntaxGym2020
 
-    assert len(SyntaxGym2020().sub_benchmarks) == 3
+    assert len(SyntaxGym2020().sub_benchmarks) == 31
 
 
 @pytest.mark.parametrize("suite_ref", REFERENCE_DISTILGPT2_SCORES.keys())
