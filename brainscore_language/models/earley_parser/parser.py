@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Tuple, Union, List, Dict
+from typing import Tuple, Union, List, Dict, Optional
 
 import numpy as np
 import xarray as xr
@@ -32,7 +32,7 @@ class EarleyParserSubject(ArtificialSubject):
         self.model_id = model_id
         self.parser_cls = ProbabilisticEarleyChartParser
 
-        self.grammar = None
+        self.grammar: Optional[PCFG] = None
 
         # Load the default grammar. This can be replaced by any custom treebank
         treebank_path = str(Path(__file__).parent / "treebank")

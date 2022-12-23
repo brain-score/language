@@ -1,9 +1,13 @@
 from pathlib import Path
 import numpy as np
+import re
 import pytest
+
+from nltk.grammar import PCFG, ProbabilisticProduction
 
 from brainscore_language import load_model
 from brainscore_language.artificial_subject import ArtificialSubject
+from brainscore_language.models.earley_parser.parser import EarleyParserSubject
 
 
 class grammars:
@@ -45,6 +49,90 @@ class grammars:
             """
 
 
+# Grammars estimated from sample_treebank with different hyperparameters
+sample_grammars_hparam_keys = ("k",)
+sample_grammars_by_hparams = {
+    (2,): """
+        S -> NP VP [1.0]
+        NP -> Det Adj N [0.45]
+        Det -> 'a' [0.55]
+        Adj -> 'brown' [0.444444]
+        N -> 'fox' [0.15]
+        VP -> V NP [0.363636]
+        V -> 'saw' [0.363636]
+        NP -> Det N [0.55]
+        N -> 'man' [0.45]
+        Det -> 'the' [0.45]
+        VP -> V PP [0.454545]
+        V -> 'walked' [0.181818]
+        PP -> P NP [1.0]
+        P -> 'with' [0.4]
+        N -> 'dog' [0.4]
+        V -> 'jumped' [0.272727]
+        P -> 'over' [0.4]
+        Adj -> 'lazy' [0.555556]
+        VP -> V [0.181818]
+        V -> 'slept' [0.181818]
+        P -> '<unk>' [0.2]
+        """,
+
+    (3,): """
+        S -> NP VP [1.0]
+        NP -> Det Adj N [0.45]
+        Det -> 'a' [0.55]
+        Adj -> 'brown' [0.444444]
+        N -> 'fox' [0.15]
+        VP -> V NP [0.363636]
+        V -> 'saw' [0.363636]
+        NP -> Det N [0.55]
+        N -> 'man' [0.45]
+        Det -> 'the' [0.45]
+        VP -> V PP [0.454545]
+        V -> '<unk>' [0.363636]
+        PP -> P NP [1.0]
+        P -> '<unk>' [1.0]
+        N -> 'dog' [0.4]
+        V -> 'jumped' [0.272727]
+        Adj -> 'lazy' [0.555556]
+        VP -> V [0.181818]
+        """,
+}
+
+
+@pytest.mark.parametrize(
+    "model_identifier, treebank_path, hparams, expected_grammar",
+    [
+        (
+            "earley-parser",
+            str(Path(__file__).parent / "treebank"),
+            dict(zip(sample_grammars_hparam_keys, hparams)),
+            grammar
+        )
+        for hparams, grammar in sample_grammars_by_hparams.items()
+    ]
+)
+def test_create_grammar(model_identifier, treebank_path, hparams, expected_grammar):
+    """
+    Estimate a PCFG grammar from a treebank with different hyperparameters.
+    """
+    model: EarleyParserSubject = load_model(model_identifier)
+    model.create_grammar(
+        treebank_path=treebank_path,
+        fileids="sample_treebank",
+        **hparams,
+    )
+
+    expected_grammar = PCFG.fromstring(expected_grammar)
+
+    # HACK: Round off estimated probabilities to 6 decimal places to match
+    # ground-truth grammars.
+    estimated_productions = [
+        ProbabilisticProduction(p.lhs(), p.rhs(), prob=round(p.prob(), 6))
+        for p in model.grammar.productions()
+    ]
+    assert set(estimated_productions) == set(expected_grammar.productions())
+
+
 @pytest.mark.parametrize(
     "model_identifier, treebank_path, expected_reading_times, expected_next_words",
     [
@@ -56,13 +144,17 @@ class grammars:
         ),
     ],
 )
-def test_create_grammar(
+def test_create_grammar_integration(
     model_identifier, treebank_path, expected_reading_times, expected_next_words
 ):
+    """
+    Estimate and deploy a PCFG grammar in behavioral tasks.
+    """
     model = load_model(model_identifier)
     model.create_grammar(
         treebank_path=treebank_path,
         fileids="sample_treebank",
+        k=1,
     )
     text = ["the", "brown", "fox", "jumped", "over", "the", "lazy", "dog"]
     model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
