@@ -54,13 +54,13 @@ class PluginTestRunner(EnvironmentManager):
                     env = yaml.dump(yaml.safe_load(f))
                     assert 'name' not in env, f"\nenvironment.yml must not specify 'name'"
                     python_specs = [line for line in env.split("\n") if 'python=' in line]
-                    if len(python_specs) > 0:
-                        if len(python_specs) == 1:
-                            python_spec = python_specs[0]
-                            python_version = python_spec.split('python=')[1]
-                            assert python_version.startswith(('3.7', '3.8', '3.9'))
-                        else:
-                            warnings.warn('multiple versions of python found in environment.yml')
+                    if len(python_specs) == 1:
+                        python_spec = python_specs[0]
+                        python_version = python_spec.split('python=')[1]
+                        assert python_version.startswith(('3.7', '3.8', '3.9'))
+                    elif len(python_specs) > 1:
+                            raise yaml.YAMLError('multiple versions of python found in environment.yml')
+                    # if no python specifications, ignore
                 except yaml.YAMLError as e:
                     raise e
 
