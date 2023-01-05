@@ -22,4 +22,4 @@ install:
   - conda install -yc conda-forge singularity
 script:
   - pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow"
-  - python brainscore_language test_plugins
+  - python -c "from brainscore_core.plugin_management.test_plugins import run_args; run_args('brainscore_language')"

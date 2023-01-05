@@ -46,8 +46,8 @@ from brainscore_language.benchmarks.syntaxgym.sg_suite import _load_suite, Suite
 def SyntaxGym2020():
     with open(Path(__file__).parent / 'test_suites.json') as json_file:
         test_suite_dict = json.load(json_file)
-        suite_paths = [test_suite_dict['center_embed'], test_suite_dict['center_embed_mod'], test_suite_dict['cleft']]
-    return SyntaxGymTSE(suite_paths)
+    return SyntaxGymTSE(test_suite_dict.values())
+
 
 class SyntaxGymTSE(BenchmarkBase):
     def __init__(self, suite_ref_list):
