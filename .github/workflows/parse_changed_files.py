@@ -6,7 +6,7 @@ from typing import List, Tuple
 PLUGIN_DIRS = ['benchmarks', 'data', 'models', 'metrics']
 
 
-def get_changed_files() -> Tuple[List[str]]:
+def get_changed_files() -> Tuple[List[str], List[str]]:
     changed_files = sys.argv[1]
     changed_files_list = changed_files.split()
 
