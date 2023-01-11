@@ -60,18 +60,16 @@ def _get_registered_plugins(plugin_type: str, plugin_dirs: List[str], return_all
 def plugins_to_score(plugins_dict, plugin_files_changed) -> str:
     plugins_dict["run_score"] = "False"
 
-    scoring_plugins = ("models", "benchmarks")
-    scoring_plugin_paths = tuple([f'brainscore_language/{plugin_type}/' for plugin_type in scoring_plugins])
+    scoring_plugin_types = ("models", "benchmarks")
+    scoring_plugin_paths = tuple([f'brainscore_language/{plugin_type}/' for plugin_type in scoring_plugin_types])
     model_and_benchmark_files = [fname for fname in plugin_files_changed if fname.startswith(scoring_plugin_paths)]
     if len(model_and_benchmark_files) > 0:
         plugins_dict["run_score"] = "True"
-        for plugin_type in scoring_plugins:
+        for plugin_type in scoring_plugin_types:
             plugin_dirs = set(
                 [fname.split('/')[2] for fname in model_and_benchmark_files if f'/{plugin_type}/' in fname])
             plugins_to_score = _get_registered_plugins(plugin_type, plugin_dirs)
             plugins_dict[f'new_{plugin_type}'] = ' '.join(plugins_to_score)
-            all_type_plugins = _get_registered_plugins(plugin_type, plugin_dirs, return_all=True)
-            plugins_dict[f'all_{plugin_type}'] = ' '.join(all_type_plugins)
 
     plugins_dict = str(plugins_dict).replace('\'', '\"')
 
