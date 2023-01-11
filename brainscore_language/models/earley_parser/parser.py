@@ -21,15 +21,9 @@ PARSING_TRACE = 0  # how verbose the tracing output should be while parsing a te
 
 
 class EarleyParserSubject(ArtificialSubject):
-    def __init__(
-        self,
-        model_id: str,
-    ):
-        """
-        :param model_id: the model id i.e. name
-        """
+    def __init__(self):
         self._logger = logging.getLogger(fullname(self))
-        self.model_id = model_id
+        self.model_id = "earley-parser"
         self.parser_cls = ProbabilisticEarleyChartParser
 
         self.grammar: Optional[PCFG] = None
@@ -129,9 +123,11 @@ class EarleyParserSubject(ArtificialSubject):
 
         return output
 
-    def estimate_reading_times(self, chart: Chart, start: int, end: int):
+    def estimate_reading_times(self, chart: Chart, start: int, end: int) -> float:
         """
-        :param parses: a list of probabilistic edges from the parsing chart
+        :param chart: a complete chart parse of the input sequence
+        :param start: the index of the first token in the current context (inclusive)
+        :param end: the index of the last token in the current context (inclusive)
         :return: surprisal (in bits) as a proxy for reading times, following Smith & Levy 2013
             (https://www.sciencedirect.com/science/article/pii/S0010027713000413)
         """
@@ -142,7 +138,7 @@ class EarleyParserSubject(ArtificialSubject):
         edges = [p for p in edges if not p.start() == p.end()][1:]
 
         if not edges:
-            # Could not parse the prefix, edge case --> infinte surprisal
+            # Could not parse the prefix, edge case --> infinite surprisal
             return np.infty
 
         # Identify the non-terminal parent node, added first by the scanner rule
@@ -163,10 +159,16 @@ class EarleyParserSubject(ArtificialSubject):
         return -np.log2(p)
 
     def predict_next_word(self, chart: Chart, start: int, end: int) -> str:
+        """
+        :param chart: a complete chart parse of the input sequence
+        :param start: the index of the first token in the current context (inclusive)
+        :param end: the index of the last token in the current context (inclusive)
+        :return: predicted next word
+        """
         # Keeps track of non-terminals to avoid infinite recursion
         visited_nonterminals = set()
 
-        def get_next_terminal(grammar: PCFG, lhs: Union[str, Nonterminal]):
+        def get_next_terminal(grammar: PCFG, lhs: Union[str, Nonterminal]) -> str:
             """
             Given a grammar and a starting left-hand-side (lhs), finds the lexical item
             that is most likely to appear first. Does this by iteratively going through
@@ -302,13 +304,6 @@ class EarleyParserSubject(ArtificialSubject):
     def _add_prefix_probability(
         self, edge_probabilities: List[float], edge_spans: List[Tuple[int]]
     ):
-        """_summary_
-
-        Args:
-            edge_probabilities (List[float]): _description_
-            edge_spans (List[Tuple[int]]): _description_
-        """
-
         if not self.prefix_probabilities:
             # First time adding a partial parse x_0: get P(x_0) by marginalizing over all possible edges
             self.prefix_probabilities.append(sum(edge_probabilities))

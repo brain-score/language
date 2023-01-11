@@ -1,6 +1,5 @@
 from pathlib import Path
 import numpy as np
-import re
 import pytest
 
 from nltk.grammar import PCFG, ProbabilisticProduction
@@ -52,7 +51,9 @@ class grammars:
 # Grammars estimated from sample_treebank with different hyperparameters
 sample_grammars_hparam_keys = ("k",)
 sample_grammars_by_hparams = {
-    (2,): """
+    (
+        2,
+    ): """
         S -> NP VP [1.0]
         NP -> Det Adj N [0.45]
         Det -> 'a' [0.55]
@@ -75,8 +76,9 @@ sample_grammars_by_hparams = {
         V -> 'slept' [0.181818]
         P -> '<unk>' [0.2]
         """,
-
-    (3,): """
+    (
+        3,
+    ): """
         S -> NP VP [1.0]
         NP -> Det Adj N [0.45]
         Det -> 'a' [0.55]
@@ -106,10 +108,10 @@ sample_grammars_by_hparams = {
             "earley-parser",
             str(Path(__file__).parent / "treebank"),
             dict(zip(sample_grammars_hparam_keys, hparams)),
-            grammar
+            grammar,
         )
         for hparams, grammar in sample_grammars_by_hparams.items()
-    ]
+    ],
 )
 def test_create_grammar(model_identifier, treebank_path, hparams, expected_grammar):
     """
@@ -134,21 +136,20 @@ def test_create_grammar(model_identifier, treebank_path, hparams, expected_gramm
 
 
 @pytest.mark.parametrize(
-    "model_identifier, treebank_path, expected_reading_times, expected_next_words",
+    "model_identifier, treebank_path, expected_reading_times",
     [
         (
             "earley-parser",
             str(Path(__file__).parent / "treebank"),
             [1.15200, 3.4739, 6.2109, 8.08537, 9.4073, 10.5593, 12.5593, 13.8812],
-            ["lazy", "man", "saw", "with", "a", "lazy", "man", "<unk>"],
         ),
     ],
 )
-def test_create_grammar_integration(
-    model_identifier, treebank_path, expected_reading_times, expected_next_words
+def test_create_grammar_integration_reading_times(
+    model_identifier, treebank_path, expected_reading_times
 ):
     """
-    Estimate and deploy a PCFG grammar in behavioral tasks.
+    Estimate and deploy a PCFG grammar in the `reading_times` behavioral task
     """
     model = load_model(model_identifier)
     model.create_grammar(
@@ -161,6 +162,30 @@ def test_create_grammar_integration(
     reading_times = model.digest_text(text)["behavior"]
     np.testing.assert_allclose(reading_times, expected_reading_times, atol=0.0001)
 
+
+@pytest.mark.parametrize(
+    "model_identifier, treebank_path, expected_next_words",
+    [
+        (
+            "earley-parser",
+            str(Path(__file__).parent / "treebank"),
+            ["lazy", "man", "saw", "a", "a", "lazy", "man", "<unk>"],
+        ),
+    ],
+)
+def test_create_grammar_integration_next_words(
+    model_identifier, treebank_path, expected_next_words
+):
+    """
+    Estimate and deploy a PCFG grammar in the `next_word` behavioral task.
+    """
+    model = load_model(model_identifier)
+    model.create_grammar(
+        treebank_path=treebank_path,
+        fileids="sample_treebank",
+        k=1,
+    )
+    text = ["the", "brown", "fox", "jumped", "over", "the", "lazy", "dog"]
     model.start_behavioral_task(task=ArtificialSubject.Task.next_word)
     next_words = model.digest_text(text)["behavior"]
     np.testing.assert_array_equal(next_words, expected_next_words)
