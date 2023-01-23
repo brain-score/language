@@ -345,7 +345,6 @@ Please include a :code:`README.md` file along with your benchmark to aid users w
 As part of your README.md file, please include a YAML section using the following format as a guideline:
 
 .. code-block:: yaml
-    ---
       benchmark_details:
         developer: <developing individual or organization>
         date: <date of benchmark creation>
@@ -379,7 +378,6 @@ As part of your README.md file, please include a YAML section using the followin
       recommendations: <any relevant caveats and recommendations>
 
       example_usage: <one example should be in test_integration.py>
-    ---
 
 4. Submit to Brain-Score
 ========================
