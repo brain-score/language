@@ -344,7 +344,8 @@ Benchmark Card Creation
 Please include a :code:`README.md` file along with your benchmark to aid users with understanding and implementation.
 As part of your README.md file, please include a YAML section using the following format as a guideline:
 
-.. code-block:: yaml
+.. code-block:: python
+
       benchmark_details:
         developer: <developing individual or organization>
         date: <date of benchmark creation>
