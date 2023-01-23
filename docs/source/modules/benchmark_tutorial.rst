@@ -381,42 +381,6 @@ As part of your README.md file, please include a YAML section using the followin
       example_usage: <one example should be in test_integration.py>
     ---
 
-For instance, the following is an excerpt from the
-`Futrell2018 tests <https://github.com/brain-score/language/blob/85afdae5294d0613fb51c33333aa76c52fc0849e/brainscore_language/benchmarks/futrell2018/test.py>`_:
-
-.. code-block:: python
-
-    from brainscore_language import ArtificialSubject, load_benchmark
-
-    class DummyModel(ArtificialSubject):
-        def __init__(self, reading_times):
-            self.reading_times = reading_times
-
-        def digest_text(self, stimuli):
-            return {'behavior': BehavioralAssembly(self.reading_times, coords={
-                                        'context': ('presentation', stimuli),
-                                        'stimulus_id': ('presentation', np.arange(len(stimuli)))},
-                                    dims=['presentation'])}
-
-        def start_behavioral_task(self, task: ArtificialSubject.Task):
-            if task != ArtificialSubject.Task.reading_times:
-                raise NotImplementedError()
-
-    def test_dummy_bad():
-        benchmark = load_benchmark('Futrell2018-pearsonr')
-        reading_times = RandomState(0).random(10256)
-        dummy_model = DummyModel(reading_times=reading_times)
-        score = benchmark(dummy_model)
-        assert score == approx(0.0098731 / .858, abs=0.001)
-
-    def test_ceiling():
-        benchmark = load_benchmark('Futrell2018-pearsonr')
-        ceiling = benchmark.ceiling
-        assert ceiling == approx(.858, abs=.0005)
-        assert ceiling.raw.median('split') == ceiling
-        assert ceiling.uncorrected_consistencies.median('split') < ceiling
-
-
 4. Submit to Brain-Score
 ========================
 
