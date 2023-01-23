@@ -338,79 +338,47 @@ For instance, the following is an excerpt from the
         assert ceiling.raw.median('split') == ceiling
         assert ceiling.uncorrected_consistencies.median('split') < ceiling
 
-Benchmark Card
---------------
+Benchmark Card Creation
+-----------------------
 
 Please include a :code:`README.md` file along with your benchmark to aid users with understanding and implementation.
 As part of your README.md file, please include a YAML section using the following format as a guideline:
 
 .. code-block:: yaml
     ---
-    benchmark details:
-        developer: MIT Computational Psycholinguistics Lab
-        date: 2020
-        questions: mitcpllab@gmail.com
-        version: 1.0
-        type: behavioral
-        license: MIT
-        citations: |
-        @inproceedings{hu-etal-2020-systematic,
-        title = "A Systematic Assessment of Syntactic Generalization in Neural Language Models",
-        author = "Hu, Jennifer and Gauthier, Jon and Qian, Peng and Wilcox, Ethan and Levy, Roger",
-        booktitle = "Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics",
-        year = "2020", url = "https://www.aclweb.org/anthology/2020.acl-main.158", pages = "1725--1744"}
-        @inproceedings{gauthier-etal-2020-syntaxgym,
-        title = "{S}yntax{G}ym: An Online Platform for Targeted Evaluation of Language Models",
-        author = "Gauthier, Jon and Hu, Jennifer and Wilcox, Ethan and Qian, Peng and Levy, Roger",
-        booktitle = "Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics: System Demonstrations",
-        year = "2020", url = "https://www.aclweb.org/anthology/2020.acl-demos.10", pages = "70--76"}
+      benchmark_details:
+        developer: <developing individual or organization>
+        date: <date of benchmark creation>
+        questions: <where to send questions>
+        version: <version number>
+        type: <behavioral or neural>
+        license: <license details>
+        citations: <citation information if relevant>
 
-    experiment:
-        task: Currently either "next_word" or "reading_times"
-        recording: fMRI
-        modelcard: NA
-        bidirectionality: NA
-        contextualization: NA
+      experiment:
+        task: <list of ArtificialSubject task values>
+        recording: <ArtificialSubject Recording type>
+        experiment_card: <reference existing experiment cards>
+        bidirectionality: <unidirectional/bidirectional>
 
-    data:
-        accessibility: public
-        modality: behavioral
-        granularity: NA
-        method: NA
-        references: |
-         Wilcox E. Levy R. & Futrell R. (2019). Hierarchical representation in neural language models: Suppression and
-        recovery of expectations.
-        location: in the benchmark, as a json
+      data:
+        accessibility: <public or private>
+        modality: <behavioral/neural and modality, e.g. neural; fMRI
+        granularity: <neural data granularity>
+        method: <how was the data obtainede?>
+        references: <abbreviated Bibtex>
 
-    description: |
-        Center embedding, the ability to embed a phrase in the middle of another phrase of the same type, is a hallmark
-        feature of natural language syntax. Center-embedding creates nested dependencies, which could pose a challenge for
-        some language models. To succeed in generating expectations about how sentences will continue in the context of
-        multiple center embedding, a model must maintain a representation not only of what words appear in the preceding
-        context but also of the order of those words, and must predict that upcoming words occur in the appropriate order.
-        In this test suite we use verb transitivity and subject/verb plausibility to test model capabilities in this respect.
+      metric:
+        mapping: <e.g., RidgeCV, LinReg, RSA>
+        metric: <e.g. PearsonR, accuracy>
+        crossvalstrat: <cross validation stratification, e.g. passage>
+        crossvalsplitcoord: <cross validation split coordinate <e.g. sentence>
 
-    metric:
-        mapping: N/A
-        metric: accuracy
-        crossvalstrat: N/A
-        crossvalsplitcoord: N/A
+      ethical_considerations: <any relevant ethical consideration>
 
-    ethical_considerations: N/A
+      recommendations: <any relevant caveats and recommendations>
 
-    recommendations: N/A
-
-    example_usage:
-        example: see test_integration.py for example usage
-        note: |
-        To use your own suite specified as a [json file:](https://cpllab.github.io/syntaxgym-core/suite_json.html)
-        ```
-        from brainscore_language.benchmarks.syntaxgym import SyntaxGymSingleTSE
-        from brainscore_language import load_model
-        model = load_model("distilgpt2")
-        benchmark = SyntaxGymSingleTSE("path/to/my/syntaxgym/suite.json")
-        score = benchmark(model)
-        ```
+      example_usage: <one example should be in test_integration.py>
     ---
 
 For instance, the following is an excerpt from the
