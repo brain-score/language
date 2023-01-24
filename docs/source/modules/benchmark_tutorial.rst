@@ -361,6 +361,7 @@ As part of your README.md file, please include a YAML section using the followin
         recording: <ArtificialSubject Recording type>
         experiment_card: <reference existing experiment cards>
         bidirectionality: <unidirectional/bidirectional>
+        contextualization: <if contextualized, what preceding context was used>
 
       data:
         accessibility: <public or private>
