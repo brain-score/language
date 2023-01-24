@@ -27,7 +27,7 @@ benchmark details:
 
 experiment:
   task: Currently either "next_word" or "reading_times"
-  recording: fMRI
+  recording: NA
   experiment_card: NA
   bidirectionality: NA
   contextualization: NA
