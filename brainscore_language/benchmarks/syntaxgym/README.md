@@ -50,14 +50,14 @@ data:
   location: in the benchmark as a json
 
 metric:
-  mapping: N/A 
+  mapping: NA 
   metric: accuracy
-  crossvalstrat: N/A
-  crossvalsplitcoord: N/A
+  crossvalstrat: NA
+  crossvalsplitcoord: NA
 
-ethical_considerations: N/A
+ethical_considerations: NA
 
-recommendations: N/A
+recommendations: NA
 
 example_usage:
   example: see test_integration.py for example usage
