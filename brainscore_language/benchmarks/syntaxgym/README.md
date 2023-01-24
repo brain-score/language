@@ -35,7 +35,7 @@ benchmark details:
     year = "2020", url = "https://www.aclweb.org/anthology/2020.acl-demos.10", pages = "70--76"}
 
 experiment:
-  task: Currently either "next_word" or "reading_times"
+  task: "reading_times"
   recording: NA
   experiment_card: NA
   bidirectionality: NA
