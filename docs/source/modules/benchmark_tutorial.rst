@@ -359,7 +359,7 @@ As part of your README.md file, please include a YAML section using the followin
       experiment:
         task: <list of ArtificialSubject task values>
         recording: <ArtificialSubject Recording type>
-        experiment_card: <reference existing experiment cards>
+        experiment_card: <reference any existing experiment cards>
         bidirectionality: <unidirectional/bidirectional>
         contextualization: <if contextualized, what preceding context was used>
 
@@ -373,6 +373,7 @@ As part of your README.md file, please include a YAML section using the followin
       metric:
         mapping: <e.g., RidgeCV, LinReg, RSA>
         metric: <e.g. PearsonR, accuracy>
+        metric_card: <reference any existing metric cards>
         crossvalstrat: <cross validation stratification, e.g. passage>
         crossvalsplitcoord: <cross validation split coordinate <e.g. sentence>
 
@@ -380,7 +381,7 @@ As part of your README.md file, please include a YAML section using the followin
 
       recommendations: <any relevant caveats and recommendations>
 
-      example_usage: <one example should be in test_integration.py>
+      example_usage: <one example should be in test_integration.py, others can be included>
 
 4. Submit to Brain-Score
 ========================
