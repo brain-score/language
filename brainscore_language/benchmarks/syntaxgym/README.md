@@ -5,6 +5,7 @@ to a wide variety of researchers.  See the [SyntaxGym Website](https://syntaxgym
 
 ## YAML section for Benchmark Card
 ---
+```yaml
 benchmark details:
   name: SyntaxGym (Center Embedding)
   developer: MIT Computational Psycholinguistics Lab
@@ -69,5 +70,4 @@ example_usage:
     benchmark = SyntaxGymSingleTSE("path/to/my/syntaxgym/suite.json")
     score = benchmark(model)
     ```
---- 
 
