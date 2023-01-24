@@ -350,10 +350,11 @@ As part of your README.md file, please include a YAML section using the followin
         name: <name of the benchmark>
         developer: <developing individual or organization>
         date: <date of benchmark creation>
-        questions: <where to send questions>
         version: <version number>
         type: <behavioral or neural>
+        description: <a short summary description>
         license: <license details>
+        questions: <where to send questions>
         citations: <citation information if relevant>
 
       experiment:
@@ -368,6 +369,7 @@ As part of your README.md file, please include a YAML section using the followin
         measurement_type: <behavioral/neural and modality, e.g. neural; fMRI
         granularity: <neural data granularity>
         method: <how was the data obtained>
+        data_card: <reference any existing data cards>
         references: <abbreviated Bibtex>
 
       metric:

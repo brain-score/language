@@ -9,10 +9,18 @@ benchmark details:
   name: SyntaxGym (Center Embedding)
   developer: MIT Computational Psycholinguistics Lab
   date: 2020
-  questions: mitcpllab@gmail.com
   version: 1.0
   type: behavioral
+  description: |
+    Center embedding, the ability to embed a phrase in the middle of another phrase of the same type, is a hallmark 
+    feature of natural language syntax. Center-embedding creates nested dependencies, which could pose a challenge for 
+    some language models. To succeed in generating expectations about how sentences will continue in the context of 
+    multiple center embedding, a model must maintain a representation not only of what words appear in the preceding 
+    context but also of the order of those words, and must predict that upcoming words occur in the appropriate order. 
+    In this test suite we use verb transitivity and subject/verb plausibility to test model capabilities in this respect.
+
   license: MIT
+  questions: mitcpllab@gmail.com
   citations: |
     @inproceedings{hu-etal-2020-systematic,
     title = "A Systematic Assessment of Syntactic Generalization in Neural Language Models",
@@ -39,14 +47,6 @@ data:
   method: NA
   references: Wilcox E. Levy R. & Futrell R. (2019). 
   location: in the benchmark as a json
-  
-  description: |
-    Center embedding, the ability to embed a phrase in the middle of another phrase of the same type, is a hallmark 
-    feature of natural language syntax. Center-embedding creates nested dependencies, which could pose a challenge for 
-    some language models. To succeed in generating expectations about how sentences will continue in the context of 
-    multiple center embedding, a model must maintain a representation not only of what words appear in the preceding 
-    context but also of the order of those words, and must predict that upcoming words occur in the appropriate order. 
-    In this test suite we use verb transitivity and subject/verb plausibility to test model capabilities in this respect.
 
 metric:
   mapping: N/A 
