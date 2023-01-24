@@ -3,7 +3,7 @@ of the evaluation process, from designing test suites to visualizing final resul
 is to make psycholinguistic assessment of language models more standardized, reproducible, and accessible 
 to a wide variety of researchers.  See the [SyntaxGym Website](https://syntaxgym.org/) for more details.
 
-## YAML section for Benchmark Card
+## Benchmark: SyntaxGym (Center Embedding)
 ---
 ```yaml
 benchmark details:
