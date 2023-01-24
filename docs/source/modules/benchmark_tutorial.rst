@@ -347,6 +347,7 @@ As part of your README.md file, please include a YAML section using the followin
 .. code-block:: python
 
       benchmark_details:
+        name: <name of the benchmark>
         developer: <developing individual or organization>
         date: <date of benchmark creation>
         questions: <where to send questions>
@@ -363,9 +364,9 @@ As part of your README.md file, please include a YAML section using the followin
 
       data:
         accessibility: <public or private>
-        modality: <behavioral/neural and modality, e.g. neural; fMRI
+        measurement_type: <behavioral/neural and modality, e.g. neural; fMRI
         granularity: <neural data granularity>
-        method: <how was the data obtainede?>
+        method: <how was the data obtained>
         references: <abbreviated Bibtex>
 
       metric:
@@ -374,7 +375,7 @@ As part of your README.md file, please include a YAML section using the followin
         crossvalstrat: <cross validation stratification, e.g. passage>
         crossvalsplitcoord: <cross validation split coordinate <e.g. sentence>
 
-      ethical_considerations: <any relevant ethical consideration>
+      ethical_considerations: <any relevant ethical considerations>
 
       recommendations: <any relevant caveats and recommendations>
 

@@ -6,6 +6,7 @@ to a wide variety of researchers.  See the [SyntaxGym Website](https://syntaxgym
 ## YAML section for Benchmark Card
 ---
 benchmark details:
+  name: SyntaxGym (Center Embedding)
   developer: MIT Computational Psycholinguistics Lab
   date: 2020
   questions: mitcpllab@gmail.com
@@ -33,7 +34,7 @@ experiment:
 
 data:
   accessibility: public
-  modality: behavioral
+  measurement_type: behavioral
   granularity: NA
   method: NA
   references: Wilcox E. Levy R. & Futrell R. (2019). 
