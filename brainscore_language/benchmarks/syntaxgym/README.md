@@ -43,7 +43,7 @@ experiment:
 
 data:
   accessibility: public
-  measurement_type: behavioral
+  measurement_type: NA
   granularity: NA
   method: NA
   references: Wilcox E. Levy R. & Futrell R. (2019). 
