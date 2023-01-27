@@ -56,10 +56,6 @@ def parse_args() -> argparse.Namespace:
                         help='The identifiers of newly submitted models to score on all benchmarks')
     parser.add_argument('--new_benchmarks', type=str, nargs='*', default=None,
                         help='The identifiers of newly submitted benchmarks on which to score all models')
-    parser.add_argument('--all_models', type=str, nargs='*', default=None,
-                        help='All registered models')
-    parser.add_argument('--all_benchmarks', type=str, nargs='*', default=None,
-                        help='All registered benchmarks')
     parser.add_argument('user_id', type=int, nargs='?', default=2,
                         help='ID of submitting user in the postgres DB')
     parser.add_argument('model_type', type=str, nargs='?', default='artificialsubject',

@@ -31,7 +31,7 @@ def is_plugin_only(plugins_dict, non_plugin_files_changed):
     return plugins_dict
 
 
-def _get_registered_plugins(plugin_type: str, plugin_dirs: List[str], return_all=False) -> List[str]:
+def _get_registered_plugins(plugin_type: str, plugin_dirs: List[str]) -> List[str]:
     """
     Searches all `plugin_type` __init.py__ files for registered plugins.
     Returns list of identifiers for each registered plugin.
