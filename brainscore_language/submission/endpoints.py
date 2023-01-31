@@ -19,8 +19,7 @@ class LanguagePlugins(DomainPlugins):
 
 
 language_plugins = LanguagePlugins()
-# run_scoring_endpoint = RunScoringEndpoint(language_plugins, db_secret='placeholder')
-# run_scoring_endpoint = RunScoringEndpoint(language_plugins, db_secret=config.get_database_secret())
+run_scoring_endpoint = RunScoringEndpoint(language_plugins, db_secret=config.get_database_secret())
 
 
 def _get_ids(args_dict: Dict[str, Union[str, List]], key: str) -> Union[List, str, None]:
@@ -29,26 +28,23 @@ def _get_ids(args_dict: Dict[str, Union[str, List]], key: str) -> Union[List, st
 
 def run_scoring(args_dict: Dict[str, Union[str, List]]):
     """ prepares `args_dict` as parameters for the `run_scoring_endpoint`. """
-    print(args_dict)
-
     new_models = _get_ids(args_dict, 'new_models')
     new_benchmarks = _get_ids(args_dict, 'new_benchmarks')
 
-    # if new_models and new_benchmarks:
-    #     args_dict['models'] = RunScoringEndpoint.ALL_PUBLIC
-    #     args_dict['benchmarks'] = RunScoringEndpoint.ALL_PUBLIC
-    # elif new_benchmarks:
-    #     args_dict['models'] = RunScoringEndpoint.ALL_PUBLIC
-    #     args_dict['benchmarks'] = new_benchmarks
-    # elif new_models:
-    #     args_dict['models'] = new_models
-    #     args_dict['benchmarks'] = RunScoringEndpoint.ALL_PUBLIC
+    if new_models and new_benchmarks:
+        args_dict['models'] = RunScoringEndpoint.ALL_PUBLIC
+        args_dict['benchmarks'] = RunScoringEndpoint.ALL_PUBLIC
+    elif new_benchmarks:
+        args_dict['models'] = RunScoringEndpoint.ALL_PUBLIC
+        args_dict['benchmarks'] = new_benchmarks
+    elif new_models:
+        args_dict['models'] = new_models
+        args_dict['benchmarks'] = RunScoringEndpoint.ALL_PUBLIC
 
-    # remove_keys = ['new_benchmarks', 'new_models']
-    # new_args = {k: v for k, v in args_dict.items() if k not in remove_keys}  # preserve other keys, e.g. `run_score`
-    # print(new_args)
+    remove_keys = ['new_benchmarks', 'new_models']
+    new_args = {k: v for k, v in args_dict.items() if k not in remove_keys}  # preserve other keys, e.g. `run_score`
 
-    # run_scoring_endpoint(**new_args)
+    run_scoring_endpoint(**new_args)
 
 
 def parse_args() -> argparse.Namespace:
