@@ -376,8 +376,7 @@ As part of your README.md file, please include a YAML section using the followin
         mapping: <e.g., RidgeCV, LinReg, RSA>
         metric: <e.g. PearsonR, accuracy>
         metric_card: <reference any existing metric cards>
-        crossvalstrat: <cross validation stratification, e.g. passage>
-        crossvalsplitcoord: <cross validation split coordinate <e.g. sentence>
+        error_estimation: <methods used for estimating errors>
 
       ethical_considerations: <any relevant ethical considerations>
 

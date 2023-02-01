@@ -44,7 +44,7 @@ experiment:
 data:
   accessibility: public
   measurement_type: NA
-  granularity: NA
+  granularity: per sentence surprisal evaluation
   method: NA
   references: Wilcox E. Levy R. & Futrell R. (2019). 
   location: in the benchmark as a json
@@ -52,8 +52,7 @@ data:
 metric:
   mapping: NA 
   metric: accuracy
-  crossvalstrat: NA
-  crossvalsplitcoord: NA
+  error_estimation: cross validation over sentences, stratified by passage
 
 ethical_considerations: NA
 
