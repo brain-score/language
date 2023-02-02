@@ -31,6 +31,9 @@ def run_scoring(args_dict: Dict[str, Union[str, List]]):
     new_models = _get_ids(args_dict, 'new_models')
     new_benchmarks = _get_ids(args_dict, 'new_benchmarks')
 
+    print(f"new models: {new_models}")
+    print(f"new benchmarks: {new_benchmarks}")
+
     if new_models and new_benchmarks:
         args_dict['models'] = RunScoringEndpoint.ALL_PUBLIC
         args_dict['benchmarks'] = RunScoringEndpoint.ALL_PUBLIC
@@ -43,6 +46,7 @@ def run_scoring(args_dict: Dict[str, Union[str, List]]):
 
     remove_keys = ['new_benchmarks', 'new_models']
     new_args = {k: v for k, v in args_dict.items() if k not in remove_keys}  # preserve other keys, e.g. `run_score`
+    print(new_args)
 
     run_scoring_endpoint(**new_args)
 
