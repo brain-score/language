@@ -352,7 +352,8 @@ following format as a guideline:
         developer: <developing individual or group>
         date: <date of benchmark creation>
         version: <version number>
-        type: <behavioral (tests against behavioral data), neural (tests against neural data), or engineering (others, typically test on ground-truth)>
+        type: <behavioral (tests against behavioral data), neural (tests against neural data), or engineering (others,
+        typically test on ground-truth)>
         description: <a short summary description>
         license: <license details>
         questions: <where to send questions>
