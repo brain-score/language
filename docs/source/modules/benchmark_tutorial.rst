@@ -356,7 +356,7 @@ following format as a guideline:
         description: <a short summary description>
         license: <license details>
         questions: <where to send questions>
-        references: <citation information if relevant>
+        references: <citation/reference information if relevant>
 
       experiment:
         task: <list of ArtificialSubject task value(s) if any>
