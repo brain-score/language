@@ -68,5 +68,13 @@ example_usage:
     model = load_model("distilgpt2")
     benchmark = SyntaxGymSingleTSE("path/to/my/syntaxgym/suite.json")
     score = benchmark(model)
+    
+    or
+    
+    from brainscore_language import load_model, load_benchmark
+    model = load_model("distilgpt2")
+    benchmark = load_benchmark("cleft")
+    score=benchmark(model)
+    print(score)
     ```
 
