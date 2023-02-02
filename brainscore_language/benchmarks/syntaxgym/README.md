@@ -73,7 +73,7 @@ example_usage:
     
     from brainscore_language import load_model, load_benchmark
     model = load_model("distilgpt2")
-    benchmark = load_benchmark("cleft")
+    benchmark = load_benchmark("center_embed")
     score=benchmark(model)
     print(score)
     ```
