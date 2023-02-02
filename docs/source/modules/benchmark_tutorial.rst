@@ -342,39 +342,40 @@ Benchmark Card Creation
 -----------------------
 
 Please include a :code:`README.md` file along with your benchmark to aid users with understanding and implementation.
-As part of your README.md file, please include a YAML section using the following format as a guideline:
+As part of your README.md file, please include a YAML "Benchmark Card" section, detailing your benchmark, and using the
+following format as a guideline:
 
 .. code-block:: python
 
       benchmark_details:
         name: <name of the benchmark>
-        developer: <developing individual or organization>
+        developer: <developing individual or group>
         date: <date of benchmark creation>
         version: <version number>
-        type: <behavioral or neural>
+        type: <behavioral (tests against behavioral data), neural (tests against neural data), or engineering (others, typically test on ground-truth)>
         description: <a short summary description>
         license: <license details>
         questions: <where to send questions>
-        citations: <citation information if relevant>
+        references: <citation information if relevant>
 
       experiment:
-        task: <list of ArtificialSubject task values>
-        recording: <ArtificialSubject Recording type>
+        task: <list of ArtificialSubject task value(s) if any>
+        recording: <ArtificialSubject Recording type(s) if any>
         experiment_card: <reference any existing experiment cards>
-        bidirectionality: <unidirectional/bidirectional>
+        bidirectionality: <(if relevant) unidirectional/bidirectional: whether bidirectionality was used to obtain e.g., internal recordings of the model>
         contextualization: <if contextualized, what preceding context was used>
 
       data:
         accessibility: <public or private>
         measurement_type: <behavioral/neural and modality, e.g. neural; fMRI
-        granularity: <neural data granularity>
-        method: <how was the data obtained>
+        granularity: <neural data granularity, e.g. whether there is any aggregation such as fROIs>
+        method: <how was the data obtained e.g. # of participants, demographics, # of unique items, reps per item, etc.>
         data_card: <reference any existing data cards>
         references: <abbreviated Bibtex>
 
       metric:
-        mapping: <e.g., RidgeCV, LinReg, RSA>
         metric: <e.g. PearsonR, accuracy>
+        mapping: <how model predictions are mapped to neural data if at all, e.g., RidgeCV, LinReg, RSA>
         metric_card: <reference any existing metric cards>
         error_estimation: <methods used for estimating errors>
 

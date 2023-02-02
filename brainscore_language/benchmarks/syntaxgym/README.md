@@ -22,7 +22,7 @@ benchmark details:
 
   license: MIT
   questions: mitcpllab@gmail.com
-  citations: |
+  references: |
     @inproceedings{hu-etal-2020-systematic,
     title = "A Systematic Assessment of Syntactic Generalization in Neural Language Models",
     author = "Hu, Jennifer and Gauthier, Jon and Qian, Peng and Wilcox, Ethan and Levy, Roger",
