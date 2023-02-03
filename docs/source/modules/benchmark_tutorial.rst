@@ -343,7 +343,9 @@ Benchmark Card Creation
 
 Please include a :code:`README.md` file along with your benchmark to aid users with understanding and implementation.
 As part of your README.md file, please include a YAML "Benchmark Card" section, detailing your benchmark, and using the
-following format as a guideline:
+following format as a guideline. (NOTE: For cases where multiple benchmarks are submitted in a single plugin; a single
+YAML could be appropriate for two very similar benchmarks, and separate YAMLs could be more fitting for dissimilar
+benchmarks. This is left as a decision for the creator).
 
 .. code-block:: python
 
