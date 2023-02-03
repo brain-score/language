@@ -362,10 +362,8 @@ following format as a guideline:
       experiment:
         task: <list of ArtificialSubject task value(s) if any>
         recording: <ArtificialSubject Recording type(s) if any>
-        experiment_card: <reference any existing experiment cards>
         bidirectionality: <(if relevant) unidirectional/bidirectional: whether bidirectionality was used to obtain e.g.,
         internal recordings of the model>
-        contextualization: <if contextualized, what preceding context was used>
 
       data:
         accessibility: <public or private>
