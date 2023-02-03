@@ -61,6 +61,7 @@ recommendations: NA
 example_usage:
   example: see test_integration.py for example usage |
     ```
+    # to use a benchmark already in the benchmark registry
     from brainscore_language import load_model, load_benchmark
     model = load_model("distilgpt2")
     benchmark = load_benchmark("center_embed")
