@@ -369,7 +369,7 @@ following format as a guideline:
 
       data:
         accessibility: <public or private>
-        measurement_type: <behavioral/neural and modality, e.g. neural; fMRI
+        type: <behavioral/neural and modality, e.g. neural; fMRI>
         granularity: <neural data granularity, e.g. whether there is any aggregation such as fROIs>
         method: <how was the data obtained e.g. # of participants, demographics, # of unique items, reps per item, etc.>
         data_card: <reference any existing data cards>
