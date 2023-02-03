@@ -59,22 +59,20 @@ ethical_considerations: NA
 recommendations: NA
 
 example_usage:
-  example: see test_integration.py for example usage
-  note: |
-    To use your own suite specified as a [json file:](https://cpllab.github.io/syntaxgym-core/suite_json.html) 
+  example: see test_integration.py for example usage |
     ```
+    from brainscore_language import load_model, load_benchmark
+    model = load_model("distilgpt2")
+    benchmark = load_benchmark("center_embed")
+    score=benchmark(model)
+    
+    or
+    
+    #  to use your own suite specified as a [json file:](https://cpllab.github.io/syntaxgym-core/suite_json.html) 
     from brainscore_language.benchmarks.syntaxgym import SyntaxGymSingleTSE
     from brainscore_language import load_model
     model = load_model("distilgpt2")
     benchmark = SyntaxGymSingleTSE("path/to/my/syntaxgym/suite.json")
     score = benchmark(model)
-    
-    or
-    
-    from brainscore_language import load_model, load_benchmark
-    model = load_model("distilgpt2")
-    benchmark = load_benchmark("center_embed")
-    score=benchmark(model)
-    print(score)
     ```
 
