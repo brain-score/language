@@ -69,7 +69,7 @@ example_usage:
     
     or
     
-    #  to use your own suite specified as a [json file:](https://cpllab.github.io/syntaxgym-core/suite_json.html) 
+    # to use your own suite specified as a [json file:](https://cpllab.github.io/syntaxgym-core/suite_json.html) 
     from brainscore_language.benchmarks.syntaxgym import SyntaxGymSingleTSE
     from brainscore_language import load_model
     model = load_model("distilgpt2")
