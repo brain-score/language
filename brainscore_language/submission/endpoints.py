@@ -43,6 +43,7 @@ def run_scoring(args_dict: Dict[str, Union[str, List]]):
 
     remove_keys = ['new_benchmarks', 'new_models']
     new_args = {k: v for k, v in args_dict.items() if k not in remove_keys}  # preserve other keys, e.g. `run_score`
+    new_args["domain"] = "language"
 
     run_scoring_endpoint(**new_args)
 
