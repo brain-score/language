@@ -75,7 +75,6 @@ def score(model_identifier: str, benchmark_identifier: str, conda_active: bool) 
     :return: a Score of how brain-like the candidate model is under this benchmark. The score is normalized by
         this benchmark's ceiling such that 1 means the model matches the data to ceiling level.
     """
-    print(_run_score)
     return wrap_score(__file__,
                       model_identifier=model_identifier, benchmark_identifier=benchmark_identifier,
                       score_function=_run_score, conda_active=conda_active)
