@@ -338,6 +338,55 @@ For instance, the following is an excerpt from the
         assert ceiling.raw.median('split') == ceiling
         assert ceiling.uncorrected_consistencies.median('split') < ceiling
 
+Benchmark Card Creation
+-----------------------
+
+Please include a :code:`README.md` file along with your benchmark to aid users with understanding and implementation.
+As part of your :code:`README.md`, please include a YAML "Benchmark Card" section, detailing your benchmark, and using the
+following format as a guideline. (NOTE: For cases where multiple benchmarks are submitted in a single plugin; a single
+YAML could be appropriate for two very similar benchmarks, and separate YAMLs could be more fitting for dissimilar
+benchmarks. This is left as a decision for the creator).
+
+.. code-block:: python
+
+      benchmark_details:
+        name: <name of the benchmark>
+        developer: <developing individual or group>
+        date: <date of benchmark creation>
+        version: <version number>
+        type: <behavioral (tests against behavioral data), neural (tests against neural data), or engineering (others,
+        typically test on ground-truth)>
+        description: <a short summary description>
+        license: <license details>
+        questions: <where to send questions>
+        references: <citation/reference information if relevant>
+
+      experiment:
+        task: <list of ArtificialSubject task value(s) if any>
+        recording: <ArtificialSubject Recording type(s) if any>
+        bidirectionality: <(if relevant) unidirectional/bidirectional: whether bidirectionality was used to obtain e.g.,
+        internal recordings of the model>
+
+      data:
+        accessibility: <public or private>
+        type: <behavioral/neural and modality, e.g. neural; fMRI>
+        granularity: <neural data granularity, e.g. whether there is any aggregation such as fROIs>
+        method: <how was the data obtained e.g. # of participants, demographics, # of unique items, reps per item, etc.>
+        data_card: <reference any existing data cards>
+        references: <abbreviated Bibtex>
+
+      metric:
+        metric: <e.g. PearsonR, accuracy>
+        mapping: <how model predictions are mapped to neural data if at all, e.g., RidgeCV, LinReg, RSA>
+        metric_card: <reference any existing metric cards>
+        error_estimation: <methods used for estimating errors>
+
+      ethical_considerations: <any relevant ethical considerations>
+
+      recommendations: <any relevant caveats and recommendations>
+
+      example_usage: <one example should be in test_integration.py, others can be included>
+
 4. Submit to Brain-Score
 ========================
 

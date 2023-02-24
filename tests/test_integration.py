@@ -15,6 +15,7 @@ from brainscore_language import score
         ("distilgpt2", "Pereira2018.243sentences-linear", approx(0.73772422, abs=0.0005)),
         ("glove-840b", "Pereira2018.384sentences-linear", approx(0.18385368, abs=0.0005)),
         ("gpt2-xl", "Futrell2018-pearsonr", approx(0.31825621, abs=0.0005)),
+        ('distilgpt2', 'syntaxgym-2020', approx(0.51398774, abs=.0005)),
         ('distilgpt2', 'center_embed', approx(0.96428571, abs=.0005)),
         ('distilgpt2', 'center_embed_mod', approx(0.92857143, abs=.0005)),
         ('distilgpt2', 'cleft', approx(1.0, abs=.0005)),

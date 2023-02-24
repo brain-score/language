@@ -60,7 +60,7 @@ class _Pereira2018ExperimentLinear(BenchmarkBase):
     recorded by Pereira et al. 2018.
     Alignment of neural activity between model and human subjects is evaluated via cross-validated linear predictivity.
 
-    This benchmark builds off the behavioral benchmark introduced
+    This benchmark builds off the Pereira2018 benchmark introduced
     in Schrimpf et al. 2021 (https://www.pnas.org/doi/10.1073/pnas.2105646118), but:
 
     * computes neural alignment to each of the two experiments ({243,384}sentences) separately, as well as ceilings

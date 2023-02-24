@@ -58,7 +58,7 @@ def _run_score(model_identifier: str, benchmark_identifier: str) -> Score:
     return score
 
 
-def score(model_identifier: str, benchmark_identifier: str) -> Score:
+def score(model_identifier: str, benchmark_identifier: str, conda_active: bool) -> Score:
     """
     Score the model referenced by the `model_identifier` on the benchmark referenced by the `benchmark_identifier`.
     The model needs to implement the :class:`~brainscore_language.artificial_subject.ArtificialSubject` interface
@@ -75,6 +75,7 @@ def score(model_identifier: str, benchmark_identifier: str) -> Score:
     :return: a Score of how brain-like the candidate model is under this benchmark. The score is normalized by
         this benchmark's ceiling such that 1 means the model matches the data to ceiling level.
     """
+    print(_run_score)
     return wrap_score(__file__,
                       model_identifier=model_identifier, benchmark_identifier=benchmark_identifier,
-                      score_function=_run_score)
+                      score_function=_run_score, conda_active=conda_active)
