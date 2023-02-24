@@ -58,7 +58,7 @@ def _run_score(model_identifier: str, benchmark_identifier: str) -> Score:
     return score
 
 
-def score(model_identifier: str, benchmark_identifier: str, conda_active: bool) -> Score:
+def score(model_identifier: str, benchmark_identifier: str, conda_active: bool=False) -> Score:
     """
     Score the model referenced by the `model_identifier` on the benchmark referenced by the `benchmark_identifier`.
     The model needs to implement the :class:`~brainscore_language.artificial_subject.ArtificialSubject` interface
