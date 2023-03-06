@@ -140,14 +140,19 @@ class HuggingfaceSubject(ArtificialSubject):
         """
         Tokenizes the context, keeping track of the newly added tokens in `self.current_tokens`
         """
-        context_tokens = self.tokenizer(context, truncation=True, return_tensors="pt")
+        context_tokens = self.tokenizer(
+                context, truncation=True, return_tensors="pt",
+                return_overflowing_tokens=True,
+                )
         context_tokens.to('cuda' if torch.cuda.is_available() else 'cpu')
         # keep track of tokens in current `text_part`
-        overflowing_encoding: list = np.array(context_tokens.encodings).item().overflowing
-        num_overflowing = 0 if not overflowing_encoding else sum(len(overflow) for overflow in overflowing_encoding)
+        overflowing_encoding: list = np.array(context_tokens.overflowing_tokens.cpu())
+        num_overflowing = sum(len(overflow) for overflow in overflowing_encoding)
         self.current_tokens = {key: value[..., num_previous_context_tokens - num_overflowing:]
                                for key, value in context_tokens.items()}
         num_new_context_tokens = context_tokens['input_ids'].shape[-1] + num_overflowing
+        context_tokens.pop('overflowing_tokens')
+        context_tokens.pop('num_truncated_tokens')
         return context_tokens, num_new_context_tokens
 
     def _setup_hooks(self):
@@ -165,7 +170,7 @@ class HuggingfaceSubject(ArtificialSubject):
     def output_to_representations(self, layer_representations: Dict[Tuple[str, str, str], np.ndarray], stimuli_coords):
         representation_values = np.concatenate([
             # Choose to use last token (-1) of values[batch, token, unit] to represent passage.
-            values[:, -1:, :].squeeze(0) for values in layer_representations.values()],
+            values[:, -1:, :].squeeze(0).cpu() for values in layer_representations.values()],
             axis=-1)  # concatenate along neuron axis
         neuroid_coords = {
             'layer': ('neuroid', np.concatenate([[layer] * values.shape[-1]
