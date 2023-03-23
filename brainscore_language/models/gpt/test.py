@@ -11,6 +11,10 @@ from brainscore_language.artificial_subject import ArtificialSubject
                     10.876629, 3.678278, 2.102749, 11.961533]),
     ('gpt2-xl', [np.nan, 1.378484e+01, 6.686095e+00, 2.284407e-01,
                  7.538393e-01, 6.105860e-03, 2.644155e-02, 4.411311e-03]),
+    ('gpt-neo-2.7B', [np.nan, 15.07522869,  3.6358602 ,  0.04999408,  1.42219079,
+                      0.0399301 ,  0.02614061,  0.02547451]),
+    ('gpt-neo-1.3B', [np.nan, 15.36009979,  5.54412651,  0.11744193,  0.60116327,
+                      0.04266951,  0.08952015,  0.09213546])
 ])
 def test_reading_times(model_identifier, expected_reading_times):
     model = load_model(model_identifier)
@@ -24,6 +28,8 @@ def test_reading_times(model_identifier, expected_reading_times):
 @pytest.mark.parametrize('model_identifier, expected_next_words', [
     ('distilgpt2', ['es', 'the', 'fox']),
     ('gpt2-xl', ['jumps', 'the', 'dog']),
+    ('gpt-neo-2.7B', ['jumps', 'the', 'dog']),
+    ('gpt-neo-1.3B', ['jumps', 'the', 'dog'])
 ])
 def test_next_word(model_identifier, expected_next_words):
     model = load_model(model_identifier)
@@ -37,6 +43,8 @@ def test_next_word(model_identifier, expected_next_words):
 @pytest.mark.parametrize('model_identifier, feature_size', [
     ('distilgpt2', 768),
     ('gpt2-xl', 1600),
+    ('gpt-neo-1.3B', 2048),
+    ('gpt-neo-2.7B', 2560)
 ])
 def test_neural(model_identifier, feature_size):
     model = load_model(model_identifier)
@@ -47,3 +55,26 @@ def test_neural(model_identifier, feature_size):
     assert len(representations['presentation']) == 3
     np.testing.assert_array_equal(representations['stimulus'], text)
     assert len(representations['neuroid']) == feature_size
+
+    
+if __name__ == '__main__':
+    test_neural('gpt-neo-2.7B', 2560)
+    test_neural('gpt-neo-1.3B', 2048)
+    test_neural('gpt2-xl', 1600)
+    test_neural('distilgpt2', 768)
+    
+    test_next_word('distilgpt2', ['es', 'the', 'fox'])
+    test_next_word('gpt2-xl', ['jumps', 'the', 'dog'])
+    test_next_word('gpt-neo-2.7B', ['jumps', 'the', 'dog'])
+    test_next_word('gpt-neo-1.3B', ['jumps', 'the', 'dog'])
+    
+    test_reading_times('distilgpt2', [np.nan, 19.260605, 12.721411, 12.083241,
+                    10.876629, 3.678278, 2.102749, 11.961533])
+    test_reading_times('gpt2-xl', [np.nan, 1.378484e+01, 6.686095e+00, 2.284407e-01,
+                 7.538393e-01, 6.105860e-03, 2.644155e-02, 4.411311e-03])
+    test_reading_times('gpt-neo-2.7B', [np.nan, 15.07522869,  3.6358602 ,  0.04999408,  1.42219079,
+                      0.0399301 ,  0.02614061,  0.02547451])
+    test_reading_times('gpt-neo-1.3B', [np.nan, 15.36009979,  5.54412651,  0.11744193,  0.60116327,
+                      0.04266951,  0.08952015,  0.09213546])
+    
+    
