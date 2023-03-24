@@ -1,13 +1,15 @@
 ### 
-# Runs on all PRs after CI checks pass.
+# Triggered on all PRs either by
+# - completion of checks, or
+# - tagging with label
+# If PR is labeled "automerge", checks if Travis tests pass. If yes, THEN:
 # Checks if PR modifies any code outside plugin dirs.
 # If no changes are made outside a subdir of /benchmarks, /data, /models, or /metrics,
 # and the PR is labeled with the "automerge" tag,
 # the PR is automatically approved and merged.
 # If changes are made to a subdir of /benchmarks or /models,
 # and an email can be found for the PR author,
-# a Jenkins scoring run is triggered.
-# 
+# PR is merged to main.
 ### 
 
 name: Automatically merge plugin-only PRs
