@@ -69,7 +69,7 @@ jobs:
         run: echo "The email is ${{ steps.getemail.outputs.email }}"
       - name: Add email to PLUGIN_INFO
         run: |
-          echo "PLUGIN_INFO="$(<<<$PLUGIN_INFO jq '. + {user_id: ${{ steps.getemail.outputs.email }} }')"" >> $GITHUB_ENV
+          echo "PLUGIN_INFO="$(<<<$PLUGIN_INFO jq '. + {author_email: ${{ steps.getemail.outputs.email }} }')"" >> $GITHUB_ENV
 
   runscore:
     name: Score plugins
