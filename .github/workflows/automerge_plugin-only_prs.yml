@@ -55,14 +55,13 @@ jobs:
           echo "::set-output name=TRAVIS_OK::$travisok"
 
   checkchanges:
-    name: Check 1) if PR only changes plugin files; 2) if scoring is needed
+    name: Check if PR only changes plugin files
     runs-on: ubuntu-latest
     needs: travis_success
     if: ${{ needs.travissuccess.outputs.TRAVIS_OK == 'True' }}
     outputs:
       PLUGIN_INFO: ${{ steps.getpluginfo.outputs.PLUGIN_INFO }}
       IS_PLUGIN_ONLY: ${{ steps.ispluginonly.outputs.IS_PLUGIN_ONLY }}
-      RUN_SCORE: ${{ steps.runscore.outputs.RUN_SCORE }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
@@ -91,31 +90,6 @@ jobs:
         id: ispluginonly
         run: |
           echo "IS_PLUGIN_ONLY=$(jq -r '.is_plugin_only' <<< "$PLUGIN_INFO")" >> $GITHUB_OUTPUT
-
-      - name: check if scoring needed
-        id: runscore
-        run: |
-          echo "RUN_SCORE=$(jq -r '.run_score' <<< "$PLUGIN_INFO")" >> $GITHUB_OUTPUT
-
-  get_user_email:
-    name: Get the PR author's email from their GitHub username
-    runs-on: ubuntu-latest
-    needs: checkchanges
-    if: ${{ needs.checkchanges.outputs.RUN_SCORE == 'True' }}
-    env:
-      PLUGIN_INFO: ${{ needs.checkchanges.outputs.PLUGIN_INFO }}
-    steps:
-      - name: Get email
-        id: getemail
-        uses: evvanErb/get-github-email-by-username-action@v1.25
-        with:
-          github-username: ${{github.event.pull_request.user.login}} # This is the input username
-          token: ${{ secrets.GITHUB_TOKEN }} # This is an optional input of a PAT to use a more reliable way to get a user's email
-      - name: Print the found email
-        run: echo "The email is ${{ steps.getemail.outputs.email }}"
-      - name: Add email to PLUGIN_INFO
-        run: |
-          echo "PLUGIN_INFO="$(<<<$PLUGIN_INFO jq '. + {user_id: ${{ steps.getemail.outputs.email }} }')"" >> $GITHUB_ENV
 
 ## DO NOT RUN AUTOMERGE WHILE TESTING ##     
   # automerge:
