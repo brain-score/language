@@ -1,6 +1,6 @@
 ### 
 # Triggered on all PRs either by
-# - completion of checks, or
+# - completion of CI checks, or
 # - tagging with label
 # If PR is labeled "automerge", checks if Travis tests pass. If yes, THEN:
 # Checks if PR modifies any code outside plugin dirs.
