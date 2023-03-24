@@ -24,7 +24,7 @@ permissions: write-all
 
 jobs:
   isautomerge:
-    name: Check if PR is labeled with 'automerge'
+    name: Check if PR is labeled with 'automerge' # All auto-generated PRs from website submission are tagged with this label 
     runs-on: ubuntu-latest
     if: contains( github.event.pull_request.labels.*.name, 'automerge')
     outputs:
