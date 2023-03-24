@@ -112,7 +112,7 @@ jobs:
           github-username: ${{github.event.pull_request.user.login}} # This is the input username
           token: ${{ secrets.GITHUB_TOKEN }} # This is an optional input of a PAT to use a more reliable way to get a user's email
       - name: Print the found email
-        run: echo "The email is ${{ steps.getemail.outputs.email }}" # Example of how to access output email
+        run: echo "The email is ${{ steps.getemail.outputs.email }}"
       - name: Add email to PLUGIN_INFO
         run: |
           echo "PLUGIN_INFO="$(<<<$PLUGIN_INFO jq '. + {user_id: ${{ steps.getemail.outputs.email }} }')"" >> $GITHUB_ENV
