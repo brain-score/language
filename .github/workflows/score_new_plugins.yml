@@ -95,4 +95,4 @@ jobs:
 
       - name: Run scoring
         run: |
-          python .github/workflows/call_jenkins.py process_github_submission '${{ env.PLUGIN_INFO }}'
+          python .github/workflows/call_jenkins.py '${{ env.PLUGIN_INFO }}'
