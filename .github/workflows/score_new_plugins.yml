@@ -51,25 +51,38 @@ jobs:
         run: |
           echo "RUN_SCORE=$(jq -r '.run_score' <<< "$PLUGIN_INFO")" >> $GITHUB_OUTPUT
 
-  get_user_email:
-    name: Get the PR author's email from their GitHub username
+  get_submitter_info:
+    name: Get PR author email and (IF web submission) Brain-Score user ID
     runs-on: ubuntu-latest
     needs: changes_models_or_benchmarks
     if: ${{ needs.changes_models_or_benchmarks.outputs.RUN_SCORE == 'True' }}
     env:
       PLUGIN_INFO: ${{ needs.changes_models_or_benchmarks.outputs.PLUGIN_INFO }}
+    outputs:
+      PLUGIN_INFO: ${{ steps.add_email_to_pluginfo.outputs.PLUGIN_INFO }}
     steps:
-      - name: Get PR author email
+      - name: Parse user ID from PR title (WEB ONLY)
+        id: getuid
+        if: ${{ github.event.pull_request.labels.*.name == 'automerge-web' }}
+        run: |
+          echo "BS_UID="$(<<<${{ github.event.pull_request.title }} | sed -E 's/.*\(user:([^)]+)\).*/\1/'"" >> $GITHUB_ENV
+      - name: Add user ID to PLUGIN_INFO (WEB ONLY)
+        id: add_uid_to_pluginfo
+        if: ${{ github.event.pull_request.labels.*.name == 'automerge-web' }}
+        run: |
+          echo "The Brain-Score user ID is ${{ steps.getuid.outputs.BS_UID }}"
+          echo "PLUGIN_INFO="$(<<<$PLUGIN_INFO jq '. + {user_id: ${{ steps.getuid.outputs.UID }} }')"" >> $GITHUB_ENV
+      - name: Get PR author email from GitHub username
         id: getemail
         uses: evvanErb/get-github-email-by-username-action@v1.25
         with:
           github-username: ${{github.event.pull_request.user.login}} # PR author's username
           token: ${{ secrets.GITHUB_TOKEN }} # Including token enables most reliable way to get a user's email
-      - name: Print the found email
-        run: echo "The email is ${{ steps.getemail.outputs.email }}"
-      - name: Add email to PLUGIN_INFO
+      - name: Add PR author email to PLUGIN_INFO
+        id: add_email_to_pluginfo
         run: |
-          echo "PLUGIN_INFO="$(<<<$PLUGIN_INFO jq '. + {author_email: ${{ steps.getemail.outputs.email }} }')"" >> $GITHUB_ENV
+          echo "The PR author email is ${{ steps.getemail.outputs.email }}"
+          echo "PLUGIN_INFO="$(<<<$PLUGIN_INFO jq '. + {author_email: ${{ steps.getemail.outputs.email }} }')"" >> $GITHUB_OUTPUT
 
   runscore:
     name: Score plugins
@@ -77,7 +90,7 @@ jobs:
     needs: changes_models_or_benchmarks
     if: ${{ needs.changes_models_or_benchmarks.outputs.RUN_SCORE == 'True' }}
     env:
-      PLUGIN_INFO: ${{ needs.changes_models_or_benchmarks.outputs.PLUGIN_INFO }}
+      PLUGIN_INFO: ${{ needs.get_submitter_info.outputs.PLUGIN_INFO }}
       JENKINS_USR: ${{ secrets.JENKINS_USR }}
       JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
       JENKINS_TRIGGER: ${{ secrets.JENKINS_TRIGGER }}
