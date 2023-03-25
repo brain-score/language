@@ -52,8 +52,10 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('jenkins_id', type=int,
                         help='The id of the current jenkins run')
-    parser.add_argument('user_id', type=int, nargs='?', default=2,
+    parser.add_argument('user_id', type=int, nargs='?', default=None,
                         help='ID of submitting user in the postgres DB')
+    parser.add_argument('author_email', type=str, nargs='?', default=None,
+                        help='email associated with PR author GitHub username')
     parser.add_argument('model_type', type=str, nargs='?', default='artificialsubject',
                         help='Type of model to score')
     parser.add_argument('public', type=bool, nargs='?', default=True,
