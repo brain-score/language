@@ -31,9 +31,10 @@ jobs:
     outputs:
       AUTOMERGE: ${{ steps.checklabel.outputs.AUTOMERGE }}
     steps:
-      -id: checklabel
-      run: |
-        echo "::set-output name=AUTOMERGE::'True'"
+      - name: Set 'automerge' to 'True' # job only runs if True
+        id: setautomerge
+        run: |
+          echo "::set-output name=AUTOMERGE::'True'"
 
   travissuccess:
     name: Check if Travis build is successful
@@ -42,10 +43,12 @@ jobs:
     outputs:
       TRAVIS_OK: ${{ steps.istravisok.outputs.TRAVIS_OK }}
     steps:
-      - id: gettravisstatus
+      - name: Get Travis build status
+        id: gettravisstatus
         run: |
           echo "TRAVIS_CONCLUSION=$(curl -X GET https://api.github.com/repos/brain-score/language/commits/${GITHUB_SHA}/check-runs | python -c "import sys,json; print(json.load(sys.stdin)['check_runs'][0]['conclusion'])")" >> $GITHUB_ENV
-      - id: istravisok
+      - name: Check if Travis was successful
+        id: istravisok
         run: |
           if [ "$TRAVIS_CONCLUSION" == "success" ]
           then
