@@ -3,6 +3,7 @@ from typing import List, Union, Dict
 
 from brainscore_core import Score, Benchmark
 from brainscore_core.submission import RunScoringEndpoint, DomainPlugins
+from brainscore_core.submission.endpoints import check_user_account
 from brainscore_language import load_model, load_benchmark, score
 from brainscore_language.submission import config
 
@@ -73,4 +74,6 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == '__main__':
     args = parse_args()
+    if not args_dict['user_id']:
+        args_dict['user_id'] = get_user_id(args_dict['author_email'])
     run_scoring(vars(args))
