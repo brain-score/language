@@ -1,17 +1,3 @@
-### 
-# Triggered on all PRs either by
-# - completion of CI checks, or
-# - tagging with label
-# If PR is labeled "automerge", checks if Travis tests pass. If yes, THEN:
-# Checks if PR modifies any code outside plugin dirs.
-# If no changes are made outside a subdir of /benchmarks, /data, /models, or /metrics,
-# and the PR is labeled with the "automerge" tag,
-# the PR is automatically approved and merged.
-# If changes are made to a subdir of /benchmarks or /models,
-# and an email can be found for the PR author,
-# PR is merged to main.
-### 
-
 name: Automatically merge plugin-only PRs
 
 on:
@@ -92,18 +78,17 @@ jobs:
         id: ispluginonly
         run: |
           echo "IS_PLUGIN_ONLY=$(jq -r '.is_plugin_only' <<< "$PLUGIN_INFO")" >> $GITHUB_OUTPUT
+   
+  automerge:
+    name: If plugin-only, approve and merge
+    runs-on: ubuntu-latest
+    needs: checkchanges
+    if: ${{ needs.checkchanges.outputs.IS_PLUGIN_ONLY == 'True' }}
+    steps:
+      - name: Auto Approve
+        uses: hmarr/auto-approve-action@v3.1.0
 
-## DO NOT RUN AUTOMERGE WHILE TESTING ##     
-  # automerge:
-  #   name: If plugin-only, approve and merge
-  #   runs-on: ubuntu-latest
-  #   needs: checkchanges
-  #   if: ${{ needs.checkchanges.outputs.IS_PLUGIN_ONLY == 'True' }}
-  #   steps:
-  #     - name: Auto Approve
-  #       uses: hmarr/auto-approve-action@v3.1.0
-
-  #     - name: Auto Merge
-  #       uses: plm9606/automerge_actions@1.2.2
-  #       with:
-  #         github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Auto Merge
+        uses: plm9606/automerge_actions@1.2.2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
