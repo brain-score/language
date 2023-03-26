@@ -1,5 +1,11 @@
 name: Trigger scoring run
 
+
+# Triggered on all PRs on merge to main
+# If changes are made to a subdir of /benchmarks or /models,
+# a Jenkins scoring run is triggered for the corresponding plugin
+
+
 on:
   pull_request:
     branches:
