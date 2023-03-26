@@ -1,9 +1,3 @@
-### 
-# Runs on all PRs merged to main.
-# If changes are made to a subdir of /benchmarks or /models,
-# a Jenkins scoring run is triggered.
-### 
-
 name: Trigger scoring run
 
 on:
