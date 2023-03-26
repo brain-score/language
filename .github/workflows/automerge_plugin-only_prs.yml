@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       contains( github.event.pull_request.labels.*.name, 'automerge') ||
-      contains( github.event.pull_request.labels.*.name, 'automerge-web') # All auto-generated PRs from website submission are tagged with this label
+      contains( github.event.pull_request.labels.*.name, 'automerge-web')
     outputs:
       AUTOMERGE: ${{ steps.checklabel.outputs.AUTOMERGE }}
     steps:
