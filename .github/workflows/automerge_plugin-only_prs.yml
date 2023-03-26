@@ -36,7 +36,7 @@ jobs:
         run: |
           echo "::set-output name=AUTOMERGE::'True'"
 
-  travissuccess:
+  travis_success:
     name: Check if Travis build is successful
     runs-on: ubuntu-latest
     if: ${{ needs.isautomerge.outputs.AUTOMERGE == 'True' }}
