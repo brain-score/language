@@ -94,17 +94,18 @@ jobs:
         id: ispluginonly
         run: |
           echo "IS_PLUGIN_ONLY=$(jq -r '.is_plugin_only' <<< "$PLUGIN_INFO")" >> $GITHUB_OUTPUT
-   
-  automerge:
-    name: If plugin-only, approve and merge
-    runs-on: ubuntu-latest
-    needs: checkchanges
-    if: ${{ needs.checkchanges.outputs.IS_PLUGIN_ONLY == 'True' }}
-    steps:
-      - name: Auto Approve
-        uses: hmarr/auto-approve-action@v3.1.0
+ 
+ ## DO NOT UNCOMMENT DURING TESTING!!!  
+  # automerge:
+  #   name: If plugin-only, approve and merge
+  #   runs-on: ubuntu-latest
+  #   needs: checkchanges
+  #   if: ${{ needs.checkchanges.outputs.IS_PLUGIN_ONLY == 'True' }}
+  #   steps:
+  #     - name: Auto Approve
+  #       uses: hmarr/auto-approve-action@v3.1.0
 
-      - name: Auto Merge
-        uses: plm9606/automerge_actions@1.2.2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Auto Merge
+  #       uses: plm9606/automerge_actions@1.2.2
+  #       with:
+  #         github-token: ${{ secrets.GITHUB_TOKEN }}
