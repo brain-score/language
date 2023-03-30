@@ -75,6 +75,6 @@ def parse_args() -> argparse.Namespace:
 if __name__ == '__main__':
     args = parse_args()
     if not args_dict['user_id']:
-        get_user_endpoint = UserManager(args_dict['author_email'], db_secret=config.get_database_secret())
-        args_dict['user_id'] = get_user_endpoint()
+        user_manager = UserManager(args_dict['author_email'], db_secret=config.get_database_secret())
+        args_dict['user_id'] = user_manager()
     run_scoring(vars(args))
