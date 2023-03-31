@@ -76,7 +76,8 @@ def plugins_to_score(plugins_dict, plugin_files_changed) -> str:
 
 
 if __name__ == '__main__':
-    plugin_files_changed, non_plugin_files_changed = get_changed_files()
+    changed_files = sys.argv[1]
+    plugin_files_changed, non_plugin_files_changed = get_changed_files(changed_files)
 
     plugins_dict = {}
     plugins_dict = is_plugin_only(plugins_dict, non_plugin_files_changed)
