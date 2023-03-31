@@ -52,7 +52,7 @@ jobs:
           echo "RUN_SCORE=$(jq -r '.run_score' <<< "$PLUGIN_INFO")" >> $GITHUB_OUTPUT
 
   get_submitter_info:
-    name: Get PR author email and (IF web submission) Brain-Score user ID
+    name: Get PR author email and (if web submission) Brain-Score user ID
     runs-on: ubuntu-latest
     needs: changes_models_or_benchmarks
     if: ${{ needs.changes_models_or_benchmarks.outputs.RUN_SCORE == 'True' }}
