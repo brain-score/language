@@ -91,7 +91,7 @@ jobs:
     if: ${{ needs.changes_models_or_benchmarks.outputs.RUN_SCORE == 'True' }}
     env:
       PLUGIN_INFO: ${{ needs.get_submitter_info.outputs.PLUGIN_INFO }}
-      JENKINS_USR: ${{ secrets.JENKINS_USR }}
+      JENKINS_USER: ${{ secrets.JENKINS_USER }}
       JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
       JENKINS_TRIGGER: ${{ secrets.JENKINS_TRIGGER }}
     steps:
