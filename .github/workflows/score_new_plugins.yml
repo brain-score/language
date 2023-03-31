@@ -16,6 +16,23 @@ on:
 permissions: write-all
 
 jobs:
+  setup:
+  runs-on: ubuntu-latest
+  outputs:
+    BSC_DATABASESECRET: ${{ steps.setenvvars.outputs.BSC_DATABASESECRET }}
+  steps:
+    - uses: actions/checkout@v2
+    - name: Set dev/prod variables
+      id: setenvvars
+      run: |
+        if [ ${{ github.ref }} != 'refs/heads/main' ]; then
+          echo "is NOT main branch"
+          echo "::set-output name=BSC_DATABASESECRET:: ${{ secrets.BSC_DATABASESECRET_DEV }}"
+        else
+          echo "is main branch"
+          echo "::set-output name=BSC_DATABASESECRET:: ${{ secrets.BSC_DATABASESECRET_PROD }}"
+        fi
+
   changes_models_or_benchmarks:
     name: Check if PR makes changes to /models or /benchmarks
     runs-on: ubuntu-latest
@@ -54,9 +71,10 @@ jobs:
   get_submitter_info:
     name: Get PR author email and (if web submission) Brain-Score user ID
     runs-on: ubuntu-latest
-    needs: changes_models_or_benchmarks
+    needs: [setup, changes_models_or_benchmarks]
     if: ${{ needs.changes_models_or_benchmarks.outputs.RUN_SCORE == 'True' }}
     env:
+      BSC_DATABASESECRET: ${{ needs.setup.outputs.BSC_DATABASESECRET }}
       PLUGIN_INFO: ${{ needs.changes_models_or_benchmarks.outputs.PLUGIN_INFO }}
     outputs:
       PLUGIN_INFO: ${{ steps.add_email_to_pluginfo.outputs.PLUGIN_INFO }}
