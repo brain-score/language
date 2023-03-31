@@ -28,8 +28,9 @@ jobs:
     outputs:
       BSC_DATABASESECRET: ${{ steps.setenvvars.outputs.BSC_DATABASESECRET }}
     steps:
-      - name: Check if main & set dev/prod vars
+      - name: Check out repository code
         uses: actions/checkout@v2
+      - name: Check if main & set dev/prod vars
         id: setenvvars
         run: |
           if [ ${{ github.ref }} != 'refs/heads/main' ]; then
