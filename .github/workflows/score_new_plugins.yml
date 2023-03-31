@@ -61,7 +61,7 @@ jobs:
     outputs:
       PLUGIN_INFO: ${{ steps.add_email_to_pluginfo.outputs.PLUGIN_INFO }}
     steps:
-      - name: Parse user ID from PR title (WEB ONLY)
+      - name: Parse user ID from PR title (WEB ONLY where we don't have access to the GitHub user)
         id: getuid
         if: ${{ github.event.pull_request.labels.*.name == 'automerge-web' }}
         run: |
