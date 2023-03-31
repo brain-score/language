@@ -52,7 +52,7 @@ jobs:
           echo "RUN_SCORE=$(jq -r '.run_score' <<< "$PLUGIN_INFO")" >> $GITHUB_OUTPUT
 
   get_submitter_info:
-    name: Get PR author email and (IF web submission) Brain-Score user ID
+    name: Get PR author email and (if web submission) Brain-Score user ID
     runs-on: ubuntu-latest
     needs: changes_models_or_benchmarks
     if: ${{ needs.changes_models_or_benchmarks.outputs.RUN_SCORE == 'True' }}
@@ -61,7 +61,7 @@ jobs:
     outputs:
       PLUGIN_INFO: ${{ steps.add_email_to_pluginfo.outputs.PLUGIN_INFO }}
     steps:
-      - name: Parse user ID from PR title (WEB ONLY)
+      - name: Parse user ID from PR title (WEB ONLY where we don't have access to the GitHub user)
         id: getuid
         if: ${{ github.event.pull_request.labels.*.name == 'automerge-web' }}
         run: |

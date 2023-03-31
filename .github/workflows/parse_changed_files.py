@@ -3,11 +3,10 @@ import sys
 from pathlib import Path
 from typing import List, Tuple
 
-PLUGIN_DIRS = ['benchmarks', 'data', 'models', 'metrics']
+PLUGIN_DIRS = ['models', 'benchmarks', 'data', 'metrics']
 
 
-def get_changed_files() -> Tuple[List[str], List[str]]:
-    changed_files = sys.argv[1]
+def get_changed_files(changed_files: str) -> Tuple[List[str], List[str]]:
     changed_files_list = changed_files.split()
 
     plugin_files_changed = []
@@ -77,7 +76,8 @@ def plugins_to_score(plugins_dict, plugin_files_changed) -> str:
 
 
 if __name__ == '__main__':
-    plugin_files_changed, non_plugin_files_changed = get_changed_files()
+    changed_files = sys.argv[1]
+    plugin_files_changed, non_plugin_files_changed = get_changed_files(changed_files)
 
     plugins_dict = {}
     plugins_dict = is_plugin_only(plugins_dict, non_plugin_files_changed)
