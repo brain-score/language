@@ -23,25 +23,22 @@ permissions: write-all
 
 jobs:
   setup:
-  runs-on: ubuntu-latest
-  outputs:
-    BSC_DATABASESECRET: ${{ steps.setenvvars.outputs.BSC_DATABASESECRET }}
-  steps:
-    - uses: actions/checkout@v2
-    - name: Set dev/prod variables
-      id: setenvvars
-      run: |
-        if [ ${{ github.ref }} != 'refs/heads/main' ]; then
-          echo "is NOT main branch"
-          echo "::set-output name=BSC_DATABASESECRET:: ${{ secrets.BSC_DATABASESECRET_DEV }}"
-        else
-          echo "is main branch"
-          echo "::set-output name=BSC_DATABASESECRET:: ${{ secrets.BSC_DATABASESECRET_PROD }}"
-        fi
-      shell: bash
-    - name: Read exported variable
-      run: |
-        echo "OUTPUT: ${{ steps.setenvvars.outputs.BSC_DATABASESECRET }}"
+    name: setup
+    runs-on: ubuntu-latest
+    outputs:
+      BSC_DATABASESECRET: ${{ steps.setenvvars.outputs.BSC_DATABASESECRET }}
+    steps:
+      - name: Check if main & set dev/prod vars
+        uses: actions/checkout@v2
+        id: setenvvars
+        run: |
+          if [ ${{ github.ref }} != 'refs/heads/main' ]; then
+            echo "is NOT main branch"
+            echo "::set-output name=BSC_DATABASESECRET:: ${{ secrets.BSC_DATABASESECRET_DEV }}"
+          else
+            echo "is main branch"
+            echo "::set-output name=BSC_DATABASESECRET:: ${{ secrets.BSC_DATABASESECRET_PROD }}"
+          fi
 
   isautomerge:
     name: Check if PR is labeled with 'automerge' or 'automerge-web'

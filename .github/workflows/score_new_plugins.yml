@@ -17,21 +17,22 @@ permissions: write-all
 
 jobs:
   setup:
-  runs-on: ubuntu-latest
-  outputs:
-    BSC_DATABASESECRET: ${{ steps.setenvvars.outputs.BSC_DATABASESECRET }}
-  steps:
-    - uses: actions/checkout@v2
-    - name: Set dev/prod variables
-      id: setenvvars
-      run: |
-        if [ ${{ github.ref }} != 'refs/heads/main' ]; then
-          echo "is NOT main branch"
-          echo "::set-output name=BSC_DATABASESECRET:: ${{ secrets.BSC_DATABASESECRET_DEV }}"
-        else
-          echo "is main branch"
-          echo "::set-output name=BSC_DATABASESECRET:: ${{ secrets.BSC_DATABASESECRET_PROD }}"
-        fi
+    name: setup
+    runs-on: ubuntu-latest
+    outputs:
+      BSC_DATABASESECRET: ${{ steps.setenvvars.outputs.BSC_DATABASESECRET }}
+    steps:
+      - name: Check if main & set dev/prod vars
+        uses: actions/checkout@v2
+        id: setenvvars
+        run: |
+          if [ ${{ github.ref }} != 'refs/heads/main' ]; then
+            echo "is NOT main branch"
+            echo "::set-output name=BSC_DATABASESECRET:: ${{ secrets.BSC_DATABASESECRET_DEV }}"
+          else
+            echo "is main branch"
+            echo "::set-output name=BSC_DATABASESECRET:: ${{ secrets.BSC_DATABASESECRET_PROD }}"
+          fi
 
   changes_models_or_benchmarks:
     name: Check if PR makes changes to /models or /benchmarks
