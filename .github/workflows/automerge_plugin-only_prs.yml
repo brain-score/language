@@ -87,7 +87,7 @@ jobs:
         # Optional (recommended) mail server username:
         username: ${{secrets.MAIL_USERNAME}}
         # Optional (recommended) mail server password:
-        password: ${{secrets.MAIL_PASSWORD}}
+        password: ${{ secrets.MAIL_PASSWORD }}
         # Required mail subject:
         subject: Brain-Score submission failed
         # Required recipients' addresses:
