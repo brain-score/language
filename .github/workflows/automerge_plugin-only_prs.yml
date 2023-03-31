@@ -23,7 +23,7 @@ permissions: write-all
 
 jobs:
   isautomerge:
-    name: Check if PR is labeled with 'automerge'
+    name: Check if PR is labeled with 'automerge' or 'automerge-web'
     runs-on: ubuntu-latest
     if: |
       contains( github.event.pull_request.labels.*.name, 'automerge') ||
@@ -66,7 +66,7 @@ jobs:
       ${{ needs.travissuccess.outputs.TRAVIS_OK == 'False' }} &&
       contains( github.event.pull_request.labels.*.name, 'automerge-web')
     steps:
-    - name: Parse user ID from PR title
+    - name: Parse Brain-Score user ID from PR title
       run: |
         echo "BS_UID="$(<<<${{ github.event.pull_request.title }} | sed -E 's/.*\(user:([^)]+)\).*/\1/'"" >> $GITHUB_ENV
     - name: Build project
