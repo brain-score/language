@@ -6,8 +6,7 @@ from typing import List, Tuple
 PLUGIN_DIRS = ['models', 'benchmarks', 'data', 'metrics']
 
 
-def get_changed_files() -> Tuple[List[str], List[str]]:
-    changed_files = sys.argv[1]
+def get_changed_files(changed_files: str) -> Tuple[List[str], List[str]]:
     changed_files_list = changed_files.split()
 
     plugin_files_changed = []
