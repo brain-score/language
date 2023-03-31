@@ -3,9 +3,6 @@ python:
   - "3.7"
   - "3.8"
   - "3.9"
-env:
-  global:
-    - secure: "vy33t794anayJQbyO8L1JjNO86kJ0GfxwBVRRXcvgbJHac+dob2xiw4HAYDQKT1WomFkfcpkeBn6jbzd7T/+cBBoDpLB8IfecDTB4QIO0O9Vdb0yAnt2bjEbMARWSLXLhsaW+jaRjGuovk1sEL8hYxfMaeZkx7VsONaJsUl7YWypd7yatcWGNf25L7+Zp4HWXjMzkTgBjWiNIHR359CpkqtGA0xjyNk7TMv8uXN/Umkd/Z7HSnqhvWmJWxBhzLhUxQ/X+yYnbyusMVEbfiw294Sqy/CDgErsZVyPHsLW2t621gN/6ymo+eolwowCQWZ67cC5TegwDYYed+0TP+Cx4mLzEoons9vWHV3kOOtgpcVz5HZ58YlTiZLNeUOsfw5qcb0s4HbMMu5vgdHhT6MmyCajSOPAHlx+KTq0e7TpHeZEOdFWrgeHgDnLto0yM2QvB/EeyYBei771vKnH8TWQkZMS+QaVoZU163Btfdg51lqs8IJ6cuv+3THdxoCsocPSiBXF3zv19Tu9BOAs43Uhjtp/AGNK6dzJapTbbszGR5OYVrwE8ImlCi5CJjzd1yTKwa4jtlQJ0hCzvC0C3QRYV+ZMaZWkyLVmrAlw9HQpHq2Yzzz88rz9o6JvLQb2lLcIhcn70GU12LHZmT9DSzQDLyRUg7O4csFaby4uYlw2xME="
 install:
   # fix setuptools for python 3.7, error in other versions https://github.com/pypa/setuptools/issues/3293
   - if [[ $TRAVIS_PYTHON_VERSION == 3.7* ]]; then
