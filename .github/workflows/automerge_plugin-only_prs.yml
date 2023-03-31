@@ -95,7 +95,7 @@ jobs:
         # Required sender full name:
         from: Brain-Score
         # Optional plain body:
-        body: Your Brain-Score submission did not pass checks. Please review the test results and update the PR at https://github.com/brain-score/language/pull/${{ github.event.number }}
+        body: Your Brain-Score submission did not pass checks. Please review the test results and update the PR at https://github.com/brain-score/language/pull/${{ github.event.number }} or send in an updated submission via the website.
 
   checkchanges:
     name: Check if PR only changes plugin files
