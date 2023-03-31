@@ -3,7 +3,6 @@ from typing import List, Union, Dict
 
 from brainscore_core import Score, Benchmark
 from brainscore_core.submission import UserManager, RunScoringEndpoint, DomainPlugins
-from brainscore_core.submission.endpoints import check_user_account
 from brainscore_language import load_model, load_benchmark, score
 from brainscore_language.submission import config
 
