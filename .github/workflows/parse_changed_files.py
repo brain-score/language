@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from typing import List, Tuple
 
-PLUGIN_DIRS = ['benchmarks', 'data', 'models', 'metrics']
+PLUGIN_DIRS = ['models', 'benchmarks', 'data', 'metrics']
 
 
 def get_changed_files() -> Tuple[List[str], List[str]]:
