@@ -74,6 +74,13 @@ def plugins_to_score(plugins_dict, plugin_files_changed) -> str:
 
     return plugins_dict
 
+def plugin_name_from_path(path_relative_to_library: str) -> str:
+    """
+    Returns the name of the plugin from the given path. 
+    E.g. `plugin_name_from_path("brainscore_vision/models/mymodel")` will return `"mymodel"`.
+    """
+    return path_relative_to_library.split('/')[2]
+
 
 if __name__ == '__main__':
     changed_files = sys.argv[1]
