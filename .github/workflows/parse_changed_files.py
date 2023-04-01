@@ -80,7 +80,8 @@ if __name__ == '__main__':
     plugin_files_changed, non_plugin_files_changed = get_changed_files(changed_files)
 
     plugins_dict = {}
-    plugins_dict = is_plugin_only(plugins_dict, non_plugin_files_changed)
-    plugins_dict = plugins_to_score(plugins_dict, plugin_files_changed)
+    is_plugin_only(plugins_dict, non_plugin_files_changed)
+    plugins_to_score(plugins_dict, plugin_files_changed)
+    plugins_dict = serialize_dict(plugins_dict)
 
     print(plugins_dict)
