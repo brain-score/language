@@ -31,9 +31,11 @@ class TestRunScoring:
         clear_schema()
 
     def test_successful_run(self):
-        run_scoring(models=['randomembedding-100'], benchmarks=['Pereira2018.243sentences-linear'],
-                    jenkins_id=123, user_id=1, model_type='artificial_subject',
-                    public=True, competition=None)
+        args_dict = {'jenkins_id': 62, 'user_id': 6, 'author_email': 'mschrimpf@mit.edu', 
+                    'model_type': 'artificialsubject', 'public': True, 'competition': 'None', 
+                    'new_models': ['randomembedding-100'], 'new_benchmarks': ['Pereira2018.243sentences-linear'],
+                    'specified_only': True}
+        run_scoring(args_dict)
         score_entries = database_models.Score.select()
         score_entries = list(score_entries)
         assert len(score_entries) == 1
@@ -42,27 +44,32 @@ class TestRunScoring:
 
     @pytest.mark.travis_slow
     def test_multiple_models(self):
-        run_scoring(models=['randomembedding-100', 'randomembedding-1600'],
-                    benchmarks=['Pereira2018.243sentences-linear'],
-                    jenkins_id=123, user_id=1, model_type='artificial_subject',
-                    public=True, competition=None)
+        args_dict = {'jenkins_id': 62, 'user_id': 6, 'author_email': 'mschrimpf@mit.edu', 
+                    'model_type': 'artificialsubject', 'public': True, 'competition': 'None', 
+                    'new_models': ['randomembedding-100', 'randomembedding-1600'], 
+                    'new_benchmarks': ['Pereira2018.243sentences-linear'], 'specified_only': True}
+        run_scoring(args_dict)
         score_entries = database_models.Score.select()
         assert len(score_entries) == 2
         score_values = [entry.score_ceiled for entry in score_entries]
         assert all(np.array(score_values) > 0)
 
     def test_benchmark_does_not_exist(self):
-        run_scoring(models=['randomembedding-100'], benchmarks=['idonotexist'],
-                    jenkins_id=123, user_id=1, model_type='artificial_subject',
-                    public=True, competition=None)
+        args_dict = {'jenkins_id': 62, 'user_id': 6, 'author_email': 'mschrimpf@mit.edu', 
+            'model_type': 'artificialsubject', 'public': True, 'competition': 'None', 
+            'new_models': ['randomembedding-100'], 'new_benchmarks': ['idonotexist'],
+            'specified_only': True}
+        run_scoring(args_dict)
         score_entries = database_models.Score.select()
         assert len(score_entries) == 0
 
     def test_model_cannot_run(self):
         # embedding model cannot perform behavior
-        run_scoring(models=['randomembedding-100'], benchmarks=['Futrell2018-pearsonr'],
-                    jenkins_id=123, user_id=1, model_type='artificial_subject',
-                    public=True, competition=None)
+        args_dict = {'jenkins_id': 62, 'user_id': 6, 'author_email': 'mschrimpf@mit.edu', 
+            'model_type': 'artificialsubject', 'public': True, 'competition': 'None', 
+            'new_models': ['randomembedding-100'], 'new_benchmarks': ['Futrell2018-pearsonr'],
+            'specified_only': True}
+        run_scoring(args_dict)
         score_entries = database_models.Score.select()
         score_entries = list(score_entries)
         assert len(score_entries) == 1

@@ -31,15 +31,21 @@ def run_scoring(args_dict: Dict[str, Union[str, List]]):
     new_models = _get_ids(args_dict, 'new_models')
     new_benchmarks = _get_ids(args_dict, 'new_benchmarks')
 
-    if new_models and new_benchmarks:
-        args_dict['models'] = RunScoringEndpoint.ALL_PUBLIC
-        args_dict['benchmarks'] = RunScoringEndpoint.ALL_PUBLIC
-    elif new_benchmarks:
-        args_dict['models'] = RunScoringEndpoint.ALL_PUBLIC
-        args_dict['benchmarks'] = new_benchmarks
-    elif new_models:
+    if args_dict['specified_only']:
+        assert len(new_models) > 0, "No models specified"
+        assert len(new_benchmarks) > 0, "No benchmarks specified"
         args_dict['models'] = new_models
-        args_dict['benchmarks'] = RunScoringEndpoint.ALL_PUBLIC
+        args_dict['benchmarks'] = new_benchmarks
+    else:
+        if new_models and new_benchmarks:
+            args_dict['models'] = RunScoringEndpoint.ALL_PUBLIC
+            args_dict['benchmarks'] = RunScoringEndpoint.ALL_PUBLIC
+        elif new_benchmarks:
+            args_dict['models'] = RunScoringEndpoint.ALL_PUBLIC
+            args_dict['benchmarks'] = new_benchmarks
+        elif new_models:
+            args_dict['models'] = new_models
+            args_dict['benchmarks'] = RunScoringEndpoint.ALL_PUBLIC
 
     remove_keys = ['new_benchmarks', 'new_models']
     new_args = {k: v for k, v in args_dict.items() if k not in remove_keys}  # preserve other keys, e.g. `run_score`
@@ -66,6 +72,8 @@ def parse_args() -> argparse.Namespace:
                         help='The identifiers of newly submitted models to score on all benchmarks')
     parser.add_argument('--new_benchmarks', type=str, nargs='*', default=None,
                         help='The identifiers of newly submitted benchmarks on which to score all models')
+    parser.add_argument('--specified_only', type=bool, nargs='?', default=False,
+                        help='Will only score the plugins specified by new_models and new_benchmarks')
     args, remaining_args = parser.parse_known_args()
 
     return args
