@@ -21,13 +21,13 @@ def get_changed_files(changed_files: str) -> Tuple[List[str], List[str]]:
     return plugin_files_changed, non_plugin_files_changed
 
 
-def is_plugin_only(plugins_dict, non_plugin_files_changed):
-    if len(non_plugin_files_changed) > 0:
-        plugins_dict["is_plugin_only"] = "False"
-    else:
-        plugins_dict["is_plugin_only"] = "True"
-
-    return plugins_dict
+def is_plugin_only(plugins_dict: dict, non_plugin_files_changed: List[str]):
+    """ 
+    Stores `plugins_dict['is_plugin_only']` `"True"` or `"False"` 
+    depending on whether there are any changed non-plugin files.
+    """
+    plugin_only = len(non_plugin_files_changed) > 0
+    plugins_dict["is_plugin_only"] = "False" if plugin_only else "True"
 
 
 def _get_registered_plugins(plugin_type: str, plugin_dirs: List[str]) -> List[str]:
