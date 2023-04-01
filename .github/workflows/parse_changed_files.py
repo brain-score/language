@@ -70,9 +70,10 @@ def plugins_to_score(plugins_dict, plugin_files_changed) -> str:
             plugins_to_score = _get_registered_plugins(plugin_type, plugin_dirs)
             plugins_dict[f'new_{plugin_type}'] = ' '.join(plugins_to_score)
 
-    plugins_dict = str(plugins_dict).replace('\'', '\"')
 
-    return plugins_dict
+def serialize_dict(plugins_dict: dict) -> str:
+    return str(plugins_dict).replace('\'', '\"')
+
 
 def plugin_name_from_path(path_relative_to_library: str) -> str:
     """
