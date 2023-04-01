@@ -22,6 +22,12 @@ language_plugins = LanguagePlugins()
 run_scoring_endpoint = RunScoringEndpoint(language_plugins, db_secret=config.get_database_secret())
 
 
+def create_user(domain: str, email: str) -> int:
+    user_manager = UserManager(domain, email, db_secret=config.get_database_secret())
+    new_user_id = user_manager()
+    return new_user_id
+
+
 def _get_ids(args_dict: Dict[str, Union[str, List]], key: str) -> Union[List, str, None]:
     return args_dict[key] if key in args_dict else None
 
@@ -51,7 +57,8 @@ def run_scoring(args_dict: Dict[str, Union[str, List]]):
             args_dict['models'] = new_models
             args_dict['benchmarks'] = RunScoringEndpoint.ALL_PUBLIC
 
-    new_args = _clean_args(['new_benchmarks', 'new_models', 'specified_only'], args_dict)
+    new_args = _clean_args(['new_benchmarks', 'new_models', 
+                            'author_email', 'specified_only'], args_dict)
     new_args["domain"] = "language"
 
     run_scoring_endpoint(**new_args)
@@ -61,6 +68,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('jenkins_id', type=int,
                         help='The id of the current jenkins run')
+    parser.add_argument('domain', type=str,
+                        help='The submission domain (vision or language)')
     parser.add_argument('user_id', type=int, nargs='?', default=None,
                         help='ID of submitting user in the postgres DB')
     parser.add_argument('author_email', type=str, nargs='?', default=None,
@@ -87,8 +96,7 @@ if __name__ == '__main__':
     args_dict = vars(args)
 
     if not args_dict['user_id']:
-        user_manager = UserManager(args_dict['author_email'], db_secret=config.get_database_secret())
-        args_dict['user_id'] = user_manager()
-    new_args = _clean_args(['author_email'], args_dict)
+        new_user_id = create_user(args_dict['domain'], args_dict['author_email'])
+        args_dict['user_id'] = new_user_id
     
     run_scoring(new_args)

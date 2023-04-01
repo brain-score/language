@@ -117,7 +117,7 @@ jobs:
     steps:
       - name: Add public, competition, and model_type to PLUGIN_INFO
         run: |
-          echo "PLUGIN_INFO="$(<<<$PLUGIN_INFO jq '. + {public: "True", competition: "None", model_type: "artificialsubject"}')"" >> $GITHUB_ENV
+          echo "PLUGIN_INFO="$(<<<$PLUGIN_INFO jq '. + {domain: "language", public: "True", competition: "None", model_type: "artificialsubject"}')"" >> $GITHUB_ENV
 
       - name: Check out repository code
         uses: actions/checkout@v2
