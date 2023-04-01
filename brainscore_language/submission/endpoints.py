@@ -26,6 +26,10 @@ def _get_ids(args_dict: Dict[str, Union[str, List]], key: str) -> Union[List, st
     return args_dict[key] if key in args_dict else None
 
 
+def _clean_args(remove_keys: List[str], args_dict: Dict[str, Union[str, List]]) -> Dict[str, Union[str, List]]:
+    return {k: v for k, v in args_dict.items() if k not in remove_keys}  # preserve other keys, e.g. `run_score`
+
+
 def run_scoring(args_dict: Dict[str, Union[str, List]]):
     """ prepares `args_dict` as parameters for the `run_scoring_endpoint`. """
     new_models = _get_ids(args_dict, 'new_models')
@@ -47,8 +51,7 @@ def run_scoring(args_dict: Dict[str, Union[str, List]]):
             args_dict['models'] = new_models
             args_dict['benchmarks'] = RunScoringEndpoint.ALL_PUBLIC
 
-    remove_keys = ['new_benchmarks', 'new_models']
-    new_args = {k: v for k, v in args_dict.items() if k not in remove_keys}  # preserve other keys, e.g. `run_score`
+    new_args = _clean_args(['new_benchmarks', 'new_models', 'specified_only'], args_dict)
     new_args["domain"] = "language"
 
     run_scoring_endpoint(**new_args)
@@ -73,7 +76,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--new_benchmarks', type=str, nargs='*', default=None,
                         help='The identifiers of newly submitted benchmarks on which to score all models')
     parser.add_argument('--specified_only', type=bool, nargs='?', default=False,
-                        help='Will only score the plugins specified by new_models and new_benchmarks')
+                        help='Only score the plugins specified by new_models and new_benchmarks')
     args, remaining_args = parser.parse_known_args()
 
     return args
@@ -81,7 +84,11 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == '__main__':
     args = parse_args()
+    args_dict = vars(args)
+
     if not args_dict['user_id']:
         user_manager = UserManager(args_dict['author_email'], db_secret=config.get_database_secret())
         args_dict['user_id'] = user_manager()
-    run_scoring(vars(args))
+    new_args = _clean_args(['author_email'], args_dict)
+    
+    run_scoring(new_args)
