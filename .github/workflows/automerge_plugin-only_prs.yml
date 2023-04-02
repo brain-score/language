@@ -95,7 +95,7 @@ jobs:
         python -m pip install "."
     - name: Get email from Brain-Score UID
       run: |
-        echo "TO_EMAIL=$(python .github/workflows/call_endpoints.py get_email_from_uid '${{ env.BS_UID }}')" >> $GITHUB_ENV
+        echo "TO_EMAIL=$(python .github/workflows/call_endpoints.py get_user_email '${{ env.BS_UID }}')" >> $GITHUB_ENV
     - name: Send email to Brain-Score user
       uses: dawidd6/action-send-mail@v3
       with:
