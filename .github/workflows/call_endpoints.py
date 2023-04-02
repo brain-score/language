@@ -1,7 +1,7 @@
 import ast
 import sys
 
-from brainscore_core.submission.endpoints import process_github_submission, get_email_from_uid
+from brainscore_language.submission.endpoints import process_github_submission, get_email_from_uid
 
 
 if __name__ == '__main__':

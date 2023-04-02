@@ -7,6 +7,24 @@ from brainscore_language import load_model, load_benchmark, score
 from brainscore_language.submission import config
 
 
+def process_github_submission(plugin_info: Dict[str, Union[List[str], str]]):
+    """
+    Triggered when changes are merged to the GitHub repository, if those changes affect benchmarks or models.
+    Starts run to score models on benchmarks (`run_scoring`).
+    """
+    jenkins_base = "http://braintree.mit.edu:8080"
+    jenkins_user = os.environ['JENKINS_USER']
+    jenkins_token = os.environ['JENKINS_TOKEN']
+    jenkins_trigger = os.environ['JENKINS_TRIGGER']
+    jenkins_job = "dev_score_plugins"
+
+    url = f'{jenkins_base}/job/{jenkins_job}/buildWithParameters?token={jenkins_trigger}'
+    payload = {k: v for k, v in plugin_info.items() if plugin_info[k]}
+    auth_basic = HTTPBasicAuth(username=jenkins_user, password=jenkins_token)
+    r = requests.get(url, params=payload, auth=auth_basic)
+    logger.debug(r)
+
+
 class LanguagePlugins(DomainPlugins):
     def load_model(self, model_identifier: str):
         return load_model(model_identifier)
@@ -20,6 +38,11 @@ class LanguagePlugins(DomainPlugins):
 
 language_plugins = LanguagePlugins()
 run_scoring_endpoint = RunScoringEndpoint(language_plugins, db_secret=config.get_database_secret())
+
+
+def get_user_email(uid: int) -> str:
+    """ Convenience method for GitHub Actions to get a user's email if their web-submitted PR fails. """
+    return get_email_from_uid(uid)
 
 
 def create_user(domain: str, email: str) -> int:
