@@ -18,6 +18,7 @@ on:
     types: [completed]
   pull_request:
     types: [labeled]
+  workflow_dispatch:
 
 permissions: write-all
 
