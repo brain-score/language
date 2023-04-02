@@ -58,6 +58,7 @@ jobs:
   travis_success:
     name: Check if Travis build is successful
     runs-on: ubuntu-latest
+    needs: [ isautomerge ]
     if: ${{ needs.isautomerge.outputs.AUTOMERGE == 'True' }}
     outputs:
       TRAVIS_OK: ${{ steps.istravisok.outputs.TRAVIS_OK }}
