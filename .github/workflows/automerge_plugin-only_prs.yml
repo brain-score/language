@@ -47,7 +47,7 @@ jobs:
       contains( github.event.pull_request.labels.*.name, 'automerge') ||
       contains( github.event.pull_request.labels.*.name, 'automerge-web')
     outputs:
-      AUTOMERGE: ${{ steps.checklabel.outputs.AUTOMERGE }}
+      AUTOMERGE: ${{ steps.setautomerge.outputs.AUTOMERGE }}
     steps:
       - name: Set 'automerge' to 'True' # job only runs if True
         id: setautomerge
