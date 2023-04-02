@@ -91,7 +91,9 @@ jobs:
     steps:
     - name: Parse Brain-Score user ID from PR title
       run: |
-        echo ${{ github.event.pull_request.labels.*.name }}
+        for name in ${{ github.event.pull_request.labels.*.name }}; do
+          echo $ {{ name }}
+        done
         echo "BS_UID="$(<<<${{ github.event.pull_request.title }} | sed -E 's/.*\(user:([^)]+)\).*/\1/'"" >> $GITHUB_ENV
     - name: Build project
       run: |
