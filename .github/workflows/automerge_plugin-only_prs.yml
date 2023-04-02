@@ -14,8 +14,7 @@ name: Automatically merge plugin-only PRs
 
 
 on:
-  check_run:
-    types: [completed]
+  status
   pull_request:
     types: [labeled]
 
