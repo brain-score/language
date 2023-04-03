@@ -60,7 +60,7 @@ def plugins_to_score(plugins_dict, plugin_files_changed) -> str:
     plugins_dict["run_score"] = "False"
 
     scoring_plugin_types = ("models", "benchmarks")
-    scoring_plugin_paths = tuple([f'brainscore_language/{plugin_type}/' for plugin_type in scoring_plugin_types])
+    scoring_plugin_paths = tuple(f'brainscore_language/{plugin_type}/' for plugin_type in scoring_plugin_types)
     model_and_benchmark_files = [fname for fname in plugin_files_changed if fname.startswith(scoring_plugin_paths)]
     if len(model_and_benchmark_files) > 0:
         plugins_dict["run_score"] = "True"
