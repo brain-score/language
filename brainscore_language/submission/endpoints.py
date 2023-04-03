@@ -7,7 +7,7 @@ from brainscore_language import load_model, load_benchmark, score
 from brainscore_language.submission import config
 
 
-def process_github_submission(plugin_info: Dict[str, Union[List[str], str]]):
+def call_jenkins(plugin_info: Dict[str, Union[List[str], str]]):
     """
     Triggered when changes are merged to the GitHub repository, if those changes affect benchmarks or models.
     Starts run to score models on benchmarks (`run_scoring`).
