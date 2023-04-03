@@ -16,7 +16,7 @@ def call_jenkins(plugin_info: Dict[str, Union[List[str], str]]):
     jenkins_user = os.environ['JENKINS_USER']
     jenkins_token = os.environ['JENKINS_TOKEN']
     jenkins_trigger = os.environ['JENKINS_TRIGGER']
-    jenkins_job = "dev_score_plugins"
+    jenkins_job = "score_plugins"
 
     url = f'{jenkins_base}/job/{jenkins_job}/buildWithParameters?token={jenkins_trigger}'
     payload = {k: v for k, v in plugin_info.items() if plugin_info[k]}
