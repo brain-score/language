@@ -66,7 +66,7 @@ def plugins_to_score(plugins_dict, plugin_files_changed) -> str:
         plugins_dict["run_score"] = "True"
         for plugin_type in scoring_plugin_types:
             plugin_dirs = set(
-                [fname.split('/')[2] for fname in model_and_benchmark_files if f'/{plugin_type}/' in fname])
+                [plugin_name_from_path(fname) for fname in model_and_benchmark_files if f'/{plugin_type}/' in fname])
             plugins_to_score = _get_registered_plugins(plugin_type, plugin_dirs)
             plugins_dict[f'new_{plugin_type}'] = ' '.join(plugins_to_score)
 
