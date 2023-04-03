@@ -87,9 +87,11 @@ jobs:
     env: 
       BSC_DATABASESECRET: ${{ needs.setup.outputs.BSC_DATABASESECRET }}
     if: |
-      ${{ needs.travissuccess.outputs.TRAVIS_OK == 'False' }} &&
-      (contains(github.event.pull_request.labels.*.name, 'automerge-web'))
+        ${{ needs.travissuccess.outputs.TRAVIS_OK == 'False' &&
+        contains(github.event.pull_request.labels.*.name, 'automerge-web') }}
     steps:
+    - name: Check label name
+      run: echo "github.event.pull_request.labels.[0].name"
     - name: Parse Brain-Score user ID from PR title
       run: |
         echo "BS_UID="$(<<<${{ github.event.pull_request.title }} | sed -E 's/.*\(user:([^)]+)\).*/\1/'"" >> $GITHUB_ENV
