@@ -50,7 +50,7 @@ def _get_registered_plugins(plugin_type: str, plugin_dirs: List[str]) -> List[st
                                     in line.replace('\"', '\'')]
             for line in plugin_registrations:
                 result = re.search(f'{registry_name}\[.*\]', line)
-                identifier = result.group(0)[len(registry_name) + 2:-2]
+                identifier = result.group(0)[len(registry_name) + 2:-2] # remove brackets and quotes
                 registered_plugins.append(identifier)
 
     return registered_plugins
@@ -60,13 +60,13 @@ def plugins_to_score(plugins_dict, plugin_files_changed) -> str:
     plugins_dict["run_score"] = "False"
 
     scoring_plugin_types = ("models", "benchmarks")
-    scoring_plugin_paths = tuple([f'brainscore_language/{plugin_type}/' for plugin_type in scoring_plugin_types])
+    scoring_plugin_paths = tuple(f'brainscore_language/{plugin_type}/' for plugin_type in scoring_plugin_types)
     model_and_benchmark_files = [fname for fname in plugin_files_changed if fname.startswith(scoring_plugin_paths)]
     if len(model_and_benchmark_files) > 0:
         plugins_dict["run_score"] = "True"
         for plugin_type in scoring_plugin_types:
             plugin_dirs = set(
-                [fname.split('/')[2] for fname in model_and_benchmark_files if f'/{plugin_type}/' in fname])
+                [plugin_name_from_path(fname) for fname in model_and_benchmark_files if f'/{plugin_type}/' in fname])
             plugins_to_score = _get_registered_plugins(plugin_type, plugin_dirs)
             plugins_dict[f'new_{plugin_type}'] = ' '.join(plugins_to_score)
 
