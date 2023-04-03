@@ -118,7 +118,7 @@ if __name__ == '__main__':
     args = parse_args()
     args_dict = vars(args)
 
-    if not args_dict['user_id']:
+    if 'user_id' not in args_dict:
         new_user_id = create_user(args_dict['domain'], args_dict['author_email'])
         args_dict['user_id'] = new_user_id
     
