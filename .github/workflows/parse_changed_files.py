@@ -50,7 +50,7 @@ def _get_registered_plugins(plugin_type: str, plugin_dirs: List[str]) -> List[st
                                     in line.replace('\"', '\'')]
             for line in plugin_registrations:
                 result = re.search(f'{registry_name}\[.*\]', line)
-                identifier = result.group(0)[len(registry_name) + 2:-2]
+                identifier = result.group(0)[len(registry_name) + 2:-2] # remove brackets and quotes
                 registered_plugins.append(identifier)
 
     return registered_plugins
