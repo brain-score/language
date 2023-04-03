@@ -93,6 +93,8 @@ jobs:
         needs.travissuccess.outputs.TRAVIS_OK == 'False' &&
         contains(github.event.pull_request.labels.*.name, 'automerge-web')
     steps:
+    - name: Sanity check
+      run: echo ${{ join(github.event.pull_request.labels.*.name, ',') }}
     - name: Parse Brain-Score user ID from PR title
       run: |
         echo "BS_UID="$(<<<${{ github.event.pull_request.title }} | sed -E 's/.*\(user:([^)]+)\).*/\1/'"" >> $GITHUB_ENV
