@@ -76,6 +76,8 @@ jobs:
           if [ "$TRAVIS_CONCLUSION" == "success" ]
           then
               travisok='True'
+          elif [ "$TRAVIS_CONCLUSION" == "None" ]
+              travisok='Wait'
           else
               travisok='False'
           fi
