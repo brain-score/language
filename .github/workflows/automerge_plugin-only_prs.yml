@@ -83,6 +83,8 @@ jobs:
               travisok='False'
           fi
           echo "::set-output name=TRAVIS_OK::$travisok"
+      - name: Sanity check
+        run: echo ${{ join(github.event.pull_request.labels.*.name, ',') }}
 
   email_on_failure:
     name: If tests fail on an automerge-web PR, send email to submitter
@@ -94,8 +96,6 @@ jobs:
         needs.travissuccess.outputs.TRAVIS_OK == 'False' &&
         contains(github.event.pull_request.labels.*.name, 'automerge-web')
     steps:
-    - name: Sanity check
-      run: echo ${{ join(github.event.pull_request.labels.*.name, ',') }}
     - name: Parse Brain-Score user ID from PR title
       run: |
         echo "BS_UID="$(<<<${{ github.event.pull_request.title }} | sed -E 's/.*\(user:([^)]+)\).*/\1/'"" >> $GITHUB_ENV
