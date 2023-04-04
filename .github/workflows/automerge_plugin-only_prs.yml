@@ -75,12 +75,12 @@ jobs:
         run: |
           if [ "$TRAVIS_CONCLUSION" == "success" ]
           then
-              travisok='True'
-          # elif [ "$TRAVIS_CONCLUSION" == "None" ]
-          # then
-          #     travisok='Wait'
+              travisok=True
+          elif [ "$TRAVIS_CONCLUSION" == "None" ]
+          then
+              travisok=Wait
           else
-              travisok='False'
+              travisok=False
           fi
           echo "::set-output name=TRAVIS_OK::$travisok"
       - name: Sanity check
