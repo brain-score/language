@@ -75,16 +75,14 @@ jobs:
         run: |
           if [ "$TRAVIS_CONCLUSION" == "success" ]
           then
-              travisok='True'
-          # elif [ "$TRAVIS_CONCLUSION" == "None" ]
-          # then
-          #     travisok='Wait'
+              travisok=True
+          elif [ "$TRAVIS_CONCLUSION" == "None" ]
+          then
+              travisok=Wait
           else
-              travisok='False'
+              travisok=False
           fi
           echo "::set-output name=TRAVIS_OK::$travisok"
-      - name: Sanity check
-        run: echo ${{ join(github.event.pull_request.labels.*.name, ',') }}
 
   email_on_failure:
     name: If tests fail on an automerge-web PR, send email to submitter
