@@ -38,7 +38,6 @@ def _get_registered_plugins(plugin_type: str, plugin_dirs: List[str]) -> List[st
     registered_plugins = []
 
     plugin_type_dir = Path(f'brainscore_language/{plugin_type}')
-    plugin_dirs = [d.name for d in plugin_type_dir.iterdir() if d.is_dir()] if return_all else plugin_dirs
 
     for plugin_dirname in plugin_dirs:
         plugin_dirpath = plugin_type_dir / plugin_dirname
