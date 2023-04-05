@@ -102,16 +102,16 @@ jobs:
         id: add_email_to_pluginfo
         run: |
           echo "The PR author email is ${{ steps.getemail.outputs.email }}"
-          echo "PLUGIN_INFO="$(<<<$PLUGIN_INFO jq '. + {author_email: ${{ steps.getemail.outputs.email }} }')"" >> $GITHUB_OUTPUT
+          echo "PLUGIN_INFO="$(<<<$PLUGIN_INFO jq '. + {author_email: "'${{ steps.getemail.outputs.email }}'"}')"" >> $GITHUB_OUTPUT
 
   runscore:
     name: Score plugins
     runs-on: ubuntu-latest
-    needs: changes_models_or_benchmarks
+    needs: [changes_models_or_benchmarks, get_submitter_info]
     if: ${{ needs.changes_models_or_benchmarks.outputs.RUN_SCORE == 'True' }}
     env:
       PLUGIN_INFO: ${{ needs.get_submitter_info.outputs.PLUGIN_INFO }}
-      JENKINS_USER: ${{ secrets.JENKINS_USER }}
+      JENKINS_USER: ${{ secrets.JENKINS_USR }}
       JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
       JENKINS_TRIGGER: ${{ secrets.JENKINS_TRIGGER }}
     steps:
