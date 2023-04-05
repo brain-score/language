@@ -171,7 +171,16 @@ jobs:
       - name: Auto Approve
         uses: hmarr/auto-approve-action@v3.1.0
 
-      - name: Auto Merge
+      - name: Auto Merge (GitHub submissions)
         uses: plm9606/automerge_actions@1.2.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          label-name: "automerge"
+          auto-delete: "true"
+
+      - name: Auto Merge (brain-score.org submissions)
+        uses: plm9606/automerge_actions@1.2.2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          label-name: "automerge-web"
+          auto-delete: "true"
