@@ -176,6 +176,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           label-name: "automerge"
+          merge-method: "squash"
           auto-delete: "true"
 
       - name: Auto Merge (brain-score.org submissions)
@@ -183,4 +184,5 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           label-name: "automerge-web"
+          merge-method: "squash"
           auto-delete: "true"
