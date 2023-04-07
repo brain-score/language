@@ -128,4 +128,4 @@ jobs:
 
       - name: Run scoring
         run: |
-          python .github/workflows/call_endpoints.py call_jenkins '${{ env.PLUGIN_INFO }}')
+          python .github/workflows/call_endpoints.py call_jenkins '${{ env.PLUGIN_INFO }}'
