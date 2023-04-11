@@ -122,4 +122,4 @@ if __name__ == '__main__':
         new_user_id = create_user(args_dict['domain'], args_dict['author_email'])
         args_dict['user_id'] = new_user_id
     
-    run_scoring(new_args)
+    run_scoring(args_dict)
