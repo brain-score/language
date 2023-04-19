@@ -146,13 +146,20 @@ class HuggingfaceSubject(ArtificialSubject):
                 )
         context_tokens.to('cuda' if torch.cuda.is_available() else 'cpu')
         # keep track of tokens in current `text_part`
-        overflowing_encoding: list = np.array(context_tokens.overflowing_tokens.cpu())
-        num_overflowing = sum(len(overflow) for overflow in overflowing_encoding)
+        if getattr(context_tokens, 'overflowing_tokens', None) is not None:
+            overflowing_encoding: list = np.array(context_tokens.overflowing_tokens.cpu())
+            num_overflowing = sum(len(overflow) for overflow in overflowing_encoding)
+        else:
+            num_overflowing = 0
         self.current_tokens = {key: value[..., num_previous_context_tokens - num_overflowing:]
                                for key, value in context_tokens.items()}
         num_new_context_tokens = context_tokens['input_ids'].shape[-1] + num_overflowing
-        context_tokens.pop('overflowing_tokens')
-        context_tokens.pop('num_truncated_tokens')
+        if getattr(context_tokens, 'overflowing_tokens', None) is not None:
+            context_tokens.pop('overflowing_tokens')
+        if 'num_truncated_tokens' in context_tokens:
+            context_tokens.pop('num_truncated_tokens')
+        if 'overflow_to_sample_mapping' in context_tokens:
+            context_tokens.pop('overflow_to_sample_mapping')
         return context_tokens, num_new_context_tokens
 
     def _setup_hooks(self):
