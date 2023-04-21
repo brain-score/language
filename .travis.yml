@@ -23,3 +23,12 @@ install:
 script:
   - pytest -m "not requires_gpu and not memory_intense and not slow and not travis_slow"
   - python -c "from brainscore_core.plugin_management.test_plugins import run_args; run_args('brainscore_language')"
+after_success:
+  # trigger workflow to check if plugin is being added
+  - >
+    if $TRAVIS_PULL_REQUEST; then
+    curl -L -X POST \
+    -H 'Authorization: token '$GH_WORKFLOW_TRIGGER 
+    -d '{\"state\": \"success\", \"description\": \"Run automerge workflow\", \"context\": \"continuous-integration/travis"}' \
+    \"https://api.github.com/repos/brain-score/language/statuses/$TRAVIS_PULL_REQUEST_SHA\"
+    fi
