@@ -14,11 +14,8 @@ name: Automatically merge plugin-only PRs
 
 
 on:
-  check_suite:
-    types: [completed]
   pull_request:
     types: [labeled]
-  workflow_dispatch:
   status:
 
 permissions: write-all
