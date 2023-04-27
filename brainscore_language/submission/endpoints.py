@@ -91,8 +91,6 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('jenkins_id', type=int,
                         help='The id of the current jenkins run')
-    parser.add_argument('domain', type=str,
-                        help='The submission domain (vision or language)')
     parser.add_argument('model_type', type=str, nargs='?', default='artificialsubject',
                         help='Type of model to score')
     parser.add_argument('public', type=bool, nargs='?', default=True,
