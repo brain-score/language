@@ -55,10 +55,6 @@ def _get_ids(args_dict: Dict[str, Union[str, List]], key: str) -> Union[List, st
     return args_dict[key] if key in args_dict else None
 
 
-def _clean_args(remove_keys: List[str], args_dict: Dict[str, Union[str, List]]) -> Dict[str, Union[str, List]]:
-    return {k: v for k, v in args_dict.items() if k not in remove_keys}  # preserve other keys, e.g. `run_score`
-
-
 def run_scoring(args_dict: Dict[str, Union[str, List]]):
     """ prepares parameters for the `run_scoring_endpoint`. """
     new_models = _get_ids(args_dict, 'new_models')
