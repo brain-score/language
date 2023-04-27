@@ -60,39 +60,35 @@ def _clean_args(remove_keys: List[str], args_dict: Dict[str, Union[str, List]]) 
 
 
 def run_scoring(args_dict: Dict[str, Union[str, List]]):
-    """ prepares `args_dict` as parameters for the `run_scoring_endpoint`. """
+    """ prepares parameters for the `run_scoring_endpoint`. """
     new_models = _get_ids(args_dict, 'new_models')
     new_benchmarks = _get_ids(args_dict, 'new_benchmarks')
 
     if args_dict['specified_only']:
         assert len(new_models) > 0, "No models specified"
         assert len(new_benchmarks) > 0, "No benchmarks specified"
-        args_dict['models'] = new_models
-        args_dict['benchmarks'] = new_benchmarks
+        models = new_models
+        benchmarks = new_benchmarks
     else:
         if new_models and new_benchmarks:
-            args_dict['models'] = RunScoringEndpoint.ALL_PUBLIC
-            args_dict['benchmarks'] = RunScoringEndpoint.ALL_PUBLIC
+            models = RunScoringEndpoint.ALL_PUBLIC
+            benchmarks = RunScoringEndpoint.ALL_PUBLIC
         elif new_benchmarks:
-            args_dict['models'] = RunScoringEndpoint.ALL_PUBLIC
-            args_dict['benchmarks'] = new_benchmarks
+            models = RunScoringEndpoint.ALL_PUBLIC
+            benchmarks = new_benchmarks
         elif new_models:
-            args_dict['models'] = new_models
-            args_dict['benchmarks'] = RunScoringEndpoint.ALL_PUBLIC
+            models = new_models
+            benchmarks = RunScoringEndpoint.ALL_PUBLIC
 
-    new_args = _clean_args(['new_benchmarks', 'new_models', 
-                            'author_email', 'specified_only'], args_dict)
-    new_args["domain"] = "language"
-
-    run_scoring_endpoint(**new_args)
+    run_scoring_endpoint("language", args_dict["jenkins_id"], models,
+        benchmarks, args_dict["user_id"], "artificialsubject",
+        args_dict["public"], args_dict["competition"])
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('jenkins_id', type=int,
                         help='The id of the current jenkins run')
-    parser.add_argument('model_type', type=str, nargs='?', default='artificialsubject',
-                        help='Type of model to score')
     parser.add_argument('public', type=bool, nargs='?', default=True,
                         help='Public (or private) submission?')
     parser.add_argument('--competition', type=str, nargs='?', const=None, default=None,
