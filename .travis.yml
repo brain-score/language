@@ -31,12 +31,6 @@ script:
 
 jobs:
   include:
+    # trigger workflow to check if plugin is being added
     - stage: "Trigger automerge workflow"
-      # trigger workflow to check if plugin is being added
-      - >
-        if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then
-        curl -L -X POST \
-        -H 'Authorization: token '$GH_WORKFLOW_TRIGGER 
-        -d '{\"state\": \"success\", \"description\": \"Run automerge workflow\", \"context\": \"continuous-integration/travis"}' \
-        \"https://api.github.com/repos/brain-score/language/statuses/$TRAVIS_PULL_REQUEST_SHA\"
-        fi
+      script: if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then bash .github/workflows/travis_trigger $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA; fi
