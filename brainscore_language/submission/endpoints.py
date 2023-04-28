@@ -88,17 +88,17 @@ def parse_args() -> argparse.Namespace:
                         help='The id of the current jenkins run')
     parser.add_argument('public', type=bool, nargs='?', default=True,
                         help='Public (or private) submission?')
-    parser.add_argument('--competition', type=str, nargs='?', const=None, default=None,
+    parser.add_argument('--competition', type=str, nargs='?', default=None,
                         help='Name of competition for which submission is being scored')
-    parser.add_argument('--user_id', type=int, nargs='?', const=None, default=None,
+    parser.add_argument('--user_id', type=int, nargs='?', default=None,
                         help='ID of submitting user in the postgres DB')
-    parser.add_argument('--author_email', type=str, nargs='?', const=None, default=None,
+    parser.add_argument('--author_email', type=str, nargs='?', default=None,
                         help='email associated with PR author GitHub username')
-    parser.add_argument('--specified_only', type=bool, nargs='?', const=True, default=False,
+    parser.add_argument('--specified_only', type=bool, nargs='?', default=False,
                         help='Only score the plugins specified by new_models and new_benchmarks')
-    parser.add_argument('--new_models', type=str, nargs='*', const=None, default=None,
+    parser.add_argument('--new_models', type=str, nargs='*', default=None,
                         help='The identifiers of newly submitted models to score on all benchmarks')
-    parser.add_argument('--new_benchmarks', type=str, nargs='*', const=None, default=None,
+    parser.add_argument('--new_benchmarks', type=str, nargs='*', default=None,
                         help='The identifiers of newly submitted benchmarks on which to score all models')
     args, remaining_args = parser.parse_known_args()
 
