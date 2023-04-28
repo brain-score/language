@@ -76,9 +76,10 @@ def run_scoring(args_dict: Dict[str, Union[str, List]]):
             models = new_models
             benchmarks = RunScoringEndpoint.ALL_PUBLIC
 
-    run_scoring_endpoint("language", args_dict["jenkins_id"], models,
-        benchmarks, args_dict["user_id"], "artificialsubject",
-        args_dict["public"], args_dict["competition"])
+    run_scoring_endpoint(domain="language", jenkins_id=args_dict["jenkins_id"], 
+        models=models, benchmarks=benchmarks, user_id=args_dict["user_id"], 
+        model_type="artificialsubject", public=args_dict["public"], 
+        competition=args_dict["competition"])
 
 
 def parse_args() -> argparse.Namespace:
