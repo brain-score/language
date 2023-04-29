@@ -55,60 +55,51 @@ def _get_ids(args_dict: Dict[str, Union[str, List]], key: str) -> Union[List, st
     return args_dict[key] if key in args_dict else None
 
 
-def _clean_args(remove_keys: List[str], args_dict: Dict[str, Union[str, List]]) -> Dict[str, Union[str, List]]:
-    return {k: v for k, v in args_dict.items() if k not in remove_keys}  # preserve other keys, e.g. `run_score`
-
-
 def run_scoring(args_dict: Dict[str, Union[str, List]]):
-    """ prepares `args_dict` as parameters for the `run_scoring_endpoint`. """
+    """ prepares parameters for the `run_scoring_endpoint`. """
     new_models = _get_ids(args_dict, 'new_models')
     new_benchmarks = _get_ids(args_dict, 'new_benchmarks')
 
     if args_dict['specified_only']:
         assert len(new_models) > 0, "No models specified"
         assert len(new_benchmarks) > 0, "No benchmarks specified"
-        args_dict['models'] = new_models
-        args_dict['benchmarks'] = new_benchmarks
+        models = new_models
+        benchmarks = new_benchmarks
     else:
         if new_models and new_benchmarks:
-            args_dict['models'] = RunScoringEndpoint.ALL_PUBLIC
-            args_dict['benchmarks'] = RunScoringEndpoint.ALL_PUBLIC
+            models = RunScoringEndpoint.ALL_PUBLIC
+            benchmarks = RunScoringEndpoint.ALL_PUBLIC
         elif new_benchmarks:
-            args_dict['models'] = RunScoringEndpoint.ALL_PUBLIC
-            args_dict['benchmarks'] = new_benchmarks
+            models = RunScoringEndpoint.ALL_PUBLIC
+            benchmarks = new_benchmarks
         elif new_models:
-            args_dict['models'] = new_models
-            args_dict['benchmarks'] = RunScoringEndpoint.ALL_PUBLIC
+            models = new_models
+            benchmarks = RunScoringEndpoint.ALL_PUBLIC
 
-    new_args = _clean_args(['new_benchmarks', 'new_models', 
-                            'author_email', 'specified_only'], args_dict)
-    new_args["domain"] = "language"
-
-    run_scoring_endpoint(**new_args)
+    run_scoring_endpoint(domain="language", jenkins_id=args_dict["jenkins_id"], 
+        models=models, benchmarks=benchmarks, user_id=args_dict["user_id"], 
+        model_type="artificialsubject", public=args_dict["public"], 
+        competition=args_dict["competition"])
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('jenkins_id', type=int,
                         help='The id of the current jenkins run')
-    parser.add_argument('domain', type=str,
-                        help='The submission domain (vision or language)')
-    parser.add_argument('user_id', type=int, nargs='?', default=None,
-                        help='ID of submitting user in the postgres DB')
-    parser.add_argument('author_email', type=str, nargs='?', default=None,
-                        help='email associated with PR author GitHub username')
-    parser.add_argument('model_type', type=str, nargs='?', default='artificialsubject',
-                        help='Type of model to score')
     parser.add_argument('public', type=bool, nargs='?', default=True,
                         help='Public (or private) submission?')
-    parser.add_argument('competition', type=str, nargs='?', default=None,
+    parser.add_argument('--competition', type=str, nargs='?', default=None,
                         help='Name of competition for which submission is being scored')
+    parser.add_argument('--user_id', type=int, nargs='?', default=None,
+                        help='ID of submitting user in the postgres DB')
+    parser.add_argument('--author_email', type=str, nargs='?', default=None,
+                        help='email associated with PR author GitHub username')
+    parser.add_argument('--specified_only', type=bool, nargs='?', default=False,
+                        help='Only score the plugins specified by new_models and new_benchmarks')
     parser.add_argument('--new_models', type=str, nargs='*', default=None,
                         help='The identifiers of newly submitted models to score on all benchmarks')
     parser.add_argument('--new_benchmarks', type=str, nargs='*', default=None,
                         help='The identifiers of newly submitted benchmarks on which to score all models')
-    parser.add_argument('--specified_only', type=bool, nargs='?', default=False,
-                        help='Only score the plugins specified by new_models and new_benchmarks')
     args, remaining_args = parser.parse_known_args()
 
     return args

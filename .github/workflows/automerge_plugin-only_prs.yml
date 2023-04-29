@@ -14,11 +14,8 @@ name: Automatically merge plugin-only PRs
 
 
 on:
-  check_suite:
-    types: [completed]
   pull_request:
     types: [labeled]
-  workflow_dispatch:
   status:
 
 permissions: write-all
@@ -174,7 +171,7 @@ jobs:
       - name: Auto Merge (GitHub submissions)
         uses: plm9606/automerge_actions@1.2.2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.WORKFLOW_TOKEN }}
           label-name: "automerge"
           merge-method: "squash"
           auto-delete: "true"
@@ -182,7 +179,7 @@ jobs:
       - name: Auto Merge (brain-score.org submissions)
         uses: plm9606/automerge_actions@1.2.2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.WORKFLOW_TOKEN }}
           label-name: "automerge-web"
           merge-method: "squash"
           auto-delete: "true"
