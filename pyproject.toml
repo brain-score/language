@@ -15,19 +15,18 @@ dependencies = [
     "tqdm",
     "numpy>=1.21",
     "brainscore_core@git+https://github.com/brain-score/core.git@main",
-    "brainio@git+https://github.com/brain-score/brainio.git@main",
     "fire",
     # model_helpers dependencies
     "torch>=1.9.1",
     "transformers>=4.11.3",
+    "gensim",
+    "joblib",
 ]
 
 [project.optional-dependencies]
 test = [
     "pytest",
-    "pytest-check",
-    "gensim",
-    "joblib",
+    "pytest-check<=1.3.0",
 ]
 
 [build-system]

@@ -1,0 +1,1701 @@
+{
+    "meta": {
+        "name": "subordination",
+        "metric": "sum",
+        "comment": "Below is the prediction of an interaction (a lower bar). #Prediction [(3;%sub_no-matrix%) - (3;%no-sub_no-matrix%) ] - [(3;%sub_matrix%) - (3;%no-sub_matrix%) ] > 0 Below is Ethan's original prediction -- a higher bar.",
+        "reference": "",
+        "author": ""
+    },
+    "region_meta": {
+        "1": "Subordinate clause 1",
+        "2": "Subordinate clause 2",
+        "3": "Main clause"
+    },
+    "predictions": [
+        {
+            "type": "formula",
+            "formula": "((3;%sub_no-matrix%) > (3;%no-sub_no-matrix%) ) & ((3;%sub_matrix%) < (3;%no-sub_matrix%) )"
+        }
+    ],
+    "items": [
+        {
+            "item_number": 1,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the doctor"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "studied the book"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The doctor"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "studied the book"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "As the doctor"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "studied the book"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the nurse walked into the room ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The doctor"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "studied the book"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the nurse walked into the room ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 2,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the man"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "shot the bird"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The man"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "shot the bird"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the man"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "shot the bird"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", he loaded his gun ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The man"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "shot the bird"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", he loaded his gun ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 3,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Because the students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "did not like the material"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "did not like the material"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Because the students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "did not like the material"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", they complained to the principal ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "did not like the material"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", they complained to the principal ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 4,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "When the general"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "entered the camp"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The general"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "entered the camp"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "When the general"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "entered the camp"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the soldiers cheered ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The general"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "entered the camp"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the soldiers cheered ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 5,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the delivery man"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "delivered the newspaper"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The delivery man"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "delivered the newspaper"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the delivery man"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "delivered the newspaper"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the dog looked at the door ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The delivery man"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "delivered the newspaper"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the dog looked at the door ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 6,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the lawyers"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "printed the documents"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The lawyers"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "printed the documents"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the lawyers"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "printed the documents"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the aids made coffee ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The lawyers"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "printed the documents"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the aids made coffee ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 7,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Because the editor"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "liked the draft"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The editor"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "liked the draft"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Because the editor"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "liked the draft"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", he published it the next month ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The editor"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "liked the draft"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", he published it the next month ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 8,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Since the nurse"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "lost her documents"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The nurse"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "lost her documents"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Since the nurse"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "lost her documents"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", she administered the wrong medicine ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The nurse"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "lost her documents"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", she administered the wrong medicine ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 9,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Because the scientist"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "broke the computer"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The scientist"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "broke the computer"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Because the scientist"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "broke the computer"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the administrator wrote everything by hand ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The scientist"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "broke the computer"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the administrator wrote everything by hand ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 10,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the minister"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "praised the new building"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The minister"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "praised the new building"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the minister"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "praised the new building"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", it started to rain ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The minister"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "praised the new building"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", it started to rain ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 11,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Because the architect"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "read the plans"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The architect"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "read the plans"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Because the architect"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "read the plans"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the house was built correctly ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The architect"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "read the plans"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the house was built correctly ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 12,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Before the actor"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "delivered the speech"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The actor"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "delivered the speech"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Before the actor"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "delivered the speech"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", she took a deep breath ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The actor"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "delivered the speech"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", she took a deep breath ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 13,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the pianist"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "practiced the music"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The pianist"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "practiced the music"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the pianist"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "practiced the music"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the conductor stretched his arms ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The pianist"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "practiced the music"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the conductor stretched his arms ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 14,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Although the students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "enjoyed the novel"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "enjoyed the novel"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Although the students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "enjoyed the novel"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the teacher considered it poorly written ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "enjoyed the novel"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the teacher considered it poorly written ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 15,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the maid"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "read the magazine"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The maid"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "read the magazine"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the maid"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "read the magazine"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the customer waited at her table ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The maid"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "read the magazine"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the customer waited at her table ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 16,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Before the assistant"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "wrote the letter"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The assistant"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "wrote the letter"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Before the assistant"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "wrote the letter"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", she had a cup of coffee ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The assistant"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "wrote the letter"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", she had a cup of coffee ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 17,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the diplomat"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "presented the file"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The diplomat"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "presented the file"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "After the diplomat"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "presented the file"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the ambassador gave a speech ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The diplomat"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "presented the file"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the ambassador gave a speech ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 18,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the officials"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "reviewed the contract"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The officials"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "reviewed the contract"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the officials"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "reviewed the contract"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the players waited nervously ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The officials"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "reviewed the contract"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the players waited nervously ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 19,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Because the clerk"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "lost the plans"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The clerk"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "lost the plans"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Because the clerk"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "lost the plans"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the detective looked elsewhere ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The clerk"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "lost the plans"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the detective looked elsewhere ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 20,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the tourists"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "read the guide"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The tourists"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "read the guide"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "While the tourists"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "read the guide"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the children played in the sand ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The tourists"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "read the guide"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the children played in the sand ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 21,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "When the politicians"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "passed the new law"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The politicians"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "passed the new law"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "When the politicians"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "passed the new law"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the protestors blocked traffic outside ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The politicians"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "passed the new law"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the protestors blocked traffic outside ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 22,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "When the police"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "found new evidence"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The police"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "found new evidence"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "When the police"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "found new evidence"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the judge declared a mistrial ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The police"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "found new evidence"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", the judge declared a mistrial ."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "item_number": 23,
+            "conditions": [
+                {
+                    "condition_name": "sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Before the students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "handed in their papers"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_no-matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "handed in their papers"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": "."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "Before the students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "handed in their papers"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", they revised them all night long ."
+                        }
+                    ]
+                },
+                {
+                    "condition_name": "no-sub_matrix",
+                    "regions": [
+                        {
+                            "region_number": 1,
+                            "content": "The students"
+                        },
+                        {
+                            "region_number": 2,
+                            "content": "handed in their papers"
+                        },
+                        {
+                            "region_number": 3,
+                            "content": ", they revised them all night long ."
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
