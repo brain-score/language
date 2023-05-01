@@ -14,7 +14,7 @@ from brainscore_language.submission.endpoints import run_scoring
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.private
+@pytest.mark.private_access
 class TestRunScoring:
     @classmethod
     def setup_class(cls):
