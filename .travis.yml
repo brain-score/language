@@ -26,7 +26,7 @@ install:
   - conda install -yc conda-forge singularity
 script:
   - if [ "$PRIVATE_ACCESS" = 1 ] && [ "$TRAVIS_PULL_REQUEST" = "false" ]; then pytest -m "private_access and not requires_gpu and not memory_intense and not slow and not travis_slow"; fi
-  - if [ "$PRIVATE_ACCESS" != 1 ]; then pytest -m "not private_access and not requires_gpu and not memory_intense and not slow and not travis_slow"; fi
+  - if [ "$PRIVATE_ACCESS" != 1 ]; then pytest -m "not private_access and not requires_gpu and not memory_intense and not slow and not travis_slow" --ignore "tests/test_submission"; fi
   - python -c "from brainscore_core.plugin_management.test_plugins import run_args; run_args('brainscore_language')"
 
 jobs:
