@@ -136,10 +136,7 @@ class HuggingfaceSubject(ArtificialSubject):
 
         return context
 
-    def _tokenize(self, context, num_previous_context_tokens):
-        """
-        Tokenizes the context, keeping track of the newly added tokens in `self.current_tokens`
-        """
+    def _tokenize_newer_tokenizers(self, context, num_previous_context_tokens):
         context_tokens = self.tokenizer(
                 context, truncation=True, return_tensors="pt",
                 return_overflowing_tokens=True,
@@ -161,6 +158,30 @@ class HuggingfaceSubject(ArtificialSubject):
         if 'overflow_to_sample_mapping' in context_tokens:
             context_tokens.pop('overflow_to_sample_mapping')
         return context_tokens, num_new_context_tokens
+
+    def _tokenize_older_tokenizers(self, context, num_previous_context_tokens):
+        # at least gpt2 and distillgpt2 can only work with this way but not general "return_overflowing_tokens"
+        # possibly a bug in these two tokenizers
+        context_tokens = self.tokenizer(context, truncation=True, return_tensors="pt")
+        context_tokens.to('cuda' if torch.cuda.is_available() else 'cpu')
+        # keep track of tokens in current `text_part`
+        overflowing_encoding: list = np.array(context_tokens.encodings).item().overflowing
+        num_overflowing = 0 if not overflowing_encoding else sum(len(overflow) for overflow in overflowing_encoding)
+        self.current_tokens = {key: value[..., num_previous_context_tokens - num_overflowing:]
+                               for key, value in context_tokens.items()}
+        num_new_context_tokens = context_tokens['input_ids'].shape[-1] + num_overflowing
+        return context_tokens, num_new_context_tokens
+
+    def _tokenize(self, context, num_previous_context_tokens):
+        """
+        Tokenizes the context, keeping track of the newly added tokens in `self.current_tokens`
+        """
+        try:
+            return self._tokenize_newer_tokenizers(
+                    context, num_previous_context_tokens)
+        except:
+            return self._tokenize_older_tokenizers(
+                    context, num_previous_context_tokens)
 
     def _setup_hooks(self):
         """ set up the hooks for recording internal neural activity from the model (aka layer activations) """
