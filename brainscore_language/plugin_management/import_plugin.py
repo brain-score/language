@@ -1,3 +1,4 @@
+import fire
 import logging
 import os
 import subprocess
@@ -10,7 +11,6 @@ class ImportPlugin:
     """ import plugin and (optionally) install dependencies """
 
     def __init__(self, plugin_type: str, identifier: str):
-
         self.plugin_type = plugin_type
         self.plugins_dir = Path(__file__).parent.with_name(plugin_type)
         self.identifier = identifier
@@ -73,9 +73,18 @@ def import_plugin(plugin_type: str, identifier: str):
     :meth:`~brainscore_language.plugin_management.ImportPlugin.install_requirements` installs all requirements
         in that directory's requirements.txt, and the plugin base package is imported
     """
-    import_plugin = ImportPlugin(plugin_type, identifier)
+    importer = ImportPlugin(plugin_type, identifier)
 
     if not installation_preference() == 'no':
-        import_plugin.install_requirements()
+        importer.install_requirements()
 
-    __import__(f'brainscore_language.{plugin_type}.{import_plugin.plugin_dirname}')
+    __import__(f'brainscore_language.{plugin_type}.{importer.plugin_dirname}')
+
+
+def print_plugin_dir(plugin_type: str, identifier: str):
+    importer = ImportPlugin(plugin_type=plugin_type, identifier=identifier)
+    print(importer.locate_plugin())
+
+
+if __name__ == '__main__':
+    fire.Fire()

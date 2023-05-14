@@ -5,16 +5,7 @@ BENCHMARK_ID=$2
 ENV_NAME=$3
 
 get_plugin_dir () {
-    PYCMD=$(cat <<EOF
-import sys
-from brainscore_language.plugin_management.import_plugin import ImportPlugin
-
-import_plugin = ImportPlugin(sys.argv[1], sys.argv[2])
-print(import_plugin.locate_plugin())
-EOF
-    )
-
-    python -c "$PYCMD" "$1" "$2"
+    python brainscore_language/plugin_management/import_plugin print_plugin_dir "$1" "$2"
 }
 
 MODEL_DIR=brainscore_language/models/$(get_plugin_dir "models" "$MODEL_ID")
