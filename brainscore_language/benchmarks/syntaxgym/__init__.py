@@ -36,8 +36,6 @@ benchmark_registry['syntaxgym-reflexive_prep_masc'] = lambda: SyntaxGymSingleTSE
 benchmark_registry['syntaxgym-reflexive_src_fem'] = lambda: SyntaxGymSingleTSE(test_suite_dict['reflexive_src_fem'])
 benchmark_registry['syntaxgym-reflexive_src_masc'] = lambda: SyntaxGymSingleTSE(test_suite_dict['reflexive_src_masc'])
 benchmark_registry['syntaxgym-subordination'] = lambda: SyntaxGymSingleTSE(test_suite_dict['subordination'])
-benchmark_registry['syntaxgym-subordination_orc-orc'] = lambda: SyntaxGymSingleTSE(
-    test_suite_dict['subordination_orc-orc'])
+benchmark_registry['syntaxgym-subordination_orc-orc'] = lambda: SyntaxGymSingleTSE(test_suite_dict['subordination_orc-orc'])
 benchmark_registry['syntaxgym-subordination_pp-pp'] = lambda: SyntaxGymSingleTSE(test_suite_dict['subordination_pp-pp'])
-benchmark_registry['syntaxgym-subordination_src-src'] = lambda: SyntaxGymSingleTSE(
-    test_suite_dict['subordination_src-src'])
+benchmark_registry['syntaxgym-subordination_src-src'] = lambda: SyntaxGymSingleTSE(test_suite_dict['subordination_src-src'])
