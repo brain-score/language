@@ -7,6 +7,7 @@ from .benchmark import SyntaxGymSingleTSE, SyntaxGym2020
 with open(Path(__file__).parent / 'test_suites.json') as json_file:
     test_suite_dict = json.load(json_file)
 
+benchmark_registry['syntaxgym'] = lambda: SyntaxGym2020()
 benchmark_registry['syntaxgym-center_embed'] = lambda: SyntaxGymSingleTSE(test_suite_dict['center_embed'])
 benchmark_registry['syntaxgym-center_embed_mod'] = lambda: SyntaxGymSingleTSE(test_suite_dict['center_embed_mod'])
 benchmark_registry['syntaxgym-cleft'] = lambda: SyntaxGymSingleTSE(test_suite_dict['cleft'])
@@ -35,6 +36,8 @@ benchmark_registry['syntaxgym-reflexive_prep_masc'] = lambda: SyntaxGymSingleTSE
 benchmark_registry['syntaxgym-reflexive_src_fem'] = lambda: SyntaxGymSingleTSE(test_suite_dict['reflexive_src_fem'])
 benchmark_registry['syntaxgym-reflexive_src_masc'] = lambda: SyntaxGymSingleTSE(test_suite_dict['reflexive_src_masc'])
 benchmark_registry['syntaxgym-subordination'] = lambda: SyntaxGymSingleTSE(test_suite_dict['subordination'])
-benchmark_registry['syntaxgym-subordination_orc-orc'] = lambda: SyntaxGymSingleTSE(test_suite_dict['subordination_orc-orc'])
+benchmark_registry['syntaxgym-subordination_orc-orc'] = lambda: SyntaxGymSingleTSE(
+    test_suite_dict['subordination_orc-orc'])
 benchmark_registry['syntaxgym-subordination_pp-pp'] = lambda: SyntaxGymSingleTSE(test_suite_dict['subordination_pp-pp'])
-benchmark_registry['syntaxgym-subordination_src-src'] = lambda: SyntaxGymSingleTSE(test_suite_dict['subordination_src-src'])
+benchmark_registry['syntaxgym-subordination_src-src'] = lambda: SyntaxGymSingleTSE(
+    test_suite_dict['subordination_src-src'])
