@@ -1,19 +1,18 @@
-from pprint import pprint
-from typing import List, Dict
-
 import numpy as np
 import pandas as pd
 import pytest
+from pprint import pprint
+from typing import List, Dict
 
-from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.benchmarks.syntaxgym.benchmark import SyntaxGymTSE, SyntaxGymSingleTSE
-from brainscore_language.benchmarks.syntaxgym.gpt2_precomputed import *
+from brainscore_language.benchmarks.syntaxgym.gpt2_precomputed import REFERENCE_DISTILGPT2_SCORES, \
+    REFERENCE_DISTILGPT2_REGION_TOTALS
 from brainscore_language.model_helpers.huggingface import HuggingfaceSubject
 
 
 @pytest.fixture(scope="session")
 def distilgpt2():
-  return HuggingfaceSubject(model_id="distilgpt2", region_layer_mapping={})
+    return HuggingfaceSubject(model_id="distilgpt2", region_layer_mapping={})
 
 
 def test_score_aggregate(distilgpt2):
@@ -58,6 +57,7 @@ def test_region_totals_match(distilgpt2, suite: str):
     def make_item_df(region_totals):
         return pd.Series(region_totals).unstack() \
             .rename_axis(index="condition", columns="region_number")
+
     actual_df = pd.concat([make_item_df(item_totals) for item_totals in actual],
                           names=["item_number"],
                           keys=np.arange(len(actual)) + 1).astype(float)
@@ -68,7 +68,7 @@ def test_region_totals_match(distilgpt2, suite: str):
     pd.testing.assert_frame_equal(actual_df, expected_df, atol=1e-3, check_exact=False)
 
 
-def test_syntaxgym2020_data():
+def test_syntaxgym2020_root():
     from brainscore_language.benchmarks.syntaxgym import SyntaxGym2020
 
     assert len(SyntaxGym2020().sub_benchmarks) == 31
@@ -83,4 +83,3 @@ def test_suite_accuracies(distilgpt2: HuggingfaceSubject, suite_ref: str):
     accuracy = tse(distilgpt2)
     expected_accuracy = REFERENCE_DISTILGPT2_SCORES[suite_ref]
     np.testing.assert_almost_equal(float(accuracy), expected_accuracy, decimal=3)
-    
