@@ -55,7 +55,7 @@ class SyntaxGymTSE(BenchmarkBase):
             identifier='syntaxgym-2020',
             version=1,
             parent='engineering',
-            ceiling=None,
+            ceiling=Score(1),
             bibtex=None)
 
         self.sub_benchmarks = [
@@ -82,7 +82,7 @@ class SyntaxGymSingleTSE(BenchmarkBase):
             identifier='syntaxgym-single',
             version=1,
             parent='engineering',
-            ceiling=None,
+            ceiling=Score(1),
             bibtex=None)
 
         self.metric = load_metric('accuracy')
