@@ -1,22 +1,27 @@
 from __future__ import annotations
+
 import json
-from pprint import pformat
-import re
-from typing import Dict, List, Optional, Iterator
 import pandas as pd
+import re
+from pathlib import Path
+from pprint import pformat
+from typing import Dict, List, Optional, Iterator, Union, TextIO
+
 from brainscore_language.benchmarks.syntaxgym.sg_prediction import Prediction
+
 
 def _load_suite(suite_ref: Union[str, Path, TextIO, Dict, Suite]) -> Suite:
     if isinstance(suite_ref, Suite):
-         return suite_ref
+        return suite_ref
     # Load from dict / JSON file / JSON path
     if not isinstance(suite_ref, dict):
-         if not hasattr(suite_ref, "read"):
-             suite_ref = open(suite_ref, "r")
-         suite = json.load(suite_ref)
+        if not hasattr(suite_ref, "read"):
+            suite_ref = open(suite_ref, "r")
+        suite = json.load(suite_ref)
     else:
-         suite = suite_ref
+        suite = suite_ref
     return Suite.from_dict(suite)
+
 
 class Suite:
     """
@@ -33,7 +38,8 @@ class Suite:
         suite JSON representation. See :ref:`suite_json` for more information.
     """
 
-    def __init__(self, condition_names: List[str], region_names: List[str], items: List[dict], predictions: Prediction, meta: dict):
+    def __init__(self, condition_names: List[str], region_names: List[str], items: List[dict], predictions: Prediction,
+                 meta: dict):
         self.condition_names = condition_names
         self.region_names = region_names
         self.items = items
@@ -158,6 +164,7 @@ class Suite:
 
     def __eq__(self, other):
         return isinstance(other, Suite) and json.dumps(self.as_dict()) == json.dumps(other.as_dict())
+
 
 class Region(object):
     boundary_space_re = re.compile(r"^\s|\s$")
