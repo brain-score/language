@@ -21,7 +21,7 @@ def test_score_aggregate(distilgpt2):
     in the combined benchmark class, and be aggregated correctly by mean.
     """
     suites = ["cleft", "cleft_modifier"]
-    benchmark = SyntaxGymTSE(suites)
+    benchmark = SyntaxGymTSE({suite: suite for suite in suites})
 
     score = benchmark(distilgpt2)
     sub_scores = {benchmark.suite.meta["name"]: benchmark(distilgpt2)
@@ -31,7 +31,7 @@ def test_score_aggregate(distilgpt2):
 
     assert score.sub_scores["sub_benchmark"].values.tolist() == suites
     np.testing.assert_array_equal(score.sub_scores.values,
-                                  np.array([sub_scores[s] for s in suites]))
+                                  [sub_scores[s] for s in suites])
 
 
 @pytest.mark.parametrize("suite", REFERENCE_DISTILGPT2_REGION_TOTALS.keys())
@@ -41,7 +41,7 @@ def test_region_totals_match(distilgpt2, suite: str):
     test suite should match those of the reference implementation.
     """
 
-    benchmark = SyntaxGymSingleTSE(suite)
+    benchmark = SyntaxGymSingleTSE(identifier=suite, suite_ref=suite)
     subject = distilgpt2
 
     expected: List[Dict[str, float]] = REFERENCE_DISTILGPT2_REGION_TOTALS[suite][:6]
@@ -79,7 +79,7 @@ def test_suite_accuracies(distilgpt2: HuggingfaceSubject, suite_ref: str):
     """
     Compare distilgpt2 suite accuracies with those of the reference implementation.
     """
-    tse = SyntaxGymSingleTSE(suite_ref)
+    tse = SyntaxGymSingleTSE(identifier=suite_ref, suite_ref=suite_ref)
     accuracy = tse(distilgpt2)
     expected_accuracy = REFERENCE_DISTILGPT2_SCORES[suite_ref]
     np.testing.assert_almost_equal(float(accuracy), expected_accuracy, decimal=3)
