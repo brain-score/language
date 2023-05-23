@@ -8,7 +8,7 @@ import requests
 from brainscore_core.benchmarks import BenchmarkBase
 from brainscore_core.metrics import Score
 from brainscore_language.artificial_subject import ArtificialSubject
-from brainscore_language import load_metric, benchmark_registry
+from brainscore_language import load_metric
 from brainscore_language.benchmarks.syntaxgym.sg_suite import _load_suite, Suite
 
 
@@ -45,12 +45,12 @@ from brainscore_language.benchmarks.syntaxgym.sg_suite import _load_suite, Suite
 
 def SyntaxGym2020():
     with open(Path(__file__).parent / 'test_suites.json') as json_file:
-        test_suite_dict = json.load(json_file)
-    return SyntaxGymTSE(test_suite_dict.values())
+        test_suite_dict: dict = json.load(json_file)
+    return SyntaxGymTSE(test_suite_dict)
 
 
 class SyntaxGymTSE(BenchmarkBase):
-    def __init__(self, suite_ref_list):
+    def __init__(self, test_suites: Dict[str, str]):
         super(SyntaxGymTSE, self).__init__(
             identifier='syntaxgym-2020',
             version=1,
@@ -59,7 +59,8 @@ class SyntaxGymTSE(BenchmarkBase):
             bibtex=None)
 
         self.sub_benchmarks = [
-            SyntaxGymSingleTSE(suite_ref) for suite_ref in suite_ref_list]
+            SyntaxGymSingleTSE(identifier=identifier, suite_ref=suite_ref)
+            for identifier, suite_ref in test_suites.items()]
 
     def __call__(self, candidate: ArtificialSubject) -> Score:
         sub_scores = []
@@ -77,9 +78,9 @@ class SyntaxGymTSE(BenchmarkBase):
 
 
 class SyntaxGymSingleTSE(BenchmarkBase):
-    def __init__(self, suite_ref):
+    def __init__(self, identifier: str, suite_ref: str):
         super(SyntaxGymSingleTSE, self).__init__(
-            identifier='syntaxgym-single',
+            identifier=f'syntaxgym-{identifier}',
             version=1,
             parent='engineering',
             ceiling=Score(1),
@@ -154,5 +155,3 @@ class SyntaxGymSingleTSE(BenchmarkBase):
         score = self.metric(conj_predictions, targets)
 
         return score
-
-
