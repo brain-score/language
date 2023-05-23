@@ -64,9 +64,10 @@ def SyntaxGym2020():
 
 
 class SyntaxGymTSE(BenchmarkBase):
+    """ collection of SyntaxGym benchmarks. """
     def __init__(self, test_suites: Dict[str, str]):
         super(SyntaxGymTSE, self).__init__(
-            identifier='syntaxgym-2020',
+            identifier='SyntaxGym',
             version=1,
             parent='engineering',
             ceiling=Score(1),
@@ -96,7 +97,7 @@ class SyntaxGymSingleTSE(BenchmarkBase):
         super(SyntaxGymSingleTSE, self).__init__(
             identifier=f'syntaxgym-{identifier}',
             version=1,
-            parent='engineering',
+            parent='SyntaxGym',
             ceiling=Score(1),
             bibtex=BIBTEX)
 
