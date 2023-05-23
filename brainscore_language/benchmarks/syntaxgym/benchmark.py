@@ -96,7 +96,7 @@ class SyntaxGymSingleTSE(BenchmarkBase):
         super(SyntaxGymSingleTSE, self).__init__(
             identifier=f'syntaxgym-{identifier}',
             version=1,
-            parent='engineering',
+            parent='SyntaxGym',
             ceiling=Score(1),
             bibtex=BIBTEX)
 
