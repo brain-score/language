@@ -9,7 +9,7 @@ import xarray as xr
 from numpy.core import defchararray
 from torch.utils.hooks import RemovableHandle
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer, BatchEncoding, GPT2TokenizerFast
+from transformers import AutoModelForCausalLM, AutoTokenizer, BatchEncoding
 from transformers.modeling_outputs import CausalLMOutput
 from typing import Union, List, Tuple, Dict, Callable
 
