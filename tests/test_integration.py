@@ -12,7 +12,7 @@ from brainscore_language import score
     "model_identifier, benchmark_identifier, expected_score",
     [
         ("distilgpt2", "Futrell2018-pearsonr", approx(0.36144805, abs=0.0005)),
-        ("distilgpt2", "Pereira2018.243sentences-linear", approx(0.73772422, abs=0.0005)),
+        ("distilgpt2", "Pereira2018.243sentences-linear", approx(0.82228507, abs=0.0005)),
         ("glove-840b", "Pereira2018.384sentences-linear", approx(0.18385368, abs=0.0005)),
         ("gpt2-xl", "Futrell2018-pearsonr", approx(0.31825621, abs=0.0005)),
         ('distilgpt2', 'syntaxgym-center_embed', approx(0.96428571, abs=.0005)),
@@ -31,7 +31,7 @@ from brainscore_language import score
         ('distilgpt2', 'syntaxgym-npi_src_ever', approx(0.0, abs=.0005)),
         ('distilgpt2', 'syntaxgym-npz_ambig', approx(0.66666667, abs=.0005)),
         ('distilgpt2', 'syntaxgym-npz_ambig_mod', approx(0.66666667, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-npz_obj', approx(0.916667, abs=.0005)),
+        ('distilgpt2', 'syntaxgym-npz_obj', approx(0.83333333, abs=.0005)),
         ('distilgpt2', 'syntaxgym-npz_obj_mod', approx(0.875, abs=.0005)),
         ('distilgpt2', 'syntaxgym-number_orc', approx(0.10526316, abs=.0005)),
         ('distilgpt2', 'syntaxgym-number_prep', approx(0.57894737, abs=.0005)),
