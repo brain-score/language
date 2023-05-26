@@ -26,6 +26,7 @@ class HuggingfaceSubject(ArtificialSubject):
             region_layer_mapping: dict,
             model=None,
             tokenizer=None,
+            tokenization_method: str = 'new',
             task_heads: Union[None, Dict[ArtificialSubject.Task, Callable]] = None,
     ):
         """
@@ -34,6 +35,7 @@ class HuggingfaceSubject(ArtificialSubject):
                 This can be left empty, but the model will not be able to be tested on neural benchmarks
             :param model: the model to run inference from. Using `AutoModelForCausalLM.from_pretrained` if `None`.
             :param tokenizer: the model's associated tokenizer. Using `AutoTokenizer.from_pretrained` if `None`.
+            :param tokenization_method: whether to use the new or old tokenization method.
             :param task_heads: a mapping from one or multiple tasks
                 (:class:`~brainscore_language.artificial_subject.ArtificialSubject.Task`) to a function outputting the
                 requested task output, given the basemodel's base output
@@ -48,7 +50,7 @@ class HuggingfaceSubject(ArtificialSubject):
         self.tokenizer = tokenizer if tokenizer is not None else AutoTokenizer.from_pretrained(self.model_id,
                                                                                                truncation_side='left')
         self.current_tokens = None  # keep track of current tokens
-        self._tokenization_method: Union[None, str] = None  # whether to use old or new tokenization. `None` initially
+        self._tokenization_method = tokenization_method
 
         self.neural_recordings: List[Tuple] = []  # list of `(recording_target, recording_type)` tuples to record
         self.behavioral_task: Union[None, ArtificialSubject.Task] = None
@@ -178,22 +180,12 @@ class HuggingfaceSubject(ArtificialSubject):
         """
         Tokenizes the context, keeping track of the newly added tokens in `self.current_tokens`
         """
-        if self._tokenization_method is None:
-            # first attempt of tokenizing, figure out which method to use
-            try:
-                self._tokenization_method = 'new'
-                result = self._tokenize_newer_tokenizers(context, num_previous_context_tokens)
-            except ValueError:
-                self._tokenization_method = 'old'
-                result = self._tokenize_older_tokenizers(context, num_previous_context_tokens)
-            self._logger.debug(f"Using tokenization_method '{self._tokenization_method}'")
-            return result
-
-        # tokenization method has already been set at this point, do not change anymore
-        elif self._tokenization_method == 'new':
+        if self._tokenization_method == 'new':
             return self._tokenize_newer_tokenizers(context, num_previous_context_tokens)
         elif self._tokenization_method == 'old':
             return self._tokenize_older_tokenizers(context, num_previous_context_tokens)
+        else:
+            raise ValueError(f"Invalid tokenization method specified: {self._tokenization_method}")
 
     def _setup_hooks(self):
         """ set up the hooks for recording internal neural activity from the model (aka layer activations) """
