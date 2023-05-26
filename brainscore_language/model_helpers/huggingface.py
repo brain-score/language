@@ -182,10 +182,12 @@ class HuggingfaceSubject(ArtificialSubject):
             # first attempt of tokenizing, figure out which method to use
             try:
                 self.tokenization_method = 'new'
-                return self._tokenize_newer_tokenizers(context, num_previous_context_tokens)
+                result = self._tokenize_newer_tokenizers(context, num_previous_context_tokens)
             except ValueError:
                 self.tokenization_method = 'old'
-                return self._tokenize_older_tokenizers(context, num_previous_context_tokens)
+                result = self._tokenize_older_tokenizers(context, num_previous_context_tokens)
+            self._logger.debug(f"Using tokenization_method '{self.tokenization_method}'")
+            return result
 
         # tokenization method has already been set at this point, do not change anymore
         elif self.tokenization_method == 'new':
