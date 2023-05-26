@@ -48,7 +48,7 @@ class HuggingfaceSubject(ArtificialSubject):
         self.tokenizer = tokenizer if tokenizer is not None else AutoTokenizer.from_pretrained(self.model_id,
                                                                                                truncation_side='left')
         self.current_tokens = None  # keep track of current tokens
-        self.tokenization_method: Union[None, str] = None  # whether to use old or new tokenization. `None` initially
+        self._tokenization_method: Union[None, str] = None  # whether to use old or new tokenization. `None` initially
 
         self.neural_recordings: List[Tuple] = []  # list of `(recording_target, recording_type)` tuples to record
         self.behavioral_task: Union[None, ArtificialSubject.Task] = None
@@ -178,21 +178,21 @@ class HuggingfaceSubject(ArtificialSubject):
         """
         Tokenizes the context, keeping track of the newly added tokens in `self.current_tokens`
         """
-        if self.tokenization_method is None:
+        if self._tokenization_method is None:
             # first attempt of tokenizing, figure out which method to use
             try:
-                self.tokenization_method = 'new'
+                self._tokenization_method = 'new'
                 result = self._tokenize_newer_tokenizers(context, num_previous_context_tokens)
             except ValueError:
-                self.tokenization_method = 'old'
+                self._tokenization_method = 'old'
                 result = self._tokenize_older_tokenizers(context, num_previous_context_tokens)
-            self._logger.debug(f"Using tokenization_method '{self.tokenization_method}'")
+            self._logger.debug(f"Using tokenization_method '{self._tokenization_method}'")
             return result
 
         # tokenization method has already been set at this point, do not change anymore
-        elif self.tokenization_method == 'new':
+        elif self._tokenization_method == 'new':
             return self._tokenize_newer_tokenizers(context, num_previous_context_tokens)
-        elif self.tokenization_method == 'old':
+        elif self._tokenization_method == 'old':
             return self._tokenize_older_tokenizers(context, num_previous_context_tokens)
 
     def _setup_hooks(self):
