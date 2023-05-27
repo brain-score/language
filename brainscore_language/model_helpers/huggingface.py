@@ -136,10 +136,32 @@ class HuggingfaceSubject(ArtificialSubject):
 
         return context
 
-    def _tokenize(self, context, num_previous_context_tokens):
-        """
-        Tokenizes the context, keeping track of the newly added tokens in `self.current_tokens`
-        """
+    def _tokenize_newer_tokenizers(self, context, num_previous_context_tokens):
+        context_tokens = self.tokenizer(
+                context, truncation=True, return_tensors="pt",
+                return_overflowing_tokens=True,
+                )
+        context_tokens.to('cuda' if torch.cuda.is_available() else 'cpu')
+        # keep track of tokens in current `text_part`
+        if getattr(context_tokens, 'overflowing_tokens', None) is not None:
+            overflowing_encoding: list = np.array(context_tokens.overflowing_tokens.cpu())
+            num_overflowing = sum(len(overflow) for overflow in overflowing_encoding)
+        else:
+            num_overflowing = 0
+        self.current_tokens = {key: value[..., num_previous_context_tokens - num_overflowing:]
+                               for key, value in context_tokens.items()}
+        num_new_context_tokens = context_tokens['input_ids'].shape[-1] + num_overflowing
+        if getattr(context_tokens, 'overflowing_tokens', None) is not None:
+            context_tokens.pop('overflowing_tokens')
+        if 'num_truncated_tokens' in context_tokens:
+            context_tokens.pop('num_truncated_tokens')
+        if 'overflow_to_sample_mapping' in context_tokens:
+            context_tokens.pop('overflow_to_sample_mapping')
+        return context_tokens, num_new_context_tokens
+
+    def _tokenize_older_tokenizers(self, context, num_previous_context_tokens):
+        # at least gpt2 and distillgpt2 can only work with this way but not general "return_overflowing_tokens"
+        # possibly a bug in these two tokenizers
         context_tokens = self.tokenizer(context, truncation=True, return_tensors="pt")
         context_tokens.to('cuda' if torch.cuda.is_available() else 'cpu')
         # keep track of tokens in current `text_part`
@@ -149,6 +171,17 @@ class HuggingfaceSubject(ArtificialSubject):
                                for key, value in context_tokens.items()}
         num_new_context_tokens = context_tokens['input_ids'].shape[-1] + num_overflowing
         return context_tokens, num_new_context_tokens
+
+    def _tokenize(self, context, num_previous_context_tokens):
+        """
+        Tokenizes the context, keeping track of the newly added tokens in `self.current_tokens`
+        """
+        try:
+            return self._tokenize_newer_tokenizers(
+                    context, num_previous_context_tokens)
+        except:
+            return self._tokenize_older_tokenizers(
+                    context, num_previous_context_tokens)
 
     def _setup_hooks(self):
         """ set up the hooks for recording internal neural activity from the model (aka layer activations) """
@@ -165,7 +198,7 @@ class HuggingfaceSubject(ArtificialSubject):
     def output_to_representations(self, layer_representations: Dict[Tuple[str, str, str], np.ndarray], stimuli_coords):
         representation_values = np.concatenate([
             # Choose to use last token (-1) of values[batch, token, unit] to represent passage.
-            values[:, -1:, :].squeeze(0) for values in layer_representations.values()],
+            values[:, -1:, :].squeeze(0).cpu() for values in layer_representations.values()],
             axis=-1)  # concatenate along neuron axis
         neuroid_coords = {
             'layer': ('neuroid', np.concatenate([[layer] * values.shape[-1]

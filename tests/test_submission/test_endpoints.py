@@ -11,6 +11,7 @@ from brainscore_core.submission.database import connect_db
 from brainscore_core.submission.database_models import clear_schema
 from brainscore_language.submission.endpoints import run_scoring
 
+
 logger = logging.getLogger(__name__)
 
 

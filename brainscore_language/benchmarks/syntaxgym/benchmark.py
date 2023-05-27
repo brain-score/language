@@ -8,7 +8,7 @@ import requests
 from brainscore_core.benchmarks import BenchmarkBase
 from brainscore_core.metrics import Score
 from brainscore_language.artificial_subject import ArtificialSubject
-from brainscore_language import load_metric, benchmark_registry
+from brainscore_language import load_metric
 from brainscore_language.benchmarks.syntaxgym.sg_suite import _load_suite, Suite
 
 
@@ -43,23 +43,39 @@ from brainscore_language.benchmarks.syntaxgym.sg_suite import _load_suite, Suite
 #                   test_suite_dict = json.load(json_file)
 #                   suite_list = [test_suite_dict['center_embed']]
 
+BIBTEX = """@inproceedings{gauthier-etal-2020-syntaxgym,
+    title = "{S}yntax{G}ym: An Online Platform for Targeted Evaluation of Language Models",
+    author = "Gauthier, Jon and Hu, Jennifer and Wilcox, Ethan and Qian, Peng and Levy, Roger",
+    booktitle = "Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics: System Demonstrations",
+    month = jul,
+    year = "2020",
+    address = "Online",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/2020.acl-demos.10",
+    pages = "70--76",
+    abstract = "Targeted syntactic evaluations have yielded insights into the generalizations learned by neural network language models. However, this line of research requires an uncommon confluence of skills: both the theoretical knowledge needed to design controlled psycholinguistic experiments, and the technical proficiency needed to train and deploy large-scale language models. We present SyntaxGym, an online platform designed to make targeted evaluations accessible to both experts in NLP and linguistics, reproducible across computing environments, and standardized following the norms of psycholinguistic experimental design. This paper releases two tools of independent value for the computational linguistics community: 1. A website, syntaxgym.org, which centralizes the process of targeted syntactic evaluation and provides easy tools for analysis and visualization; 2. Two command-line tools, {`}syntaxgym{`} and {`}lm-zoo{`}, which allow any user to reproduce targeted syntactic evaluations and general language model inference on their own machine.",
+}"""
+
+
 def SyntaxGym2020():
     with open(Path(__file__).parent / 'test_suites.json') as json_file:
-        test_suite_dict = json.load(json_file)
-    return SyntaxGymTSE(test_suite_dict.values())
+        test_suite_dict: dict = json.load(json_file)
+    return SyntaxGymTSE(test_suite_dict)
 
 
 class SyntaxGymTSE(BenchmarkBase):
-    def __init__(self, suite_ref_list):
+    """ collection of SyntaxGym benchmarks. """
+    def __init__(self, test_suites: Dict[str, str]):
         super(SyntaxGymTSE, self).__init__(
-            identifier='syntaxgym-2020',
+            identifier='SyntaxGym',
             version=1,
             parent='engineering',
-            ceiling=None,
-            bibtex=None)
+            ceiling=Score(1),
+            bibtex=BIBTEX)
 
         self.sub_benchmarks = [
-            SyntaxGymSingleTSE(suite_ref) for suite_ref in suite_ref_list]
+            SyntaxGymSingleTSE(identifier=identifier, suite_ref=suite_ref)
+            for identifier, suite_ref in test_suites.items()]
 
     def __call__(self, candidate: ArtificialSubject) -> Score:
         sub_scores = []
@@ -77,13 +93,13 @@ class SyntaxGymTSE(BenchmarkBase):
 
 
 class SyntaxGymSingleTSE(BenchmarkBase):
-    def __init__(self, suite_ref):
+    def __init__(self, identifier: str, suite_ref: str):
         super(SyntaxGymSingleTSE, self).__init__(
-            identifier='syntaxgym-single',
+            identifier=f'syntaxgym-{identifier}',
             version=1,
-            parent='engineering',
-            ceiling=None,
-            bibtex=None)
+            parent='SyntaxGym',
+            ceiling=Score(1),
+            bibtex=BIBTEX)
 
         self.metric = load_metric('accuracy')
         self.suite = self._load_suite(suite_ref)
@@ -154,5 +170,3 @@ class SyntaxGymSingleTSE(BenchmarkBase):
         score = self.metric(conj_predictions, targets)
 
         return score
-
-
