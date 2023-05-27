@@ -11,36 +11,38 @@ logging.basicConfig(level=logging.INFO)
 
 
 class TestNextWord:
-    @pytest.mark.parametrize('model_identifier, expected_next_word', [
-        pytest.param('bert-base-uncased', '.', marks=pytest.mark.memory_intense),
-        pytest.param('gpt2-xl', 'jumps', marks=pytest.mark.memory_intense),
-        ('distilgpt2', 'es'),
+    @pytest.mark.parametrize('model_identifier, tokenization_method, expected_next_word', [
+        pytest.param('bert-base-uncased', 'new', '.', marks=pytest.mark.memory_intense),
+        pytest.param('gpt2-xl', 'old', 'jumps', marks=pytest.mark.memory_intense),
+        ('distilgpt2', 'old', 'es'),
     ])
-    def test_single_string(self, model_identifier, expected_next_word):
+    def test_single_string(self, model_identifier, tokenization_method, expected_next_word):
         """
         This is a simple test that takes in text = 'the quick brown fox', and tests the next word.
         This test is a stand-in prototype to check if our model definitions are correct.
         """
 
-        model = HuggingfaceSubject(model_id=model_identifier, region_layer_mapping={})
+        model = HuggingfaceSubject(model_id=model_identifier, tokenization_method=tokenization_method,
+                                   region_layer_mapping={})
         text = 'the quick brown fox'
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.start_behavioral_task(task=ArtificialSubject.Task.next_word)
         next_word = model.digest_text(text)['behavior'].values
         assert next_word == expected_next_word
 
-    @pytest.mark.parametrize('model_identifier, expected_next_words', [
-        pytest.param('bert-base-uncased', ['.', '.', '.'], marks=pytest.mark.memory_intense),
-        pytest.param('gpt2-xl', ['jumps', 'the', 'dog'], marks=pytest.mark.memory_intense),
-        ('distilgpt2', ['es', 'the', 'fox']),
+    @pytest.mark.parametrize('model_identifier, tokenization_method, expected_next_words', [
+        pytest.param('bert-base-uncased', 'new', ['.', '.', '.'], marks=pytest.mark.memory_intense),
+        pytest.param('gpt2-xl', 'old', ['jumps', 'the', 'dog'], marks=pytest.mark.memory_intense),
+        ('distilgpt2', 'old', ['es', 'the', 'fox']),
     ])
-    def test_list_input(self, model_identifier, expected_next_words):
+    def test_list_input(self, model_identifier, tokenization_method, expected_next_words):
         """
         This is a simple test that takes in text = ['the quick brown fox', 'jumps over', 'the lazy'], and tests the
         next word for each text part in the list.
         This test is a stand-in prototype to check if our model definitions are correct.
         """
-        model = HuggingfaceSubject(model_id=model_identifier, region_layer_mapping={})
+        model = HuggingfaceSubject(model_id=model_identifier, tokenization_method=tokenization_method,
+                                   region_layer_mapping={})
         text = ['the quick brown fox', 'jumps over', 'the lazy']
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.start_behavioral_task(task=ArtificialSubject.Task.next_word)
@@ -53,7 +55,7 @@ class TestNextWord:
         text = 'lorem ipsum dolor sit amet'.split() * 205
         assert len(text) > 1024
         text = ' '.join(text)
-        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
+        model = HuggingfaceSubject(model_id='distilgpt2', tokenization_method='old', region_layer_mapping={})
         model.start_behavioral_task(task=ArtificialSubject.Task.next_word)
         next_words = model.digest_text(text)['behavior']
         assert len(next_words) == 1
@@ -64,26 +66,26 @@ class TestNextWord:
         from brainscore_language import load_benchmark
         benchmark = load_benchmark('Wikitext-accuracy')
         benchmark.data = benchmark.data[0:2] # test on subset for speed
-        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
+        model = HuggingfaceSubject(model_id='distilgpt2', tokenization_method='old', region_layer_mapping={})
         score = benchmark(model)
         assert score == 0
 
 
 class TestReadingTimes:
     def test_single_word(self):
-        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
+        model = HuggingfaceSubject(model_id='distilgpt2', tokenization_method='old', region_layer_mapping={})
         model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_time = model.digest_text('the')['behavior']
         assert np.isnan(reading_time)
 
     def test_multiple_words(self):
-        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
+        model = HuggingfaceSubject(model_id='distilgpt2', tokenization_method='old', region_layer_mapping={})
         model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_time = model.digest_text('the quick brown fox')['behavior']
         assert reading_time == approx(44.06524, abs=0.001)
 
     def test_list_input(self):
-        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
+        model = HuggingfaceSubject(model_id='distilgpt2', tokenization_method='old', region_layer_mapping={})
         text = ['the', 'quick', 'brown', 'fox', 'jumps', 'over', 'the', 'lazy']
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
@@ -93,7 +95,7 @@ class TestReadingTimes:
             atol=0.0001)
 
     def test_multitoken_words(self):
-        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
+        model = HuggingfaceSubject(model_id='distilgpt2', tokenization_method='old', region_layer_mapping={})
         text = ['beekeepers', 'often', 'go', 'beekeeping']
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
@@ -102,7 +104,7 @@ class TestReadingTimes:
             reading_times, [16.1442, 10.4003, 6.6620, 16.0906 + 1.3748], atol=0.0001)
 
     def test_multiword_list_input(self):
-        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
+        model = HuggingfaceSubject(model_id='distilgpt2', tokenization_method='old', region_layer_mapping={})
         text = ['the quick brown fox', 'jumps over', 'the lazy']
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
@@ -110,7 +112,7 @@ class TestReadingTimes:
         np.testing.assert_allclose(reading_times, [44.06524, 14.554907, 14.064276], atol=0.0001)
 
     def test_punct(self):
-        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
+        model = HuggingfaceSubject(model_id='distilgpt2', tokenization_method='old', region_layer_mapping={})
         text = ['fox', 'is', 'quick.']
         logging.info(f'Running {model.identifier()} with text "{text}"')
         model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
@@ -143,7 +145,7 @@ class TestNeural:
         This test is a stand-in prototype to check if our model definitions are correct.
         """
 
-        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={
+        model = HuggingfaceSubject(model_id='distilgpt2', tokenization_method='old', region_layer_mapping={
             ArtificialSubject.RecordingTarget.language_system: 'transformer.h.0.ln_1'})
         text = ['the quick brown fox', 'jumps over', 'the lazy dog']
         logging.info(f'Running {model.identifier()} with text "{text}"')
@@ -161,7 +163,7 @@ class TestNeural:
         indexed by `representation_layer` has 1 text presentation and 768 neurons. This test is a stand-in prototype to
         check if our model definitions are correct.
         """
-        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={
+        model = HuggingfaceSubject(model_id='distilgpt2', tokenization_method='old', region_layer_mapping={
             ArtificialSubject.RecordingTarget.language_system: 'transformer.h.0.ln_1'})
         text = 'the quick brown fox'
         logging.info(f'Running {model.identifier()} with text "{text}"')
@@ -175,7 +177,7 @@ class TestNeural:
 
     @pytest.mark.memory_intense
     def test_one_text_two_targets(self):
-        model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={
+        model = HuggingfaceSubject(model_id='distilgpt2', tokenization_method='old', region_layer_mapping={
             ArtificialSubject.RecordingTarget.language_system_left_hemisphere: 'transformer.h.0.ln_1',
             ArtificialSubject.RecordingTarget.language_system_right_hemisphere: 'transformer.h.1.ln_1'})
         text = 'the quick brown fox'
