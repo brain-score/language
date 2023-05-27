@@ -75,6 +75,7 @@ class TestSyntaxGym2020Root:
     def test_number_sub_benchmarks(self):
         assert len(SyntaxGym2020().sub_benchmarks) == 31
 
+    @pytest.mark.travis_slow
     def test_model_score(self):
         model = load_model('distilgpt2')
         benchmark = SyntaxGym2020()
