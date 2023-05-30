@@ -26,7 +26,6 @@ class HuggingfaceSubject(ArtificialSubject):
             region_layer_mapping: dict,
             model=None,
             tokenizer=None,
-            tokenization_method: str = 'new',
             task_heads: Union[None, Dict[ArtificialSubject.Task, Callable]] = None,
     ):
         """
@@ -35,7 +34,6 @@ class HuggingfaceSubject(ArtificialSubject):
                 This can be left empty, but the model will not be able to be tested on neural benchmarks
             :param model: the model to run inference from. Using `AutoModelForCausalLM.from_pretrained` if `None`.
             :param tokenizer: the model's associated tokenizer. Using `AutoTokenizer.from_pretrained` if `None`.
-            :param tokenization_method: whether to use the new or old tokenization method.
             :param task_heads: a mapping from one or multiple tasks
                 (:class:`~brainscore_language.artificial_subject.ArtificialSubject.Task`) to a function outputting the
                 requested task output, given the basemodel's base output
@@ -50,7 +48,8 @@ class HuggingfaceSubject(ArtificialSubject):
         self.tokenizer = tokenizer if tokenizer is not None else AutoTokenizer.from_pretrained(self.model_id,
                                                                                                truncation_side='left')
         self.current_tokens = None  # keep track of current tokens
-        self._tokenization_method = tokenization_method
+        self._tokenizer_returns_overflow: Union[None, bool] = None
+        """ whether the tokenizer can return overflowing tokens. `None` initially before inferring tokenizer type """
 
         self.neural_recordings: List[Tuple] = []  # list of `(recording_target, recording_type)` tuples to record
         self.behavioral_task: Union[None, ArtificialSubject.Task] = None
@@ -140,18 +139,40 @@ class HuggingfaceSubject(ArtificialSubject):
 
         return context
 
-    def _tokenize_newer_tokenizers(self, context: str, num_previous_context_tokens: int) -> Tuple[BatchEncoding, int]:
-        context_tokens = self.tokenizer(
-            context, truncation=True, return_tensors="pt",
-            return_overflowing_tokens=True,
-        )
-        context_tokens.to(self.device)
+    def _tokenize(self, context, num_previous_context_tokens: int) -> Tuple[BatchEncoding, int]:
+        """
+        Tokenizes the context, keeping track of the newly added tokens in `self.current_tokens`
+        """
+        tokenizer_kwargs = dict()
+        if self._tokenizer_returns_overflow is None:  # first attempt of tokenizing, figure out which kwargs to use
+            try:
+                # First try method for 'older' tokenizers such as `GPT2TokenizerFast` that are not capable of
+                # returning overflowing tokens directly. Try this first because this method will fail for
+                # 'newer' tokenizers whereas the 'newer' method might work for some inputs, but will fail eventually.
+                self._tokenizer_returns_overflow = False
+                result = self._tokenize_overflow_aware(context, num_previous_context_tokens)
+            except ValueError:
+                self._tokenizer_returns_overflow = True
+                result = self._tokenize_overflow_aware(context, num_previous_context_tokens)
+            self._logger.debug(f"Using tokenizer_returns_overflow={self._tokenizer_returns_overflow}")
+            return result
+
+        # tokenization method has already been set at this point, do not change anymore
+        return self._tokenize_overflow_aware(context, num_previous_context_tokens)
+
+    def _tokenize_overflow_aware(self, context, num_previous_context_tokens: int) -> Tuple[BatchEncoding, int]:
+        context_tokens = self.tokenizer(context, truncation=True, return_tensors="pt",
+                                        return_overflowing_tokens=self._tokenizer_returns_overflow)
+
         # keep track of tokens in current `text_part`
-        if getattr(context_tokens, 'overflowing_tokens', None) is not None:
-            overflowing_encoding: list = np.array(context_tokens.overflowing_tokens.cpu())
+        num_overflowing = 0
+        if self._tokenizer_returns_overflow and getattr(context_tokens, 'overflowing_tokens', None) is not None:
+            overflowing_encoding = np.array(context_tokens.overflowing_tokens)
             num_overflowing = sum(len(overflow) for overflow in overflowing_encoding)
-        else:
-            num_overflowing = 0
+        elif not self._tokenizer_returns_overflow:  # 'older' gpt-style tokenizers, e.g. `GPT2TokenizerFast`
+            overflowing_encoding: list = np.array(context_tokens.encodings).item().overflowing
+            num_overflowing = 0 if not overflowing_encoding else sum(len(overflow) for overflow in overflowing_encoding)
+
         self.current_tokens = {key: value[..., num_previous_context_tokens - num_overflowing:]
                                for key, value in context_tokens.items()}
         num_new_context_tokens = context_tokens['input_ids'].shape[-1] + num_overflowing
@@ -161,31 +182,8 @@ class HuggingfaceSubject(ArtificialSubject):
             context_tokens.pop('num_truncated_tokens')
         if 'overflow_to_sample_mapping' in context_tokens:
             context_tokens.pop('overflow_to_sample_mapping')
-        return context_tokens, num_new_context_tokens
-
-    def _tokenize_older_tokenizers(self, context: str, num_previous_context_tokens: int) -> Tuple[BatchEncoding, int]:
-        # at least gpt2 and distillgpt2 can only work with this way but not general "return_overflowing_tokens"
-        # possibly a bug in these two tokenizers
-        context_tokens = self.tokenizer(context, truncation=True, return_tensors="pt")
         context_tokens.to(self.device)
-        # keep track of tokens in current `text_part`
-        overflowing_encoding: list = np.array(context_tokens.encodings).item().overflowing
-        num_overflowing = 0 if not overflowing_encoding else sum(len(overflow) for overflow in overflowing_encoding)
-        self.current_tokens = {key: value[..., num_previous_context_tokens - num_overflowing:]
-                               for key, value in context_tokens.items()}
-        num_new_context_tokens = context_tokens['input_ids'].shape[-1] + num_overflowing
         return context_tokens, num_new_context_tokens
-
-    def _tokenize(self, context, num_previous_context_tokens):
-        """
-        Tokenizes the context, keeping track of the newly added tokens in `self.current_tokens`
-        """
-        if self._tokenization_method == 'new':
-            return self._tokenize_newer_tokenizers(context, num_previous_context_tokens)
-        elif self._tokenization_method == 'old':
-            return self._tokenize_older_tokenizers(context, num_previous_context_tokens)
-        else:
-            raise ValueError(f"Invalid tokenization method specified: {self._tokenization_method}")
 
     def _setup_hooks(self):
         """ set up the hooks for recording internal neural activity from the model (aka layer activations) """
