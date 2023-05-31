@@ -7,7 +7,7 @@ from pytest import approx
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.model_helpers.huggingface import HuggingfaceSubject
 
-logging.basicConfig(level=logging.INFO)
+_logger = logging.getLogger(__name__)
 
 
 class TestNextWord:
@@ -24,7 +24,7 @@ class TestNextWord:
 
         model = HuggingfaceSubject(model_id=model_identifier, region_layer_mapping={})
         text = 'the quick brown fox'
-        logging.info(f'Running {model.identifier()} with text "{text}"')
+        _logger.info(f'Running {model.identifier()} with text "{text}"')
         model.start_behavioral_task(task=ArtificialSubject.Task.next_word)
         next_word = model.digest_text(text)['behavior'].values
         assert next_word == expected_next_word
@@ -42,7 +42,7 @@ class TestNextWord:
         """
         model = HuggingfaceSubject(model_id=model_identifier, region_layer_mapping={})
         text = ['the quick brown fox', 'jumps over', 'the lazy']
-        logging.info(f'Running {model.identifier()} with text "{text}"')
+        _logger.info(f'Running {model.identifier()} with text "{text}"')
         model.start_behavioral_task(task=ArtificialSubject.Task.next_word)
         next_words = model.digest_text(text)['behavior']
         np.testing.assert_array_equal(next_words, expected_next_words)
@@ -63,7 +63,7 @@ class TestNextWord:
         # ensure that this is handled gracefully
         from brainscore_language import load_benchmark
         benchmark = load_benchmark('Wikitext-accuracy')
-        benchmark.data = benchmark.data[0:2] # test on subset for speed
+        benchmark.data = benchmark.data[0:2]  # test on subset for speed
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
         score = benchmark(model)
         assert score == 0
@@ -85,7 +85,7 @@ class TestReadingTimes:
     def test_list_input(self):
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
         text = ['the', 'quick', 'brown', 'fox', 'jumps', 'over', 'the', 'lazy']
-        logging.info(f'Running {model.identifier()} with text "{text}"')
+        _logger.info(f'Running {model.identifier()} with text "{text}"')
         model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)['behavior']
         np.testing.assert_allclose(
@@ -95,7 +95,7 @@ class TestReadingTimes:
     def test_multitoken_words(self):
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
         text = ['beekeepers', 'often', 'go', 'beekeeping']
-        logging.info(f'Running {model.identifier()} with text "{text}"')
+        _logger.info(f'Running {model.identifier()} with text "{text}"')
         model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)['behavior']
         np.testing.assert_allclose(
@@ -104,7 +104,7 @@ class TestReadingTimes:
     def test_multiword_list_input(self):
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
         text = ['the quick brown fox', 'jumps over', 'the lazy']
-        logging.info(f'Running {model.identifier()} with text "{text}"')
+        _logger.info(f'Running {model.identifier()} with text "{text}"')
         model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)['behavior']
         np.testing.assert_allclose(reading_times, [44.06524, 14.554907, 14.064276], atol=0.0001)
@@ -112,7 +112,7 @@ class TestReadingTimes:
     def test_punct(self):
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
         text = ['fox', 'is', 'quick.']
-        logging.info(f'Running {model.identifier()} with text "{text}"')
+        _logger.info(f'Running {model.identifier()} with text "{text}"')
         model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)['behavior']
         np.testing.assert_allclose(
@@ -128,7 +128,7 @@ class TestReadingTimes:
         # expected tokenization:
         # ['<s>', '▁The', '▁quick', '▁brown', '▁', 'fox', '▁jump', 's', '▁over', '▁the',
         #  '▁la', 'zy', '▁dog', '</s>']
-        logging.info(f'Running {model.identifier()} with text "{text}"')
+        _logger.info(f'Running {model.identifier()} with text "{text}"')
         model.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
         reading_times = model.digest_text(text)['behavior']
         np.testing.assert_allclose(
@@ -146,7 +146,7 @@ class TestNeural:
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={
             ArtificialSubject.RecordingTarget.language_system: 'transformer.h.0.ln_1'})
         text = ['the quick brown fox', 'jumps over', 'the lazy dog']
-        logging.info(f'Running {model.identifier()} with text "{text}"')
+        _logger.info(f'Running {model.identifier()} with text "{text}"')
         model.start_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
                                      recording_type=ArtificialSubject.RecordingType.fMRI)
         representations = model.digest_text(text)['neural']
@@ -164,14 +164,14 @@ class TestNeural:
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={
             ArtificialSubject.RecordingTarget.language_system: 'transformer.h.0.ln_1'})
         text = 'the quick brown fox'
-        logging.info(f'Running {model.identifier()} with text "{text}"')
+        _logger.info(f'Running {model.identifier()} with text "{text}"')
         model.start_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
                                      recording_type=ArtificialSubject.RecordingType.fMRI)
         representations = model.digest_text(text)['neural']
         assert len(representations['presentation']) == 1
         assert representations['stimulus'].squeeze() == text
         assert len(representations['neuroid']) == 768
-        logging.info(f'representation shape is correct: {representations.shape}')
+        _logger.info(f'representation shape is correct: {representations.shape}')
 
     @pytest.mark.memory_intense
     def test_one_text_two_targets(self):
@@ -179,7 +179,7 @@ class TestNeural:
             ArtificialSubject.RecordingTarget.language_system_left_hemisphere: 'transformer.h.0.ln_1',
             ArtificialSubject.RecordingTarget.language_system_right_hemisphere: 'transformer.h.1.ln_1'})
         text = 'the quick brown fox'
-        logging.info(f'Running {model.identifier()} with text "{text}"')
+        _logger.info(f'Running {model.identifier()} with text "{text}"')
         model.start_neural_recording(
             recording_target=ArtificialSubject.RecordingTarget.language_system_left_hemisphere,
             recording_type=ArtificialSubject.RecordingType.fMRI)
@@ -193,4 +193,4 @@ class TestNeural:
         assert set(representations['region'].values) == {
             ArtificialSubject.RecordingTarget.language_system_left_hemisphere,
             ArtificialSubject.RecordingTarget.language_system_right_hemisphere}
-        logging.info(f'representation shape is correct: {representations.shape}')
+        _logger.info(f'representation shape is correct: {representations.shape}')
