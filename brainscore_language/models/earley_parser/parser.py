@@ -23,7 +23,7 @@ PARSING_TRACE = 0  # how verbose the tracing output should be while parsing a te
 class EarleyParserSubject(ArtificialSubject):
     def __init__(self):
         self._logger = logging.getLogger(fullname(self))
-        self.model_id = "earley-parser"
+        self.model_id = "earley-parser-minivocab"
         self.parser_cls = ProbabilisticEarleyChartParser
 
         self.grammar: Optional[PCFG] = None

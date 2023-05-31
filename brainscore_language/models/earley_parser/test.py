@@ -105,7 +105,7 @@ sample_grammars_by_hparams = {
     "model_identifier, treebank_path, hparams, expected_grammar",
     [
         (
-            "earley-parser",
+            "earley-parser-minivocab",
             str(Path(__file__).parent / "treebank"),
             dict(zip(sample_grammars_hparam_keys, hparams)),
             grammar,
@@ -139,7 +139,7 @@ def test_create_grammar(model_identifier, treebank_path, hparams, expected_gramm
     "model_identifier, treebank_path, expected_reading_times",
     [
         (
-            "earley-parser",
+            "earley-parser-minivocab",
             str(Path(__file__).parent / "treebank"),
             [1.15200, 3.4739, 6.2109, 8.08537, 9.4073, 10.5593, 12.5593, 13.8812],
         ),
@@ -167,7 +167,7 @@ def test_create_grammar_integration_reading_times(
     "model_identifier, treebank_path, expected_next_words",
     [
         (
-            "earley-parser",
+            "earley-parser-minivocab",
             str(Path(__file__).parent / "treebank"),
             ["lazy", "man", "saw", "a", "a", "lazy", "man", "<unk>"],
         ),
@@ -195,7 +195,7 @@ def test_create_grammar_integration_next_words(
     "model_identifier, grammar_string, expected_reading_times",
     [
         (
-            "earley-parser",
+            "earley-parser-minivocab",
             grammars.GRAMMAR_1,
             [2.4150, 3.1885, 6.4709, 7.1840, 10.5060, 11.5060],
         ),
@@ -214,7 +214,7 @@ def test_reading_times_1(model_identifier, grammar_string, expected_reading_time
     "model_identifier, grammar_string, expected_reading_times",
     [
         (
-            "earley-parser",
+            "earley-parser-minivocab",
             grammars.GRAMMAR_2,
             [2.7799, 5.0460, 7.9414, 8.6545, 11.7773, 14.6138],
         ),
@@ -233,7 +233,7 @@ def test_reading_times_2(model_identifier, grammar_string, expected_reading_time
     "model_identifier, grammar_string, expected_next_words",
     [
         (
-            "earley-parser",
+            "earley-parser-minivocab",
             grammars.GRAMMAR_1,
             ["saw", "the", "with", "the", "man", "with"],
         ),
@@ -252,7 +252,7 @@ def test_next_word_1(model_identifier, grammar_string, expected_next_words):
     "model_identifier, grammar_string, expected_next_words",
     [
         (
-            "earley-parser",
+            "earley-parser-minivocab",
             grammars.GRAMMAR_2,
             ["ate", "the", "with", "the", "hill", "with"],
         ),
