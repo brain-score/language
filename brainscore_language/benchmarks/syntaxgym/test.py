@@ -2,8 +2,11 @@ import numpy as np
 import pandas as pd
 import pytest
 from pprint import pprint
+from pytest import approx
 from typing import List, Dict
 
+from brainscore_language import load_model
+from brainscore_language.benchmarks.syntaxgym import SyntaxGym2020
 from brainscore_language.benchmarks.syntaxgym.benchmark import SyntaxGymTSE, SyntaxGymSingleTSE
 from brainscore_language.benchmarks.syntaxgym.gpt2_precomputed import REFERENCE_DISTILGPT2_SCORES, \
     REFERENCE_DISTILGPT2_REGION_TOTALS
@@ -68,10 +71,16 @@ def test_region_totals_match(distilgpt2, suite: str):
     pd.testing.assert_frame_equal(actual_df, expected_df, atol=1e-3, check_exact=False)
 
 
-def test_syntaxgym2020_root():
-    from brainscore_language.benchmarks.syntaxgym import SyntaxGym2020
+class TestSyntaxGym2020Root:
+    def test_number_sub_benchmarks(self):
+        assert len(SyntaxGym2020().sub_benchmarks) == 31
 
-    assert len(SyntaxGym2020().sub_benchmarks) == 31
+    @pytest.mark.travis_slow
+    def test_model_score(self):
+        model = load_model('distilgpt2')
+        benchmark = SyntaxGym2020()
+        actual_score = benchmark(model)
+        assert actual_score == approx(0.51398774, abs=.0005)
 
 
 @pytest.mark.parametrize("suite_ref", REFERENCE_DISTILGPT2_SCORES.keys())
