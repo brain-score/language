@@ -1113,7 +1113,7 @@ REFERENCE_DISTILGPT2_SCORES = {
     "npi_src_ever": 0.000000,
     "npz_ambig": 0.750000,
     "npz_ambig_mod": 0.583334,
-    "npz_obj": 0.83333333,
+    "npz_obj": 0.916667,
     "npz_obj_mod": 0.875000,
     "number_orc": 0.105263,
     "number_prep": 0.578947,
