@@ -14,7 +14,6 @@ matrix:
 env:
   global:
     - PYTEST_SETTINGS="not requires_gpu and not memory_intense and not slow and not travis_slow"
-    - CHANGES_PLUGINS="false"
 install:
   - python -m pip install -e ".[test]"
   # install conda for plugin runner
