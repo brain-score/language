@@ -181,6 +181,8 @@ class HuggingfaceSubject(ArtificialSubject):
             context_tokens.pop('num_truncated_tokens')
         if 'overflow_to_sample_mapping' in context_tokens:
             context_tokens.pop('overflow_to_sample_mapping')
+        if self.basemodel.config.is_encoder_decoder:
+            context_tokens['decoder_input_ids'] = context_tokens['input_ids']
         context_tokens.to(self.device)
         return context_tokens, num_new_context_tokens
 
