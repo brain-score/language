@@ -22,8 +22,6 @@ dependencies = [
     "gensim",
     "joblib",
     "accelerate",
-    "sentencepiece",
-    "protobuf==3.19.4",
 ]
 
 [project.optional-dependencies]
