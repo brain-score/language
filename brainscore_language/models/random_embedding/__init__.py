@@ -33,3 +33,5 @@ model_registry['randomembedding-1600'] = lambda: EmbeddingSubject(identifier='ra
                                                                   lookup=WordToEmbedding(1600))
 model_registry['randomembedding-100'] = lambda: EmbeddingSubject(identifier='randomembedding-100',
                                                                  lookup=WordToEmbedding(100))
+model_registry['randomembedding-256'] = lambda: EmbeddingSubject(identifier='randomembedding-256',
+                                                                 lookup=WordToEmbedding(256))
