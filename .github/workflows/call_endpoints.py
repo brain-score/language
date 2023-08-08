@@ -5,6 +5,7 @@ from brainscore_language.submission.endpoints import call_jenkins, get_email_fro
 
 
 if __name__ == '__main__':
-	function = getattr(sys.modules[__name__], sys.argv[1])
-	args = ast.literal_eval(sys.argv[2])
-	function(args)
+	print("OK")
+	# function = getattr(sys.modules[__name__], sys.argv[1])
+	# args = ast.literal_eval(sys.argv[2])
+	# function(args)
