@@ -42,6 +42,10 @@ def send_email_to_submitter(uid: int, domain: str, pr_number: str,
 
 if __name__ == '__main__':
     parser = make_argparser()
+    parser.add_argument('--fn', type=str, nargs='?', default='run_scoring',
+                    choices=['run_scoring', 'retrieve_models_and_benchmarks'],
+                    help='The endpoint method to run. `run_scoring` to score `new_models` on `new_benchmarks`, or `get_models_and_benchmarks` to respond with a list of models and benchmarks to score.')
+
     args, remaining_args = parser.parse_known_args()
     args_dict = vars(args)
 
@@ -51,7 +55,7 @@ if __name__ == '__main__':
     
     if args.fn == 'run_scoring':
         run_scoring(args_dict)
-    elif args.fn == 'get_models_and_benchmarks':
+    elif args.fn == 'retrieve_models_and_benchmarks':
         benchmark_ids, model_ids = retrieve_models_and_benchmarks(args_dict)
         print("BS_NEW_MODELS=" + " ".join(model_ids))
         print("BS_NEW_BENCHMARKS=" + " ".join(benchmark_ids))
