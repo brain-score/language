@@ -244,6 +244,7 @@ class HuggingfaceSubject(ArtificialSubject):
         actual_tokens = self.current_tokens['input_ids'].squeeze(dim=0).contiguous()
         if actual_tokens.shape[0] == predicted_logits.shape[0] + 1:  # multiple tokens for first model input
             actual_tokens = actual_tokens[1:]  # we have no prior context to predict the 0th token
+        actual_tokens = actual_tokens.to(self.device)
 
         # assume that reading time is additive, i.e. reading time of multiple tokens is
         # the sum of the surprisals of each individual token.
