@@ -1,9 +1,9 @@
-import logging
-import sys
-import warnings
 from collections import defaultdict
 
+import logging
 import numpy as np
+import sys
+import warnings
 from numpy import AxisError
 from numpy.random import RandomState
 from result_caching import store
@@ -13,6 +13,7 @@ from tqdm import tqdm, trange
 from brainio.assemblies import DataAssembly, array_is_element, walk_coords, merge_data_arrays
 from brainscore_core.metrics import Score
 from brainscore_language import load_benchmark
+from brainscore_language.benchmark_helpers import ci_error, manual_merge
 from brainscore_language.utils import fullname
 from brainscore_language.utils.s3 import upload_data_assembly
 from brainscore_language.utils.transformations import apply_aggregate
@@ -251,44 +252,6 @@ class ExtrapolationCeiling:
                                  # v (i.e. max ceiling) is between 0 and 1, tau0 unconstrained
                                  bounds=([0, -np.inf], [1, np.inf]))
         return params
-
-
-def manual_merge(*elements, on='neuroid'):
-    dims = elements[0].dims
-    assert all(element.dims == dims for element in elements[1:])
-    merge_index = dims.index(on)
-    # the coordinates in the merge index should have the same keys
-    assert _coords_match(elements, dim=on,
-                         match_values=False), f"coords in {[element[on] for element in elements]} do not match"
-    # all other dimensions, their coordinates and values should already align
-    for dim in set(dims) - {on}:
-        assert _coords_match(elements, dim=dim,
-                             match_values=True), f"coords in {[element[dim] for element in elements]} do not match"
-    # merge values without meta
-    merged_values = np.concatenate([element.values for element in elements], axis=merge_index)
-    # piece together with meta
-    result = type(elements[0])(merged_values, coords={
-        **{coord: (dims, values)
-           for coord, dims, values in walk_coords(elements[0])
-           if not array_is_element(dims, on)},
-        **{coord: (dims, np.concatenate([element[coord].values for element in elements]))
-           for coord, dims, _ in walk_coords(elements[0])
-           if array_is_element(dims, on)}}, dims=elements[0].dims)
-    return result
-
-
-def _coords_match(elements, dim, match_values=False):
-    first_coords = [(key, tuple(value)) if match_values else key for _, key, value in walk_coords(elements[0][dim])]
-    other_coords = [[(key, tuple(value)) if match_values else key for _, key, value in walk_coords(element[dim])]
-                    for element in elements[1:]]
-    return all(tuple(first_coords) == tuple(coords) for coords in other_coords)
-
-
-def ci_error(samples, center, confidence=.95):
-    low, high = 100 * ((1 - confidence) / 2), 100 * (1 - ((1 - confidence) / 2))
-    confidence_below, confidence_above = np.nanpercentile(samples, low), np.nanpercentile(samples, high)
-    confidence_below, confidence_above = center - confidence_below, confidence_above - center
-    return confidence_below, confidence_above
 
 
 class NoOverlapException(Exception):
