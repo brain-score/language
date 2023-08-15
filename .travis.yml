@@ -23,16 +23,16 @@ script:
 
 jobs:
   include:
-    - stage: '3.8 public'
+    - stage: "Tests"
+      name: '3.8 public'
       python: '3.8'
-    - stage: '3.8 private'
+    - name: '3.8 private'
       python: '3.8'
       env: PRIVATE_ACCESS=1
-    - stage: '3.9 public'
+    - name: '3.9 public'
       python: '3.9'
-    - stage: '3.9 private'
+    - name: '3.9 private'
       python: '3.9'
       env: PRIVATE_ACCESS=1
-
-after_success:
-  - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then bash .github/workflows/travis_trigger $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA; fi
+    - stage: "Automerge check"
+      script: if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then bash .github/workflows/travis_trigger $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA; fi
