@@ -1,16 +1,4 @@
 language: python
-matrix:
-  include:
-    - name: 3.8 public
-      python: '3.8'
-    - name: 3.8 private
-      python: '3.8'
-      env: PRIVATE_ACCESS=1
-    - name: 3.9 public
-      python: '3.9'
-    - name: 3.9 private
-      python: '3.9'
-      env: PRIVATE_ACCESS=1
 env:
   global:
     - PYTEST_SETTINGS="not requires_gpu and not memory_intense and not slow and not travis_slow"
@@ -35,6 +23,16 @@ script:
 
 jobs:
   include:
-    # trigger workflow to check if plugin is being added
-    - stage: "Trigger automerge workflow"
-      script: if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then bash .github/workflows/travis_trigger $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA; fi
+    - stage: '3.8 public'
+      python: '3.8'
+    - stage: '3.8 private'
+      python: '3.8'
+      env: PRIVATE_ACCESS=1
+    - stage: '3.9 public'
+      python: '3.9'
+    - stage: '3.9 private'
+      python: '3.9'
+      env: PRIVATE_ACCESS=1
+
+after_success:
+  - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then bash .github/workflows/travis_trigger $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA; fi
