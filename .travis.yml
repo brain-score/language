@@ -52,4 +52,4 @@ jobs:
     - stage: "Automerge check"
       install: skip
       if: type = pull_request
-      script: bash .github/workflows/travis_trigger $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA
+      script: ${TRAVIS_BUILD_DIR}/bash .github/workflows/travis_trigger $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA
