@@ -22,31 +22,27 @@ jobs:
       name: '3.8 public'
       python: '3.8'
       script:
-        - if [ "$PRIVATE_ACCESS" = 1 ] && [ -n "${GITHUB_TOKEN}" ]; then pytest -m "private_access and $PYTEST_SETTINGS"; fi
-        - if [ "$PRIVATE_ACCESS" != 1 ]; then pytest -m "not private_access and $PYTEST_SETTINGS" --ignore "tests/test_submission"; fi
+        - pytest -m "not private_access and $PYTEST_SETTINGS" --ignore "tests/test_submission"; fi
         # if plugin files added or modified, run tests for those plugins
         - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests($TRAVIS_PULL_REQUEST_SHA, 'brainscore_language')"; fi
     - name: '3.8 private'
       python: '3.8'
       env: PRIVATE_ACCESS=1
       script:
-        - if [ "$PRIVATE_ACCESS" = 1 ] && [ -n "${GITHUB_TOKEN}" ]; then pytest -m "private_access and $PYTEST_SETTINGS"; fi
-        - if [ "$PRIVATE_ACCESS" != 1 ]; then pytest -m "not private_access and $PYTEST_SETTINGS" --ignore "tests/test_submission"; fi
+        - if [ -n "${GITHUB_TOKEN}" ]; then pytest -m "private_access and $PYTEST_SETTINGS"; fi
         # if plugin files added or modified, run tests for those plugins
         - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests($TRAVIS_PULL_REQUEST_SHA, 'brainscore_language')"; fi
     - name: '3.9 public'
       python: '3.9'
       script:
-        - if [ "$PRIVATE_ACCESS" = 1 ] && [ -n "${GITHUB_TOKEN}" ]; then pytest -m "private_access and $PYTEST_SETTINGS"; fi
-        - if [ "$PRIVATE_ACCESS" != 1 ]; then pytest -m "not private_access and $PYTEST_SETTINGS" --ignore "tests/test_submission"; fi
+        - pytest -m "not private_access and $PYTEST_SETTINGS" --ignore "tests/test_submission"; fi
         # if plugin files added or modified, run tests for those plugins
         - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests($TRAVIS_PULL_REQUEST_SHA, 'brainscore_language')"; fi
     - name: '3.9 private'
       python: '3.9'
       env: PRIVATE_ACCESS=1
       script:
-        - if [ "$PRIVATE_ACCESS" = 1 ] && [ -n "${GITHUB_TOKEN}" ]; then pytest -m "private_access and $PYTEST_SETTINGS"; fi
-        - if [ "$PRIVATE_ACCESS" != 1 ]; then pytest -m "not private_access and $PYTEST_SETTINGS" --ignore "tests/test_submission"; fi
+        - if [ -n "${GITHUB_TOKEN}" ]; then pytest -m "private_access and $PYTEST_SETTINGS"; fi
         # if plugin files added or modified, run tests for those plugins
         - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests($TRAVIS_PULL_REQUEST_SHA, 'brainscore_language')"; fi
     - stage: "Automerge check"
