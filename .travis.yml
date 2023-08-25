@@ -1,4 +1,16 @@
 language: python
+matrix:
+  include:
+    - name: 3.8 public
+      python: '3.8'
+    - name: 3.8 private
+      python: '3.8'
+      env: PRIVATE_ACCESS=1
+    - name: 3.9 public
+      python: '3.9'
+    - name: 3.9 private
+      python: '3.9'
+      env: PRIVATE_ACCESS=1
 env:
   global:
     - PYTEST_SETTINGS="not requires_gpu and not memory_intense and not slow and not travis_slow"
@@ -15,44 +27,16 @@ install:
   - pip list
   # install singularity for container models
   - conda install -yc conda-forge singularity
-
+script:
+  - if [ "$PRIVATE_ACCESS" = 1 ] && [ -n "${GITHUB_TOKEN}" ]; then pytest -m "private_access and $PYTEST_SETTINGS"; fi
+  - if [ "$PRIVATE_ACCESS" != 1 ]; then pytest -m "not private_access and $PYTEST_SETTINGS" --ignore "tests/test_submission"; fi
+  # if plugin files added or modified, run tests for those plugins
+  - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests($TRAVIS_PULL_REQUEST_SHA, 'brainscore_language')"; fi
+after_failure:
+  - bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA failure
+    
 jobs:
   include:
-    - stage: "Tests"
-      name: '3.8 public'
-      python: '3.8'
-      script:
-        - pytest -m "not private_access and $PYTEST_SETTINGS" --ignore "tests/test_submission"; fi
-        # if plugin files added or modified, run tests for those plugins
-        - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests($TRAVIS_PULL_REQUEST_SHA, 'brainscore_language')"; fi
-      after_failure:
-        - bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA failure
-    - name: '3.8 private'
-      python: '3.8'
-      env: PRIVATE_ACCESS=1
-      script:
-        - if [ -n "${GITHUB_TOKEN}" ]; then pytest -m "private_access and $PYTEST_SETTINGS"; fi
-        # if plugin files added or modified, run tests for those plugins
-        - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests($TRAVIS_PULL_REQUEST_SHA, 'brainscore_language')"; fi
-      after_failure:
-        - bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA failure
-    - name: '3.9 public'
-      python: '3.9'
-      script:
-        - pytest -m "not private_access and $PYTEST_SETTINGS" --ignore "tests/test_submission"; fi
-        # if plugin files added or modified, run tests for those plugins
-        - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests($TRAVIS_PULL_REQUEST_SHA, 'brainscore_language')"; fi
-      after_failure:
-        - bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA failure
-    - name: '3.9 private'
-      python: '3.9'
-      env: PRIVATE_ACCESS=1
-      script:
-        - if [ -n "${GITHUB_TOKEN}" ]; then pytest -m "private_access and $PYTEST_SETTINGS"; fi
-        # if plugin files added or modified, run tests for those plugins
-        - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests($TRAVIS_PULL_REQUEST_SHA, 'brainscore_language')"; fi
-      after_failure:
-        - bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA failure
     - stage: "Automerge check"
       install: skip
       if: type = pull_request
