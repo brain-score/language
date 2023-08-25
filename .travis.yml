@@ -25,6 +25,8 @@ jobs:
         - pytest -m "not private_access and $PYTEST_SETTINGS" --ignore "tests/test_submission"; fi
         # if plugin files added or modified, run tests for those plugins
         - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests($TRAVIS_PULL_REQUEST_SHA, 'brainscore_language')"; fi
+      after_failure:
+        - bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA failure
     - name: '3.8 private'
       python: '3.8'
       env: PRIVATE_ACCESS=1
@@ -32,12 +34,16 @@ jobs:
         - if [ -n "${GITHUB_TOKEN}" ]; then pytest -m "private_access and $PYTEST_SETTINGS"; fi
         # if plugin files added or modified, run tests for those plugins
         - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests($TRAVIS_PULL_REQUEST_SHA, 'brainscore_language')"; fi
+      after_failure:
+        - bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA failure
     - name: '3.9 public'
       python: '3.9'
       script:
         - pytest -m "not private_access and $PYTEST_SETTINGS" --ignore "tests/test_submission"; fi
         # if plugin files added or modified, run tests for those plugins
         - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests($TRAVIS_PULL_REQUEST_SHA, 'brainscore_language')"; fi
+      after_failure:
+        - bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA failure
     - name: '3.9 private'
       python: '3.9'
       env: PRIVATE_ACCESS=1
@@ -45,7 +51,9 @@ jobs:
         - if [ -n "${GITHUB_TOKEN}" ]; then pytest -m "private_access and $PYTEST_SETTINGS"; fi
         # if plugin files added or modified, run tests for those plugins
         - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests($TRAVIS_PULL_REQUEST_SHA, 'brainscore_language')"; fi
+      after_failure:
+        - bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA failure
     - stage: "Automerge check"
       install: skip
       if: type = pull_request
-      script: bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA
+      script: bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA success
