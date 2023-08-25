@@ -41,7 +41,7 @@ jobs:
           fi
 
   isautomerge:
-    name: Check if PR is labeled with 'automerge' or 'automerge-web'
+    name: Set as 'automerge' if PR is labeled with 'automerge' or 'automerge-web'
     runs-on: ubuntu-latest
     if: |
       contains( github.event.pull_request.labels.*.name, 'automerge') ||
