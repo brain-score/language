@@ -1,16 +1,4 @@
 language: python
-matrix:
-  include:
-    - name: 3.8 public
-      python: '3.8'
-    - name: 3.8 private
-      python: '3.8'
-      env: PRIVATE_ACCESS=1
-    - name: 3.9 public
-      python: '3.9'
-    - name: 3.9 private
-      python: '3.9'
-      env: PRIVATE_ACCESS=1
 env:
   global:
     - PYTEST_SETTINGS="not requires_gpu and not memory_intense and not slow and not travis_slow"
@@ -37,6 +25,16 @@ after_failure:
     
 jobs:
   include:
+    - name: 3.8 public
+      python: '3.8'
+    - name: 3.8 private
+      python: '3.8'
+      env: PRIVATE_ACCESS=1
+    - name: 3.9 public
+      python: '3.9'
+    - name: 3.9 private
+      python: '3.9'
+      env: PRIVATE_ACCESS=1
     - stage: "Automerge check"
       install: skip
       if: type = pull_request
