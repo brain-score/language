@@ -42,7 +42,7 @@ class HuggingfaceSubject(ArtificialSubject):
         self._logger = logging.getLogger(fullname(self))
         self.model_id = model_id
         self.region_layer_mapping = region_layer_mapping
-        self.basemodel = (model if model is not None else AutoModelForCausalLM.from_pretrained(self.model_id))
+        self.basemodel = (model if model is not None else AutoModelForCausalLM.from_pretrained(self.model_id, output_hidden_states=True))
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.basemodel.to(self.device)
         self.tokenizer = tokenizer if tokenizer is not None else AutoTokenizer.from_pretrained(self.model_id,
