@@ -19,7 +19,7 @@ install:
 script:
   # if ONLY plugin files added or modified, ONLY run tests for those plugins, else run test suite
   - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then PLUGIN_ONLY=$(python -c "from brainscore_core.plugin_management.parse_plugin_changes import is_automergeable; is_automergeable($TRAVIS_PULL_REQUEST_SHA, 'brainscore_language')"); fi
-  - if [ "$PLUGIN_ONLY = "true"; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests($TRAVIS_PULL_REQUEST_SHA, 'brainscore_language')"; fi
+  - if [ "$PLUGIN_ONLY = "true" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests($TRAVIS_PULL_REQUEST_SHA, 'brainscore_language')"; fi
   - if [ "$PRIVATE_ACCESS" = 1 ] && [ -n "${GITHUB_TOKEN}" ] && [ "$PLUGIN_ONLY = "false" ]; then pytest -m "private_access and $PYTEST_SETTINGS"; fi
   - if [ "$PRIVATE_ACCESS" != 1 ] && [ "$PLUGIN_ONLY = "false" ]; then pytest -m "not private_access and $PYTEST_SETTINGS" --ignore "tests/test_submission"; fi
 after_failure:
