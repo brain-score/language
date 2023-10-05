@@ -20,8 +20,9 @@ before_script:
   - git fetch --depth=50 origin refs/heads/main:refs/heads/main
 script:
   # if ONLY plugin files added or modified, ONLY run tests for those plugins, else run test suite
-  - CHANGED_FILES=$( git diff --name-only main $TRAVIS_PULL_REQUEST_SHA -C $TRAVIS_BUILD_DIR )
+  - CHANGED_FILES=$( echo $(git diff --name-only main $TRAVIS_PULL_REQUEST_SHA -C $TRAVIS_BUILD_DIR) | tr '\n' ' ' )
   - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then PLUGIN_ONLY=$( python -c "from brainscore_core.plugin_management.parse_plugin_changes import is_automergeable; is_automergeable(\"${CHANGED_FILES}\", 'brainscore_language')" ); fi
+  - if [ "$PLUGIN_ONLY" != "true" ] && [ "$PLUGIN_ONLY" != "false" ]; then echo $PLUGIN_ONLY && exit 1; fi
   - if [ "$PLUGIN_ONLY" = "false" ]; then echo $( python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests(\"${CHANGED_FILES}\", 'brainscore_language')" ); fi
   - if [ "$PLUGIN_ONLY" = "true" ]; then echo $( python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests(\"${CHANGED_FILES}\", 'brainscore_language')" ); fi
   - if [ "$PRIVATE_ACCESS" = 1 ] && [ -n "${GITHUB_TOKEN}" ] && [ "$PLUGIN_ONLY" = "false" ]; then pytest -m "private_access and $PYTEST_SETTINGS"; fi
