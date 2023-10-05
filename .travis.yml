@@ -16,6 +16,8 @@ install:
   - pip list
   # install singularity for container models
   - conda install -yc conda-forge singularity
+before_script:
+  - git fetch --depth=50 origin refs/heads/main:refs/heads/main
 script:
   # if ONLY plugin files added or modified, ONLY run tests for those plugins, else run test suite
   - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then PLUGIN_ONLY=$(python -c "from brainscore_core.plugin_management.parse_plugin_changes import is_automergeable; is_automergeable(\"${TRAVIS_PULL_REQUEST_SHA}\", 'brainscore_language')"); fi
