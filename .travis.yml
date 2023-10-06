@@ -27,7 +27,6 @@ script:
       TESTING_NEEDED=$( python -c "from brainscore_core.plugin_management.parse_plugin_changes import testing_needed; testing_needed(\"${CHANGED_FILES}\", 'brainscore_language')" ) && 
       read MODIFIES_PLUGIN PLUGIN_ONLY <<< $TESTING_NEEDED && echo MODIFIES_PLUGIN: $MODIFIES_PLUGIN && echo PLUGIN_ONLY: $PLUGIN_ONLY; 
     fi
-  - if [ "$MODIFIES_PLUGIN" = "False" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests(\"${CHANGED_FILES}\", 'brainscore_language')"; fi # TESTING ONLY
   - if [ "$MODIFIES_PLUGIN" = "True" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests(\"${CHANGED_FILES}\", 'brainscore_language')"; fi
   - if [ "$PRIVATE_ACCESS" = 1 ] && [ -n "${GITHUB_TOKEN}" ] && [ "$PLUGIN_ONLY" = "False" ]; then pytest -m "private_access and $PYTEST_SETTINGS"; fi
   - if [ "$PRIVATE_ACCESS" != 1 ] && [ "$PLUGIN_ONLY" = "False" ]; then pytest -m "not private_access and $PYTEST_SETTINGS" --ignore "tests/test_submission"; fi
