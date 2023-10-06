@@ -25,8 +25,8 @@ script:
   - |
     if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then 
       TESTING_NEEDED=$( python -c "from brainscore_core.plugin_management.parse_plugin_changes import testing_needed; testing_needed(\"${CHANGED_FILES}\", 'brainscore_language')" ) &&
-      MODIFIES_PLUGIN=$( echo $TESTING_NEEDED | head -n 1 ) &&
-      PLUGIN_ONLY=$( echo $TESTING_NEEDED | tail -n 1 ); 
+      MODIFIES_PLUGIN=$( echo $TESTING_NEEDED | head -n 1 ) && echo $MODIFIES_PLUGIN &&
+      PLUGIN_ONLY=$( echo $TESTING_NEEDED | tail -n 1 ) && echo $PLUGIN_ONLY;  
     fi
   - if [ "$MODIFIES_PLUGIN" = "False" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests(\"${CHANGED_FILES}\", 'brainscore_language')"; fi # TESTING ONLY
   - if [ "$MODIFIES_PLUGIN" = "True" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests(\"${CHANGED_FILES}\", 'brainscore_language')"; fi
