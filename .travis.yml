@@ -30,8 +30,6 @@ script:
   - if [ "$MODIFIES_PLUGIN" = "True" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests(\"${CHANGED_FILES}\", 'brainscore_language')"; fi
   - if [ "$PRIVATE_ACCESS" = 1 ] && [ -n "${GITHUB_TOKEN}" ] && [ "$PLUGIN_ONLY" = "False" ]; then pytest -m "private_access and $PYTEST_SETTINGS"; fi
   - if [ "$PRIVATE_ACCESS" != 1 ] && [ "$PLUGIN_ONLY" = "False" ]; then pytest -m "not private_access and $PYTEST_SETTINGS" --ignore "tests/test_submission"; fi
-after_failure:
-  - bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA failure
     
 jobs:
   include:
@@ -48,4 +46,4 @@ jobs:
     - stage: "Automerge check"
       install: skip
       if: type = pull_request
-      script: bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA success
+      script: if [ "$PLUGIN_ONLY" = "True" ]; then bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA success
