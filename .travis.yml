@@ -2,8 +2,9 @@ language: python
 env:
   global:
     - PYTEST_SETTINGS="not requires_gpu and not memory_intense and not slow and not travis_slow"
-    - MODIFIES_PLUGIN="false"
-    - PLUGIN_ONLY="false"
+    - MODIFIES_PLUGIN="False"
+    - PLUGIN_ONLY="False"
+    - WEB_SUBMISSION="False"
 install:
   - python -m pip install -e ".[test]"
   # install conda for plugin runner
@@ -30,6 +31,16 @@ script:
   - if [ "$MODIFIES_PLUGIN" = "True" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests(\"${CHANGED_FILES}\", 'brainscore_language')"; fi
   - if [ "$PRIVATE_ACCESS" = 1 ] && [ -n "${GITHUB_TOKEN}" ] && [ "$PLUGIN_ONLY" = "False" ]; then pytest -m "private_access and $PYTEST_SETTINGS"; fi
   - if [ "$PRIVATE_ACCESS" != 1 ] && [ "$PLUGIN_ONLY" = "False" ]; then pytest -m "not private_access and $PYTEST_SETTINGS" --ignore "tests/test_submission"; fi
+after_failure:
+  # if web submission, notify submitter via email
+  - PR_TITLE=$(curl https://github.com/${TRAVIS_REPO_SLUG}/pull/${TRAVIS_PULL_REQUEST} 2> /dev/null | grep "title" | head -1)
+  - if [[ "$PR_TITLE" = "brain-score.org (user:"* ]]; then WEB_SUBMISSION="True"; fi
+  - |
+    if $WEB_SUBMISSION = "True"; then
+      BRAINSCORE_UID=$(<<<$PR_TITLE | sed -E 's/.*\(user:([^)]+)\).*/\1/') && 
+      python -c "from brainscore_language.submission.endpoints import send_email_to_submitter; send_email_to_submitter(\"${BRAINSCORE_UID}\", 'language', \"${$TRAVIS_PULL_REQUEST}\", \"${$GMAIL_USERNAME}\", \"${GMAIL_PASSWORD}\")"; 
+    fi
+
     
 jobs:
   include:
@@ -46,4 +57,4 @@ jobs:
     - stage: "Automerge check"
       install: skip
       if: type = pull_request
-      script: if [ "$PLUGIN_ONLY" = "True" ]; then bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA success; fi
+      script: if [ "$PLUGIN_ONLY" = "True" ]; then bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA $PLUGIN_ONLY; fi

@@ -2,7 +2,7 @@ import argparse
 from typing import List, Union, Dict
 
 from brainscore_core import Score, Benchmark
-from brainscore_core.submission import UserManager, RunScoringEndpoint, DomainPlugins
+from brainscore_core.submission import UserManager, RunScoringEndpoint, DomainPlugins, send_user_email
 from brainscore_language import load_model, load_benchmark, score
 from brainscore_language.submission import config
 
@@ -40,9 +40,10 @@ language_plugins = LanguagePlugins()
 run_scoring_endpoint = RunScoringEndpoint(language_plugins, db_secret=config.get_database_secret())
 
 
-def get_user_email(uid: int) -> str:
-    """ Convenience method for GitHub Actions to get a user's email if their web-submitted PR fails. """
-    return get_email_from_uid(uid)
+def send_email_to_submitter(uid: int, domain: str, pr_number: str, 
+                            mail_username: str, mail_password:str ) -> str:
+    """ Convenience method for Travis to send a user email if their web-submitted PR fails. """
+    return send_user_email(uid, domain, pr_number, mail_username, mail_password)
 
 
 def create_user(domain: str, email: str) -> int:
