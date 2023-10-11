@@ -60,7 +60,7 @@ jobs:
       - name: Get scoring info
         run: |
           python -m pip install .
-          echo "PLUGIN_INFO=$(python -c "from brainscore_core.plugin_management.parse_plugin_changes import get_scoring_info; get_scoring_info('${{ env.CHANGED_FILES }}', 'brainscore_language')" >> $GITHUB_ENV
+          echo "PLUGIN_INFO=$(python -c "from brainscore_core.plugin_management.parse_plugin_changes import get_scoring_info; get_scoring_info('${{ env.CHANGED_FILES }}', 'brainscore_language')" >> $GITHUB_OUTPUT
           echo "RUN_SCORE=$(jq -r '.run_score' <<< "$PLUGIN_INFO")" >> $GITHUB_OUTPUT
 
 
