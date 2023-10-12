@@ -41,7 +41,7 @@ run_scoring_endpoint = RunScoringEndpoint(language_plugins, db_secret=config.get
 
 
 def send_email_to_submitter(uid: int, domain: str, pr_number: str, 
-                            mail_username: str, mail_password:str ) -> str:
+                            mail_username: str, mail_password:str ):
     """ Send submitter an email if their web-submitted PR fails. """
     subject = "Brain-Score submission failed"
     body = f"Your Brain-Score submission did not pass checks. Please review the test results and update the PR at https://github.com/brain-score/{domain}/pull/{pr_number} or send in an updated submission via the website."
