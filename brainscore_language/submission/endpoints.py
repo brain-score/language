@@ -2,7 +2,7 @@ import argparse
 from typing import List, Union, Dict
 
 from brainscore_core import Score, Benchmark
-from brainscore_core.submission import UserManager, RunScoringEndpoint, DomainPlugins, send_user_email
+from brainscore_core.submission import UserManager, RunScoringEndpoint, DomainPlugins
 from brainscore_language import load_model, load_benchmark, score
 from brainscore_language.submission import config
 
@@ -42,14 +42,16 @@ run_scoring_endpoint = RunScoringEndpoint(language_plugins, db_secret=config.get
 
 def send_email_to_submitter(uid: int, domain: str, pr_number: str, 
                             mail_username: str, mail_password:str ) -> str:
-    """ Convenience method for Travis to send a user email if their web-submitted PR fails. """
-    return send_user_email(uid, domain, pr_number, mail_username, mail_password)
+    """ Send submitter an email if their web-submitted PR fails. """
+    subject = "Brain-Score submission failed"
+    body = f"Your Brain-Score submission did not pass checks. Please review the test results and update the PR at https://github.com/brain-score/{domain}/pull/{pr_number} or send in an updated submission via the website."
+    return send_user_email(uid, body, mail_username, mail_password)
 
 
-def create_user(domain: str, email: str) -> int:
-    user_manager = UserManager(domain, email, db_secret=config.get_database_secret())
-    new_user_id = user_manager()
-    return new_user_id
+def get_user_id(email: str) -> int:
+    user_manager = UserManager(db_secret=config.get_database_secret())
+    user_id = user_manager.get_uid(email)
+    return user_id
 
 
 def _get_ids(args_dict: Dict[str, Union[str, List]], key: str) -> Union[List, str, None]:
@@ -111,7 +113,7 @@ if __name__ == '__main__':
     args_dict = vars(args)
 
     if 'user_id' not in args_dict or args_dict['user_id'] == None:
-        new_user_id = create_user(args_dict['domain'], args_dict['author_email'])
+        user_id = get_user_id(args_dict['author_email'])
         args_dict['user_id'] = new_user_id
     
     run_scoring(args_dict)
