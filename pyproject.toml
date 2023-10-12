@@ -22,6 +22,8 @@ dependencies = [
     "transformers>=4.11.3",
     "gensim",
     "joblib",
+    # submission dependencies
+    "requests"
 ]
 
 [project.optional-dependencies]

@@ -1,4 +1,7 @@
 import argparse
+import os
+import requests
+from requests.auth import HTTPBasicAuth
 from typing import List, Union, Dict
 
 from brainscore_core import Score, Benchmark
@@ -20,9 +23,11 @@ def call_jenkins(plugin_info: Dict[str, Union[List[str], str]]):
 
     url = f'{jenkins_base}/job/{jenkins_job}/buildWithParameters?token={jenkins_trigger}'
     payload = {k: v for k, v in plugin_info.items() if plugin_info[k]}
-    auth_basic = HTTPBasicAuth(username=jenkins_user, password=jenkins_token)
-    r = requests.get(url, params=payload, auth=auth_basic)
-    logger.debug(r)
+    try:
+        auth_basic = HTTPBasicAuth(username=jenkins_user, password=jenkins_token)
+        r = requests.get(url, params=payload, auth=auth_basic)
+    except Exception as e:
+        print(f'Could not initiate Jenkins job because of {e}')
 
 
 class LanguagePlugins(DomainPlugins):
@@ -45,7 +50,8 @@ def send_email_to_submitter(uid: int, domain: str, pr_number: str,
     """ Send submitter an email if their web-submitted PR fails. """
     subject = "Brain-Score submission failed"
     body = f"Your Brain-Score submission did not pass checks. Please review the test results and update the PR at https://github.com/brain-score/{domain}/pull/{pr_number} or send in an updated submission via the website."
-    return send_user_email(uid, body, mail_username, mail_password)
+    user_manager = UserManager(db_secret=config.get_database_secret())
+    return user_manager.send_user_email(uid, body, mail_username, mail_password)
 
 
 def get_user_id(email: str) -> int:
@@ -114,6 +120,6 @@ if __name__ == '__main__':
 
     if 'user_id' not in args_dict or args_dict['user_id'] == None:
         user_id = get_user_id(args_dict['author_email'])
-        args_dict['user_id'] = new_user_id
+        args_dict['user_id'] = user_id
     
     run_scoring(args_dict)
