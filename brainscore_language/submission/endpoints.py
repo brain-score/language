@@ -1,4 +1,7 @@
 import argparse
+import os
+import requests
+from requests.auth import HTTPBasicAuth
 from typing import List, Union, Dict
 
 from brainscore_core import Score, Benchmark
@@ -20,9 +23,11 @@ def call_jenkins(plugin_info: Dict[str, Union[List[str], str]]):
 
     url = f'{jenkins_base}/job/{jenkins_job}/buildWithParameters?token={jenkins_trigger}'
     payload = {k: v for k, v in plugin_info.items() if plugin_info[k]}
-    auth_basic = HTTPBasicAuth(username=jenkins_user, password=jenkins_token)
-    r = requests.get(url, params=payload, auth=auth_basic)
-    logger.debug(r)
+    try:
+        auth_basic = HTTPBasicAuth(username=jenkins_user, password=jenkins_token)
+        r = requests.get(url, params=payload, auth=auth_basic)
+    except Exception as e:
+        print(f'Could not initiate Jenkins job because of {e}')
 
 
 class LanguagePlugins(DomainPlugins):
@@ -40,15 +45,19 @@ language_plugins = LanguagePlugins()
 run_scoring_endpoint = RunScoringEndpoint(language_plugins, db_secret=config.get_database_secret())
 
 
-def get_user_email(uid: int) -> str:
-    """ Convenience method for GitHub Actions to get a user's email if their web-submitted PR fails. """
-    return get_email_from_uid(uid)
+def send_email_to_submitter(uid: int, domain: str, pr_number: str, 
+                            mail_username: str, mail_password:str ):
+    """ Send submitter an email if their web-submitted PR fails. """
+    subject = "Brain-Score submission failed"
+    body = f"Your Brain-Score submission did not pass checks. Please review the test results and update the PR at https://github.com/brain-score/{domain}/pull/{pr_number} or send in an updated submission via the website."
+    user_manager = UserManager(db_secret=config.get_database_secret())
+    return user_manager.send_user_email(uid, body, mail_username, mail_password)
 
 
-def create_user(domain: str, email: str) -> int:
-    user_manager = UserManager(domain, email, db_secret=config.get_database_secret())
-    new_user_id = user_manager()
-    return new_user_id
+def get_user_id(email: str) -> int:
+    user_manager = UserManager(db_secret=config.get_database_secret())
+    user_id = user_manager.get_uid(email)
+    return user_id
 
 
 def _get_ids(args_dict: Dict[str, Union[str, List]], key: str) -> Union[List, str, None]:
@@ -110,7 +119,7 @@ if __name__ == '__main__':
     args_dict = vars(args)
 
     if 'user_id' not in args_dict or args_dict['user_id'] == None:
-        new_user_id = create_user(args_dict['domain'], args_dict['author_email'])
-        args_dict['user_id'] = new_user_id
+        user_id = get_user_id(args_dict['author_email'])
+        args_dict['user_id'] = user_id
     
     run_scoring(args_dict)
