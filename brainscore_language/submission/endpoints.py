@@ -25,13 +25,14 @@ run_scoring_endpoint = RunScoringEndpoint(language_plugins, db_secret=config.get
 
 def run_scoring(args_dict: Dict[str, Union[str, List]]):
     benchmarks, models = retrieve_models_and_benchmarks(args_dict)
-
-    run_scoring_endpoint(domain="language", jenkins_id=args_dict["jenkins_id"],
-                         models=models, benchmarks=benchmarks, user_id=args_dict["user_id"],
-                         model_type="artificialsubject", public=args_dict["public"],
-                         competition=args_dict["competition"])
-
-
+    
+    for benchmark in benchmarks:
+        for model in models:
+            run_scoring_endpoint(domain="language", jenkins_id=args_dict["jenkins_id"],
+                                model_identifier=model, benchmark_identifier=benchmark,
+                                user_id=args_dict["user_id"], model_type="artificialsubject",
+                                public=args_dict["public"], competition=args_dict["competition"])
+    
 def send_email_to_submitter(uid: int, domain: str, pr_number: str,
                             mail_username: str, mail_password: str):
     send_email_to_submitter_core(uid=uid, domain=domain, pr_number=pr_number,
@@ -47,5 +48,12 @@ if __name__ == '__main__':
     if 'user_id' not in args_dict or args_dict['user_id'] is None:
         user_id = get_user_id(args_dict['author_email'], db_secret=config.get_database_secret())
         args_dict['user_id'] = user_id
-
-    run_scoring(args_dict)
+    
+    if args.fn == 'run_scoring':
+        run_scoring(args_dict)
+    elif args.fn == 'get_models_and_benchmarks':
+        benchmark_ids, model_ids = retrieve_models_and_benchmarks(args_dict)
+        print("BS_NEW_MODELS=" + " ".join(model_ids))
+        print("BS_NEW_BENCHMARKS=" + " ".join(benchmark_ids))
+    else:
+        raise ValueError(f'Invalid method: {args.fn}')
