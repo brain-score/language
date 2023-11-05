@@ -1,33 +1,10 @@
 import argparse
-import os
-import requests
-from requests.auth import HTTPBasicAuth
 from typing import List, Union, Dict
 
 from brainscore_core import Score, Benchmark
 from brainscore_core.submission import UserManager, RunScoringEndpoint, DomainPlugins
 from brainscore_language import load_model, load_benchmark, score
 from brainscore_language.submission import config
-
-
-def call_jenkins(plugin_info: Dict[str, Union[List[str], str]]):
-    """
-    Triggered when changes are merged to the GitHub repository, if those changes affect benchmarks or models.
-    Starts run to score models on benchmarks (`run_scoring`).
-    """
-    jenkins_base = "http://braintree.mit.edu:8080"
-    jenkins_user = os.environ['JENKINS_USER']
-    jenkins_token = os.environ['JENKINS_TOKEN']
-    jenkins_trigger = os.environ['JENKINS_TRIGGER']
-    jenkins_job = "score_plugins"
-
-    url = f'{jenkins_base}/job/{jenkins_job}/buildWithParameters?token={jenkins_trigger}'
-    payload = {k: v for k, v in plugin_info.items() if plugin_info[k]}
-    try:
-        auth_basic = HTTPBasicAuth(username=jenkins_user, password=jenkins_token)
-        r = requests.get(url, params=payload, auth=auth_basic)
-    except Exception as e:
-        print(f'Could not initiate Jenkins job because of {e}')
 
 
 class LanguagePlugins(DomainPlugins):
@@ -45,8 +22,8 @@ language_plugins = LanguagePlugins()
 run_scoring_endpoint = RunScoringEndpoint(language_plugins, db_secret=config.get_database_secret())
 
 
-def send_email_to_submitter(uid: int, domain: str, pr_number: str, 
-                            mail_username: str, mail_password:str ):
+def send_email_to_submitter(uid: int, domain: str, pr_number: str,
+                            mail_username: str, mail_password: str):
     """ Send submitter an email if their web-submitted PR fails. """
     subject = "Brain-Score submission failed"
     body = f"Your Brain-Score submission did not pass checks. Please review the test results and update the PR at https://github.com/brain-score/{domain}/pull/{pr_number} or send in an updated submission via the website."
@@ -85,10 +62,10 @@ def run_scoring(args_dict: Dict[str, Union[str, List]]):
             models = new_models
             benchmarks = RunScoringEndpoint.ALL_PUBLIC
 
-    run_scoring_endpoint(domain="language", jenkins_id=args_dict["jenkins_id"], 
-        models=models, benchmarks=benchmarks, user_id=args_dict["user_id"], 
-        model_type="artificialsubject", public=args_dict["public"], 
-        competition=args_dict["competition"])
+    run_scoring_endpoint(domain="language", jenkins_id=args_dict["jenkins_id"],
+                         models=models, benchmarks=benchmarks, user_id=args_dict["user_id"],
+                         model_type="artificialsubject", public=args_dict["public"],
+                         competition=args_dict["competition"])
 
 
 def parse_args() -> argparse.Namespace:
@@ -118,8 +95,8 @@ if __name__ == '__main__':
     args = parse_args()
     args_dict = vars(args)
 
-    if 'user_id' not in args_dict or args_dict['user_id'] == None:
+    if 'user_id' not in args_dict or args_dict['user_id'] is None:
         user_id = get_user_id(args_dict['author_email'])
         args_dict['user_id'] = user_id
-    
+
     run_scoring(args_dict)
