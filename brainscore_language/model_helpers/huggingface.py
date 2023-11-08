@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 import functools
+import itertools
 import logging
 import numpy as np
 import re
@@ -9,7 +10,7 @@ import xarray as xr
 from numpy.core import defchararray
 from torch.utils.hooks import RemovableHandle
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer, BatchEncoding
+from transformers import AutoModelForCausalLM, AutoModelForMaskedLM, AutoTokenizer, BatchEncoding
 from transformers.modeling_outputs import CausalLMOutput
 from typing import Union, List, Tuple, Dict, Callable
 
@@ -26,6 +27,7 @@ class HuggingfaceSubject(ArtificialSubject):
             region_layer_mapping: dict,
             model=None,
             tokenizer=None,
+            bidirectional=False,
             task_heads: Union[None, Dict[ArtificialSubject.Task, Callable]] = None,
     ):
         """
@@ -34,6 +36,7 @@ class HuggingfaceSubject(ArtificialSubject):
                 This can be left empty, but the model will not be able to be tested on neural benchmarks
             :param model: the model to run inference from. Using `AutoModelForCausalLM.from_pretrained` if `None`.
             :param tokenizer: the model's associated tokenizer. Using `AutoTokenizer.from_pretrained` if `None`.
+            :param bidirectional: whether to use bidirectional (masked) modeling [default: False]
             :param task_heads: a mapping from one or multiple tasks
                 (:class:`~brainscore_language.artificial_subject.ArtificialSubject.Task`) to a function outputting the
                 requested task output, given the basemodel's base output
@@ -42,7 +45,18 @@ class HuggingfaceSubject(ArtificialSubject):
         self._logger = logging.getLogger(fullname(self))
         self.model_id = model_id
         self.region_layer_mapping = region_layer_mapping
-        self.basemodel = (model if model is not None else AutoModelForCausalLM.from_pretrained(self.model_id))
+        self.bidirectional = bidirectional
+        
+        if model is not None:
+            self.basemodel = model
+        elif self.bidirectional:
+            self.basemodel = AutoModelForMaskedLM.from_pretrained(self.model_id)
+        else:
+            self.basemodel = AutoModelForCausalLM.from_pretrained(self.model_id)
+        
+        # Context window = # positional embeddings - # special tokens [CLS, SEP]
+        self.context_window = getattr(self.basemodel.config, "max_position_embeddings", 0)  - 2
+        
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.basemodel.to(self.device)
         self.tokenizer = tokenizer if tokenizer is not None else AutoTokenizer.from_pretrained(self.model_id,
@@ -71,15 +85,7 @@ class HuggingfaceSubject(ArtificialSubject):
                                recording_type: ArtificialSubject.RecordingType):
         self.neural_recordings.append((recording_target, recording_type))
 
-    def digest_text(self, text: Union[str, List[str]]) -> Dict[str, DataAssembly]:
-        """
-        :param text: the text to be used for inference e.g. "the quick brown fox"
-        :return: assembly of either behavioral output or internal neural representations
-        """
-
-        if type(text) == str:
-            text = [text]
-
+    def _causal_inference(self, text):
         output = {'behavior': [], 'neural': []}
         number_of_tokens = 0
 
@@ -115,6 +121,97 @@ class HuggingfaceSubject(ArtificialSubject):
             if self.neural_recordings:
                 representations = self.output_to_representations(layer_representations, stimuli_coords=stimuli_coords)
                 output['neural'].append(representations)
+        return output
+
+    def _masked_inference(self, text):
+        output = {'behavior': [], 'neural': []}
+        text_tokens = []
+        
+        # preprocessing: get the tokens for each text part
+        remaining_tokens = 0
+        for text_part in text:
+            part_tokens = self.tokenizer.tokenize(text_part)
+            remaining_tokens += len(part_tokens)
+            text_tokens.append(part_tokens)
+        
+        start_part = 0
+        cur_number_of_tokens = 0
+        for part_number, text_part in enumerate(tqdm(text)):
+            cur_number_of_tokens += len(text_tokens[part_number])
+            while cur_number_of_tokens > (self.context_window / 2) and (start_part < part_number):
+                cur_number_of_tokens -= len(text_tokens[start_part])
+                start_part += 1
+            
+            end_part = part_number + 1
+            if self.behavioral_task == ArtificialSubject.Task.reading_times:
+                # For reading time estimation, the input should be masked, otherwise
+                # surprisal will be very low.
+                end_part = part_number                
+            
+            context_tokens = list(itertools.chain.from_iterable(text_tokens[start_part:end_part]))
+            context = prepare_context(text[start_part: part_number + 1])
+            
+            # Add MASK tokens to the second half of the context
+            context_tokens += [self.tokenizer.mask_token] * min(remaining_tokens, self.context_window - len(context_tokens))
+            masked_part = self.tokenizer.convert_tokens_to_string(context_tokens)
+            part_inputs = self.tokenizer(masked_part, return_tensors="pt", return_overflowing_tokens=self._tokenizer_returns_overflow)
+            part_inputs.to(self.device)
+            
+            # prepare recording hooks
+            hooks, layer_representations = self._setup_hooks()
+
+            # predicted_logits = logits[-self.current_tokens['input_ids'].shape[-1] - 1: - 1, :].contiguous()
+            self.current_tokens = self.tokenizer(text_part, return_tensors="pt", add_special_tokens=False, return_overflowing_tokens=self._tokenizer_returns_overflow)
+            self.current_tokens.to(self.device)
+            
+            # run and remove hooks
+            try:
+                with torch.no_grad():
+                    base_output = self.basemodel(**part_inputs)
+                for hook in hooks:
+                    hook.remove()
+            except:
+                breakpoint()
+                
+            mask_token_index = torch.where(part_inputs["input_ids"] == self.tokenizer.mask_token_id)[1][0]
+            base_output.logits = base_output.logits[:, :mask_token_index + 1]
+            if self.tokenizer.cls_token is not None:
+                base_output.logits = base_output.logits[:, 1:]
+            
+            remaining_tokens -= len(text_tokens[part_number])
+                
+            # format output
+            stimuli_coords = {
+                'stimulus': ('presentation', [text_part]),
+                'context': ('presentation', [context]),
+                'part_number': ('presentation', [part_number]),
+            }
+            if self.behavioral_task:
+                behavioral_output = self.output_to_behavior(base_output=base_output)
+                behavior = BehavioralAssembly(
+                    [behavioral_output],
+                    coords=stimuli_coords,
+                    dims=['presentation']
+                )
+                output['behavior'].append(behavior)
+            if self.neural_recordings:
+                representations = self.output_to_representations(layer_representations, stimuli_coords=stimuli_coords)
+                output['neural'].append(representations)
+        return output
+                
+    def digest_text(self, text: Union[str, List[str]]) -> Dict[str, DataAssembly]:
+        """
+        :param text: the text to be used for inference e.g. "the quick brown fox"
+        :return: assembly of either behavioral output or internal neural representations
+        """
+
+        if type(text) == str:
+            text = [text]
+
+        if self.bidirectional:
+            output = self._masked_inference(text)
+        else:
+            output = self._causal_inference(text)
 
         # merge over text parts
         self._logger.debug("Merging outputs")
@@ -198,10 +295,13 @@ class HuggingfaceSubject(ArtificialSubject):
         return hooks, layer_representations
 
     def output_to_representations(self, layer_representations: Dict[Tuple[str, str, str], np.ndarray], stimuli_coords):
+        # Choose to first token [CLS] in bidirectional models, the last token for causal models, to represent passage        
         representation_values = np.concatenate([
-            # Choose to use last token (-1) of values[batch, token, unit] to represent passage.
-            values[:, -1:, :].squeeze(0).cpu() for values in layer_representations.values()],
+            values[:, :1, :].squeeze(0).cpu() if self.bidirectional
+            else values[:, -1:, :].squeeze(0).cpu()
+            for values in layer_representations.values()],
             axis=-1)  # concatenate along neuron axis
+
         neuroid_coords = {
             'layer': ('neuroid', np.concatenate([[layer] * values.shape[-1]
                                                  for (recording_target, recording_type, layer), values
@@ -288,6 +388,8 @@ class HuggingfaceSubject(ArtificialSubject):
         def hook_function(_layer: torch.nn.Module, _input, output: torch.Tensor, key=key):
             # fix for when taking out only the hidden state, this is different from dropout because of residual state
             # see:  https://github.com/huggingface/transformers/blob/c06d55564740ebdaaf866ffbbbabf8843b34df4b/src/transformers/models/gpt2/modeling_gpt2.py#L428
+            if isinstance(output, tuple):
+                output = output[0]
             output = output[0] if len(output) > 1 else output
             target_dict[key] = output
 
