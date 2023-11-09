@@ -89,45 +89,24 @@ class HuggingfaceSubject(ArtificialSubject):
         output = {'behavior': [], 'neural': []}
         number_of_tokens = 0
 
-        text_iterator = tqdm(text, desc='digest text') if len(text) > 100 else text  # show progress bar if many parts
-        for part_number, text_part in enumerate(text_iterator):
+        for part_number, text_part in enumerate(tqdm(text, desc='digest text')):
             # prepare string representation of context
             context = prepare_context(text[:part_number + 1])
             context_tokens, number_of_tokens = self._tokenize(context, number_of_tokens)
+            
+            # setup hooks in the model's layers and perform inference on `context_tokens`
+            base_output, layer_representations = self._run_model_with_hooks(context_tokens)   
 
-            # prepare recording hooks
-            hooks, layer_representations = self._setup_hooks()
-
-            # run and remove hooks
-            with torch.no_grad():
-                base_output = self.basemodel(**context_tokens)
-            for hook in hooks:
-                hook.remove()
-
-            # format output
-            stimuli_coords = {
-                'stimulus': ('presentation', [text_part]),
-                'context': ('presentation', [context]),
-                'part_number': ('presentation', [part_number]),
-            }
-            if self.behavioral_task:
-                behavioral_output = self.output_to_behavior(base_output=base_output)
-                behavior = BehavioralAssembly(
-                    [behavioral_output],
-                    coords=stimuli_coords,
-                    dims=['presentation']
-                )
-                output['behavior'].append(behavior)
-            if self.neural_recordings:
-                representations = self.output_to_representations(layer_representations, stimuli_coords=stimuli_coords)
-                output['neural'].append(representations)
+            # update output dict with new behavioral output and/or neural representations
+            output = self._format_output(base_output, layer_representations, text_part, context, part_number, output)
+            
         return output
 
     def _masked_inference(self, text):
         output = {'behavior': [], 'neural': []}
         text_tokens = []
         
-        # preprocessing: get the tokens for each text part
+        # Preprocessing: get the tokens for each text part
         remaining_tokens = 0
         for text_part in text:
             part_tokens = self.tokenizer.tokenize(text_part)
@@ -135,69 +114,77 @@ class HuggingfaceSubject(ArtificialSubject):
             text_tokens.append(part_tokens)
         
         start_part = 0
-        cur_number_of_tokens = 0
-        for part_number, text_part in enumerate(tqdm(text)):
-            cur_number_of_tokens += len(text_tokens[part_number])
-            while cur_number_of_tokens > (self.context_window / 2) and (start_part < part_number):
-                cur_number_of_tokens -= len(text_tokens[start_part])
+        number_of_tokens = 0
+        for part_number, text_part in enumerate(tqdm(text, desc='digest text')):
+            number_of_tokens += len(text_tokens[part_number])
+            while number_of_tokens > (self.context_window / 2) and (start_part < part_number):
+                number_of_tokens -= len(text_tokens[start_part])
                 start_part += 1
             
             end_part = part_number + 1
             if self.behavioral_task == ArtificialSubject.Task.reading_times:
-                # For reading time estimation, the input should be masked, otherwise
-                # surprisal will be very low.
+                # For reading time estimation, this part should be masked, otherwise
+                # surprisal will be very low since the model will have seen the tokens.
                 end_part = part_number                
             
-            context_tokens = list(itertools.chain.from_iterable(text_tokens[start_part:end_part]))
+            unmasked_context_tokens = list(itertools.chain.from_iterable(text_tokens[start_part:end_part]))
             context = prepare_context(text[start_part: part_number + 1])
             
-            # Add MASK tokens to the second half of the context
-            context_tokens += [self.tokenizer.mask_token] * min(remaining_tokens, self.context_window - len(context_tokens))
-            masked_part = self.tokenizer.convert_tokens_to_string(context_tokens)
-            part_inputs = self.tokenizer(masked_part, return_tensors="pt", return_overflowing_tokens=self._tokenizer_returns_overflow)
-            part_inputs.to(self.device)
+            # Add [MASK] tokens to the second half of the context
+            unmasked_context_tokens += [self.tokenizer.mask_token] * min(remaining_tokens, self.context_window - len(unmasked_context_tokens))
+            masked_part = self.tokenizer.convert_tokens_to_string(unmasked_context_tokens)
+            context_tokens = self.tokenizer(masked_part, return_tensors="pt", return_overflowing_tokens=self._tokenizer_returns_overflow)
+            context_tokens.to(self.device)
+            remaining_tokens -= len(text_tokens[part_number])
             
-            # prepare recording hooks
-            hooks, layer_representations = self._setup_hooks()
-
-            # predicted_logits = logits[-self.current_tokens['input_ids'].shape[-1] - 1: - 1, :].contiguous()
+            # Tokenize the text part without masking for comparison with model logits (e.g. for reading time estimates)
             self.current_tokens = self.tokenizer(text_part, return_tensors="pt", add_special_tokens=False, return_overflowing_tokens=self._tokenizer_returns_overflow)
             self.current_tokens.to(self.device)
             
-            # run and remove hooks
-            try:
-                with torch.no_grad():
-                    base_output = self.basemodel(**part_inputs)
-                for hook in hooks:
-                    hook.remove()
-            except:
-                breakpoint()
-                
-            mask_token_index = torch.where(part_inputs["input_ids"] == self.tokenizer.mask_token_id)[1][0]
+            # Setup hooks in the model's layers and perform inference on `context_tokens`
+            base_output, layer_representations = self._run_model_with_hooks(context_tokens)                
+            
+            # Post processing model output: removing logits for [MASK] tokens in the future context
+            mask_token_index = torch.where(context_tokens["input_ids"] == self.tokenizer.mask_token_id)[1][0]
             base_output.logits = base_output.logits[:, :mask_token_index + 1]
             if self.tokenizer.cls_token is not None:
                 base_output.logits = base_output.logits[:, 1:]
             
-            remaining_tokens -= len(text_tokens[part_number])
-                
-            # format output
-            stimuli_coords = {
-                'stimulus': ('presentation', [text_part]),
-                'context': ('presentation', [context]),
-                'part_number': ('presentation', [part_number]),
-            }
-            if self.behavioral_task:
-                behavioral_output = self.output_to_behavior(base_output=base_output)
-                behavior = BehavioralAssembly(
-                    [behavioral_output],
-                    coords=stimuli_coords,
-                    dims=['presentation']
-                )
-                output['behavior'].append(behavior)
-            if self.neural_recordings:
-                representations = self.output_to_representations(layer_representations, stimuli_coords=stimuli_coords)
-                output['neural'].append(representations)
+            # Update output dict with new behavioral output and/or neural representations
+            output = self._format_output(base_output, layer_representations, text_part, context, part_number, output)
+            
         return output
+
+    def _format_output(self, base_output, layer_representations, text_part, context, part_number, output):
+        if not output:
+            output = {'behavior': [], 'neural': []}
+        
+        stimuli_coords = {
+            'stimulus': ('presentation', [text_part]),
+            'context': ('presentation', [context]),
+            'part_number': ('presentation', [part_number]),
+        }
+        if self.behavioral_task:
+            behavioral_output = self.output_to_behavior(base_output=base_output)
+            behavior = BehavioralAssembly(
+                [behavioral_output],
+                coords=stimuli_coords,
+                dims=['presentation']
+            )
+            output["behavior"].append(behavior)
+        if self.neural_recordings:
+            representations = self.output_to_representations(layer_representations, stimuli_coords=stimuli_coords)
+            output["neural"].append(representations)
+        return output
+
+    def _run_model_with_hooks(self, context_tokens):
+        # prepare recording hooks
+        hooks, layer_representations = self._setup_hooks()
+        with torch.no_grad():
+            base_output = self.basemodel(**context_tokens)
+        for hook in hooks:
+            hook.remove()
+        return base_output, layer_representations
                 
     def digest_text(self, text: Union[str, List[str]]) -> Dict[str, DataAssembly]:
         """
