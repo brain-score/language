@@ -297,8 +297,9 @@ class HuggingfaceSubject(ArtificialSubject):
     def output_to_representations(self, layer_representations: Dict[Tuple[str, str, str], np.ndarray], stimuli_coords):
         # Choose to first token [CLS] in bidirectional models, the last token for causal models, to represent passage        
         representation_values = np.concatenate([
-            values[:, :1, :].squeeze(0).cpu() if self.bidirectional
-            else values[:, -1:, :].squeeze(0).cpu()
+            # values are [batch, token, unit]
+            values[:, -1:, :].squeeze(0).cpu() if not self.bidirectional  # use last token (-1) to represent passage
+            else values[:, :1, :].squeeze(0).cpu()  # for bidirectional models, use first token
             for values in layer_representations.values()],
             axis=-1)  # concatenate along neuron axis
 
