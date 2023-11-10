@@ -376,9 +376,7 @@ class HuggingfaceSubject(ArtificialSubject):
         def hook_function(_layer: torch.nn.Module, _input, output: torch.Tensor, key=key):
             # fix for when taking out only the hidden state, this is different from dropout because of residual state
             # see:  https://github.com/huggingface/transformers/blob/c06d55564740ebdaaf866ffbbbabf8843b34df4b/src/transformers/models/gpt2/modeling_gpt2.py#L428
-            if isinstance(output, tuple):
-                output = output[0]
-            output = output[0] if len(output) > 1 else output
+            output = output[0] if isinstance(output, tuple) else output
             target_dict[key] = output
 
         hook = layer.register_forward_hook(hook_function)
