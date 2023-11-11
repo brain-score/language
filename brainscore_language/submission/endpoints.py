@@ -36,8 +36,8 @@ def run_scoring(args_dict: Dict[str, Union[str, List]]):
 def resolve_models_benchmarks(args_dict: Dict[str, Union[str, List]]):
     benchmarks, models = retrieve_models_and_benchmarks(args_dict)
 
-    model_ids = resolve_models(models)
-    benchmark_ids = resolve_benchmarks(benchmarks)
+    model_ids = resolve_models(domain="language", models=models)
+    benchmark_ids = resolve_benchmarks(domain="language", benchmarks=benchmarks)
     print("BS_NEW_MODELS=" + " ".join(model_ids))
     print("BS_NEW_BENCHMARKS=" + " ".join(benchmark_ids))
     return model_ids, benchmark_ids
