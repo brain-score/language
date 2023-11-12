@@ -38,7 +38,7 @@ class TestRunScoring:
         args_dict = {'jenkins_id': 62, 'user_id': 1, 'model_type': 'artificialsubject', 
                     'public': True, 'competition': 'None', 'new_models': new_models, 
                     'new_benchmarks': new_benchmarks, 'specified_only': True}
-        model_ids, benchmark_ids = retrieve_models_and_benchmarks(args_dict)
+        benchmark_ids, model_ids = retrieve_models_and_benchmarks(args_dict)
         assert model_ids == new_models
         assert benchmark_ids == new_benchmarks
         
