@@ -51,9 +51,6 @@ def send_email_to_submitter(uid: int, domain: str, pr_number: str,
 
 if __name__ == '__main__':
     parser = make_argparser()
-    parser.add_argument('--fn', type=str, nargs='?', default='run_scoring',
-                    choices=['run_scoring', 'resolve_models_benchmarks'],
-                    help='The endpoint method to run. `run_scoring` to score `new_models` on `new_benchmarks`, or `resolve_models_benchmarks` to respond with a list of models and benchmarks to score.')
 
     args, remaining_args = parser.parse_known_args()
     args_dict = vars(args)
