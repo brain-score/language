@@ -9,7 +9,7 @@ from .mock_config import test_database
 from brainscore_core.submission import database_models
 from brainscore_core.submission.database import connect_db
 from brainscore_core.submission.database_models import clear_schema
-from brainscore_language.submission.endpoints import run_scoring, retrieve_models_and_benchmarks
+from brainscore_language.submission.endpoints import run_scoring
 
 
 logger = logging.getLogger(__name__)
@@ -31,16 +31,6 @@ class TestRunScoring:
     def teardown_method(self):
         logger.info('Clean database')
         clear_schema()
-
-    def test_retrieve_models_and_benchmarks(self):
-        new_models = ['randomembedding-100']
-        new_benchmarks = ['Pereira2018.243sentences-linear']
-        args_dict = {'jenkins_id': 62, 'user_id': 1, 'model_type': 'artificialsubject', 
-                    'public': True, 'competition': 'None', 'new_models': new_models, 
-                    'new_benchmarks': new_benchmarks, 'specified_only': True}
-        benchmark_ids, model_ids = retrieve_models_and_benchmarks(args_dict)
-        assert model_ids == new_models
-        assert benchmark_ids == new_benchmarks
         
     def test_successful_run(self):
         args_dict = {'jenkins_id': 62, 'user_id': 1, 'model_type': 'artificialsubject', 

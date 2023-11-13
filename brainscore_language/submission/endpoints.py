@@ -2,7 +2,7 @@ from typing import List, Union, Dict
 
 from brainscore_core import Score, Benchmark
 from brainscore_core.submission import RunScoringEndpoint, DomainPlugins
-from brainscore_core.submission.endpoints import make_argparser, retrieve_models_and_benchmarks, resolve_models, resolve_benchmarks, get_user_id, \
+from brainscore_core.submission.endpoints import make_argparser, resolve_models_benchmarks, get_user_id, \
     send_email_to_submitter as send_email_to_submitter_core
 from brainscore_language import load_model, load_benchmark, score
 from brainscore_language.submission import config
@@ -24,7 +24,7 @@ run_scoring_endpoint = RunScoringEndpoint(language_plugins, db_secret=config.get
 
 
 def run_scoring(args_dict: Dict[str, Union[str, List]]):
-    model_ids, benchmark_ids = resolve_models_benchmarks(args_dict)
+    model_ids, benchmark_ids = resolve_models_benchmarks(domain="language", args_dict=args_dict)
     
     for benchmark in benchmark_ids:
         for model in model_ids:
@@ -33,14 +33,6 @@ def run_scoring(args_dict: Dict[str, Union[str, List]]):
                                 user_id=args_dict["user_id"], model_type="artificialsubject",
                                 public=args_dict["public"], competition=args_dict["competition"])
 
-def resolve_models_benchmarks(args_dict: Dict[str, Union[str, List]]):
-    benchmarks, models = retrieve_models_and_benchmarks(args_dict)
-
-    model_ids = resolve_models(domain="language", models=models)
-    benchmark_ids = resolve_benchmarks(domain="language", benchmarks=benchmarks)
-    print("BS_NEW_MODELS=" + " ".join(model_ids))
-    print("BS_NEW_BENCHMARKS=" + " ".join(benchmark_ids))
-    return model_ids, benchmark_ids
 
 def send_email_to_submitter(uid: int, domain: str, pr_number: str,
                             mail_username: str, mail_password: str):
@@ -62,6 +54,6 @@ if __name__ == '__main__':
     if args.fn == 'run_scoring':
         run_scoring(args_dict)
     elif args.fn == 'resolve_models_benchmarks':
-        resolve_models_benchmarks(args_dict)
+        resolve_models_benchmarks(domain="language", args_dict=args_dict)
     else:
         raise ValueError(f'Invalid method: {args.fn}')
