@@ -52,8 +52,8 @@ def send_email_to_submitter(uid: int, domain: str, pr_number: str,
 if __name__ == '__main__':
     parser = make_argparser()
     parser.add_argument('--fn', type=str, nargs='?', default='run_scoring',
-                    choices=['run_scoring', 'retrieve_models_and_benchmarks'],
-                    help='The endpoint method to run. `run_scoring` to score `new_models` on `new_benchmarks`, or `retrieve_models_and_benchmarks` to respond with a list of models and benchmarks to score.')
+                    choices=['run_scoring', 'resolve_models_benchmarks'],
+                    help='The endpoint method to run. `run_scoring` to score `new_models` on `new_benchmarks`, or `resolve_models_benchmarks` to respond with a list of models and benchmarks to score.')
 
     args, remaining_args = parser.parse_known_args()
     args_dict = vars(args)
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     
     if args.fn == 'run_scoring':
         run_scoring(args_dict)
-    elif args.fn == 'retrieve_models_and_benchmarks':
-        retrieve_models_and_benchmarks(args_dict)
+    elif args.fn == 'resolve_models_benchmarks':
+        resolve_models_benchmarks(args_dict)
     else:
         raise ValueError(f'Invalid method: {args.fn}')
