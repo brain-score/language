@@ -8,11 +8,11 @@ from brainscore_language.model_helpers.huggingface import HuggingfaceSubject
 model_registry['distilgpt2'] = lambda: HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={
     ArtificialSubject.RecordingTarget.language_system: 'transformer.h.5'})
 
-model_registry['gpt2-xl'] = lambda: HuggingfaceSubject(model_id='gpt2-xl', region_layer_mapping={
-    ArtificialSubject.RecordingTarget.language_system: 'transformer.h.43'})
-
 model_registry['gpt2-large'] = lambda: HuggingfaceSubject(model_id='gpt2-large', region_layer_mapping={
     ArtificialSubject.RecordingTarget.language_system: 'transformer.h.33'})
+
+model_registry['gpt2-xl'] = lambda: HuggingfaceSubject(model_id='gpt2-xl', region_layer_mapping={
+    ArtificialSubject.RecordingTarget.language_system: 'transformer.h.43'})
 
 model_registry['gpt-neo-2.7B'] = lambda: HuggingfaceSubject(model_id='EleutherAI/gpt-neo-2.7B', region_layer_mapping={
     ArtificialSubject.RecordingTarget.language_system: 'transformer.h.31'})
