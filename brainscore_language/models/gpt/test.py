@@ -7,6 +7,8 @@ from brainscore_language.artificial_subject import ArtificialSubject
 
 @pytest.mark.memory_intense
 @pytest.mark.parametrize('model_identifier, expected_reading_times', [
+    ('openai-gpt', [np.nan, 13.267056, 13.145847, 11.971989,
+                    13.211679,  4.648034, 1.44646 , 15.464076]),
     ('distilgpt2', [np.nan, 19.260605, 12.721411, 12.083241,
                     10.876629, 3.678278, 2.102749, 11.961533]),
     ('gpt2', [np.nan, 13.006296, 12.126239,  9.79957 ,
@@ -32,6 +34,7 @@ def test_reading_times(model_identifier, expected_reading_times):
 
 @pytest.mark.memory_intense
 @pytest.mark.parametrize('model_identifier, expected_next_words', [
+    ('openai-gpt', ['.', 'the', 'dog']),
     ('distilgpt2', ['es', 'the', 'fox']),
     ('gpt2', ['es', 'the', ',']),
     ('gpt2-medium', ['jumps', 'the', 'dog']),
@@ -50,6 +53,7 @@ def test_next_word(model_identifier, expected_next_words):
 
 @pytest.mark.memory_intense
 @pytest.mark.parametrize('model_identifier, feature_size', [
+    ('openai-gpt', 768),
     ('distilgpt2', 768),
     ('gpt2', 768),
     ('gpt2-medium', 1024),
