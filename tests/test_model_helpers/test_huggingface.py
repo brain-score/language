@@ -11,36 +11,38 @@ _logger = logging.getLogger(__name__)
 
 
 class TestNextWord:
-    @pytest.mark.parametrize('model_identifier, expected_next_word', [
-        pytest.param('bert-base-uncased', '.', marks=pytest.mark.memory_intense),
-        pytest.param('gpt2-xl', 'jumps', marks=pytest.mark.memory_intense),
-        ('distilgpt2', 'es'),
+    @pytest.mark.parametrize('model_identifier, expected_next_word, bidirectional', [
+        pytest.param('bert-base-uncased', 'and', True, marks=pytest.mark.memory_intense),
+        pytest.param('bert-base-uncased', '.', False, marks=pytest.mark.memory_intense),
+        pytest.param('gpt2-xl', 'jumps', False, marks=pytest.mark.memory_intense),
+        ('distilgpt2', 'es', False),
     ])
-    def test_single_string(self, model_identifier, expected_next_word):
+    def test_single_string(self, model_identifier, expected_next_word, bidirectional):
         """
         This is a simple test that takes in text = 'the quick brown fox', and tests the next word.
         This test is a stand-in prototype to check if our model definitions are correct.
         """
 
-        model = HuggingfaceSubject(model_id=model_identifier, region_layer_mapping={})
+        model = HuggingfaceSubject(model_id=model_identifier, region_layer_mapping={}, bidirectional=bidirectional)
         text = 'the quick brown fox'
         _logger.info(f'Running {model.identifier()} with text "{text}"')
         model.start_behavioral_task(task=ArtificialSubject.Task.next_word)
         next_word = model.digest_text(text)['behavior'].values
         assert next_word == expected_next_word
 
-    @pytest.mark.parametrize('model_identifier, expected_next_words', [
-        pytest.param('bert-base-uncased', ['.', '.', '.'], marks=pytest.mark.memory_intense),
-        pytest.param('gpt2-xl', ['jumps', 'the', 'dog'], marks=pytest.mark.memory_intense),
-        ('distilgpt2', ['es', 'the', 'fox']),
+    @pytest.mark.parametrize('model_identifier, expected_next_words, bidirectional', [
+        pytest.param('bert-base-uncased', [';', 'the', 'water'], True, marks=pytest.mark.memory_intense),
+        pytest.param('bert-base-uncased', ['.', '.', '.'], False, marks=pytest.mark.memory_intense),
+        pytest.param('gpt2-xl', ['jumps', 'the', 'dog'], False, marks=pytest.mark.memory_intense),
+        ('distilgpt2', ['es', 'the', 'fox'], False),
     ])
-    def test_list_input(self, model_identifier, expected_next_words):
+    def test_list_input(self, model_identifier, expected_next_words, bidirectional):
         """
         This is a simple test that takes in text = ['the quick brown fox', 'jumps over', 'the lazy'], and tests the
         next word for each text part in the list.
         This test is a stand-in prototype to check if our model definitions are correct.
         """
-        model = HuggingfaceSubject(model_id=model_identifier, region_layer_mapping={})
+        model = HuggingfaceSubject(model_id=model_identifier, region_layer_mapping={}, bidirectional=bidirectional)
         text = ['the quick brown fox', 'jumps over', 'the lazy']
         _logger.info(f'Running {model.identifier()} with text "{text}"')
         model.start_behavioral_task(task=ArtificialSubject.Task.next_word)
@@ -163,6 +165,25 @@ class TestNeural:
         """
         model = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={
             ArtificialSubject.RecordingTarget.language_system: 'transformer.h.0.ln_1'})
+        text = 'the quick brown fox'
+        _logger.info(f'Running {model.identifier()} with text "{text}"')
+        model.start_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
+                                     recording_type=ArtificialSubject.RecordingType.fMRI)
+        representations = model.digest_text(text)['neural']
+        assert len(representations['presentation']) == 1
+        assert representations['stimulus'].squeeze() == text
+        assert len(representations['neuroid']) == 768
+        _logger.info(f'representation shape is correct: {representations.shape}')
+
+    @pytest.mark.memory_intense
+    def test_one_text_single_target_bidirectional(self):
+        """
+        This is a simple test that takes in text = 'the quick brown fox', and asserts that a bidirectiona BERT model
+        layer indexed by `representation_layer` has 1 text presentation and 768 neurons. This test is a stand-in prototype
+        to check if our model definitions are correct.
+        """
+        model = HuggingfaceSubject(model_id='bert-base-uncased', region_layer_mapping={
+            ArtificialSubject.RecordingTarget.language_system: 'bert.encoder.layer.4'})
         text = 'the quick brown fox'
         _logger.info(f'Running {model.identifier()} with text "{text}"')
         model.start_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
