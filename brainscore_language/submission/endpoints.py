@@ -2,7 +2,7 @@ from typing import List, Union, Dict
 
 from brainscore_core import Score, Benchmark
 from brainscore_core.submission import RunScoringEndpoint, DomainPlugins
-from brainscore_core.submission.endpoints import make_argparser, retrieve_models_and_benchmarks, get_user_id, \
+from brainscore_core.submission.endpoints import make_argparser, resolve_models_benchmarks, get_user_id, \
     send_email_to_submitter as send_email_to_submitter_core
 from brainscore_language import load_model, load_benchmark, score
 from brainscore_language.submission import config
@@ -24,12 +24,14 @@ run_scoring_endpoint = RunScoringEndpoint(language_plugins, db_secret=config.get
 
 
 def run_scoring(args_dict: Dict[str, Union[str, List]]):
-    benchmarks, models = retrieve_models_and_benchmarks(args_dict)
-
-    run_scoring_endpoint(domain="language", jenkins_id=args_dict["jenkins_id"],
-                         models=models, benchmarks=benchmarks, user_id=args_dict["user_id"],
-                         model_type="artificialsubject", public=args_dict["public"],
-                         competition=args_dict["competition"])
+    model_ids, benchmark_ids = resolve_models_benchmarks(domain="language", args_dict=args_dict)
+    
+    for benchmark in benchmark_ids:
+        for model in model_ids:
+            run_scoring_endpoint(domain="language", jenkins_id=args_dict["jenkins_id"],
+                                model_identifier=model, benchmark_identifier=benchmark,
+                                user_id=args_dict["user_id"], model_type="artificialsubject",
+                                public=args_dict["public"], competition=args_dict["competition"])
 
 
 def send_email_to_submitter(uid: int, domain: str, pr_number: str,
@@ -41,11 +43,17 @@ def send_email_to_submitter(uid: int, domain: str, pr_number: str,
 
 if __name__ == '__main__':
     parser = make_argparser()
+
     args, remaining_args = parser.parse_known_args()
     args_dict = vars(args)
 
     if 'user_id' not in args_dict or args_dict['user_id'] is None:
         user_id = get_user_id(args_dict['author_email'], db_secret=config.get_database_secret())
         args_dict['user_id'] = user_id
-
-    run_scoring(args_dict)
+    
+    if args.fn == 'run_scoring':
+        run_scoring(args_dict)
+    elif args.fn == 'resolve_models_benchmarks':
+        resolve_models_benchmarks(domain="language", args_dict=args_dict)
+    else:
+        raise ValueError(f'Invalid method: {args.fn}')

@@ -31,7 +31,7 @@ class TestRunScoring:
     def teardown_method(self):
         logger.info('Clean database')
         clear_schema()
-
+        
     def test_successful_run(self):
         args_dict = {'jenkins_id': 62, 'user_id': 1, 'model_type': 'artificialsubject', 
                     'public': True, 'competition': 'None', 'new_models': ['randomembedding-100'], 
