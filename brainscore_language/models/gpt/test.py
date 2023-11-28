@@ -19,6 +19,8 @@ from brainscore_language.artificial_subject import ArtificialSubject
                  0.522623, 0.102953, 0.038324, 0.021452]),
     ('gpt2-xl', [np.nan, 1.378484e+01, 6.686095e+00, 2.284407e-01,
                  7.538393e-01, 6.105860e-03, 2.644155e-02, 4.411311e-03]),
+    ('gpt-neo-125m', [np.nan, 14.348133,  6.299568 ,  6.598476,  8.743038,
+                      3.293406 ,  0.741776,  6.183576]),
     ('gpt-neo-2.7B', [np.nan, 15.07522869,  3.6358602 ,  0.04999408,  1.42219079,
                       0.0399301 ,  0.02614061,  0.02547451]),
     ('gpt-neo-1.3B', [np.nan, 15.36009979,  5.54412651,  0.11744193,  0.60116327,
@@ -40,6 +42,7 @@ def test_reading_times(model_identifier, expected_reading_times):
     ('gpt2-medium', ['jumps', 'the', 'dog']),
     ('gpt2-large', ['jumps', 'the', 'dog']),
     ('gpt2-xl', ['jumps', 'the', 'dog']),
+    ('gpt-neo-125m', [',', 'the', 'dog']),
     ('gpt-neo-2.7B', ['jumps', 'the', 'dog']),
     ('gpt-neo-1.3B', ['jumps', 'the', 'dog'])
 ])
@@ -59,6 +62,7 @@ def test_next_word(model_identifier, expected_next_words):
     ('gpt2-medium', 1024),
     ('gpt2-large', 1280),
     ('gpt2-xl', 1600),
+    ('gpt-neo-125m', 768),
     ('gpt-neo-1.3B', 2048),
     ('gpt-neo-2.7B', 2560)
 ])
