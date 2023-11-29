@@ -57,4 +57,11 @@ jobs:
     - stage: "Automerge check"
       install: skip
       if: type = pull_request
-      script: if [ "$PLUGIN_ONLY" = "True" ]; then bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA $PLUGIN_ONLY; fi
+      script: 
+        - |
+          if [ ! -z "$TRAVIS_PULL_REQUEST_BRANCH" ]; then 
+            CHANGED_FILES=$( git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" && git fetch && echo $(git diff --name-only origin/$TRAVIS_PULL_REQUEST_BRANCH origin/$TRAVIS_BRANCH -C $TRAVIS_BUILD_DIR) | tr '\n' ' ' ) &&
+            TESTING_NEEDED=$( python -c "from brainscore_core.plugin_management.parse_plugin_changes import get_testing_info; get_testing_info(\"${CHANGED_FILES}\", 'brainscore_language')" ) && 
+            read MODIFIES_PLUGIN PLUGIN_ONLY <<< $TESTING_NEEDED && echo MODIFIES_PLUGIN: $MODIFIES_PLUGIN && echo PLUGIN_ONLY: $PLUGIN_ONLY; 
+          fi
+        - if [ "$PLUGIN_ONLY" = "True" ]; then bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA $PLUGIN_ONLY; fi

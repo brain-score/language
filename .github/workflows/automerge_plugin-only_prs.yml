@@ -68,7 +68,7 @@ jobs:
         id: gettravisstatus
         run: |
           echo ${{ github.event.pull_request.head.sha }}
-          echo "TRAVIS_CONCLUSION=$(python -c "import requests; r = requests.get(\"https://api.github.com/repos/brain-score/language/commits/$github.event.pull_request.head.sha/check-runs\"); print(next(run['conclusion'] for run in r.json()['check_runs'] if run['name'] == 'Travis CI - Pull Request'))")" >> $GITHUB_ENV
+          echo "TRAVIS_CONCLUSION=$(python -c "import requests; r = requests.get(\"https://api.github.com/repos/brain-score/language/commits/${{ github.event.pull_request.head.sha }}/check-runs\"); print(next(run['conclusion'] for run in r.json()['check_runs'] if run['name'] == 'Travis CI - Pull Request'))")" >> $GITHUB_ENV
       - name: Check if Travis was successful
         id: istravisok
         run: |
