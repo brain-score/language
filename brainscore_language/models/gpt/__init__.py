@@ -31,3 +31,6 @@ model_registry['gpt-neo-2.7B'] = lambda: HuggingfaceSubject(model_id='EleutherAI
 
 model_registry['gpt-neo-1.3B'] = lambda: HuggingfaceSubject(model_id='EleutherAI/gpt-neo-1.3B', region_layer_mapping={
     ArtificialSubject.RecordingTarget.language_system: 'transformer.h.18'})
+
+model_registry['gpt-j-6b'] = lambda: HuggingfaceSubject(model_id='EleutherAI/gpt-j-6b', region_layer_mapping={
+    ArtificialSubject.RecordingTarget.language_system: 'transformer.h.26'})
