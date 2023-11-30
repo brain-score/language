@@ -55,6 +55,13 @@ jobs:
       python: '3.9'
       env: PRIVATE_ACCESS=1
     - stage: "Automerge check"
-      install: skip
+      python: '3.9'
+      install: python -m pip install -e ".[test]"
       if: type = pull_request
-      script: if [ "$PLUGIN_ONLY" = "True" ]; then bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA $PLUGIN_ONLY; fi
+      script: 
+        - |
+          if [ ! -z "$TRAVIS_PULL_REQUEST_BRANCH" ]; then 
+            CHANGED_FILES=$( git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" && git fetch && echo $(git diff --name-only origin/$TRAVIS_PULL_REQUEST_BRANCH origin/$TRAVIS_BRANCH -C $TRAVIS_BUILD_DIR) | tr '\n' ' ' ) &&
+            PLUGIN_ONLY=$( python -c "from brainscore_core.plugin_management.parse_plugin_changes import is_plugin_only; is_plugin_only(\"${CHANGED_FILES}\", 'brainscore_language')" )
+          fi
+        - if [ "$PLUGIN_ONLY" = "True" ]; then bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA; fi
