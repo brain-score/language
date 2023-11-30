@@ -55,7 +55,7 @@ jobs:
       python: '3.9'
       env: PRIVATE_ACCESS=1
     - stage: "Automerge check"
-      install: skip
+      install: python -m pip install -e ".[test]"
       if: type = pull_request
       script: 
         - |
