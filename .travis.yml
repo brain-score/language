@@ -2,6 +2,7 @@ language: python
 env:
   global:
     - PYTEST_SETTINGS="not requires_gpu and not memory_intense and not slow and not travis_slow"
+    - DOMAIN="language"
     - MODIFIES_PLUGIN="False"
     - PLUGIN_ONLY="False"
     - WEB_SUBMISSION="False"
@@ -18,28 +19,8 @@ install:
   - pip list
   # install singularity for container models
   - conda install -yc conda-forge singularity
-before_script:
-  - git fetch --depth=50 origin refs/heads/main:refs/heads/main
-script:
-  # if ONLY plugin files changed, ONLY run tests for those plugins; otherwise, run full test suite
-  - |
-    if [ ! -z "$TRAVIS_PULL_REQUEST_BRANCH" ]; then 
-      CHANGED_FILES=$( git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" && git fetch && echo $(git diff --name-only origin/$TRAVIS_PULL_REQUEST_BRANCH origin/$TRAVIS_BRANCH -C $TRAVIS_BUILD_DIR) | tr '\n' ' ' ) &&
-      TESTING_NEEDED=$( python -c "from brainscore_core.plugin_management.parse_plugin_changes import get_testing_info; get_testing_info(\"${CHANGED_FILES}\", 'brainscore_language')" ) && 
-      read MODIFIES_PLUGIN PLUGIN_ONLY <<< $TESTING_NEEDED && echo MODIFIES_PLUGIN: $MODIFIES_PLUGIN && echo PLUGIN_ONLY: $PLUGIN_ONLY; 
-    fi
-  - if [ "$MODIFIES_PLUGIN" = "True" ]; then python -c "from brainscore_core.plugin_management.parse_plugin_changes import run_changed_plugin_tests; run_changed_plugin_tests(\"${CHANGED_FILES}\", 'brainscore_language')"; fi
-  - if [ "$PRIVATE_ACCESS" = 1 ] && [ -n "${GITHUB_TOKEN}" ] && [ "$PLUGIN_ONLY" = "False" ]; then pytest -m "private_access and $PYTEST_SETTINGS"; fi
-  - if [ "$PRIVATE_ACCESS" != 1 ] && [ "$PLUGIN_ONLY" = "False" ]; then pytest -m "not private_access and $PYTEST_SETTINGS" --ignore "tests/test_submission"; fi
-after_failure:
-  # if web submission, notify submitter via email
-  - PR_TITLE=$(curl https://github.com/${TRAVIS_REPO_SLUG}/pull/${TRAVIS_PULL_REQUEST} 2> /dev/null | grep "title" | head -1)
-  - if [[ "$PR_TITLE" = "brain-score.org (user:"* ]]; then WEB_SUBMISSION="True"; fi
-  - |
-    if $WEB_SUBMISSION = "True"; then
-      BRAINSCORE_UID=$(<<<$PR_TITLE | sed -E 's/.*\(user:([^)]+)\).*/\1/') && 
-      python -c "from brainscore_language.submission.endpoints import send_email_to_submitter; send_email_to_submitter(\"${BRAINSCORE_UID}\", 'language', \"${$TRAVIS_PULL_REQUEST}\", \"${$GMAIL_USERNAME}\", \"${GMAIL_PASSWORD}\")"; 
-    fi
+import: brain-score/core:tools/script.yml@main
+import: brain-score/core:tools/submission_failure.yml@main 
 
     
 jobs:
@@ -58,10 +39,4 @@ jobs:
       python: '3.9'
       install: python -m pip install -e ".[test]"
       if: type = pull_request
-      script: 
-        - |
-          if [ ! -z "$TRAVIS_PULL_REQUEST_BRANCH" ]; then 
-            CHANGED_FILES=$( git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" && git fetch && echo $(git diff --name-only origin/$TRAVIS_PULL_REQUEST_BRANCH origin/$TRAVIS_BRANCH -C $TRAVIS_BUILD_DIR) | tr '\n' ' ' ) &&
-            PLUGIN_ONLY=$( python -c "from brainscore_core.plugin_management.parse_plugin_changes import is_plugin_only; is_plugin_only(\"${CHANGED_FILES}\", 'brainscore_language')" )
-          fi
-        - if [ "$PLUGIN_ONLY" = "True" ]; then bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA; fi
+      import: brain-score/core:tools/automerge_check.yml@main 
