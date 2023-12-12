@@ -19,8 +19,8 @@ install:
   - pip list
   # install singularity for container models
   - conda install -yc conda-forge singularity
-import: brain-score/core:tools/script.yml@main
-import: brain-score/core:tools/submission_failure.yml@main 
+import: brain-score/core:brainscore_core/travis/script.yml@main
+import: brain-score/core:brainscore_core/travis/submission_failure.yml@main 
 
     
 jobs:
@@ -39,4 +39,4 @@ jobs:
       python: '3.9'
       install: python -m pip install -e ".[test]"
       if: type = pull_request
-      import: brain-score/core:tools/automerge_check.yml@main 
+      import: brain-score/core:brainscore_core/travis/automerge_check.yml@main 
