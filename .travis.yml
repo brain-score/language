@@ -20,8 +20,9 @@ install:
   - pip list
   # install singularity for container models
   - conda install -yc conda-forge singularity
-import: brain-score/core:brainscore_core/travis/script.yml@main
-import: brain-score/core:brainscore_core/travis/submission_failure.yml@main 
+import:
+  - brain-score/core:brainscore_core/travis/script.yml@main
+  - brain-score/core:brainscore_core/travis/submission_failure.yml@main 
 
     
 jobs:
@@ -40,4 +41,11 @@ jobs:
       python: '3.9'
       install: python -m pip install -e ".[test]"
       if: type = pull_request
-      import: brain-score/core:brainscore_core/travis/automerge_check.yml@main 
+      script:
+      - |
+        if [ ! -z "$TRAVIS_PULL_REQUEST_BRANCH" ]; then 
+          CHANGED_FILES=$( git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" && git fetch && echo $(git diff --name-only origin/$TRAVIS_PULL_REQUEST_BRANCH origin/$TRAVIS_BRANCH -C $TRAVIS_BUILD_DIR) | tr '\n' ' ' ) &&
+          PLUGIN_ONLY=$( python -c "from brainscore_core.plugin_management.parse_plugin_changes import is_plugin_only; is_plugin_only(\"${CHANGED_FILES}\", \"brainscore_${DOMAIN}\")" )
+        fi
+      - if [ "$PLUGIN_ONLY" = "True" ]; then bash ${TRAVIS_BUILD_DIR}/.github/workflows/travis_trigger.sh $GH_WORKFLOW_TRIGGER $TRAVIS_PULL_REQUEST_SHA; fi
+
