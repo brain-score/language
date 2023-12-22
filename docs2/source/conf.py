@@ -35,7 +35,9 @@ extensions = [
     'recommonmark',
     'sphinx.ext.viewcode',
     'sphinx_rtd_theme',
-    'sphinxcontrib.bibtex'
+    'sphinxcontrib.bibtex',
+    'rstcloth',
+    'sphinx.ext.autosectionlabel'
 ]
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
 
@@ -64,6 +66,7 @@ bibtex_bibfiles = ['bibtex/refs.bib']
 # a list of builtin themes.
 #
 html_theme = "sphinx_rtd_theme"
+html_style = "overrides.css"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

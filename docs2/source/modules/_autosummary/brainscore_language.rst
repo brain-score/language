@@ -49,6 +49,7 @@
 
    brainscore_language.artificial_subject
    brainscore_language.benchmark_helpers
+   brainscore_language.document_plugins
    brainscore_language.model_helpers
    brainscore_language.submission
    brainscore_language.utils
