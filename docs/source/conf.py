@@ -36,7 +36,6 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx_rtd_theme',
     'sphinxcontrib.bibtex',
-    'rstcloth',
     'sphinx.ext.autosectionlabel'
 ]
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
