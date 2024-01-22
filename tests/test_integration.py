@@ -1,3 +1,4 @@
+import os
 import pytest
 import subprocess
 import sys
@@ -50,6 +51,30 @@ from brainscore_language import score
 )
 def test_score(model_identifier, benchmark_identifier, expected_score):
     actual_score = score(model_identifier=model_identifier, benchmark_identifier=benchmark_identifier)
+    assert actual_score == expected_score
+
+
+@pytest.mark.parametrize(
+    "model_identifier, benchmark_identifier, expected_score, install_dependencies",
+    [
+        ("randomembedding-100", "Pereira2018.243sentences-linear",
+         approx(0.0285022, abs=0.0005), "newenv"),
+        ("randomembedding-100", "Pereira2018.243sentences-linear",
+         approx(0.0285022, abs=0.0005), "yes"),
+        ("randomembedding-100", "Pereira2018.243sentences-linear",
+         approx(0.0285022, abs=0.0005), "no"),
+    ]
+)
+def test_score_with_install_dependencies(
+        model_identifier, benchmark_identifier, expected_score, install_dependencies):
+    install_dependence_preference = os.environ.get(
+        "BS_INSTALL_DEPENDENCIES", "yes")
+    os.environ["BS_INSTALL_DEPENDENCIES"] = install_dependencies
+    actual_score = score(
+        model_identifier=model_identifier,
+        benchmark_identifier=benchmark_identifier,
+        conda_active=True)
+    os.environ["BS_INSTALL_DEPENDENCIES"] = install_dependence_preference
     assert actual_score == expected_score
 
 
