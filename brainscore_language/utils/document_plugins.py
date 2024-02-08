@@ -12,6 +12,7 @@ GITHUB_DIR = 'https://github.com/brain-score/language/tree/main/brainscore_langu
 
 def update_docs():
     all_plugin_info = get_all_plugin_info(Path(__file__).parents[1])
+    print('running document_plugins.py')
     print(f"all_plugin_info: {all_plugin_info}")
     for plugin_type in all_plugin_info:
         create_bibfile(all_plugin_info[plugin_type], BIBS_DIR, plugin_type) # plugin type .bib file
