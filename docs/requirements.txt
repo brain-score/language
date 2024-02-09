@@ -3,3 +3,5 @@
 Sphinx>=4
 sphinx_rtd_theme
 recommonmark
+sphinxcontrib-bibtex
+rstcloth

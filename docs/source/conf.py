@@ -35,6 +35,8 @@ extensions = [
     'recommonmark',
     'sphinx.ext.viewcode',
     'sphinx_rtd_theme',
+    'sphinxcontrib.bibtex',
+    'sphinx.ext.autosectionlabel'
 ]
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
 
@@ -53,6 +55,9 @@ master_doc = 'index'
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+# allows BibTeX citations to be inserted into docs
+bibtex_bibfiles = ['bibtex/refs.bib']
+
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -60,11 +65,6 @@ exclude_patterns = []
 # a list of builtin themes.
 #
 html_theme = "sphinx_rtd_theme"
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
 
 
 def skip(app, what, name, obj, would_skip, options):
