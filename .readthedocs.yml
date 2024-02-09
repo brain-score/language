@@ -6,7 +6,10 @@ build:
       python: "3.8"
    jobs:
       pre_build:
+      - pwd
+      - cat brainscore_language/utils/document_plugins.py
       - cd brainscore_language/utils
+      - pwd
       - python document_plugins.py
 
 
