@@ -245,6 +245,7 @@ class HuggingfaceSubject(ArtificialSubject):
         actual_tokens = self.current_tokens['input_ids'].squeeze(dim=0).contiguous()
         if actual_tokens.shape[0] == predicted_logits.shape[0] + 1:  # multiple tokens for first model input
             actual_tokens = actual_tokens[1:]  # we have no prior context to predict the 0th token
+        actual_tokens = actual_tokens.to(self.device)
 
         # assume that reading time is additive, i.e. reading time of multiple tokens is
         # the sum of the surprisals of each individual token.
@@ -288,7 +289,7 @@ class HuggingfaceSubject(ArtificialSubject):
         def hook_function(_layer: torch.nn.Module, _input, output: torch.Tensor, key=key):
             # fix for when taking out only the hidden state, this is different from dropout because of residual state
             # see:  https://github.com/huggingface/transformers/blob/c06d55564740ebdaaf866ffbbbabf8843b34df4b/src/transformers/models/gpt2/modeling_gpt2.py#L428
-            output = output[0] if len(output) > 1 else output
+            output = output[0] if isinstance(output, (tuple, list)) else output
             target_dict[key] = output
 
         hook = layer.register_forward_hook(hook_function)

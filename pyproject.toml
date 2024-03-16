@@ -23,6 +23,8 @@ dependencies = [
     "gensim",
     "joblib",
     "accelerate",
+    # submission dependencies
+    "requests"
 ]
 
 [project.optional-dependencies]
