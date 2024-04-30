@@ -5,7 +5,6 @@ __pycache__/
 
 # Folders
 xarray_test/*
-data/*
 
 # C extensions
 *.so
