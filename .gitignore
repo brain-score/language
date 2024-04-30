@@ -5,7 +5,6 @@ __pycache__/
 
 # Folders
 xarray_test/*
-data/*
 
 # C extensions
 *.so
@@ -136,7 +135,7 @@ dmypy.json
 
 ### project specific additions:
 
-brainscore_language/data
+# brainscore_language/data
 html
 .vscode
 *.code-workspace
