@@ -11,7 +11,7 @@ layer_names = [f'transformer.h.{block}.{layer_type}'
     for layer_type in ['ln_1', 'attn', 'ln_2', 'mlp']
 ]
 
-layer_model = HuggingfaceSubject(model_id='gpt2', 
+model = HuggingfaceSubject(model_id='gpt2', 
     region_layer_mapping={ArtificialSubject.RecordingTarget.language_system: layer_names},
     use_localizer=True,
     localizer_kwargs={
@@ -21,6 +21,6 @@ layer_model = HuggingfaceSubject(model_id='gpt2',
     }
 )
 
-layer_score = benchmark(layer_model)
+model_score = benchmark(model)
 
-print(layer_score)
+print(model_score)
