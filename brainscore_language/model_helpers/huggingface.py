@@ -17,6 +17,7 @@ from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.model_helpers.preprocessing import prepare_context
 from brainscore_language.utils import fullname
+from brainscore_language.model_helpers.localize import localize_fed10
 
 
 class HuggingfaceSubject(ArtificialSubject):
@@ -26,6 +27,8 @@ class HuggingfaceSubject(ArtificialSubject):
             region_layer_mapping: dict,
             model=None,
             tokenizer=None,
+            use_localizer=False,
+            localizer_kwargs=None,
             task_heads: Union[None, Dict[ArtificialSubject.Task, Callable]] = None,
     ):
         """
@@ -41,6 +44,7 @@ class HuggingfaceSubject(ArtificialSubject):
         """
         self._logger = logging.getLogger(fullname(self))
         self.model_id = model_id
+        self.use_localizer = use_localizer
         self.region_layer_mapping = region_layer_mapping
         self.basemodel = (model if model is not None else AutoModelForCausalLM.from_pretrained(self.model_id))
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -58,6 +62,18 @@ class HuggingfaceSubject(ArtificialSubject):
             ArtificialSubject.Task.reading_times: self.estimate_reading_times,
         }
         self.task_function_mapping_dict = {**task_mapping_default, **task_heads} if task_heads else task_mapping_default
+
+        if self.use_localizer:
+            layer_names = region_layer_mapping["language_system"]
+            self.language_mask = localize_fed10(model_id=self.model_id, 
+                model=self.basemodel, 
+                tokenizer=self.tokenizer, 
+                layer_names=layer_names,
+                top_k=localizer_kwargs["top_k"],
+                batch_size=localizer_kwargs["batch_size"],
+                hidden_dim=localizer_kwargs["hidden_dim"],
+                device=self.device
+            ).flatten()
 
     def identifier(self):
         return self.model_id
@@ -122,6 +138,13 @@ class HuggingfaceSubject(ArtificialSubject):
             if output['behavior'] else None
         output['neural'] = xr.concat(output['neural'], dim='presentation').sortby('part_number') \
             if output['neural'] else None
+        
+        if self.neural_recordings and self.use_localizer:
+            num_presentations = output['neural'].data.shape[0]
+            output['neural-mask'] = output['neural'].copy()
+            output['neural-mask'].data = np.repeat(self.language_mask[np.newaxis,:], num_presentations, axis=0)
+            output['neural'] = output['neural'].where(output['neural-mask'], drop=True)
+                    
         return output
 
     def _prepare_context(self, context_parts):
@@ -190,11 +213,16 @@ class HuggingfaceSubject(ArtificialSubject):
         hooks = []
         layer_representations = OrderedDict()
         for (recording_target, recording_type) in self.neural_recordings:
-            layer_name = self.region_layer_mapping[recording_target]
-            layer = self._get_layer(layer_name)
-            hook = self._register_hook(layer, key=(recording_target, recording_type, layer_name),
-                                       target_dict=layer_representations)
-            hooks.append(hook)
+            layer_names = self.region_layer_mapping[recording_target]
+            if type(layer_names) == str:
+                layer_names = [layer_names]
+
+            for layer_idx, layer_name in enumerate(layer_names):
+                layer = self._get_layer(layer_name)
+                hook = self._register_hook(layer, key=(f"{recording_target}.{layer_idx}", recording_type, layer_name),
+                                        target_dict=layer_representations)
+                hooks.append(hook)
+
         return hooks, layer_representations
 
     def output_to_representations(self, layer_representations: Dict[Tuple[str, str, str], np.ndarray], stimuli_coords):
