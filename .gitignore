@@ -136,6 +136,7 @@ dmypy.json
 
 ### project specific additions:
 
+brainscore_language/data
 html
 .vscode
 *.code-workspace
