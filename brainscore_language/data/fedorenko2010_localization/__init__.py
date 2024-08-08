@@ -27,6 +27,7 @@ def load_data():
     data["sent"] = data["stim2"].apply(str.lower)
 
     for stimuli_idx in range(3, 14):
+        # lowercase each stimulus/word then add it to the sentence
         data["sent"] += " " + data[f"stim{stimuli_idx}"].apply(str.lower)
     return data
 

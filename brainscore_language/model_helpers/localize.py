@@ -16,8 +16,8 @@ from pathlib import Path
 
 from brainscore_language import load_dataset
 
+# To cache the language mask
 BRAINIO_CACHE = os.environ.get("BRAINIO", f"{Path.home()}/.brainio")
-os.environ["TOKENIZERS_PARALLELISM"] = "False"
 
 logger = logging.getLogger(__name__)
 
