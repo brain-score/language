@@ -25,8 +25,6 @@ logger = logging.getLogger(__name__)
 
 class Fed10_langlocDataset(Dataset):
     def __init__(self):
-        self.num_samples = 240
-
         data = load_dataset("Fedorenko2010.localization")
         self.sentences = data[data["stim14"]=="S"]["sent"]
         self.non_words = data[data["stim14"]=="N"]["sent"]
@@ -112,8 +110,8 @@ def extract_representations(
     model.to(device)
 
     final_layer_representations = {
-        "sentences": {layer_name: np.zeros((langloc_dataset.num_samples, hidden_dim)) for layer_name in layer_names},
-        "non-words": {layer_name: np.zeros((langloc_dataset.num_samples, hidden_dim)) for layer_name in layer_names}
+        "sentences": {layer_name: np.zeros((len(langloc_dataset.sentences), hidden_dim)) for layer_name in layer_names},
+        "non-words": {layer_name: np.zeros((len(langloc_dataset.sentences), hidden_dim)) for layer_name in layer_names}
     }
     
     for batch_idx, batch_data in tqdm(enumerate(langloc_dataloader)):
