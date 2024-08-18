@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.stats
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, RidgeCV
 from sklearn.preprocessing import scale
 
 from brainio.assemblies import NeuroidAssembly, array_is_element, DataAssembly
@@ -157,6 +157,11 @@ class ScaledCrossRegressedCorrelation(Metric):
             coord: (dims, value) for coord, dims, value in walk_coords(target)}, dims=target.dims)
         return self.cross_regressed_correlation(source, target)
 
+def ridge_regression(xarray_kwargs=None):
+    regression = RidgeCV(alphas=[10 ** x for x in range(-10, 10)])
+    xarray_kwargs = xarray_kwargs or {}
+    regression = XarrayRegression(regression, **xarray_kwargs)
+    return regression
 
 def linear_regression(xarray_kwargs=None):
     regression = LinearRegression()
@@ -164,13 +169,16 @@ def linear_regression(xarray_kwargs=None):
     regression = XarrayRegression(regression, **xarray_kwargs)
     return regression
 
-
 def pearsonr_correlation(xarray_kwargs=None):
     xarray_kwargs = xarray_kwargs or {}
     return XarrayCorrelation(scipy.stats.pearsonr, **xarray_kwargs)
 
-
 def linear_pearsonr(*args, regression_kwargs=None, correlation_kwargs=None, **kwargs):
     regression = linear_regression(regression_kwargs or {})
+    correlation = pearsonr_correlation(correlation_kwargs or {})
+    return CrossRegressedCorrelation(*args, regression=regression, correlation=correlation, **kwargs)
+
+def ridge_pearsonr(*args, regression_kwargs=None, correlation_kwargs=None, **kwargs):
+    regression = ridge_regression(regression_kwargs or {})
     correlation = pearsonr_correlation(correlation_kwargs or {})
     return CrossRegressedCorrelation(*args, regression=regression, correlation=correlation, **kwargs)
