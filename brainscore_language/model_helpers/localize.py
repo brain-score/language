@@ -7,7 +7,6 @@ import torch
 import logging
 import numpy as np
 import transformers
-import pandas as pd
 
 from glob import glob
 from tqdm import tqdm
@@ -114,7 +113,7 @@ def extract_representations(
         "non-words": {layer_name: np.zeros((len(langloc_dataset.sentences), hidden_dim)) for layer_name in layer_names}
     }
     
-    for batch_idx, batch_data in tqdm(enumerate(langloc_dataloader)):
+    for batch_idx, batch_data in tqdm(enumerate(langloc_dataloader), total=len(langloc_dataloader)):
 
         sents, non_words = batch_data
         sent_tokens = tokenizer(sents, truncation=True, max_length=12, return_tensors='pt').to(device)
@@ -154,7 +153,7 @@ def localize_fed10(model_id: str,
     p_values_matrix = np.zeros((len(layer_names), hidden_dim))
     t_values_matrix = np.zeros((len(layer_names), hidden_dim))
 
-    for layer_idx, layer_name in tqdm(enumerate(layer_names)):
+    for layer_idx, layer_name in tqdm(enumerate(layer_names), total=len(layer_names)):
 
         sentences_actv = representations["sentences"][layer_name]
         non_words_actv = representations["non-words"][layer_name]
