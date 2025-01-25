@@ -158,7 +158,7 @@ class ScaledCrossRegressedCorrelation(Metric):
         return self.cross_regressed_correlation(source, target)
 
 def ridge_regression(xarray_kwargs=None):
-    regression = RidgeCV(alphas=[10 ** x for x in range(-10, 10)])
+    regression = RidgeCV(alphas=np.logspace(-3, 3, 7))
     xarray_kwargs = xarray_kwargs or {}
     regression = XarrayRegression(regression, **xarray_kwargs)
     return regression

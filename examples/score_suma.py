@@ -1,6 +1,6 @@
 from brainscore_language import score
 
-model_score = score(model_identifier='suma', benchmark_identifier='Pereira2018.243sentences-linear')
+model_score = score(model_identifier='suma', benchmark_identifier='Fedorenko2016-ridge')
 print(model_score)
 
 '''

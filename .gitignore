@@ -136,7 +136,7 @@ dmypy.json
 
 ### project specific additions:
 
-brainscore_language/data
+# brainscore_language/data
 html
 .vscode
 *.code-workspace
@@ -151,3 +151,4 @@ cache
 wandb/
 **/models/lm1b/resources
 conda_score--*
+brainscore_language/data/*/*.csv

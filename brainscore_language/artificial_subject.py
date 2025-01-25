@@ -104,6 +104,8 @@ class ArtificialSubject:
 
         fMRI = "fMRI"
         """ functional magnetic resonance imaging """
+        ECoG = "ECoG"
+        """ Electrocorticography """
 
     def start_neural_recording(self, recording_target: RecordingTarget, recording_type: RecordingType):
         """
