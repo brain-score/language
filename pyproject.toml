@@ -9,7 +9,7 @@ description = ""
 authors = []
 license = { 'file' = 'LICENSE' }
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.11"
 
 dependencies = [
     "tqdm",
@@ -34,7 +34,7 @@ test = [
 
 [build-system]
 requires = [
-    "setuptools>=65.*",
+    "setuptools>=65",
     "wheel"
 ]
 
