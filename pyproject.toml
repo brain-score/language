@@ -9,12 +9,12 @@ description = ""
 authors = []
 license = { 'file' = 'LICENSE' }
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.11"
 
 dependencies = [
     "tqdm",
     "numpy>=1.21",
-    "brainscore_core@git+https://github.com/brain-score/core.git@v2.0.0",
+    "brainscore_core@git+https://github.com/brain-score/core.git@main",
     "fire",
     "scikit-learn",
     # model_helpers dependencies
