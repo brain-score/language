@@ -14,7 +14,7 @@ requires-python = ">=3.7"
 dependencies = [
     "tqdm",
     "numpy>=1.21",
-    "brainscore_core@git+https://github.com/brain-score/core.git@main",
+    "brainscore_core==2.0.0",
     "fire",
     "scikit-learn",
     # model_helpers dependencies
