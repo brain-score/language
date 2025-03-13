@@ -150,3 +150,5 @@ cache
 .idea/
 wandb/
 **/models/lm1b/resources
+conda_score--*
+brainscore_language/data/*/*.csv
