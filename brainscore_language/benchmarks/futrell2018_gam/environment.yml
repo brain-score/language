@@ -1,0 +1,8 @@
+channels:
+  - r
+dependencies:
+  - pip
+  - r
+  - r-mgcv
+  - pip:
+    - rpy2
