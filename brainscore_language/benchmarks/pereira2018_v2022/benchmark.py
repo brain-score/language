@@ -1,27 +1,40 @@
-import xarray as xr
-
 from brainio.assemblies import NeuroidAssembly
 from brainscore_core.benchmarks import BenchmarkBase
 from brainscore_core.metrics import Score
-from brainscore_language import load_dataset, load_metric
 from brainscore_language.artificial_subject import ArtificialSubject
-from brainscore_language.data.pereira2018 import BIBTEX
 from brainscore_language.utils.ceiling import ceiling_normalize
 from brainscore_language.utils.s3 import load_from_s3
+from brainscore_language import load_dataset, load_metric
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+BIBTEX = """@article{pereira2018toward,
+  title={Toward a universal decoder of linguistic meaning from brain activation},
+  author={Pereira, Francisco and Lou, Bin and Pritchett, Brianna and Ritter, Samuel and Gershman, Samuel J 
+          and Kanwisher, Nancy and Botvinick, Matthew and Fedorenko, Evelina},
+  journal={Nature communications},
+  volume={9},
+  number={1},
+  pages={1--13},
+  year={2018},
+  publisher={Nature Publishing Group}
+}"""
 
 
 def Pereira2018_243sentences():
-    return _Pereira2018ExperimentLinear(
-        experiment="243sentences",
+    return _Pereira2018LinregPearsonr(
+        experiment="PereiraE3_72pass",
         ceiling_s3_kwargs=dict(
-            version_id="CHl_9aFHIWVnPW_njePfy28yzggKuUPw",
-            sha1="5e23de899883828f9c886aec304bc5aa0f58f66c",
+            sha1="f74a68b74568e44257778effc40c56d223cc5219",
+            version_id="g1oQg1J.HBuG2WwD6fwjNsjhMvsbQpjA",
             raw_kwargs=dict(
-                version_id="uZye03ENmn.vKB5mARUGhcIY_DjShtPD",
-                sha1="525a6ac8c14ad826c63fdd71faeefb8ba542d5ac",
+                sha1="e64c0c8e73169340f30f7135d1f2f4f1275cb2ad",
+                version_id="8NMVc498YgYz7TZiocfeueCB5uxBt42G",
                 raw_kwargs=dict(
-                    version_id="XVTo58Po5YrNjTuDIWrmfHI0nbN2MVZa",
-                    sha1="34ba453dc7e8a19aed18cc9bca160e97b4a80be5",
+                    sha1="5b97b28406e18ea345a254d15562f4d271c6dc59",
+                    version_id="cNV3rCdVCAu2FjbQyoNGtFZNBfkh0q5d",
                 ),
             ),
         ),
@@ -29,30 +42,30 @@ def Pereira2018_243sentences():
 
 
 def Pereira2018_384sentences():
-    return _Pereira2018ExperimentLinear(
-        experiment="384sentences",
+    return _Pereira2018LinregPearsonr(
+        experiment="PereiraE2_96pass",
         ceiling_s3_kwargs=dict(
-            version_id="sjlnXr5wXUoGv6exoWu06C4kYI0KpZLk",
-            sha1="fc895adc52fd79cea3040961d65d8f736a9d3e29",
+            sha1="d4b55d2d7b44a27d45c375b938584b6b2c9b2265",
+            version_id="U_kebareV3iUmbUwg4P1MVJJdj_ImpcP",
             raw_kwargs=dict(
-                version_id="Hi74r9UKfpK0h0Bjf5DL.JgflGoaknrA",
-                sha1="ce2044a7713426870a44131a99bfc63d8843dae0",
+                sha1="e64c0c8e73169340f30f7135d1f2f4f1275cb2ad",
+                version_id="yKvtiG3W5FUrzRvi7nXdk7tH2x4C0H_F",
                 raw_kwargs=dict(
-                    version_id="m4dq_ouKWZkYtdyNPMSP0p6rqb7wcYpi",
-                    sha1="fe9fb24b34fd5602e18e34006ac5ccc7d4c825b8",
+                    sha1="5b97b28406e18ea345a254d15562f4d271c6dc59",
+                    version_id="2lHr8sfxTfZ25j88on1Wve2mmPnk3Cfp",
                 ),
             ),
         ),
     )
 
 
-class _Pereira2018ExperimentLinear(BenchmarkBase):
+class _Pereira2018LinregPearsonr(BenchmarkBase):
     """
     Evaluate model ability to predict neural activity in the human language system in response to natural sentences,
     recorded by Pereira et al. 2018.
     Alignment of neural activity between model and human subjects is evaluated via cross-validated linear predictivity.
 
-    This benchmark builds off the Pereira2018 benchmark introduced
+    This benchmark builds off the behavioral benchmark introduced
     in Schrimpf et al. 2021 (https://www.pnas.org/doi/10.1073/pnas.2105646118), but:
 
     * computes neural alignment to each of the two experiments ({243,384}sentences) separately, as well as ceilings
@@ -63,26 +76,45 @@ class _Pereira2018ExperimentLinear(BenchmarkBase):
     the two ceiling-normalized scores.
     """
 
-    def __init__(self, experiment: str, ceiling_s3_kwargs: dict):
+    def __init__(
+        self,
+        experiment: str,
+        ceiling_s3_kwargs: dict,
+    ):
         self.data = self._load_data(experiment)
-        self.metric = load_metric("linear_pearsonr")
-        identifier = f"Pereira2018.{experiment}-linear"
+        self.metric = load_metric(
+            "linear_pearsonr",
+            crossvalidation_kwargs={
+                "split_coord": "stimuli",
+            },
+            regression_kwargs={
+                "stimulus_coord": "stimuli",
+            },
+            correlation_kwargs={
+                "correlation_coord": "stimuli",
+                "neuroid_coord": "neuroid",
+            },
+        )
+        identifier = f"Pereira2018_v2022.{experiment}-linreg_pearsonr"
         ceiling = self._load_ceiling(identifier=identifier, **ceiling_s3_kwargs)
-        super(_Pereira2018ExperimentLinear, self).__init__(
+        super(_Pereira2018LinregPearsonr, self).__init__(
             identifier=identifier,
             ceiling=ceiling,
             version=1,
-            parent="Pereira2018-linear",
+            parent="Pereira2018-linreg_pearsonr",
             bibtex=BIBTEX,
         )
 
     def _load_data(self, experiment: str) -> NeuroidAssembly:
-        data = load_dataset("Pereira2018.language")
-        data = data.sel(experiment=experiment)  # filter experiment
+        data = load_dataset("Pereira2018_v2022.language")
+        # data = data.sel(experiment=experiment)  # filter experiment
+        data = data.loc[data.experiment == experiment, :, :]
         data = data.dropna(
             "neuroid"
         )  # not all subjects have done both experiments, drop those that haven't
         data.attrs["identifier"] = f"{data.identifier}.{experiment}"
+        if "time" in data.dims:
+            data = data.drop("time").squeeze("time")
         return data
 
     def _load_ceiling(
@@ -110,29 +142,16 @@ class _Pereira2018ExperimentLinear(BenchmarkBase):
         return ceiling
 
     def __call__(self, candidate: ArtificialSubject) -> Score:
-        candidate.start_neural_recording(
+        candidate.perform_neural_recording(
             recording_target=ArtificialSubject.RecordingTarget.language_system,
             recording_type=ArtificialSubject.RecordingType.fMRI,
         )
-        stimuli = self.data["stimulus"]
-        passages = self.data["passage_label"].values
-        predictions = []
-        for passage in sorted(
-            set(passages)
-        ):  # go over individual passages, sorting to keep consistency across runs
-            passage_indexer = [
-                stimulus_passage == passage for stimulus_passage in passages
-            ]
-            passage_stimuli = stimuli[passage_indexer]
-            passage_predictions = candidate.digest_text(passage_stimuli.values)[
-                "neural"
-            ]
-            passage_predictions["stimulus_id"] = (
-                "presentation",
-                passage_stimuli["stimulus_id"].values,
-            )
-            predictions.append(passage_predictions)
-        predictions = xr.concat(predictions, dim="presentation")
-        raw_score = self.metric(predictions, self.data)
-        score = ceiling_normalize(raw_score, self.ceiling)
+        stimuli = self.data["stimuli"]
+        predictions = candidate.digest_text(stimuli.values)["neural"]
+        predictions["presentation"] = "presentation", stimuli["stimuli"].values
+        raw_score = self.metric(
+            predictions,
+            self.data,
+        )
+        score = raw_score  # ceiling_normalize(raw_score, self.ceiling)
         return score

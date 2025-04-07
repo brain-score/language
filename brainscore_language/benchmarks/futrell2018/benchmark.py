@@ -25,27 +25,30 @@ class Futrell2018Pearsonr(BenchmarkBase):
     """
 
     def __init__(self):
-        self.data = load_dataset('Futrell2018')
-        self.metric = load_metric('pearsonr')
-        ceiler = SplitHalvesConsistency(num_splits=10, split_coordinate='subject_id', consistency_metric=self.metric)
+        self.data = load_dataset("Futrell2018")
+        self.metric = load_metric("pearsonr")
+        ceiler = SplitHalvesConsistency(
+            num_splits=10, split_coordinate="subject_id", consistency_metric=self.metric
+        )
         ceiling = ceiler(self.data)
         super(Futrell2018Pearsonr, self).__init__(
-            identifier='Futrell2018-pearsonr',
-            version=1,
-            parent='behavior',
+            identifier="Futrell2018-pearsonr",
             ceiling=ceiling,
-            bibtex=self.data.bibtex)
+            version=1,
+            parent="behavior",
+            bibtex=self.data.bibtex,
+        )
 
     def __call__(self, candidate: ArtificialSubject) -> Score:
         # run experiment
         candidate.start_behavioral_task(ArtificialSubject.Task.reading_times)
-        stimuli = self.data['word'].values
-        predictions = candidate.digest_text(stimuli)['behavior']
-        attach_presentation_meta(predictions, self.data['presentation'])
+        stimuli = self.data["word"].values
+        predictions = candidate.digest_text(stimuli)["behavior"]
+        attach_presentation_meta(predictions, self.data["presentation"])
         # exclude first words
-        predictions = predictions[predictions['word_within_sentence_id'] != 1]
-        targets = self.data[self.data['word_within_sentence_id'] != 1]
-        targets = targets.mean('subject')  # compare to "average human"
+        predictions = predictions[predictions["word_within_sentence_id"] != 1]
+        targets = self.data[self.data["word_within_sentence_id"] != 1]
+        targets = targets.mean("subject")  # compare to "average human"
         # score
         raw_score = self.metric(predictions, targets)
         score = ceiling_normalize(raw_score, self.ceiling)
@@ -56,7 +59,9 @@ class SplitHalvesConsistency:
     # following
     # https://github.com/brain-score/brain-score/blob/c51b8aa2c94212a9ac56c06c556afad0bb0a3521/brainscore/metrics/ceiling.py#L25-L96
 
-    def __init__(self, num_splits: int, split_coordinate: str, consistency_metric: Metric):
+    def __init__(
+        self, num_splits: int, split_coordinate: str, consistency_metric: Metric
+    ):
         """
         :param num_splits: how many times to create two halves
         :param split_coordinate: over which coordinate to split the assembly into halves
@@ -73,18 +78,30 @@ class SplitHalvesConsistency:
         consistencies, uncorrected_consistencies = [], []
         splits = range(self.num_splits)
         for _ in splits:
-            half1_values = random_state.choice(split_values, size=len(split_values) // 2, replace=False)
-            half2_values = set(split_values) - set(half1_values)  # this only works because of `replace=False` above
-            half1 = assembly[{split_dim: [value in half1_values for value in split_values]}].mean(split_dim)
-            half2 = assembly[{split_dim: [value in half2_values for value in split_values]}].mean(split_dim)
+            half1_values = random_state.choice(
+                split_values, size=len(split_values) // 2, replace=False
+            )
+            half2_values = set(split_values) - set(
+                half1_values
+            )  # this only works because of `replace=False` above
+            half1 = assembly[
+                {split_dim: [value in half1_values for value in split_values]}
+            ].mean(split_dim)
+            half2 = assembly[
+                {split_dim: [value in half2_values for value in split_values]}
+            ].mean(split_dim)
             consistency = self.consistency_metric(half1, half2)
             uncorrected_consistencies.append(consistency)
             # Spearman-Brown correction for sub-sampling
             corrected_consistency = 2 * consistency / (1 + (2 - 1) * consistency)
             consistencies.append(corrected_consistency)
-        consistencies = Score(consistencies, coords={'split': splits}, dims=['split'])
-        uncorrected_consistencies = Score(uncorrected_consistencies, coords={'split': splits}, dims=['split'])
-        average_consistency = consistencies.median('split')
-        average_consistency.attrs['raw'] = consistencies
-        average_consistency.attrs['uncorrected_consistencies'] = uncorrected_consistencies
+        consistencies = Score(consistencies, coords={"split": splits}, dims=["split"])
+        uncorrected_consistencies = Score(
+            uncorrected_consistencies, coords={"split": splits}, dims=["split"]
+        )
+        average_consistency = consistencies.median("split")
+        average_consistency.attrs["raw"] = consistencies
+        average_consistency.attrs[
+            "uncorrected_consistencies"
+        ] = uncorrected_consistencies
         return average_consistency
