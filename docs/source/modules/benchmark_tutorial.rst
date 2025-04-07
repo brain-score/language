@@ -208,7 +208,7 @@ For example:
 
         def __call__(self, candidate: ArtificialSubject) -> Score:
             candidate.start_behavioral_task(ArtificialSubject.Task.reading_times)  # or any other task
-            # or e.g. candidate.start_start_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
+            # or e.g. candidate.start_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
             #                                            recording_type=ArtificialSubject.RecordingType.fMRI)
             predictions = candidate.digest_text(stimuli)['behavior']
             raw_score = self.metric(predictions, self.data)
