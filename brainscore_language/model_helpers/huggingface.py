@@ -46,9 +46,8 @@ class HuggingfaceSubject(ArtificialSubject):
         self.model_id = model_id
         self.use_localizer = use_localizer
         self.region_layer_mapping = region_layer_mapping
-        self.basemodel = (model if model is not None else AutoModelForCausalLM.from_pretrained(self.model_id))
+        self.basemodel = (model if model is not None else AutoModelForCausalLM.from_pretrained(self.model_id, device_map="auto"))
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.basemodel.to(self.device)
         self.tokenizer = tokenizer if tokenizer is not None else AutoTokenizer.from_pretrained(self.model_id,
                                                                                                truncation_side='left')
         self.current_tokens = None  # keep track of current tokens
@@ -205,6 +204,10 @@ class HuggingfaceSubject(ArtificialSubject):
             context_tokens.pop('num_truncated_tokens')
         if 'overflow_to_sample_mapping' in context_tokens:
             context_tokens.pop('overflow_to_sample_mapping')
+        if 'token_type_ids' in context_tokens:
+            context_tokens.pop('token_type_ids')
+        if self.basemodel.config.is_encoder_decoder:
+            context_tokens['decoder_input_ids'] = context_tokens['input_ids']
         context_tokens.to(self.device)
         return context_tokens, num_new_context_tokens
 
