@@ -24,7 +24,9 @@ from brainscore_language.artificial_subject import ArtificialSubject
     ('gpt-neo-2.7B', [np.nan, 15.07522869,  3.6358602 ,  0.04999408,  1.42219079,
                       0.0399301 ,  0.02614061,  0.02547451]),
     ('gpt-neo-1.3B', [np.nan, 15.36009979,  5.54412651,  0.11744193,  0.60116327,
-                      0.04266951,  0.08952015,  0.09213546])
+                      0.04266951,  0.08952015,  0.09213546]),
+    ('gpt2', [np.nan, 13.00629139, 12.12623215,  9.79956627,  8.60373306,
+        3.44214535,  1.31260252, 10.23834896])
 ])
 def test_reading_times(model_identifier, expected_reading_times):
     model = load_model(model_identifier)
@@ -44,7 +46,8 @@ def test_reading_times(model_identifier, expected_reading_times):
     ('gpt2-xl', ['jumps', 'the', 'dog']),
     ('gpt-neo-125m', [',', 'the', 'dog']),
     ('gpt-neo-2.7B', ['jumps', 'the', 'dog']),
-    ('gpt-neo-1.3B', ['jumps', 'the', 'dog'])
+    ('gpt-neo-1.3B', ['jumps', 'the', 'dog']),
+    ('gpt2', ['es', 'the', ','])
 ])
 def test_next_word(model_identifier, expected_next_words):
     model = load_model(model_identifier)
@@ -64,7 +67,8 @@ def test_next_word(model_identifier, expected_next_words):
     ('gpt2-xl', 1600),
     ('gpt-neo-125m', 768),
     ('gpt-neo-1.3B', 2048),
-    ('gpt-neo-2.7B', 2560)
+    ('gpt-neo-2.7B', 2560),
+    ('gpt2', 768)
 ])
 def test_neural(model_identifier, feature_size):
     model = load_model(model_identifier)
