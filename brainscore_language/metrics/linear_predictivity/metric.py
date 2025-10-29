@@ -3,8 +3,8 @@ import scipy.stats
 from sklearn.linear_model import LinearRegression, RidgeCV
 from sklearn.preprocessing import scale
 
-from brainio.assemblies import NeuroidAssembly, array_is_element, DataAssembly
-from brainio.assemblies import walk_coords
+from brainscore_core.supported_data_standards.brainio.assemblies import NeuroidAssembly, array_is_element, DataAssembly
+from brainscore_core.supported_data_standards.brainio.assemblies import walk_coords
 from brainscore_core.metrics import Score, Metric
 from brainscore_language.utils.transformations import CrossValidation
 

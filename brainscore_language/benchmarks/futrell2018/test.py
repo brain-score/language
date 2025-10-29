@@ -2,7 +2,7 @@ import numpy as np
 from numpy.random import RandomState
 from pytest import approx
 
-from brainio.assemblies import BehavioralAssembly
+from brainscore_core.supported_data_standards.brainio.assemblies import BehavioralAssembly
 from brainscore_language import load_benchmark
 from brainscore_language.artificial_subject import ArtificialSubject
 

@@ -9,7 +9,7 @@ from nltk.grammar import PCFG, Nonterminal, is_terminal
 from nltk.corpus.reader import BracketParseCorpusReader
 from nltk.parse.pchart import Chart
 
-from brainio.assemblies import DataAssembly, BehavioralAssembly
+from brainscore_core.supported_data_standards.brainio.assemblies import DataAssembly, BehavioralAssembly
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.utils import fullname
 

@@ -1,6 +1,6 @@
 from typing import Dict, List, Union
 
-from brainio.assemblies import DataAssembly
+from brainscore_core.supported_data_standards.brainio.assemblies import DataAssembly
 
 
 class ArtificialSubject:
