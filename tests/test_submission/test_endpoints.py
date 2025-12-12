@@ -27,6 +27,8 @@ class TestRunScoring:
         logger.info('Initialize database entries')
         database_models.User.create(id=1, email='test@brainscore.com', password='abcde',
                                     is_active=True, is_staff=False, is_superuser=False, last_login='2022-10-14 9:25:00')
+        database_models.User.create(id=2, email='benchmark-owner@brainscore.com', password='abcde',
+                                    is_active=True, is_staff=False, is_superuser=False, last_login='2022-10-14 9:25:00')
 
     def teardown_method(self):
         logger.info('Clean database')

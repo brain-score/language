@@ -2,51 +2,55 @@ import os
 import pytest
 import subprocess
 import sys
+import torch
 from pathlib import Path
 from pytest import approx
 
 from brainscore_language import score
+
+# Use more lenient tolerance for MPS (Apple Silicon) due to hardware differences
+_SCORE_ATOL = 0.005 if torch.backends.mps.is_available() else 0.0005
 
 
 @pytest.mark.travis_slow
 @pytest.mark.parametrize(
     "model_identifier, benchmark_identifier, expected_score",
     [
-        ("distilgpt2", "Futrell2018-pearsonr", approx(0.36144805, abs=0.0005)),
-        ("distilgpt2", "Pereira2018.243sentences-linear", approx(0.82228507, abs=0.0005)),
-        ("glove-840b", "Pereira2018.384sentences-linear", approx(0.18385368, abs=0.0005)),
-        ("gpt2-xl", "Futrell2018-pearsonr", approx(0.31825621, abs=0.0005)),
-        ('distilgpt2', 'syntaxgym-center_embed', approx(0.96428571, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-center_embed_mod', approx(0.92857143, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-cleft', approx(1.0, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-cleft_modifier', approx(0.725, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-fgd_hierarchy', approx(0.0, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-fgd_object', approx(0.875, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-fgd_pp', approx(0.875, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-fgd_subject', approx(0.54166667, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-mvrr', approx(0.821429, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-mvrr_mod', approx(0.785714, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-npi_orc_any', approx(0.026316, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-npi_orc_ever', approx(0.026316, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-npi_src_any', approx(0.0, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-npi_src_ever', approx(0.0, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-npz_ambig', approx(0.66666667, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-npz_ambig_mod', approx(0.66666667, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-npz_obj', approx(0.83333333, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-npz_obj_mod', approx(0.875, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-number_orc', approx(0.10526316, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-number_prep', approx(0.57894737, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-number_src', approx(0.78947368, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-reflexive_orc_fem', approx(0.0, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-reflexive_orc_masc', approx(0.368421, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-reflexive_prep_fem', approx(0.105263, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-reflexive_prep_masc', approx(0.473684, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-reflexive_src_fem', approx(0.157895, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-reflexive_src_masc', approx(0.526316, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-subordination', approx(0.2173913, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-subordination_orc-orc', approx(0.95652174, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-subordination_pp-pp', approx(0.47826087, abs=.0005)),
-        ('distilgpt2', 'syntaxgym-subordination_src-src', approx(0.56521739, abs=.0005))
+        ("distilgpt2", "Futrell2018-pearsonr", approx(0.36144805, abs=_SCORE_ATOL)),
+        ("distilgpt2", "Pereira2018.243sentences-linear", approx(0.82228507, abs=_SCORE_ATOL)),
+        ("glove-840b", "Pereira2018.384sentences-linear", approx(0.18385368, abs=_SCORE_ATOL)),
+        ("gpt2-xl", "Futrell2018-pearsonr", approx(0.31825621, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-center_embed', approx(0.96428571, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-center_embed_mod', approx(0.92857143, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-cleft', approx(1.0, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-cleft_modifier', approx(0.725, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-fgd_hierarchy', approx(0.0, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-fgd_object', approx(0.875, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-fgd_pp', approx(0.875, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-fgd_subject', approx(0.54166667, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-mvrr', approx(0.821429, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-mvrr_mod', approx(0.785714, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-npi_orc_any', approx(0.026316, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-npi_orc_ever', approx(0.026316, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-npi_src_any', approx(0.0, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-npi_src_ever', approx(0.0, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-npz_ambig', approx(0.66666667, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-npz_ambig_mod', approx(0.66666667, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-npz_obj', approx(0.83333333, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-npz_obj_mod', approx(0.875, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-number_orc', approx(0.10526316, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-number_prep', approx(0.57894737, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-number_src', approx(0.78947368, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-reflexive_orc_fem', approx(0.0, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-reflexive_orc_masc', approx(0.368421, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-reflexive_prep_fem', approx(0.105263, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-reflexive_prep_masc', approx(0.473684, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-reflexive_src_fem', approx(0.157895, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-reflexive_src_masc', approx(0.526316, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-subordination', approx(0.2173913, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-subordination_orc-orc', approx(0.95652174, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-subordination_pp-pp', approx(0.47826087, abs=_SCORE_ATOL)),
+        ('distilgpt2', 'syntaxgym-subordination_src-src', approx(0.56521739, abs=_SCORE_ATOL))
     ]
 )
 def test_score(model_identifier, benchmark_identifier, expected_score):
@@ -58,11 +62,11 @@ def test_score(model_identifier, benchmark_identifier, expected_score):
     "model_identifier, benchmark_identifier, expected_score, install_dependencies",
     [
         ("randomembedding-100", "Pereira2018.243sentences-linear",
-         approx(0.0285022, abs=0.0005), "newenv"),
+         approx(0.0285022, abs=_SCORE_ATOL), "newenv"),
         ("randomembedding-100", "Pereira2018.243sentences-linear",
-         approx(0.0285022, abs=0.0005), "yes"),
+         approx(0.0285022, abs=_SCORE_ATOL), "yes"),
         ("randomembedding-100", "Pereira2018.243sentences-linear",
-         approx(0.0285022, abs=0.0005), "no"),
+         approx(0.0285022, abs=_SCORE_ATOL), "no"),
     ]
 )
 def test_score_with_install_dependencies(
