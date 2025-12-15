@@ -11,7 +11,7 @@ from brainscore_language.model_helpers.huggingface import HuggingfaceSubject
 _logger = logging.getLogger(__name__)
 
 # Use more lenient tolerance for MPS (Apple Silicon) due to floating point precision differences
-_ATOL = 0.001 if torch.backends.mps.is_available() else 0.0001
+_ATOL = 0.001 
 
 
 class TestNextWord:

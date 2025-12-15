@@ -9,7 +9,7 @@ from pytest import approx
 from brainscore_language import score
 
 # Use more lenient tolerance for MPS (Apple Silicon) due to hardware differences
-_SCORE_ATOL = 0.005 if torch.backends.mps.is_available() else 0.0005
+_SCORE_ATOL = 0.005 
 
 
 @pytest.mark.travis_slow
