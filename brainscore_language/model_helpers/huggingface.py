@@ -13,7 +13,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BatchEncoding
 from transformers.modeling_outputs import CausalLMOutput
 from typing import Union, List, Tuple, Dict, Callable
 
-from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly
+from brainscore_core.supported_data_standards.brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.model_helpers.preprocessing import prepare_context
 from brainscore_language.utils import fullname
@@ -47,7 +47,14 @@ class HuggingfaceSubject(ArtificialSubject):
         self.use_localizer = use_localizer
         self.region_layer_mapping = region_layer_mapping
         self.basemodel = (model if model is not None else AutoModelForCausalLM.from_pretrained(self.model_id))
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        if torch.backends.mps.is_available():
+            self.device = 'mps'
+        elif torch.cuda.is_available():
+            self.device = 'cuda'
+        else:
+            self.device = 'cpu'
+        self._logger.info(f"Using device: {self.device}")
+        print(f"Using device: {self.device}")
         self.basemodel.to(self.device)
         self.tokenizer = tokenizer if tokenizer is not None else AutoTokenizer.from_pretrained(self.model_id,
                                                                                                truncation_side='left')

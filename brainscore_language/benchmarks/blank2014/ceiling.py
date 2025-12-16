@@ -5,7 +5,7 @@ from numpy.random import RandomState
 from scipy.optimize import curve_fit
 from tqdm import tqdm, trange
 
-from brainio.assemblies import array_is_element, walk_coords, DataAssembly, merge_data_arrays
+from brainscore_core.supported_data_standards.brainio.assemblies import array_is_element, walk_coords, DataAssembly, merge_data_arrays
 from brainscore_core.metrics import Score
 from brainscore_language.benchmark_helpers import ci_error, manual_merge
 from brainscore_language.utils import fullname

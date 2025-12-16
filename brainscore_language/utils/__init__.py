@@ -1,6 +1,6 @@
 import numpy as np
 
-from brainio.assemblies import walk_coords
+from brainscore_core.supported_data_standards.brainio.assemblies import walk_coords
 
 
 def fullname(obj):
