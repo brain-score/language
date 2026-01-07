@@ -81,6 +81,7 @@ def test_score_with_install_dependencies(
     os.environ["BS_INSTALL_DEPENDENCIES"] = install_dependence_preference
     assert actual_score == expected_score
 
+# quick change here
 
 def test_commandline_score():
     process = subprocess.run(
