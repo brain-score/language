@@ -58,26 +58,6 @@ def test_score(model_identifier, benchmark_identifier, expected_score):
     assert actual_score == expected_score
 
 
-@pytest.mark.parametrize(
-    "model_identifier, benchmark_identifier, expected_score, install_dependencies",
-    [
-        ("randomembedding-100", "Pereira2018.243sentences-linear",
-         approx(0.0285022, abs=_SCORE_ATOL), "newenv"),
-    ]
-)
-def test_score_with_install_dependencies(
-        model_identifier, benchmark_identifier, expected_score, install_dependencies):
-    install_dependence_preference = os.environ.get(
-        "BS_INSTALL_DEPENDENCIES", "yes")
-    os.environ["BS_INSTALL_DEPENDENCIES"] = install_dependencies
-    actual_score = score(
-        model_identifier=model_identifier,
-        benchmark_identifier=benchmark_identifier,
-        conda_active=True)
-    os.environ["BS_INSTALL_DEPENDENCIES"] = install_dependence_preference
-    assert actual_score == expected_score
-
-
 @pytest.mark.travis_slow
 @pytest.mark.parametrize(
     "model_identifier, benchmark_identifier, expected_score, install_dependencies",
@@ -90,7 +70,7 @@ def test_score_with_install_dependencies(
          approx(0.0285022, abs=_SCORE_ATOL), "no"),
     ]
 )
-def test_score_with_install_dependencies_slow(
+def test_score_with_install_dependencies(
         model_identifier, benchmark_identifier, expected_score, install_dependencies):
     install_dependence_preference = os.environ.get(
         "BS_INSTALL_DEPENDENCIES", "yes")
