@@ -23,6 +23,17 @@ on:
         required: false
         type: boolean
         default: false
+    secrets:
+      BSC_DATABASESECRET:
+        required: true
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      GITHUB_TOKEN:
+        required: true
+      APPROVAL_TOKEN:
+        required: true
 
   workflow_dispatch:
     inputs:
