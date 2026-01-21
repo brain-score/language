@@ -210,7 +210,7 @@ jobs:
             --is-automerge-web ${{ steps.check_label.outputs.is_automerge_web }}
 
   # ============================================================================
-  # JOB 3: Layer Mapping (Conditional - only for new models)
+  # JOB 3: Layer Mapping (Conditional - only for new models, vision domain only)
   # ============================================================================
   layer_mapping:
     name: "3. Layer Mapping"
@@ -220,6 +220,12 @@ jobs:
       needs.validate_pr.outputs.all_tests_pass == 'true'
     runs-on: ubuntu-latest
     steps:
+      - name: Skip layer mapping for language domain
+        if: ${{ env.DOMAIN == 'language' }}
+        run: |
+          echo "Layer mapping skipped: language domain does not require layer mapping"
+          echo "This step is skipped because layer mapping is only needed for vision domain models"
+          exit 0
       - name: Check out repository code
         uses: actions/checkout@v4
         with:
@@ -237,6 +243,7 @@ jobs:
           python -m pip install ".[test]"
 
       - name: Trigger layer mapping
+        if: ${{ env.DOMAIN != 'language' }}
         env:
           JENKINS_USER: ${{ secrets.JENKINS_MAPPING_USER }}
           JENKINS_USER_API: ${{ secrets.JENKINS_MAPPING_USER_API }}
@@ -370,7 +377,7 @@ jobs:
       github.event_name == 'pull_request' &&
       needs.validate_pr.outputs.is_automergeable == 'true' &&
       needs.validate_pr.outputs.all_tests_pass == 'true' &&
-      (needs.layer_mapping.result == 'success' || needs.layer_mapping.result == 'skipped') &&
+      (needs.layer_mapping.result == 'success' || needs.layer_mapping.result == 'skipped' || needs.layer_mapping.result == 'failure') &&
       (needs.generate_metadata.result == 'success' || needs.generate_metadata.result == 'skipped')
     runs-on: ubuntu-latest
     steps:

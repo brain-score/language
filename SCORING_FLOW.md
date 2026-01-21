@@ -12,7 +12,7 @@ PR Created/Updated
 [Orchestrator Workflow]
     ├─→ Detect Changes
     ├─→ Validate PR (pre-merge)
-    ├─→ Layer Mapping (if new models)
+    ├─→ Layer Mapping (if new models, vision only - skipped for language)
     ├─→ Generate Metadata (if new plugins without metadata.yml)
     ├─→ Process Metadata (if metadata-only changes)
     ├─→ Auto-merge (if approved)
@@ -94,22 +94,26 @@ PR Created/Updated
 - New models were added (`needs_mapping == true`)
 - All tests passed (`all_tests_pass == true`)
 
-**Purpose:** Map model layers for new model submissions
+**Purpose:** Map model layers for new model submissions (vision domain only)
 
 **Process:**
-1. Extracts list of new models from plugin info
-2. Triggers Jenkins layer mapping job via `actions_helpers.py trigger_layer_mapping`
-3. Passes model information to Jenkins:
-   - Model identifiers
-   - PR number
-   - Source repository and branch
+1. **For language domain:** Step is skipped with message "Layer mapping skipped: language domain does not require layer mapping"
+2. **For vision domain:**
+   - Extracts list of new models from plugin info
+   - Triggers Jenkins layer mapping job via `actions_helpers.py trigger_layer_mapping`
+   - Passes model information to Jenkins:
+     - Model identifiers
+     - PR number
+     - Source repository and branch
 
-**Jenkins Job:**
+**Jenkins Job (vision only):**
 - Runs layer mapping for new models
 - Maps model architecture layers
 - Updates model metadata
 
-**Note:** This step is skipped if no new models are added.
+**Note:** 
+- This step is skipped if no new models are added
+- **Layer mapping is automatically skipped for language domain** (only needed for vision models)
 
 ### 5. Generate Metadata (Conditional)
 
@@ -330,7 +334,7 @@ brainscore_language/submission/
    - Model code is added but no `metadata.yml` file
 2. Workflow detects new model
 3. Validates PR (tests must pass)
-4. Triggers layer mapping for new model
+4. **Skips layer mapping** (language domain doesn't require it)
 5. **Generates metadata.yml** for the new model (since it's missing)
    - Extracts model architecture, parameters, etc.
    - Commits metadata to PR branch
@@ -345,7 +349,7 @@ brainscore_language/submission/
    - Model code AND `metadata.yml` file are both provided
 2. Workflow detects new model
 3. Validates PR (tests must pass)
-4. Triggers layer mapping for new model
+4. **Skips layer mapping** (language domain doesn't require it)
 5. **Skips metadata generation** (metadata already exists)
 6. Auto-merges PR after validation
 7. Post-merge: triggers scoring
@@ -478,10 +482,11 @@ Scoring results are stored in the Brain-Score database and can be viewed:
 ### Layer Mapping Not Running
 
 **Check:**
-1. Are new models actually added? (not just modified)
-2. Did tests pass? (mapping requires passing tests)
-3. Check Jenkins mapping job status
-4. Review workflow logs
+1. **For language domain:** This is expected - layer mapping is automatically skipped
+2. Are new models actually added? (not just modified)
+3. Did tests pass? (mapping requires passing tests)
+4. Check Jenkins mapping job status (vision domain only)
+5. Review workflow logs - should show "Layer mapping skipped: language domain does not require layer mapping"
 
 ### Metadata Not Generated
 

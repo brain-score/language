@@ -14,11 +14,12 @@ This workflow orchestrates the entire submission pipeline:
 
 1. **Detect Changes** - Identifies what plugins changed
 2. **Validate PR** - Checks if PR is automergeable (pre-merge only)
-3. **Layer Mapping** - Maps layers for new models (conditional)
+3. **Layer Mapping** - Maps layers for new models (conditional, vision domain only - skipped for language)
 4. **Process Metadata** - Handles metadata-only changes (conditional)
-5. **Auto-merge** - Automatically merges approved PRs (conditional)
-6. **Post-Merge Scoring** - Triggers Jenkins scoring after merge (conditional)
-7. **Notify on Failure** - Sends failure notifications (always runs on failure)
+5. **Generate Metadata** - Generates metadata for new plugins missing metadata.yml (conditional)
+6. **Auto-merge** - Automatically merges approved PRs (conditional)
+7. **Post-Merge Scoring** - Triggers Jenkins scoring after merge (conditional)
+8. **Notify on Failure** - Sends failure notifications (always runs on failure)
 
 ### Reusable Workflows
 
@@ -43,23 +44,27 @@ PR Created/Updated
     └─→ Tests fail? → Notify user
     ↓
 [3] Layer Mapping (if new models)
-    ├─→ Trigger Jenkins mapping
-    └─→ Wait for completion
+    ├─→ Language domain? → Skip (not needed)
+    └─→ Vision domain? → Trigger Jenkins mapping
     ↓
 [4] Process Metadata (if metadata-only)
     ├─→ Process metadata
     └─→ Create/merge metadata PRs
     ↓
-[5] Auto-merge (if validated)
+[5] Generate Metadata (if new plugins without metadata)
+    ├─→ Generate metadata.yml
+    └─→ Commit to PR branch
+    ↓
+[6] Auto-merge (if validated)
     ├─→ Approve PR
     └─→ Merge to main
     ↓
-[6] Post-Merge Scoring (after merge)
+[7] Post-Merge Scoring (after merge)
     ├─→ Extract user email
     ├─→ Build plugin info
     └─→ Trigger Jenkins scoring
     ↓
-[7] Notify on Failure (if any step fails)
+[8] Notify on Failure (if any step fails)
     └─→ Send email notification
 ```
 
