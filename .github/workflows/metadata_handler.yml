@@ -30,10 +30,10 @@ on:
         required: true
       AWS_SECRET_ACCESS_KEY:
         required: true
-      GITHUB_TOKEN:
-        required: true
       APPROVAL_TOKEN:
         required: true
+      # Note: GITHUB_TOKEN is automatically available in reusable workflows
+      # and cannot be passed explicitly as it's a reserved secret name
 
   workflow_dispatch:
     inputs:

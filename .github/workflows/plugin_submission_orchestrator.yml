@@ -275,8 +275,8 @@ jobs:
       BSC_DATABASESECRET: ${{ secrets.BSC_DATABASESECRET }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       APPROVAL_TOKEN: ${{ secrets.APPROVAL_TOKEN }}
+      # Note: GITHUB_TOKEN is automatically available in reusable workflows
 
   # ============================================================================
   # JOB 5: Generate Metadata (Conditional - for new plugins without metadata.yml)
