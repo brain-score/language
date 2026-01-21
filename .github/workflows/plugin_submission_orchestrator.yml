@@ -1,0 +1,543 @@
+name: Plugin Submission Orchestrator
+
+# Professional, industry-standard orchestration workflow for LLM evaluations
+# Single entry point for all plugin submissions (models, benchmarks, metrics, data)
+# Consolidates all submission logic into one clear, sequential flow
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled]
+  pull_request_target:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  checks: read
+  statuses: read
+
+env:
+  DOMAIN: language
+  DOMAIN_ROOT: brainscore_language
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # ============================================================================
+  # JOB 1: Detect and Classify Changes
+  # ============================================================================
+  detect_changes:
+    name: "1. Detect Changes"
+    runs-on: ubuntu-latest
+    outputs:
+      has_plugins: ${{ steps.detect.outputs.has_plugins }}
+      plugin_type: ${{ steps.detect.outputs.plugin_type }}
+      plugin_dirs: ${{ steps.detect.outputs.plugin_dirs }}
+      has_new_models: ${{ steps.detect.outputs.has_new_models }}
+      metadata_only: ${{ steps.detect.outputs.metadata_only }}
+      needs_scoring: ${{ steps.detect.outputs.needs_scoring }}
+      needs_mapping: ${{ steps.detect.outputs.needs_mapping }}
+      needs_metadata_generation: ${{ steps.detect.outputs.needs_metadata_generation }}
+      is_automergeable: ${{ steps.detect.outputs.is_automergeable }}
+      plugin_info_json: ${{ steps.detect.outputs.plugin_info_json }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          python -m pip install ".[test]"
+
+      - name: Get changed files
+        id: changed_files
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request_target" ] && [ "${{ github.event.pull_request.merged }}" == "true" ]; then
+            # Post-merge: compare merge commit to previous
+            git fetch origin refs/pull/${{ github.event.number }}/head
+            MERGE_COMMIT=$(git log --format='%H %P' --all | grep "$(git rev-parse FETCH_HEAD)$" | cut -f1 -d' ')
+            CHANGED_FILES=$(git diff --name-only origin/main~1 $MERGE_COMMIT | tr '\n' ' ' || echo "")
+          else
+            # Pre-merge: compare PR head to base
+            git fetch origin ${{ github.event.pull_request.head.ref }}
+            CHANGED_FILES=$(git diff --name-only origin/main...FETCH_HEAD | tr '\n' ' ' || echo "")
+          fi
+          echo "CHANGED_FILES=${CHANGED_FILES}" >> $GITHUB_ENV
+          echo "Changed files: ${CHANGED_FILES}"
+
+      - name: Detect plugin changes
+        id: detect
+        run: |
+          PLUGIN_INFO=$(python -c "
+          from brainscore_core.plugin_management.parse_plugin_changes import get_scoring_info
+          import json
+          info = get_scoring_info('${{ env.CHANGED_FILES }}', '${{ env.DOMAIN_ROOT }}')
+          print(json.dumps(info))
+          ")
+          
+          echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_ENV
+          
+          # Extract outputs
+          HAS_PLUGINS=$(echo "$PLUGIN_INFO" | jq -r '.modifies_plugins // false')
+          PLUGIN_TYPE=$(echo "$PLUGIN_INFO" | jq -r '.plugin_type // ""')
+          NEEDS_SCORING=$(echo "$PLUGIN_INFO" | jq -r '.run_score // "False"')
+          IS_AUTOMERGEABLE=$(echo "$PLUGIN_INFO" | jq -r '.is_automergeable // false')
+          
+          # Check for new models
+          NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models // []')
+          HAS_NEW_MODELS=$(if [ "$NEW_MODELS" != "[]" ] && [ "$NEW_MODELS" != "null" ] && [ -n "$NEW_MODELS" ]; then echo "true"; else echo "false"; fi)
+          
+          # Extract plugin directories
+          PLUGIN_DIRS=$(echo "$PLUGIN_INFO" | jq -r '[.changed_plugins.models[], .changed_plugins.benchmarks[]] | join(",")' || echo "")
+          
+          # Check if metadata only
+          NON_METADATA=$(echo "${{ env.CHANGED_FILES }}" | tr ' ' '\n' | grep -Ev "metadata\.ya?ml" || true)
+          METADATA_ONLY="false"
+          if [ -z "$NON_METADATA" ] && [ "$HAS_PLUGINS" = "true" ]; then
+            METADATA_ONLY="true"
+          fi
+          
+          # Determine if mapping needed (for new models)
+          NEEDS_MAPPING="false"
+          if [ "$HAS_NEW_MODELS" = "true" ] && [ "$NEEDS_SCORING" = "True" ]; then
+            NEEDS_MAPPING="true"
+          fi
+          
+          # Check if new plugins need metadata generation (missing metadata.yml)
+          NEEDS_METADATA_GENERATION="false"
+          if [ "$HAS_PLUGINS" = "true" ] && [ "$METADATA_ONLY" = "false" ]; then
+            # Check if any plugin directories are missing metadata.yml
+            IFS=',' read -ra DIRS <<< "$PLUGIN_DIRS"
+            for dir in "${DIRS[@]}"; do
+              if [ -n "$dir" ]; then
+                # Check if metadata.yml or metadata.yaml exists
+                if [ ! -f "${dir}/metadata.yml" ] && [ ! -f "${dir}/metadata.yaml" ]; then
+                  NEEDS_METADATA_GENERATION="true"
+                  echo "Plugin directory missing metadata: ${dir}"
+                  break
+                fi
+              fi
+            done
+          fi
+          
+          # Set outputs
+          echo "has_plugins=${HAS_PLUGINS}" >> $GITHUB_OUTPUT
+          echo "plugin_type=${PLUGIN_TYPE}" >> $GITHUB_OUTPUT
+          echo "plugin_dirs=${PLUGIN_DIRS}" >> $GITHUB_OUTPUT
+          echo "has_new_models=${HAS_NEW_MODELS}" >> $GITHUB_OUTPUT
+          echo "metadata_only=${METADATA_ONLY}" >> $GITHUB_OUTPUT
+          echo "needs_scoring=${NEEDS_SCORING}" >> $GITHUB_OUTPUT
+          echo "needs_mapping=${NEEDS_MAPPING}" >> $GITHUB_OUTPUT
+          echo "needs_metadata_generation=${NEEDS_METADATA_GENERATION}" >> $GITHUB_OUTPUT
+          echo "is_automergeable=${IS_AUTOMERGEABLE}" >> $GITHUB_OUTPUT
+          echo "plugin_info_json=${PLUGIN_INFO}" >> $GITHUB_OUTPUT
+          
+          echo "Detection results:"
+          echo "  Has plugins: ${HAS_PLUGINS}"
+          echo "  Needs scoring: ${NEEDS_SCORING}"
+          echo "  Needs mapping: ${NEEDS_MAPPING}"
+          echo "  Metadata only: ${METADATA_ONLY}"
+          echo "  Needs metadata generation: ${NEEDS_METADATA_GENERATION}"
+
+  # ============================================================================
+  # JOB 2: Validate PR (Pre-merge only)
+  # ============================================================================
+  validate_pr:
+    name: "2. Validate PR"
+    needs: detect_changes
+    if: |
+      github.event_name == 'pull_request' &&
+      needs.detect_changes.outputs.has_plugins == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      is_automergeable: ${{ steps.validate.outputs.is_automergeable }}
+      all_tests_pass: ${{ steps.validate.outputs.all_tests_pass }}
+      pr_number: ${{ steps.get_pr_number.outputs.pr_number }}
+      is_automerge_web: ${{ steps.check_label.outputs.is_automerge_web }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          python -m pip install ".[test]"
+
+      - name: Get PR number
+        id: get_pr_number
+        run: |
+          echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+
+      - name: Check for automerge labels
+        id: check_label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LABELS_JSON=$(gh pr view ${{ github.event.pull_request.number }} --json labels)
+          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "automerge-web")' >/dev/null; then
+            echo "is_automerge_web=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_automerge_web=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "automerge" or .name == "automerge-web")' >/dev/null; then
+            echo "has_automerge_label=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_automerge_label=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate PR
+        id: validate
+        run: |
+          python brainscore_language/submission/actions_helpers.py validate_pr \
+            --pr-number ${{ github.event.pull_request.number }} \
+            --pr-head ${{ github.event.pull_request.head.sha }} \
+            --is-automerge-web ${{ steps.check_label.outputs.is_automerge_web }}
+
+  # ============================================================================
+  # JOB 3: Layer Mapping (Conditional - only for new models, vision domain only)
+  # ============================================================================
+  layer_mapping:
+    name: "3. Layer Mapping"
+    needs: [detect_changes, validate_pr]
+    if: |
+      needs.detect_changes.outputs.needs_mapping == 'true' &&
+      needs.validate_pr.outputs.all_tests_pass == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip layer mapping for language domain
+        if: ${{ env.DOMAIN == 'language' }}
+        run: |
+          echo "Layer mapping skipped: language domain does not require layer mapping"
+          echo "This step is skipped because layer mapping is only needed for vision domain models"
+          exit 0
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          python -m pip install ".[test]"
+
+      - name: Trigger layer mapping
+        if: ${{ env.DOMAIN != 'language' }}
+        env:
+          JENKINS_USER: ${{ secrets.JENKINS_MAPPING_USER }}
+          JENKINS_USER_API: ${{ secrets.JENKINS_MAPPING_USER_API }}
+          JENKINS_TOKEN: ${{ secrets.JENKINS_MAPPING_TOKEN }}
+          JENKINS_TRIGGER: ${{ secrets.JENKINS_MAPPING_URL }}
+        run: |
+          NEW_MODELS=$(echo '${{ needs.detect_changes.outputs.plugin_info_json }}' | jq -r '.new_models // []')
+          python brainscore_language/submission/actions_helpers.py trigger_layer_mapping \
+            --new-models "$NEW_MODELS" \
+            --pr-number ${{ github.event.pull_request.number }} \
+            --source-repo ${{ github.event.pull_request.head.repo.clone_url }} \
+            --source-branch ${{ github.event.pull_request.head.ref }}
+
+  # ============================================================================
+  # JOB 4: Process Metadata (Conditional - only if metadata-only changes)
+  # ============================================================================
+  process_metadata:
+    name: "4. Process Metadata"
+    needs: detect_changes
+    if: |
+      needs.detect_changes.outputs.metadata_only == 'true'
+    uses: ./.github/workflows/metadata_handler.yml
+    with:
+      plugin-dir: ${{ needs.detect_changes.outputs.plugin_dirs }}
+      plugin-type: ${{ needs.detect_changes.outputs.plugin_type }}
+      domain: language
+      db-connection: true
+    secrets:
+      BSC_DATABASESECRET: ${{ secrets.BSC_DATABASESECRET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      APPROVAL_TOKEN: ${{ secrets.APPROVAL_TOKEN }}
+
+  # ============================================================================
+  # JOB 5: Generate Metadata (Conditional - for new plugins without metadata.yml)
+  # ============================================================================
+  generate_metadata:
+    name: "5. Generate Metadata"
+    needs: [detect_changes, layer_mapping]
+    if: |
+      needs.detect_changes.outputs.needs_metadata_generation == 'true' &&
+      (needs.layer_mapping.result == 'success' || needs.layer_mapping.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          python -m pip install ".[test]"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "us-east-1"
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+      - name: Generate metadata for plugins
+        env:
+          BSC_DATABASESECRET: ${{ secrets.BSC_DATABASESECRET }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Split comma-separated plugin directories
+          IFS=',' read -ra PLUGIN_DIRS <<< "${{ needs.detect_changes.outputs.plugin_dirs }}"
+          
+          for dir in "${PLUGIN_DIRS[@]}"; do
+            if [ -n "$dir" ]; then
+              # Determine plugin type from directory path
+              if [[ "$dir" == *"/models/"* ]]; then
+                PLUGIN_TYPE="models"
+              elif [[ "$dir" == *"/benchmarks/"* ]]; then
+                PLUGIN_TYPE="benchmarks"
+              else
+                echo "Could not determine plugin type for ${dir}, skipping"
+                continue
+              fi
+              
+              # Check if metadata.yml exists
+              if [ ! -f "${dir}/metadata.yml" ] && [ ! -f "${dir}/metadata.yaml" ]; then
+                echo "Generating metadata for: ${dir} (type: ${PLUGIN_TYPE})"
+                # Generate metadata directly (without creating a new PR)
+                python -c "
+                from brainscore_core.plugin_management.handle_metadata import generate_metadata
+                metadata_path = generate_metadata('$dir', '$PLUGIN_TYPE', domain='language')
+                if metadata_path:
+                    print(f'Generated metadata at: {metadata_path}')
+                else:
+                    print(f'Failed to generate metadata for {dir}')
+                    exit(1)
+                " || echo "Metadata generation failed for ${dir}, continuing..."
+              else
+                echo "Metadata already exists for: ${dir}, skipping generation"
+              fi
+            fi
+          done
+
+      - name: Commit generated metadata files
+        run: |
+          # Check if any metadata files were generated
+          if git diff --name-only | grep -q "metadata\.ya?ml"; then
+            git add **/metadata.yml **/metadata.yaml
+            git commit -m "Auto-generate metadata.yml for new plugins" || echo "No changes to commit"
+            git push origin ${{ github.event.pull_request.head.ref }} || echo "Push failed or no changes"
+          else
+            echo "No metadata files to commit"
+          fi
+
+  # ============================================================================
+  # JOB 6: Auto-merge (Conditional - only if validated and approved)
+  # ============================================================================
+  automerge:
+    name: "6. Auto-merge"
+    needs: [detect_changes, validate_pr, layer_mapping, generate_metadata]
+    if: |
+      github.event_name == 'pull_request' &&
+      needs.validate_pr.outputs.is_automergeable == 'true' &&
+      needs.validate_pr.outputs.all_tests_pass == 'true' &&
+      (needs.layer_mapping.result == 'success' || needs.layer_mapping.result == 'skipped' || needs.layer_mapping.result == 'failure') &&
+      (needs.generate_metadata.result == 'success' || needs.generate_metadata.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto Approve
+        uses: hmarr/auto-approve-action@v4
+        with:
+          pull-request-number: ${{ github.event.pull_request.number }}
+          github-token: ${{ secrets.APPROVAL_TOKEN }}
+
+      - name: Auto Merge (GitHub submissions)
+        if: contains(github.event.pull_request.labels.*.name, 'automerge')
+        uses: plm9606/automerge_actions@1.2.2
+        with:
+          github-token: ${{ secrets.WORKFLOW_TOKEN }}
+          label-name: "automerge"
+          merge-method: "squash"
+          auto-delete: "true"
+
+      - name: Auto Merge (brain-score.org submissions)
+        if: contains(github.event.pull_request.labels.*.name, 'automerge-web')
+        uses: plm9606/automerge_actions@1.2.2
+        with:
+          github-token: ${{ secrets.WORKFLOW_TOKEN }}
+          label-name: "automerge-web"
+          merge-method: "squash"
+          auto-delete: "true"
+
+  # ============================================================================
+  # JOB 7: Post-Merge Scoring (Runs after PR is merged)
+  # ============================================================================
+  post_merge_scoring:
+    name: "6. Post-Merge Scoring"
+    needs: detect_changes
+    if: |
+      github.event_name == 'pull_request_target' &&
+      github.event.pull_request.merged == true &&
+      needs.detect_changes.outputs.needs_scoring == 'True' &&
+      needs.detect_changes.outputs.metadata_only == 'false'
+    runs-on: ubuntu-latest
+    env:
+      BSC_DATABASESECRET: ${{ secrets.BSC_DATABASESECRET }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          python -m pip install "."
+
+      - name: Extract user email
+        id: extract_email
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BSC_DATABASESECRET: ${{ secrets.BSC_DATABASESECRET }}
+        run: |
+          EMAIL=$(python brainscore_language/submission/actions_helpers.py extract_email \
+            --pr-username "${{ github.event.pull_request.user.login }}" \
+            --pr-title "${{ github.event.pull_request.title }}" \
+            --is-automerge-web ${{ contains(github.event.pull_request.labels.*.name, 'automerge-web') }})
+          echo "::add-mask::$EMAIL"
+          echo "email=$EMAIL" >> $GITHUB_OUTPUT
+
+      - name: Build plugin info
+        id: build_info
+        run: |
+          PLUGIN_INFO=$(echo '${{ needs.detect_changes.outputs.plugin_info_json }}' | jq -c \
+            --arg domain "language" \
+            --arg email "${{ steps.extract_email.outputs.email }}" \
+            --arg plugin_dirs "${{ needs.detect_changes.outputs.plugin_dirs }}" \
+            --arg plugin_type "${{ needs.detect_changes.outputs.plugin_type }}" \
+            '. + {
+              domain: $domain,
+              email: $email,
+              plugin_dirs: $plugin_dirs,
+              plugin_type: $plugin_type,
+              competition: "None",
+              model_type: "artificialsubject",
+              public: true
+            }')
+          echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_ENV
+          echo "plugin_info=${PLUGIN_INFO}" >> $GITHUB_OUTPUT
+          echo "Plugin info: ${PLUGIN_INFO}"
+
+      - name: Trigger Jenkins scoring
+        env:
+          JENKINS_USER: ${{ secrets.JENKINS_USER }}
+          JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
+          JENKINS_TRIGGER: ${{ secrets.JENKINS_TRIGGER }}
+          PLUGIN_INFO: ${{ steps.build_info.outputs.plugin_info }}
+        run: |
+          python -c 'from brainscore_core.submission.endpoints import call_jenkins; import os; call_jenkins(os.environ["PLUGIN_INFO"])'
+
+  # ============================================================================
+  # JOB 8: Failure Notification (Runs if any job fails)
+  # ============================================================================
+  notify_on_failure:
+    name: "Notify on Failure"
+    needs: [detect_changes, validate_pr, layer_mapping, process_metadata, generate_metadata, automerge, post_merge_scoring]
+    if: always() && (contains(needs.*.result, 'failure'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine which job failed
+        id: failed_job
+        run: |
+          if [ "${{ needs.detect_changes.result }}" == "failure" ]; then
+            FAILED_JOB="Detect Changes"
+          elif [ "${{ needs.validate_pr.result }}" == "failure" ]; then
+            FAILED_JOB="Validate PR"
+          elif [ "${{ needs.layer_mapping.result }}" == "failure" ]; then
+            FAILED_JOB="Layer Mapping"
+          elif [ "${{ needs.process_metadata.result }}" == "failure" ]; then
+            FAILED_JOB="Process Metadata"
+          elif [ "${{ needs.generate_metadata.result }}" == "failure" ]; then
+            FAILED_JOB="Generate Metadata"
+          elif [ "${{ needs.automerge.result }}" == "failure" ]; then
+            FAILED_JOB="Auto-merge"
+          elif [ "${{ needs.post_merge_scoring.result }}" == "failure" ]; then
+            FAILED_JOB="Post-Merge Scoring"
+          else
+            FAILED_JOB="Unknown"
+          fi
+          echo "failed_job=${FAILED_JOB}" >> $GITHUB_OUTPUT
+          echo "Failed job: ${FAILED_JOB}"
+
+      - name: Extract email for notification
+        if: github.event_name == 'pull_request'
+        id: get_email
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BSC_DATABASESECRET: ${{ secrets.BSC_DATABASESECRET }}
+        run: |
+          EMAIL=$(python brainscore_language/submission/actions_helpers.py extract_email \
+            --pr-username "${{ github.event.pull_request.user.login }}" \
+            --pr-title "${{ github.event.pull_request.title }}" \
+            --is-automerge-web ${{ contains(github.event.pull_request.labels.*.name, 'automerge-web') }})
+          echo "::add-mask::$EMAIL"
+          echo "email=$EMAIL" >> $GITHUB_OUTPUT
+
+      - name: Notify user
+        if: github.event_name == 'pull_request'
+        env:
+          GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
+          GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
+        run: |
+          python brainscore_language/submission/actions_helpers.py send_failure_email \
+            "${{ steps.get_email.outputs.email }}" \
+            "${{ github.event.pull_request.number }}" \
+            "${{ steps.failed_job.outputs.failed_job }}" \
+            "$GMAIL_USERNAME" \
+            "$GMAIL_PASSWORD"
