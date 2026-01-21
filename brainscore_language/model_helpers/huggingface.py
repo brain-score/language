@@ -69,6 +69,7 @@ class HuggingfaceSubject(ArtificialSubject):
             ArtificialSubject.Task.reading_times: self.estimate_reading_times,
         }
         self.task_function_mapping_dict = {**task_mapping_default, **task_heads} if task_heads else task_mapping_default
+        self.basemodel.eval()
 
         if self.use_localizer:
             layer_names = region_layer_mapping["language_system"]
