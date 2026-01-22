@@ -78,27 +78,31 @@ jobs:
       - name: Detect plugin changes
         id: detect
         run: |
-          PLUGIN_INFO=$(python -c "
+          PLUGIN_INFO=$(python -W ignore -c "
           from brainscore_core.plugin_management.parse_plugin_changes import get_scoring_info
           import json
           info = get_scoring_info('${{ env.CHANGED_FILES }}', '${{ env.DOMAIN_ROOT }}')
           print(json.dumps(info))
-          ")
+          " 2>/dev/null)
           
           echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_ENV
           
-          # Extract outputs
-          HAS_PLUGINS=$(echo "$PLUGIN_INFO" | jq -r '.modifies_plugins // false')
-          PLUGIN_TYPE=$(echo "$PLUGIN_INFO" | jq -r '.plugin_type // ""')
-          NEEDS_SCORING=$(echo "$PLUGIN_INFO" | jq -r '.run_score // "False"')
-          IS_AUTOMERGEABLE=$(echo "$PLUGIN_INFO" | jq -r '.is_automergeable // false')
+          # Extract outputs and normalize to lowercase strings
+          # Force single scalar values to prevent multiline output from jq
+          HAS_PLUGINS_RAW=$(echo "$PLUGIN_INFO" | jq -r 'if .modifies_plugins == true then "true" else "false" end' | head -n 1)
+          HAS_PLUGINS=$(echo "$HAS_PLUGINS_RAW" | tr '[:upper:]' '[:lower:]')
+          PLUGIN_TYPE=$(echo "$PLUGIN_INFO" | jq -r '.plugin_type // ""' | head -n 1)
+          NEEDS_SCORING_RAW=$(echo "$PLUGIN_INFO" | jq -r 'if .run_score == true then "True" else "False" end' | head -n 1)
+          NEEDS_SCORING=$(echo "$NEEDS_SCORING_RAW" | tr '[:upper:]' '[:lower:]')
+          IS_AUTOMERGEABLE_RAW=$(echo "$PLUGIN_INFO" | jq -r 'if .is_automergeable == true then "true" else "false" end' | head -n 1)
+          IS_AUTOMERGEABLE=$(echo "$IS_AUTOMERGEABLE_RAW" | tr '[:upper:]' '[:lower:]')
           
           # Check for new models
-          NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models // []')
+          NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models // []' | head -n 1)
           HAS_NEW_MODELS=$(if [ "$NEW_MODELS" != "[]" ] && [ "$NEW_MODELS" != "null" ] && [ -n "$NEW_MODELS" ]; then echo "true"; else echo "false"; fi)
           
-          # Extract plugin directories
-          PLUGIN_DIRS=$(echo "$PLUGIN_INFO" | jq -r '[.changed_plugins.models[], .changed_plugins.benchmarks[]] | join(",")' || echo "")
+          # Extract plugin directories (handle null case)
+          PLUGIN_DIRS=$(echo "$PLUGIN_INFO" | jq -r 'if .changed_plugins then [.changed_plugins.models[]? // empty, .changed_plugins.benchmarks[]? // empty] | join(",") else "" end' | head -n 1)
           
           # Check if metadata only
           NON_METADATA=$(echo "${{ env.CHANGED_FILES }}" | tr ' ' '\n' | grep -Ev "metadata\.ya?ml" || true)
@@ -109,7 +113,7 @@ jobs:
           
           # Determine if mapping needed (for new models)
           NEEDS_MAPPING="false"
-          if [ "$HAS_NEW_MODELS" = "true" ] && [ "$NEEDS_SCORING" = "True" ]; then
+          if [ "$HAS_NEW_MODELS" = "true" ] && [ "$NEEDS_SCORING" = "true" ]; then
             NEEDS_MAPPING="true"
           fi
           
@@ -130,17 +134,23 @@ jobs:
             done
           fi
           
-          # Set outputs
-          echo "has_plugins=${HAS_PLUGINS}" >> $GITHUB_OUTPUT
-          echo "plugin_type=${PLUGIN_TYPE}" >> $GITHUB_OUTPUT
-          echo "plugin_dirs=${PLUGIN_DIRS}" >> $GITHUB_OUTPUT
-          echo "has_new_models=${HAS_NEW_MODELS}" >> $GITHUB_OUTPUT
-          echo "metadata_only=${METADATA_ONLY}" >> $GITHUB_OUTPUT
-          echo "needs_scoring=${NEEDS_SCORING}" >> $GITHUB_OUTPUT
-          echo "needs_mapping=${NEEDS_MAPPING}" >> $GITHUB_OUTPUT
-          echo "needs_metadata_generation=${NEEDS_METADATA_GENERATION}" >> $GITHUB_OUTPUT
-          echo "is_automergeable=${IS_AUTOMERGEABLE}" >> $GITHUB_OUTPUT
-          echo "plugin_info_json=${PLUGIN_INFO}" >> $GITHUB_OUTPUT
+          # Set outputs - use simple echo format (GitHub Actions expects key=value format)
+          echo "has_plugins=${HAS_PLUGINS:-false}" >> $GITHUB_OUTPUT
+          echo "plugin_type=${PLUGIN_TYPE:-}" >> $GITHUB_OUTPUT
+          echo "plugin_dirs=${PLUGIN_DIRS:-}" >> $GITHUB_OUTPUT
+          echo "has_new_models=${HAS_NEW_MODELS:-false}" >> $GITHUB_OUTPUT
+          echo "metadata_only=${METADATA_ONLY:-false}" >> $GITHUB_OUTPUT
+          echo "needs_scoring=${NEEDS_SCORING:-false}" >> $GITHUB_OUTPUT
+          echo "needs_mapping=${NEEDS_MAPPING:-false}" >> $GITHUB_OUTPUT
+          echo "needs_metadata_generation=${NEEDS_METADATA_GENERATION:-false}" >> $GITHUB_OUTPUT
+          echo "is_automergeable=${IS_AUTOMERGEABLE:-false}" >> $GITHUB_OUTPUT
+          # Store plugin_info_json as base64-encoded string to avoid special character issues
+          if [ -n "$PLUGIN_INFO" ]; then
+            PLUGIN_INFO_B64=$(echo "$PLUGIN_INFO" | base64 | tr -d '\n')
+            echo "plugin_info_json=${PLUGIN_INFO_B64}" >> $GITHUB_OUTPUT
+          else
+            echo "plugin_info_json=" >> $GITHUB_OUTPUT
+          fi
           
           echo "Detection results:"
           echo "  Has plugins: ${HAS_PLUGINS}"
@@ -253,7 +263,9 @@ jobs:
           JENKINS_TOKEN: ${{ secrets.JENKINS_MAPPING_TOKEN }}
           JENKINS_TRIGGER: ${{ secrets.JENKINS_MAPPING_URL }}
         run: |
-          NEW_MODELS=$(echo '${{ needs.detect_changes.outputs.plugin_info_json }}' | jq -r '.new_models // []')
+          PLUGIN_INFO_B64='${{ needs.detect_changes.outputs.plugin_info_json }}'
+          PLUGIN_INFO=$(echo "$PLUGIN_INFO_B64" | base64 -d)
+          NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models // []')
           python brainscore_language/submission/actions_helpers.py trigger_layer_mapping \
             --new-models "$NEW_MODELS" \
             --pr-number ${{ github.event.pull_request.number }} \
@@ -278,7 +290,6 @@ jobs:
       BSC_DATABASESECRET: ${{ secrets.BSC_DATABASESECRET }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       APPROVAL_TOKEN: ${{ secrets.APPROVAL_TOKEN }}
 
   # ============================================================================
@@ -438,7 +449,7 @@ jobs:
     if: |
       github.event_name == 'pull_request_target' &&
       github.event.pull_request.merged == true &&
-      needs.detect_changes.outputs.needs_scoring == 'True' &&
+      needs.detect_changes.outputs.needs_scoring == 'true' &&
       needs.detect_changes.outputs.metadata_only == 'false'
     runs-on: ubuntu-latest
     env:
@@ -492,7 +503,9 @@ jobs:
       - name: Build plugin info
         id: build_info
         run: |
-          PLUGIN_INFO=$(echo '${{ needs.detect_changes.outputs.plugin_info_json }}' | jq -c \
+          PLUGIN_INFO_B64='${{ needs.detect_changes.outputs.plugin_info_json }}'
+          PLUGIN_INFO_DECODED=$(echo "$PLUGIN_INFO_B64" | base64 -d)
+          PLUGIN_INFO=$(echo "$PLUGIN_INFO_DECODED" | jq -c \
             --arg domain "language" \
             --arg email "${{ steps.extract_email.outputs.email }}" \
             --arg plugin_dirs "${{ needs.detect_changes.outputs.plugin_dirs }}" \
@@ -530,6 +543,22 @@ jobs:
     if: always() && (needs.detect_changes.result == 'failure' || needs.validate_pr.result == 'failure' || needs.layer_mapping.result == 'failure' || needs.process_metadata.result == 'failure' || needs.generate_metadata.result == 'failure' || needs.automerge.result == 'failure' || needs.post_merge_scoring.result == 'failure')
     runs-on: ubuntu-latest
     steps:
+      - name: Check out repository code
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        if: github.event_name == 'pull_request'
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        if: github.event_name == 'pull_request'
+        run: |
+          python -m pip install --upgrade pip setuptools
+          python -m pip install "."
+
       - name: Determine which job failed
         id: failed_job
         run: |
@@ -576,12 +605,21 @@ jobs:
           EMAIL=$(python brainscore_language/submission/actions_helpers.py extract_email \
             --pr-username "${{ github.event.pull_request.user.login }}" \
             --pr-title "${{ github.event.pull_request.title }}" \
-            --is-automerge-web ${{ steps.check_automerge_web_notify.outputs.is_automerge_web }})
-          echo "::add-mask::$EMAIL"
-          echo "email=$EMAIL" >> $GITHUB_OUTPUT
+            --is-automerge-web ${{ steps.check_automerge_web_notify.outputs.is_automerge_web }} || echo "")
+          if [ -z "$EMAIL" ]; then
+            echo "Warning: Could not extract email for user ${{ github.event.pull_request.user.login }}"
+            echo "email=" >> $GITHUB_OUTPUT
+            echo "email_found=false" >> $GITHUB_OUTPUT
+          else
+            echo "::add-mask::$EMAIL"
+            echo "email=$EMAIL" >> $GITHUB_OUTPUT
+            echo "email_found=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Notify user
-        if: github.event_name == 'pull_request'
+        if: |
+          github.event_name == 'pull_request' &&
+          steps.get_email.outputs.email_found == 'true'
         env:
           GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
           GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
@@ -592,3 +630,12 @@ jobs:
             "${{ steps.failed_job.outputs.failed_job }}" \
             "$GMAIL_USERNAME" \
             "$GMAIL_PASSWORD"
+      
+      - name: Log email extraction failure
+        if: |
+          github.event_name == 'pull_request' &&
+          steps.get_email.outputs.email_found == 'false'
+        run: |
+          echo "Could not send failure notification email - email not found for user ${{ github.event.pull_request.user.login }}"
+          echo "Failure reason: ${{ steps.failed_job.outputs.failed_job }}"
+          echo "PR: https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
