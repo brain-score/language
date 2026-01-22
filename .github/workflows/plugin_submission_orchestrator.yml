@@ -130,19 +130,23 @@ jobs:
             done
           fi
           
-          # Set outputs
-          echo "has_plugins=${HAS_PLUGINS}" >> $GITHUB_OUTPUT
-          echo "plugin_type=${PLUGIN_TYPE}" >> $GITHUB_OUTPUT
-          echo "plugin_dirs=${PLUGIN_DIRS}" >> $GITHUB_OUTPUT
-          echo "has_new_models=${HAS_NEW_MODELS}" >> $GITHUB_OUTPUT
-          echo "metadata_only=${METADATA_ONLY}" >> $GITHUB_OUTPUT
-          echo "needs_scoring=${NEEDS_SCORING}" >> $GITHUB_OUTPUT
-          echo "needs_mapping=${NEEDS_MAPPING}" >> $GITHUB_OUTPUT
-          echo "needs_metadata_generation=${NEEDS_METADATA_GENERATION}" >> $GITHUB_OUTPUT
-          echo "is_automergeable=${IS_AUTOMERGEABLE}" >> $GITHUB_OUTPUT
+          # Set outputs (ensure all values are non-empty strings)
+          echo "has_plugins=${HAS_PLUGINS:-false}" >> $GITHUB_OUTPUT
+          echo "plugin_type=${PLUGIN_TYPE:-}" >> $GITHUB_OUTPUT
+          echo "plugin_dirs=${PLUGIN_DIRS:-}" >> $GITHUB_OUTPUT
+          echo "has_new_models=${HAS_NEW_MODELS:-false}" >> $GITHUB_OUTPUT
+          echo "metadata_only=${METADATA_ONLY:-false}" >> $GITHUB_OUTPUT
+          echo "needs_scoring=${NEEDS_SCORING:-False}" >> $GITHUB_OUTPUT
+          echo "needs_mapping=${NEEDS_MAPPING:-false}" >> $GITHUB_OUTPUT
+          echo "needs_metadata_generation=${NEEDS_METADATA_GENERATION:-false}" >> $GITHUB_OUTPUT
+          echo "is_automergeable=${IS_AUTOMERGEABLE:-false}" >> $GITHUB_OUTPUT
           # Store plugin_info_json as base64-encoded string to avoid special character issues
-          PLUGIN_INFO_B64=$(echo "$PLUGIN_INFO" | base64 | tr -d '\n')
-          echo "plugin_info_json=${PLUGIN_INFO_B64}" >> $GITHUB_OUTPUT
+          if [ -n "$PLUGIN_INFO" ]; then
+            PLUGIN_INFO_B64=$(echo "$PLUGIN_INFO" | base64 | tr -d '\n')
+            echo "plugin_info_json=${PLUGIN_INFO_B64}" >> $GITHUB_OUTPUT
+          else
+            echo "plugin_info_json=" >> $GITHUB_OUTPUT
+          fi
           
           echo "Detection results:"
           echo "  Has plugins: ${HAS_PLUGINS}"
@@ -538,6 +542,18 @@ jobs:
       - name: Check out repository code
         if: github.event_name == 'pull_request'
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        if: github.event_name == 'pull_request'
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        if: github.event_name == 'pull_request'
+        run: |
+          python -m pip install --upgrade pip setuptools
+          python -m pip install "."
 
       - name: Determine which job failed
         id: failed_job
