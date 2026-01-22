@@ -67,8 +67,10 @@ jobs:
             CHANGED_FILES=$(git diff --name-only origin/main~1 $MERGE_COMMIT | tr '\n' ' ' || echo "")
           else
             # Pre-merge: compare PR head to base
-            git fetch origin ${{ github.event.pull_request.head.ref }}
-            CHANGED_FILES=$(git diff --name-only origin/main...FETCH_HEAD | tr '\n' ' ' || echo "")
+            # For pull_request events, checkout@v4 already has the PR code, so we can use HEAD
+            # Compare base ref with HEAD (which contains the PR changes)
+            BASE_REF="${{ github.event.pull_request.base.ref }}"
+            CHANGED_FILES=$(git diff --name-only origin/${BASE_REF}...HEAD | tr '\n' ' ' || echo "")
           fi
           echo "CHANGED_FILES=${CHANGED_FILES}" >> $GITHUB_ENV
           echo "Changed files: ${CHANGED_FILES}"
@@ -216,6 +218,7 @@ jobs:
     name: "3. Layer Mapping"
     needs: [detect_changes, validate_pr]
     if: |
+      github.event_name == 'pull_request' &&
       needs.detect_changes.outputs.needs_mapping == 'true' &&
       needs.validate_pr.outputs.all_tests_pass == 'true'
     runs-on: ubuntu-latest
@@ -357,12 +360,16 @@ jobs:
           done
 
       - name: Commit generated metadata files
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Check if any metadata files were generated
           if git diff --name-only | grep -q "metadata\.ya?ml"; then
             git add **/metadata.yml **/metadata.yaml
             git commit -m "Auto-generate metadata.yml for new plugins" || echo "No changes to commit"
-            git push origin ${{ github.event.pull_request.head.ref }} || echo "Push failed or no changes"
+            # Configure git to use token for push (works for same-repo PRs, not fork PRs)
+            git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git
+            git push origin ${{ github.event.pull_request.head.ref }} || echo "Push failed (may be fork PR or no changes)"
           else
             echo "No metadata files to commit"
           fi
@@ -377,7 +384,7 @@ jobs:
       github.event_name == 'pull_request' &&
       needs.validate_pr.outputs.is_automergeable == 'true' &&
       needs.validate_pr.outputs.all_tests_pass == 'true' &&
-      (needs.layer_mapping.result == 'success' || needs.layer_mapping.result == 'skipped' || needs.layer_mapping.result == 'failure') &&
+      (needs.layer_mapping.result == 'success' || needs.layer_mapping.result == 'skipped') &&
       (needs.generate_metadata.result == 'success' || needs.generate_metadata.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
@@ -387,8 +394,25 @@ jobs:
           pull-request-number: ${{ github.event.pull_request.number }}
           github-token: ${{ secrets.APPROVAL_TOKEN }}
 
+      - name: Check for automerge labels
+        id: check_automerge_labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LABELS_JSON=$(gh pr view ${{ github.event.pull_request.number }} --json labels)
+          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "automerge")' >/dev/null; then
+            echo "has_automerge=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_automerge=false" >> $GITHUB_OUTPUT
+          fi
+          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "automerge-web")' >/dev/null; then
+            echo "has_automerge_web=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_automerge_web=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Auto Merge (GitHub submissions)
-        if: contains(github.event.pull_request.labels.*.name, 'automerge')
+        if: steps.check_automerge_labels.outputs.has_automerge == 'true'
         uses: plm9606/automerge_actions@1.2.2
         with:
           github-token: ${{ secrets.WORKFLOW_TOKEN }}
@@ -397,7 +421,7 @@ jobs:
           auto-delete: "true"
 
       - name: Auto Merge (brain-score.org submissions)
-        if: contains(github.event.pull_request.labels.*.name, 'automerge-web')
+        if: steps.check_automerge_labels.outputs.has_automerge_web == 'true'
         uses: plm9606/automerge_actions@1.2.2
         with:
           github-token: ${{ secrets.WORKFLOW_TOKEN }}
@@ -409,7 +433,7 @@ jobs:
   # JOB 7: Post-Merge Scoring (Runs after PR is merged)
   # ============================================================================
   post_merge_scoring:
-    name: "6. Post-Merge Scoring"
+    name: "7. Post-Merge Scoring"
     needs: detect_changes
     if: |
       github.event_name == 'pull_request_target' &&
@@ -440,6 +464,18 @@ jobs:
           python -m pip install --upgrade pip setuptools
           python -m pip install "."
 
+      - name: Check for automerge-web label
+        id: check_automerge_web
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LABELS_JSON=$(gh pr view ${{ github.event.number }} --json labels)
+          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "automerge-web")' >/dev/null; then
+            echo "is_automerge_web=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_automerge_web=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Extract user email
         id: extract_email
         env:
@@ -449,7 +485,7 @@ jobs:
           EMAIL=$(python brainscore_language/submission/actions_helpers.py extract_email \
             --pr-username "${{ github.event.pull_request.user.login }}" \
             --pr-title "${{ github.event.pull_request.title }}" \
-            --is-automerge-web ${{ contains(github.event.pull_request.labels.*.name, 'automerge-web') }})
+            --is-automerge-web ${{ steps.check_automerge_web.outputs.is_automerge_web }})
           echo "::add-mask::$EMAIL"
           echo "email=$EMAIL" >> $GITHUB_OUTPUT
 
@@ -472,7 +508,9 @@ jobs:
             }')
           echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_ENV
           echo "plugin_info=${PLUGIN_INFO}" >> $GITHUB_OUTPUT
-          echo "Plugin info: ${PLUGIN_INFO}"
+          # Mask email in log output (email is already in PLUGIN_INFO JSON)
+          PLUGIN_INFO_MASKED=$(echo "$PLUGIN_INFO" | jq -c 'if .email then .email = "***MASKED***" else . end')
+          echo "Plugin info (email masked): ${PLUGIN_INFO_MASKED}"
 
       - name: Trigger Jenkins scoring
         env:
@@ -489,7 +527,7 @@ jobs:
   notify_on_failure:
     name: "Notify on Failure"
     needs: [detect_changes, validate_pr, layer_mapping, process_metadata, generate_metadata, automerge, post_merge_scoring]
-    if: always() && (contains(needs.*.result, 'failure'))
+    if: always() && (needs.detect_changes.result == 'failure' || needs.validate_pr.result == 'failure' || needs.layer_mapping.result == 'failure' || needs.process_metadata.result == 'failure' || needs.generate_metadata.result == 'failure' || needs.automerge.result == 'failure' || needs.post_merge_scoring.result == 'failure')
     runs-on: ubuntu-latest
     steps:
       - name: Determine which job failed
@@ -515,6 +553,19 @@ jobs:
           echo "failed_job=${FAILED_JOB}" >> $GITHUB_OUTPUT
           echo "Failed job: ${FAILED_JOB}"
 
+      - name: Check for automerge-web label
+        if: github.event_name == 'pull_request'
+        id: check_automerge_web_notify
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LABELS_JSON=$(gh pr view ${{ github.event.pull_request.number }} --json labels)
+          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "automerge-web")' >/dev/null; then
+            echo "is_automerge_web=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_automerge_web=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Extract email for notification
         if: github.event_name == 'pull_request'
         id: get_email
@@ -525,7 +576,7 @@ jobs:
           EMAIL=$(python brainscore_language/submission/actions_helpers.py extract_email \
             --pr-username "${{ github.event.pull_request.user.login }}" \
             --pr-title "${{ github.event.pull_request.title }}" \
-            --is-automerge-web ${{ contains(github.event.pull_request.labels.*.name, 'automerge-web') }})
+            --is-automerge-web ${{ steps.check_automerge_web_notify.outputs.is_automerge_web }})
           echo "::add-mask::$EMAIL"
           echo "email=$EMAIL" >> $GITHUB_OUTPUT
 
