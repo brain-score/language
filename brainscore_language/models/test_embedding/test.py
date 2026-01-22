@@ -5,26 +5,6 @@ import numpy as np
 import pytest
 from brainscore_language import load_model, ArtificialSubject, score
 
-from brainscore_language.models.test_embedding import SimpleTestEmbedding
-
-
-class TestSimpleTestEmbedding:
-    def test_embedding_dimension(self):
-        embedding = SimpleTestEmbedding(embedding_size=50)['the']
-        assert len(embedding) == 50
-
-    def test_consistent(self):
-        embedder = SimpleTestEmbedding(50)
-        embedding1 = embedder['the']
-        embedding2 = embedder['the']
-        assert np.array_equal(embedding1, embedding2)
-
-    def test_unique(self):
-        embedder = SimpleTestEmbedding(50)
-        embedding1 = embedder['the']
-        embedding2 = embedder['fox']
-        assert not np.array_equal(embedding1, embedding2)
-
 
 def test_neural():
     """Test that the model can produce neural recordings."""
@@ -37,7 +17,7 @@ def test_neural():
     representations = model.digest_text(text)['neural']
     assert len(representations['presentation']) == 3
     np.testing.assert_array_equal(representations['stimulus'], text)
-    assert len(representations['neuroid']) == 50  # embedding_size
+    assert len(representations['neuroid']) == 768  # distilgpt2 hidden size
 
 
 def test_score():
