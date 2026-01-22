@@ -78,12 +78,12 @@ jobs:
       - name: Detect plugin changes
         id: detect
         run: |
-          PLUGIN_INFO=$(python -c "
+          PLUGIN_INFO=$(python -W ignore -c "
           from brainscore_core.plugin_management.parse_plugin_changes import get_scoring_info
           import json
           info = get_scoring_info('${{ env.CHANGED_FILES }}', '${{ env.DOMAIN_ROOT }}')
           print(json.dumps(info))
-          ")
+          " 2>/dev/null)
           
           echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_ENV
           
@@ -112,7 +112,7 @@ jobs:
           
           # Determine if mapping needed (for new models)
           NEEDS_MAPPING="false"
-          if [ "$HAS_NEW_MODELS" = "true" ] && [ "$NEEDS_SCORING" = "True" ]; then
+          if [ "$HAS_NEW_MODELS" = "true" ] && [ "$NEEDS_SCORING" = "true" ]; then
             NEEDS_MAPPING="true"
           fi
           
@@ -448,7 +448,7 @@ jobs:
     if: |
       github.event_name == 'pull_request_target' &&
       github.event.pull_request.merged == true &&
-      needs.detect_changes.outputs.needs_scoring == 'True' &&
+      needs.detect_changes.outputs.needs_scoring == 'true' &&
       needs.detect_changes.outputs.metadata_only == 'false'
     runs-on: ubuntu-latest
     env:
