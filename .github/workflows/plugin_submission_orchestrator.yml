@@ -97,8 +97,8 @@ jobs:
           NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models // []')
           HAS_NEW_MODELS=$(if [ "$NEW_MODELS" != "[]" ] && [ "$NEW_MODELS" != "null" ] && [ -n "$NEW_MODELS" ]; then echo "true"; else echo "false"; fi)
           
-          # Extract plugin directories
-          PLUGIN_DIRS=$(echo "$PLUGIN_INFO" | jq -r '[.changed_plugins.models[], .changed_plugins.benchmarks[]] | join(",")' || echo "")
+          # Extract plugin directories (handle null case)
+          PLUGIN_DIRS=$(echo "$PLUGIN_INFO" | jq -r 'if .changed_plugins then [.changed_plugins.models[]? // empty, .changed_plugins.benchmarks[]? // empty] | join(",") else "" end' || echo "")
           
           # Check if metadata only
           NON_METADATA=$(echo "${{ env.CHANGED_FILES }}" | tr ' ' '\n' | grep -Ev "metadata\.ya?ml" || true)
@@ -140,7 +140,9 @@ jobs:
           echo "needs_mapping=${NEEDS_MAPPING}" >> $GITHUB_OUTPUT
           echo "needs_metadata_generation=${NEEDS_METADATA_GENERATION}" >> $GITHUB_OUTPUT
           echo "is_automergeable=${IS_AUTOMERGEABLE}" >> $GITHUB_OUTPUT
-          echo "plugin_info_json=${PLUGIN_INFO}" >> $GITHUB_OUTPUT
+          # Store plugin_info_json as base64-encoded string to avoid special character issues
+          PLUGIN_INFO_B64=$(echo "$PLUGIN_INFO" | base64 | tr -d '\n')
+          echo "plugin_info_json=${PLUGIN_INFO_B64}" >> $GITHUB_OUTPUT
           
           echo "Detection results:"
           echo "  Has plugins: ${HAS_PLUGINS}"
@@ -253,7 +255,9 @@ jobs:
           JENKINS_TOKEN: ${{ secrets.JENKINS_MAPPING_TOKEN }}
           JENKINS_TRIGGER: ${{ secrets.JENKINS_MAPPING_URL }}
         run: |
-          NEW_MODELS=$(echo '${{ needs.detect_changes.outputs.plugin_info_json }}' | jq -r '.new_models // []')
+          PLUGIN_INFO_B64='${{ needs.detect_changes.outputs.plugin_info_json }}'
+          PLUGIN_INFO=$(echo "$PLUGIN_INFO_B64" | base64 -d)
+          NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models // []')
           python brainscore_language/submission/actions_helpers.py trigger_layer_mapping \
             --new-models "$NEW_MODELS" \
             --pr-number ${{ github.event.pull_request.number }} \
@@ -491,7 +495,9 @@ jobs:
       - name: Build plugin info
         id: build_info
         run: |
-          PLUGIN_INFO=$(echo '${{ needs.detect_changes.outputs.plugin_info_json }}' | jq -c \
+          PLUGIN_INFO_B64='${{ needs.detect_changes.outputs.plugin_info_json }}'
+          PLUGIN_INFO_DECODED=$(echo "$PLUGIN_INFO_B64" | base64 -d)
+          PLUGIN_INFO=$(echo "$PLUGIN_INFO_DECODED" | jq -c \
             --arg domain "language" \
             --arg email "${{ steps.extract_email.outputs.email }}" \
             --arg plugin_dirs "${{ needs.detect_changes.outputs.plugin_dirs }}" \
@@ -529,6 +535,10 @@ jobs:
     if: always() && (needs.detect_changes.result == 'failure' || needs.validate_pr.result == 'failure' || needs.layer_mapping.result == 'failure' || needs.process_metadata.result == 'failure' || needs.generate_metadata.result == 'failure' || needs.automerge.result == 'failure' || needs.post_merge_scoring.result == 'failure')
     runs-on: ubuntu-latest
     steps:
+      - name: Check out repository code
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+
       - name: Determine which job failed
         id: failed_job
         run: |
