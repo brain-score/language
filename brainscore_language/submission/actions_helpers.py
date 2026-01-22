@@ -14,6 +14,7 @@ import requests
 import sys
 import smtplib
 import argparse
+import time
 from typing import Union
 from email.mime.text import MIMEText
 
@@ -45,29 +46,68 @@ def get_statuses_result(context: str, statuses_json: dict) -> Union[str, None]:
     return last_status['result']
 
 
-def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str) -> dict:
+def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str, 
+                poll_interval: int = 30, max_wait_time: int = 7200) -> dict:
     """
     Validate PR for automerge eligibility
+    
+    Polls test status every poll_interval seconds until all tests are complete
+    (success or failure), or max_wait_time is reached.
+    
+    Args:
+        pr_number: PR number
+        pr_head: PR head commit SHA
+        is_automerge_web: Whether this is an automerge-web PR
+        token: GitHub token
+        poll_interval: Seconds to wait between polls (default: 30)
+        max_wait_time: Maximum seconds to wait for tests (default: 7200 = 2 hours)
     
     Returns:
         dict with keys:
         - is_automergeable: bool
         - all_tests_pass: bool
+        - test_results: dict mapping test context to result
     """
-    # Get status checks
-    statuses_url = f"{BASE_URL}/commits/{pr_head}/statuses"
-    statuses_json = get_data(statuses_url, token)
-    
     # Check required test contexts (adjust these for language domain)
     required_contexts = [
         "Language Unittests, Plugins",
         "Language Unittests, Non-Plugins"
     ]
     
+    start_time = time.time()
     test_results = {}
-    for context in required_contexts:
-        result = get_statuses_result(context, statuses_json)
-        test_results[context] = result
+    
+    while True:
+        # Get status checks
+        statuses_url = f"{BASE_URL}/commits/{pr_head}/statuses"
+        statuses_json = get_data(statuses_url, token)
+        
+        # Check each required context
+        test_results = {}
+        has_pending = False
+        
+        for context in required_contexts:
+            result = get_statuses_result(context, statuses_json)
+            test_results[context] = result
+            
+            # Check if any test is still pending
+            if result is None or result == "pending":
+                has_pending = True
+        
+        # If no pending tests, we're done
+        if not has_pending:
+            break
+        
+        # Check if we've exceeded max wait time
+        elapsed = time.time() - start_time
+        if elapsed >= max_wait_time:
+            print(f"Warning: Max wait time ({max_wait_time}s) reached. Some tests still pending.", file=sys.stderr)
+            break
+        
+        # Wait before next poll
+        print(f"Tests still pending. Waiting {poll_interval}s before next check...", file=sys.stderr)
+        print(f"Current status: {json.dumps(test_results)}", file=sys.stderr)
+        time.sleep(poll_interval)
     
     # Determine if all tests pass
     all_tests_pass = all(

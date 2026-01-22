@@ -216,10 +216,20 @@ jobs:
       - name: Validate PR
         id: validate
         run: |
-          python brainscore_language/submission/actions_helpers.py validate_pr \
+          RESULT=$(python brainscore_language/submission/actions_helpers.py validate_pr \
             --pr-number ${{ github.event.pull_request.number }} \
             --pr-head ${{ github.event.pull_request.head.sha }} \
-            --is-automerge-web ${{ steps.check_label.outputs.is_automerge_web }}
+            --is-automerge-web ${{ steps.check_label.outputs.is_automerge_web }})
+          
+          # Parse JSON output and set step outputs
+          IS_AUTOMERGEABLE=$(echo "$RESULT" | jq -r '.is_automergeable // false' | head -n 1)
+          ALL_TESTS_PASS=$(echo "$RESULT" | jq -r '.all_tests_pass // false' | head -n 1)
+          
+          echo "is_automergeable=${IS_AUTOMERGEABLE}" >> $GITHUB_OUTPUT
+          echo "all_tests_pass=${ALL_TESTS_PASS}" >> $GITHUB_OUTPUT
+          
+          echo "Validation results:"
+          echo "$RESULT" | jq '.'
 
   # ============================================================================
   # JOB 3: Layer Mapping (Conditional - only for new models, vision domain only)
@@ -273,10 +283,10 @@ jobs:
             --source-branch ${{ github.event.pull_request.head.ref }}
 
   # ============================================================================
-  # JOB 4: Process Metadata (Conditional - only if metadata-only changes)
+  # JOB 4: Update Existing Metadata (Conditional - only if metadata-only changes)
   # ============================================================================
   process_metadata:
-    name: "4. Process Metadata"
+    name: "4. Update Existing Metadata"
     needs: detect_changes
     if: |
       needs.detect_changes.outputs.metadata_only == 'true'
@@ -540,7 +550,17 @@ jobs:
   notify_on_failure:
     name: "Notify on Failure"
     needs: [detect_changes, validate_pr, layer_mapping, process_metadata, generate_metadata, automerge, post_merge_scoring]
-    if: always() && (needs.detect_changes.result == 'failure' || needs.validate_pr.result == 'failure' || needs.layer_mapping.result == 'failure' || needs.process_metadata.result == 'failure' || needs.generate_metadata.result == 'failure' || needs.automerge.result == 'failure' || needs.post_merge_scoring.result == 'failure')
+    if: |
+      always() && (
+        needs.detect_changes.result == 'failure' ||
+        needs.validate_pr.result == 'failure' ||
+        (needs.validate_pr.result == 'success' && needs.validate_pr.outputs.all_tests_pass == 'false') ||
+        needs.layer_mapping.result == 'failure' ||
+        needs.process_metadata.result == 'failure' ||
+        needs.generate_metadata.result == 'failure' ||
+        needs.automerge.result == 'failure' ||
+        needs.post_merge_scoring.result == 'failure'
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -569,7 +589,7 @@ jobs:
           elif [ "${{ needs.layer_mapping.result }}" == "failure" ]; then
             FAILED_JOB="Layer Mapping"
           elif [ "${{ needs.process_metadata.result }}" == "failure" ]; then
-            FAILED_JOB="Process Metadata"
+            FAILED_JOB="Update Existing Metadata"
           elif [ "${{ needs.generate_metadata.result }}" == "failure" ]; then
             FAILED_JOB="Generate Metadata"
           elif [ "${{ needs.automerge.result }}" == "failure" ]; then
