@@ -196,7 +196,7 @@ PR Created/Updated
 
 ### 8. Post-Merge Scoring
 
-**Job:** `6. Post-Merge Scoring`
+**Job:** `7. Post-Merge Scoring`
 
 **When:** Only runs if:
 - PR was merged to `main` (`pull_request_target` event, `merged == true`)
@@ -444,7 +444,7 @@ Plugin Submission Orchestrator
 ├─ 3. Layer Mapping ⏭️ (skipped)
 ├─ 4. Process Metadata ⏭️ (skipped)
 ├─ 5. Auto-merge ✅
-└─ 6. Post-Merge Scoring ✅
+└─ 7. Post-Merge Scoring ✅
 ```
 
 ### Check Jenkins Status
@@ -497,13 +497,32 @@ Scoring results are stored in the Brain-Score database and can be viewed:
 4. Review metadata generation logs for errors
 5. Verify plugin is properly registered in the domain
 
+### Workflow Output Format Errors
+
+**If you see "Invalid format 'false'" or "Unable to process file command 'output'":**
+
+This error occurs when GitHub Actions cannot parse the workflow output file. The workflow has been fixed to:
+- Suppress Python warnings that could contaminate JSON output
+- Ensure all jq extractions return single scalar values (no multiline output)
+- Use proper output formatting for GitHub Actions
+
+If you still see this error:
+1. Check that the Python command output is valid JSON
+2. Verify that jq commands are not outputting multiple lines
+3. Review the "Detect Changes" job logs for any parsing errors
+4. Ensure all workflow outputs use the `key=value` format (no extra newlines)
+
 ### Email Notifications Not Sent
 
 **Check:**
 1. Is email properly extracted? (check logs)
+   - For GitHub submissions: Email is extracted from GitHub user profile (may not be available if user's email is private)
+   - For web submissions: Email is extracted from database using user ID in PR title
+   - If email cannot be extracted, the workflow will log a warning but continue without sending email
 2. Are Gmail credentials correct?
 3. Check for `failure-notified` label (prevents duplicates)
 4. Review email sending logs
+5. Check workflow logs for "Could not extract email" messages - this is handled gracefully and won't fail the workflow
 
 ## Best Practices
 

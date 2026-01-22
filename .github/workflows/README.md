@@ -160,8 +160,9 @@ Plugin Submission Orchestrator
 ├─ 2. Validate PR ✅
 ├─ 3. Layer Mapping ⏭️ (skipped)
 ├─ 4. Process Metadata ⏭️ (skipped)
-├─ 5. Auto-merge ✅
-└─ 6. Post-Merge Scoring ✅
+├─ 5. Generate Metadata ⏭️ (skipped)
+├─ 6. Auto-merge ✅
+└─ 7. Post-Merge Scoring ✅
 ```
 
 ### Debugging
