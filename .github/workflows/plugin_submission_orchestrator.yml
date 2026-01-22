@@ -283,10 +283,10 @@ jobs:
             --source-branch ${{ github.event.pull_request.head.ref }}
 
   # ============================================================================
-  # JOB 4: Process Metadata (Conditional - only if metadata-only changes)
+  # JOB 4: Update Existing Metadata (Conditional - only if metadata-only changes)
   # ============================================================================
   process_metadata:
-    name: "4. Process Metadata"
+    name: "4. Update Existing Metadata"
     needs: detect_changes
     if: |
       needs.detect_changes.outputs.metadata_only == 'true'
@@ -589,7 +589,7 @@ jobs:
           elif [ "${{ needs.layer_mapping.result }}" == "failure" ]; then
             FAILED_JOB="Layer Mapping"
           elif [ "${{ needs.process_metadata.result }}" == "failure" ]; then
-            FAILED_JOB="Process Metadata"
+            FAILED_JOB="Update Existing Metadata"
           elif [ "${{ needs.generate_metadata.result }}" == "failure" ]; then
             FAILED_JOB="Generate Metadata"
           elif [ "${{ needs.automerge.result }}" == "failure" ]; then
