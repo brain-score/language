@@ -87,11 +87,14 @@ jobs:
           
           echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_ENV
           
-          # Extract outputs
-          HAS_PLUGINS=$(echo "$PLUGIN_INFO" | jq -r '.modifies_plugins // false')
+          # Extract outputs and normalize to lowercase strings
+          HAS_PLUGINS_RAW=$(echo "$PLUGIN_INFO" | jq -r '.modifies_plugins // false')
+          HAS_PLUGINS=$(echo "$HAS_PLUGINS_RAW" | tr '[:upper:]' '[:lower:]')
           PLUGIN_TYPE=$(echo "$PLUGIN_INFO" | jq -r '.plugin_type // ""')
-          NEEDS_SCORING=$(echo "$PLUGIN_INFO" | jq -r '.run_score // "False"')
-          IS_AUTOMERGEABLE=$(echo "$PLUGIN_INFO" | jq -r '.is_automergeable // false')
+          NEEDS_SCORING_RAW=$(echo "$PLUGIN_INFO" | jq -r '.run_score // "False"')
+          NEEDS_SCORING=$(echo "$NEEDS_SCORING_RAW" | tr '[:upper:]' '[:lower:]')
+          IS_AUTOMERGEABLE_RAW=$(echo "$PLUGIN_INFO" | jq -r '.is_automergeable // false')
+          IS_AUTOMERGEABLE=$(echo "$IS_AUTOMERGEABLE_RAW" | tr '[:upper:]' '[:lower:]')
           
           # Check for new models
           NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models // []')
@@ -130,22 +133,23 @@ jobs:
             done
           fi
           
-          # Set outputs (ensure all values are non-empty strings)
-          echo "has_plugins=${HAS_PLUGINS:-false}" >> $GITHUB_OUTPUT
-          echo "plugin_type=${PLUGIN_TYPE:-}" >> $GITHUB_OUTPUT
-          echo "plugin_dirs=${PLUGIN_DIRS:-}" >> $GITHUB_OUTPUT
-          echo "has_new_models=${HAS_NEW_MODELS:-false}" >> $GITHUB_OUTPUT
-          echo "metadata_only=${METADATA_ONLY:-false}" >> $GITHUB_OUTPUT
-          echo "needs_scoring=${NEEDS_SCORING:-False}" >> $GITHUB_OUTPUT
-          echo "needs_mapping=${NEEDS_MAPPING:-false}" >> $GITHUB_OUTPUT
-          echo "needs_metadata_generation=${NEEDS_METADATA_GENERATION:-false}" >> $GITHUB_OUTPUT
-          echo "is_automergeable=${IS_AUTOMERGEABLE:-false}" >> $GITHUB_OUTPUT
+          # Set outputs (ensure all values are properly formatted strings)
+          # Use printf to ensure proper formatting and avoid issues with special characters
+          printf "has_plugins=%s\n" "${HAS_PLUGINS:-false}" >> $GITHUB_OUTPUT
+          printf "plugin_type=%s\n" "${PLUGIN_TYPE:-}" >> $GITHUB_OUTPUT
+          printf "plugin_dirs=%s\n" "${PLUGIN_DIRS:-}" >> $GITHUB_OUTPUT
+          printf "has_new_models=%s\n" "${HAS_NEW_MODELS:-false}" >> $GITHUB_OUTPUT
+          printf "metadata_only=%s\n" "${METADATA_ONLY:-false}" >> $GITHUB_OUTPUT
+          printf "needs_scoring=%s\n" "${NEEDS_SCORING:-false}" >> $GITHUB_OUTPUT
+          printf "needs_mapping=%s\n" "${NEEDS_MAPPING:-false}" >> $GITHUB_OUTPUT
+          printf "needs_metadata_generation=%s\n" "${NEEDS_METADATA_GENERATION:-false}" >> $GITHUB_OUTPUT
+          printf "is_automergeable=%s\n" "${IS_AUTOMERGEABLE:-false}" >> $GITHUB_OUTPUT
           # Store plugin_info_json as base64-encoded string to avoid special character issues
           if [ -n "$PLUGIN_INFO" ]; then
             PLUGIN_INFO_B64=$(echo "$PLUGIN_INFO" | base64 | tr -d '\n')
-            echo "plugin_info_json=${PLUGIN_INFO_B64}" >> $GITHUB_OUTPUT
+            printf "plugin_info_json=%s\n" "${PLUGIN_INFO_B64}" >> $GITHUB_OUTPUT
           else
-            echo "plugin_info_json=" >> $GITHUB_OUTPUT
+            printf "plugin_info_json=\n" >> $GITHUB_OUTPUT
           fi
           
           echo "Detection results:"
@@ -601,12 +605,21 @@ jobs:
           EMAIL=$(python brainscore_language/submission/actions_helpers.py extract_email \
             --pr-username "${{ github.event.pull_request.user.login }}" \
             --pr-title "${{ github.event.pull_request.title }}" \
-            --is-automerge-web ${{ steps.check_automerge_web_notify.outputs.is_automerge_web }})
-          echo "::add-mask::$EMAIL"
-          echo "email=$EMAIL" >> $GITHUB_OUTPUT
+            --is-automerge-web ${{ steps.check_automerge_web_notify.outputs.is_automerge_web }} || echo "")
+          if [ -z "$EMAIL" ]; then
+            echo "Warning: Could not extract email for user ${{ github.event.pull_request.user.login }}"
+            echo "email=" >> $GITHUB_OUTPUT
+            echo "email_found=false" >> $GITHUB_OUTPUT
+          else
+            echo "::add-mask::$EMAIL"
+            echo "email=$EMAIL" >> $GITHUB_OUTPUT
+            echo "email_found=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Notify user
-        if: github.event_name == 'pull_request'
+        if: |
+          github.event_name == 'pull_request' &&
+          steps.get_email.outputs.email_found == 'true'
         env:
           GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
           GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
@@ -617,3 +630,12 @@ jobs:
             "${{ steps.failed_job.outputs.failed_job }}" \
             "$GMAIL_USERNAME" \
             "$GMAIL_PASSWORD"
+      
+      - name: Log email extraction failure
+        if: |
+          github.event_name == 'pull_request' &&
+          steps.get_email.outputs.email_found == 'false'
+        run: |
+          echo "Could not send failure notification email - email not found for user ${{ github.event.pull_request.user.login }}"
+          echo "Failure reason: ${{ steps.failed_job.outputs.failed_job }}"
+          echo "PR: https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
