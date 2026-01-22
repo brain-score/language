@@ -30,8 +30,6 @@ on:
         required: true
       AWS_SECRET_ACCESS_KEY:
         required: true
-      GITHUB_TOKEN:
-        required: true
       APPROVAL_TOKEN:
         required: true
 
@@ -155,19 +153,19 @@ jobs:
               echo "Status summary: $pending pending, $failures failures"
 
               if [ "$failures" -gt 0 ]; then
-                echo "❌ One or more status checks failed for PR #$pr - aborting"
+                echo "One or more status checks failed for PR #$pr - aborting"
                 exit 1
               fi
 
               if [ "$pending" -eq 0 ]; then
-                echo "✅ All status checks passed for PR #$pr"
+                echo "All status checks passed for PR #$pr"
                 break
               fi
 
               sleep $SLEEP_INTERVAL
               ELAPSED=$((ELAPSED + SLEEP_INTERVAL))
               if [ "$ELAPSED" -ge "$MAX_WAIT" ]; then
-                echo "⏱️ Timeout of $MAX_WAIT seconds reached for PR #$pr - aborting"
+                echo "Timeout of $MAX_WAIT seconds reached for PR #$pr - aborting"
                 exit 1
               fi
             done
