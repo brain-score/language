@@ -88,20 +88,21 @@ jobs:
           echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_ENV
           
           # Extract outputs and normalize to lowercase strings
-          HAS_PLUGINS_RAW=$(echo "$PLUGIN_INFO" | jq -r '.modifies_plugins // false')
+          # Force single scalar values to prevent multiline output from jq
+          HAS_PLUGINS_RAW=$(echo "$PLUGIN_INFO" | jq -r 'if .modifies_plugins == true then "true" else "false" end' | head -n 1)
           HAS_PLUGINS=$(echo "$HAS_PLUGINS_RAW" | tr '[:upper:]' '[:lower:]')
-          PLUGIN_TYPE=$(echo "$PLUGIN_INFO" | jq -r '.plugin_type // ""')
-          NEEDS_SCORING_RAW=$(echo "$PLUGIN_INFO" | jq -r '.run_score // "False"')
+          PLUGIN_TYPE=$(echo "$PLUGIN_INFO" | jq -r '.plugin_type // ""' | head -n 1)
+          NEEDS_SCORING_RAW=$(echo "$PLUGIN_INFO" | jq -r 'if .run_score == true then "True" else "False" end' | head -n 1)
           NEEDS_SCORING=$(echo "$NEEDS_SCORING_RAW" | tr '[:upper:]' '[:lower:]')
-          IS_AUTOMERGEABLE_RAW=$(echo "$PLUGIN_INFO" | jq -r '.is_automergeable // false')
+          IS_AUTOMERGEABLE_RAW=$(echo "$PLUGIN_INFO" | jq -r 'if .is_automergeable == true then "true" else "false" end' | head -n 1)
           IS_AUTOMERGEABLE=$(echo "$IS_AUTOMERGEABLE_RAW" | tr '[:upper:]' '[:lower:]')
           
           # Check for new models
-          NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models // []')
+          NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models // []' | head -n 1)
           HAS_NEW_MODELS=$(if [ "$NEW_MODELS" != "[]" ] && [ "$NEW_MODELS" != "null" ] && [ -n "$NEW_MODELS" ]; then echo "true"; else echo "false"; fi)
           
           # Extract plugin directories (handle null case)
-          PLUGIN_DIRS=$(echo "$PLUGIN_INFO" | jq -r 'if .changed_plugins then [.changed_plugins.models[]? // empty, .changed_plugins.benchmarks[]? // empty] | join(",") else "" end' || echo "")
+          PLUGIN_DIRS=$(echo "$PLUGIN_INFO" | jq -r 'if .changed_plugins then [.changed_plugins.models[]? // empty, .changed_plugins.benchmarks[]? // empty] | join(",") else "" end' | head -n 1)
           
           # Check if metadata only
           NON_METADATA=$(echo "${{ env.CHANGED_FILES }}" | tr ' ' '\n' | grep -Ev "metadata\.ya?ml" || true)
