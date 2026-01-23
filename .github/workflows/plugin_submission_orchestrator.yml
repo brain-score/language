@@ -80,9 +80,7 @@ jobs:
         run: |
           PLUGIN_INFO=$(python -W ignore -c "
           from brainscore_core.plugin_management.parse_plugin_changes import get_scoring_info
-          import json
-          info = get_scoring_info('${{ env.CHANGED_FILES }}', '${{ env.DOMAIN_ROOT }}')
-          print(json.dumps(info))
+          get_scoring_info('${{ env.CHANGED_FILES }}', '${{ env.DOMAIN_ROOT }}')
           " 2>/dev/null)
           
           echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_ENV
@@ -92,7 +90,10 @@ jobs:
           HAS_PLUGINS_RAW=$(echo "$PLUGIN_INFO" | jq -r 'if .modifies_plugins == true then "true" else "false" end' | head -n 1)
           HAS_PLUGINS=$(echo "$HAS_PLUGINS_RAW" | tr '[:upper:]' '[:lower:]')
           PLUGIN_TYPE=$(echo "$PLUGIN_INFO" | jq -r '.plugin_type // ""' | head -n 1)
-          NEEDS_SCORING_RAW=$(echo "$PLUGIN_INFO" | jq -r 'if .run_score == true then "True" else "False" end' | head -n 1)
+          # run_score is returned as string "True" or "False" (capitalized) from get_scoring_info
+          # run_score is returned as string "True" or "False" (capitalized) from get_scoring_info
+          # Extract the value and normalize to lowercase
+          NEEDS_SCORING_RAW=$(echo "$PLUGIN_INFO" | jq -r '.run_score // "False"' | head -n 1)
           NEEDS_SCORING=$(echo "$NEEDS_SCORING_RAW" | tr '[:upper:]' '[:lower:]')
           IS_AUTOMERGEABLE_RAW=$(echo "$PLUGIN_INFO" | jq -r 'if .is_automergeable == true then "true" else "false" end' | head -n 1)
           IS_AUTOMERGEABLE=$(echo "$IS_AUTOMERGEABLE_RAW" | tr '[:upper:]' '[:lower:]')
