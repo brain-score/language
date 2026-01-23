@@ -12,9 +12,9 @@ PR Created/Updated
 [Orchestrator Workflow]
     ├─→ Detect Changes
     ├─→ Validate PR (pre-merge)
-    ├─→ Layer Mapping (if new models, vision only - skipped for language)
+    ├─→ Update Existing Metadata (if metadata-only changes)
     ├─→ Generate Metadata (if new plugins without metadata.yml)
-    ├─→ Process Metadata (if metadata-only changes)
+    ├─→ Layer Mapping (if new models, vision only - skipped for language)
     ├─→ Auto-merge (if approved)
     └─→ Post-Merge Scoring (after merge)
         └─→ Jenkins Scoring Job
@@ -86,44 +86,36 @@ PR Created/Updated
 - If valid → proceed to layer mapping (if needed) or auto-merge
 - If invalid → notify user of failure
 
-### 4. Layer Mapping (Conditional)
+### 4. Update Existing Metadata (Conditional)
 
-**Job:** `3. Layer Mapping`
+**Job:** `3. Update Existing Metadata`
 
-**When:** Only runs if:
-- New models were added (`needs_mapping == true`)
-- All tests passed (`all_tests_pass == true`)
+**When:** Only runs if `metadata_only == true` (only metadata.yml changed, no code changes)
 
-**Purpose:** Map model layers for new model submissions (vision domain only)
+**Purpose:** Process metadata-only updates without triggering full scoring
 
 **Process:**
-1. **For language domain:** Step is skipped with message "Layer mapping skipped: language domain does not require layer mapping"
-2. **For vision domain:**
-   - Extracts list of new models from plugin info
-   - Triggers Jenkins layer mapping job via `actions_helpers.py trigger_layer_mapping`
-   - Passes model information to Jenkins:
-     - Model identifiers
-     - PR number
-     - Source repository and branch
-
-**Jenkins Job (vision only):**
-- Runs layer mapping for new models
-- Maps model architecture layers
-- Updates model metadata
+1. Calls reusable `metadata_handler.yml` workflow
+2. Processes metadata.yml files for affected plugins
+3. Validates metadata structure
+4. Updates database with new metadata
+5. Creates PRs for metadata updates if needed
+6. Auto-approves and merges metadata PRs
 
 **Note:** 
-- This step is skipped if no new models are added
-- **Layer mapping is automatically skipped for language domain** (only needed for vision models)
+- This step is skipped if code changes were made (not metadata-only)
+- Different from "Generate Metadata" which creates new metadata files
+- This is for when users only want to update existing metadata
 
 ### 5. Generate Metadata (Conditional)
 
-**Job:** `5. Generate Metadata`
+**Job:** `4. Generate Metadata`
 
 **When:** Only runs if:
 - New plugins were added (`has_plugins == true`)
 - Not metadata-only (`metadata_only == false`)
 - Plugin directories are missing `metadata.yml` or `metadata.yaml`
-- Layer mapping completed (or skipped)
+- All tests passed (`all_tests_pass == true`)
 
 **Purpose:** Automatically generate metadata.yml files for new plugins that don't have one
 
@@ -152,34 +144,43 @@ PR Created/Updated
 - Generated metadata is committed to the current PR (not a separate PR)
 - If generation fails for a plugin, workflow continues with other plugins
 
-### 6. Process Metadata (Conditional)
+### 6. Layer Mapping (Conditional)
 
-**Job:** `4. Process Metadata`
+**Job:** `5. Layer Mapping`
 
-**When:** Only runs if `metadata_only == true` (only metadata.yml changed, no code changes)
+**When:** Only runs if:
+- New models were added (`needs_mapping == true`)
+- All tests passed (`all_tests_pass == true`)
 
-**Purpose:** Process metadata-only updates without triggering full scoring
+**Purpose:** Map model layers for new model submissions (vision domain only)
 
 **Process:**
-1. Calls reusable `metadata_handler.yml` workflow
-2. Processes metadata.yml files for affected plugins
-3. Validates metadata structure
-4. Updates database with new metadata
-5. Creates PRs for metadata updates if needed
-6. Auto-approves and merges metadata PRs
+1. **For language domain:** Step is skipped with message "Layer mapping skipped: language domain does not require layer mapping"
+2. **For vision domain:**
+   - Extracts list of new models from plugin info
+   - Triggers Jenkins layer mapping job via `actions_helpers.py trigger_layer_mapping`
+   - Passes model information to Jenkins:
+     - Model identifiers
+     - PR number
+     - Source repository and branch
+
+**Jenkins Job (vision only):**
+- Runs layer mapping for new models
+- Maps model architecture layers
+- Updates model metadata
 
 **Note:** 
-- This step is skipped if code changes were made (not metadata-only)
-- Different from "Generate Metadata" which creates new metadata files
-- This is for when users only want to update existing metadata
+- This step is skipped if no new models are added
+- **Layer mapping is automatically skipped for language domain** (only needed for vision models)
 
 ### 7. Auto-merge (Conditional)
 
-**Job:** `5. Auto-merge`
+**Job:** `6. Auto-merge`
 
 **When:** Only runs if:
 - PR is validated (`is_automergeable == true`)
 - All tests pass (`all_tests_pass == true`)
+- Metadata processing completed (or skipped)
 - Layer mapping completed (or skipped)
 
 **Purpose:** Automatically merge approved PRs
@@ -196,7 +197,7 @@ PR Created/Updated
 
 ### 8. Post-Merge Scoring
 
-**Job:** `6. Post-Merge Scoring`
+**Job:** `7. Post-Merge Scoring`
 
 **When:** Only runs if:
 - PR was merged to `main` (`pull_request_target` event, `merged == true`)
@@ -260,7 +261,7 @@ The Jenkins job receives the plugin information and:
 
 ### 9. Failure Notification
 
-**Job:** `7. Notify on Failure`
+**Job:** `8. Notify on Failure`
 
 **When:** Runs if any job in the workflow fails
 
@@ -334,10 +335,10 @@ brainscore_language/submission/
    - Model code is added but no `metadata.yml` file
 2. Workflow detects new model
 3. Validates PR (tests must pass)
-4. **Skips layer mapping** (language domain doesn't require it)
-5. **Generates metadata.yml** for the new model (since it's missing)
+4. **Generates metadata.yml** for the new model (since it's missing)
    - Extracts model architecture, parameters, etc.
    - Commits metadata to PR branch
+5. **Skips layer mapping** (language domain doesn't require it)
 6. Auto-merges PR after validation
 7. Post-merge: triggers scoring
    - New model scored on all public benchmarks
@@ -349,8 +350,8 @@ brainscore_language/submission/
    - Model code AND `metadata.yml` file are both provided
 2. Workflow detects new model
 3. Validates PR (tests must pass)
-4. **Skips layer mapping** (language domain doesn't require it)
-5. **Skips metadata generation** (metadata already exists)
+4. **Skips metadata generation** (metadata already exists)
+5. **Skips layer mapping** (language domain doesn't require it)
 6. Auto-merges PR after validation
 7. Post-merge: triggers scoring
 
@@ -441,10 +442,11 @@ On any PR, you'll see a single workflow run:
 Plugin Submission Orchestrator
 ├─ 1. Detect Changes ✅
 ├─ 2. Validate PR ✅
-├─ 3. Layer Mapping ⏭️ (skipped)
-├─ 4. Process Metadata ⏭️ (skipped)
-├─ 5. Auto-merge ✅
-└─ 6. Post-Merge Scoring ✅
+├─ 3. Update Existing Metadata ⏭️ (skipped)
+├─ 4. Generate Metadata ⏭️ (skipped)
+├─ 5. Layer Mapping ⏭️ (skipped)
+├─ 6. Auto-merge ✅
+└─ 7. Post-Merge Scoring ✅
 ```
 
 ### Check Jenkins Status

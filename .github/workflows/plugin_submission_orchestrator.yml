@@ -232,63 +232,13 @@ jobs:
           echo "$RESULT" | jq '.'
 
   # ============================================================================
-  # JOB 3: Layer Mapping (Conditional - only for new models, vision domain only)
+  # JOB 3: Update Existing Metadata (Conditional - only if metadata-only changes)
   # ============================================================================
-  layer_mapping:
-    name: "3. Layer Mapping"
+  process_metadata:
+    name: "3. Update Existing Metadata"
     needs: [detect_changes, validate_pr]
     if: |
       github.event_name == 'pull_request' &&
-      needs.detect_changes.outputs.needs_mapping == 'true' &&
-      needs.validate_pr.outputs.all_tests_pass == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Skip layer mapping for language domain
-        if: ${{ env.DOMAIN == 'language' }}
-        run: |
-          echo "Layer mapping skipped: language domain does not require layer mapping"
-          echo "This step is skipped because layer mapping is only needed for vision domain models"
-          exit 0
-      - name: Check out repository code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools
-          python -m pip install ".[test]"
-
-      - name: Trigger layer mapping
-        if: ${{ env.DOMAIN != 'language' }}
-        env:
-          JENKINS_USER: ${{ secrets.JENKINS_MAPPING_USER }}
-          JENKINS_USER_API: ${{ secrets.JENKINS_MAPPING_USER_API }}
-          JENKINS_TOKEN: ${{ secrets.JENKINS_MAPPING_TOKEN }}
-          JENKINS_TRIGGER: ${{ secrets.JENKINS_MAPPING_URL }}
-        run: |
-          PLUGIN_INFO_B64='${{ needs.detect_changes.outputs.plugin_info_json }}'
-          PLUGIN_INFO=$(echo "$PLUGIN_INFO_B64" | base64 -d)
-          NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models // []')
-          python brainscore_language/submission/actions_helpers.py trigger_layer_mapping \
-            --new-models "$NEW_MODELS" \
-            --pr-number ${{ github.event.pull_request.number }} \
-            --source-repo ${{ github.event.pull_request.head.repo.clone_url }} \
-            --source-branch ${{ github.event.pull_request.head.ref }}
-
-  # ============================================================================
-  # JOB 4: Update Existing Metadata (Conditional - only if metadata-only changes)
-  # ============================================================================
-  process_metadata:
-    name: "4. Update Existing Metadata"
-    needs: detect_changes
-    if: |
       needs.detect_changes.outputs.metadata_only == 'true'
     uses: ./.github/workflows/metadata_handler.yml
     with:
@@ -303,14 +253,15 @@ jobs:
       APPROVAL_TOKEN: ${{ secrets.APPROVAL_TOKEN }}
 
   # ============================================================================
-  # JOB 5: Generate Metadata (Conditional - for new plugins without metadata.yml)
+  # JOB 4: Generate Metadata (Conditional - for new plugins without metadata.yml)
   # ============================================================================
   generate_metadata:
-    name: "5. Generate Metadata"
-    needs: [detect_changes, layer_mapping]
+    name: "4. Generate Metadata"
+    needs: [detect_changes, validate_pr]
     if: |
+      github.event_name == 'pull_request' &&
       needs.detect_changes.outputs.needs_metadata_generation == 'true' &&
-      (needs.layer_mapping.result == 'success' || needs.layer_mapping.result == 'skipped')
+      needs.validate_pr.outputs.all_tests_pass == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -396,17 +347,69 @@ jobs:
           fi
 
   # ============================================================================
+  # JOB 5: Layer Mapping (Conditional - only for new models, vision domain only)
+  # ============================================================================
+  layer_mapping:
+    name: "5. Layer Mapping"
+    needs: [detect_changes, validate_pr]
+    if: |
+      github.event_name == 'pull_request' &&
+      needs.detect_changes.outputs.needs_mapping == 'true' &&
+      needs.validate_pr.outputs.all_tests_pass == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip layer mapping for language domain
+        if: ${{ env.DOMAIN == 'language' }}
+        run: |
+          echo "Layer mapping skipped: language domain does not require layer mapping"
+          echo "This step is skipped because layer mapping is only needed for vision domain models"
+          exit 0
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          python -m pip install ".[test]"
+
+      - name: Trigger layer mapping
+        if: ${{ env.DOMAIN != 'language' }}
+        env:
+          JENKINS_USER: ${{ secrets.JENKINS_MAPPING_USER }}
+          JENKINS_USER_API: ${{ secrets.JENKINS_MAPPING_USER_API }}
+          JENKINS_TOKEN: ${{ secrets.JENKINS_MAPPING_TOKEN }}
+          JENKINS_TRIGGER: ${{ secrets.JENKINS_MAPPING_URL }}
+        run: |
+          PLUGIN_INFO_B64='${{ needs.detect_changes.outputs.plugin_info_json }}'
+          PLUGIN_INFO=$(echo "$PLUGIN_INFO_B64" | base64 -d)
+          NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models // []')
+          python brainscore_language/submission/actions_helpers.py trigger_layer_mapping \
+            --new-models "$NEW_MODELS" \
+            --pr-number ${{ github.event.pull_request.number }} \
+            --source-repo ${{ github.event.pull_request.head.repo.clone_url }} \
+            --source-branch ${{ github.event.pull_request.head.ref }}
+
+  # ============================================================================
   # JOB 6: Auto-merge (Conditional - only if validated and approved)
   # ============================================================================
   automerge:
     name: "6. Auto-merge"
-    needs: [detect_changes, validate_pr, layer_mapping, generate_metadata]
+    needs: [detect_changes, validate_pr, process_metadata, generate_metadata, layer_mapping]
     if: |
       github.event_name == 'pull_request' &&
       needs.validate_pr.outputs.is_automergeable == 'true' &&
       needs.validate_pr.outputs.all_tests_pass == 'true' &&
-      (needs.layer_mapping.result == 'success' || needs.layer_mapping.result == 'skipped') &&
-      (needs.generate_metadata.result == 'success' || needs.generate_metadata.result == 'skipped')
+      (needs.process_metadata.result == 'success' || needs.process_metadata.result == 'skipped') &&
+      (needs.generate_metadata.result == 'success' || needs.generate_metadata.result == 'skipped') &&
+      (needs.layer_mapping.result == 'success' || needs.layer_mapping.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - name: Auto Approve
