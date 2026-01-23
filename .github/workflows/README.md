@@ -14,9 +14,9 @@ This workflow orchestrates the entire submission pipeline:
 
 1. **Detect Changes** - Identifies what plugins changed
 2. **Validate PR** - Checks if PR is automergeable (pre-merge only)
-3. **Layer Mapping** - Maps layers for new models (conditional, vision domain only - skipped for language)
-4. **Process Metadata** - Handles metadata-only changes (conditional)
-5. **Generate Metadata** - Generates metadata for new plugins missing metadata.yml (conditional)
+3. **Update Existing Metadata** - Handles metadata-only changes (conditional)
+4. **Generate Metadata** - Generates metadata for new plugins missing metadata.yml (conditional)
+5. **Layer Mapping** - Maps layers for new models (conditional, vision domain only - skipped for language)
 6. **Auto-merge** - Automatically merges approved PRs (conditional)
 7. **Post-Merge Scoring** - Triggers Jenkins scoring after merge (conditional)
 8. **Notify on Failure** - Sends failure notifications (always runs on failure)
@@ -43,17 +43,17 @@ PR Created/Updated
     ├─→ Tests pass? → Continue
     └─→ Tests fail? → Notify user
     ↓
-[3] Layer Mapping (if new models)
-    ├─→ Language domain? → Skip (not needed)
-    └─→ Vision domain? → Trigger Jenkins mapping
-    ↓
-[4] Process Metadata (if metadata-only)
+[3] Update Existing Metadata (if metadata-only)
     ├─→ Process metadata
     └─→ Create/merge metadata PRs
     ↓
-[5] Generate Metadata (if new plugins without metadata)
+[4] Generate Metadata (if new plugins without metadata)
     ├─→ Generate metadata.yml
     └─→ Commit to PR branch
+    ↓
+[5] Layer Mapping (if new models)
+    ├─→ Language domain? → Skip (not needed)
+    └─→ Vision domain? → Trigger Jenkins mapping
     ↓
 [6] Auto-merge (if validated)
     ├─→ Approve PR
@@ -158,10 +158,11 @@ On any PR, you'll see a single workflow run:
 Plugin Submission Orchestrator
 ├─ 1. Detect Changes ✅
 ├─ 2. Validate PR ✅
-├─ 3. Layer Mapping ⏭️ (skipped)
-├─ 4. Process Metadata ⏭️ (skipped)
-├─ 5. Auto-merge ✅
-└─ 6. Post-Merge Scoring ✅
+├─ 3. Update Existing Metadata ⏭️ (skipped)
+├─ 4. Generate Metadata ⏭️ (skipped)
+├─ 5. Layer Mapping ⏭️ (skipped)
+├─ 6. Auto-merge ✅
+└─ 7. Post-Merge Scoring ✅
 ```
 
 ### Debugging
