@@ -551,7 +551,7 @@ jobs:
   # JOB 8: Failure Notification (Runs if any job fails)
   # ============================================================================
   notify_on_failure:
-    name: "Notify on Failure"
+    name: "8. Notify on Failure"
     needs: [detect_changes, validate_pr, layer_mapping, process_metadata, generate_metadata, automerge, post_merge_scoring]
     if: |
       always() && (
