@@ -112,6 +112,9 @@ jobs:
           # Note: get_scoring_info prints JSON to stdout (doesn't return), so we capture stdout
           # Use base64 encoding to safely pass CHANGED_FILES with spaces to Python
           CHANGED_FILES_B64=$(echo -n "${CHANGED_FILES}" | base64 | tr -d '\n')
+          # Capture stdout and stderr separately to avoid filtering JSON output
+          # Use a temp file to capture stderr separately
+          TEMP_STDERR=$(mktemp)
           PLUGIN_INFO=$(python -W ignore -c "
           from brainscore_core.plugin_management.parse_plugin_changes import get_scoring_info
           import json
@@ -120,16 +123,43 @@ jobs:
           try:
               # Decode CHANGED_FILES from base64 to handle spaces safely
               changed_files_b64 = '${CHANGED_FILES_B64}'
-              changed_files = base64.b64decode(changed_files_b64).decode('utf-8') if changed_files_b64 else ''
+              if not changed_files_b64:
+                  print('{}', file=sys.stdout)
+                  sys.exit(0)
+              changed_files = base64.b64decode(changed_files_b64).decode('utf-8')
+              # Debug: print decoded files to stderr for troubleshooting
+              if not changed_files or changed_files.strip() == '':
+                  print('Warning: Decoded changed_files is empty', file=sys.stderr)
+                  print('{}', file=sys.stdout)
+                  sys.exit(0)
               # get_scoring_info prints JSON to stdout directly, capture it
               get_scoring_info(changed_files, '${{ env.DOMAIN_ROOT }}')
+              # Ensure stdout is flushed
+              sys.stdout.flush()
+          except ImportError as e:
+              # Import errors are critical - print full error
+              error_msg = f'ImportError in get_scoring_info: {str(e)}'
+              print(error_msg, file=sys.stderr)
+              print('{}', file=sys.stdout)
           except Exception as e:
               # If it fails, print sanitized error to stderr and empty JSON to stdout
               # Only print exception type and message, not full traceback (may contain sensitive paths)
               error_msg = f'Error in get_scoring_info: {type(e).__name__}: {str(e)}'
               print(error_msg, file=sys.stderr)
-              print('{}')
-          " 2>&1 | grep -v "^Error in get_scoring_info" || echo '{}')
+              print('{}', file=sys.stdout)
+          " 2>"$TEMP_STDERR")
+          
+          # Print stderr errors for debugging (but filter out our own error prefix to avoid duplication)
+          if [ -s "$TEMP_STDERR" ]; then
+            echo "Python stderr output:" >&2
+            cat "$TEMP_STDERR" >&2
+          fi
+          rm -f "$TEMP_STDERR"
+          
+          # If PLUGIN_INFO is empty, set to empty JSON object
+          if [ -z "$PLUGIN_INFO" ]; then
+            PLUGIN_INFO='{}'
+          fi
           
           # Validate JSON output
           if ! echo "$PLUGIN_INFO" | jq empty 2>/dev/null; then
