@@ -51,6 +51,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
@@ -188,6 +189,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
@@ -278,6 +280,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
@@ -301,6 +304,9 @@ jobs:
           BSC_DATABASESECRET: ${{ secrets.BSC_DATABASESECRET }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # TEMPORARY: Using hardcoded metadata until language metadata generation is fixed
+          # TODO: Replace with actual metadata generation once language metadata is working
+          
           # Split comma-separated plugin directories
           IFS=',' read -ra PLUGIN_DIRS <<< "${{ needs.detect_changes.outputs.plugin_dirs }}"
           
@@ -319,16 +325,24 @@ jobs:
               # Check if metadata.yml exists
               if [ ! -f "${dir}/metadata.yml" ] && [ ! -f "${dir}/metadata.yaml" ]; then
                 echo "Generating metadata for: ${dir} (type: ${PLUGIN_TYPE})"
-                # Generate metadata directly (without creating a new PR)
-                python -c "
-                from brainscore_core.plugin_management.handle_metadata import generate_metadata
-                metadata_path = generate_metadata('$dir', '$PLUGIN_TYPE', domain='language')
-                if metadata_path:
-                    print(f'Generated metadata at: {metadata_path}')
-                else:
-                    print(f'Failed to generate metadata for {dir}')
-                    exit(1)
-                " || echo "Metadata generation failed for ${dir}, continuing..."
+                
+                # TEMPORARY: Using hardcoded metadata until language metadata generation is fixed
+                # TODO: Replace hardcoded_metadata with actual metadata generation once language metadata is working
+                # To switch to real metadata generation, change the import below to:
+                # from brainscore_core.plugin_management.handle_metadata import generate_metadata
+                # and replace the function call accordingly
+                python brainscore_language/submission/hardcoded_metadata.py "${dir}" "${PLUGIN_TYPE}" || echo "Metadata generation failed for ${dir}, continuing..."
+                
+                # ACTUAL METADATA GENERATION (COMMENTED OUT - uncomment when ready):
+                # python -c "
+                # from brainscore_core.plugin_management.handle_metadata import generate_metadata
+                # metadata_path = generate_metadata('$dir', '$PLUGIN_TYPE', domain='language')
+                # if metadata_path:
+                #     print(f'Generated metadata at: {metadata_path}')
+                # else:
+                #     print(f'Failed to generate metadata for {dir}')
+                #     exit(1)
+                # " || echo "Metadata generation failed for ${dir}, continuing..."
               else
                 echo "Metadata already exists for: ${dir}, skipping generation"
               fi
@@ -372,6 +386,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
@@ -474,6 +489,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
