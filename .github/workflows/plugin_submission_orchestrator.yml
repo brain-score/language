@@ -113,8 +113,9 @@ jobs:
           fi
           
           # Determine if mapping needed (for new models)
+          # Layer mapping is only needed for vision domain, not language
           NEEDS_MAPPING="false"
-          if [ "$HAS_NEW_MODELS" = "true" ] && [ "$NEEDS_SCORING" = "true" ]; then
+          if [ "$DOMAIN" != "language" ] && [ "$HAS_NEW_MODELS" = "true" ] && [ "$NEEDS_SCORING" = "true" ]; then
             NEEDS_MAPPING="true"
           fi
           
@@ -159,6 +160,8 @@ jobs:
           echo "  Needs mapping: ${NEEDS_MAPPING}"
           echo "  Metadata only: ${METADATA_ONLY}"
           echo "  Needs metadata generation: ${NEEDS_METADATA_GENERATION}"
+          echo "  Changed files: ${CHANGED_FILES}"
+          echo "  Plugin info JSON: ${PLUGIN_INFO}"
 
   # ============================================================================
   # JOB 2: Validate PR (Pre-merge only)
@@ -359,12 +362,6 @@ jobs:
       needs.validate_pr.outputs.all_tests_pass == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Skip layer mapping for language domain
-        if: ${{ env.DOMAIN == 'language' }}
-        run: |
-          echo "Layer mapping skipped: language domain does not require layer mapping"
-          echo "This step is skipped because layer mapping is only needed for vision domain models"
-          exit 0
       - name: Check out repository code
         uses: actions/checkout@v4
         with:
@@ -463,6 +460,7 @@ jobs:
     if: |
       github.event_name == 'pull_request_target' &&
       github.event.pull_request.merged == true &&
+      needs.detect_changes.result == 'success' &&
       needs.detect_changes.outputs.needs_scoring == 'true' &&
       needs.detect_changes.outputs.metadata_only == 'false'
     runs-on: ubuntu-latest
