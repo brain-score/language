@@ -451,6 +451,7 @@ jobs:
       - name: Commit generated metadata files
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_PAT: ${{ secrets.GH_MFERG_PAT }}
         run: |
           # Check if there are any staged changes (metadata files were added during generation)
           if ! git diff --cached --quiet; then
@@ -479,8 +480,10 @@ jobs:
             
             git commit -m "$COMMIT_MSG" || echo "Commit failed"
             
-            # Configure git to use token for push (works for same-repo PRs, not fork PRs)
-            git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git
+            # Use PAT for push to trigger workflow rerun (GITHUB_TOKEN commits don't trigger workflows)
+            # Fall back to GITHUB_TOKEN if PAT is not set (for backwards compatibility)
+            PUSH_TOKEN="${GH_PAT:-${GH_TOKEN}}"
+            git remote set-url origin https://x-access-token:${PUSH_TOKEN}@github.com/${{ github.repository }}.git
             git push origin ${{ github.event.pull_request.head.ref }} || echo "Push failed (may be fork PR or no changes)"
           else
             echo "No metadata files staged for commit"
