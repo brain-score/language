@@ -144,8 +144,34 @@ jobs:
           NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models // []' | head -n 1)
           HAS_NEW_MODELS=$(if [ "$NEW_MODELS" != "[]" ] && [ "$NEW_MODELS" != "null" ] && [ -n "$NEW_MODELS" ]; then echo "true"; else echo "false"; fi)
           
-          # Extract plugin directories (handle null case)
-          PLUGIN_DIRS=$(echo "$PLUGIN_INFO" | jq -r 'if .changed_plugins then [.changed_plugins.models[]? // empty, .changed_plugins.benchmarks[]? // empty] | join(",") else "" end' | head -n 1)
+          # Extract plugin directories (construct full paths from model/benchmark names)
+          # get_scoring_info returns just the plugin names, so we need to construct full paths
+          MODELS=$(echo "$PLUGIN_INFO" | jq -r '.changed_plugins.models[]? // empty' | head -n 1)
+          BENCHMARKS=$(echo "$PLUGIN_INFO" | jq -r '.changed_plugins.benchmarks[]? // empty' | head -n 1)
+          PLUGIN_DIRS=""
+          if [ -n "$MODELS" ]; then
+            # Construct full path: DOMAIN_ROOT/models/PLUGIN_NAME
+            for model in $(echo "$PLUGIN_INFO" | jq -r '.changed_plugins.models[]? // empty'); do
+              if [ -n "$model" ]; then
+                if [ -z "$PLUGIN_DIRS" ]; then
+                  PLUGIN_DIRS="${DOMAIN_ROOT}/models/${model}"
+                else
+                  PLUGIN_DIRS="${PLUGIN_DIRS},${DOMAIN_ROOT}/models/${model}"
+                fi
+              fi
+            done
+          fi
+          if [ -n "$BENCHMARKS" ]; then
+            for benchmark in $(echo "$PLUGIN_INFO" | jq -r '.changed_plugins.benchmarks[]? // empty'); do
+              if [ -n "$benchmark" ]; then
+                if [ -z "$PLUGIN_DIRS" ]; then
+                  PLUGIN_DIRS="${DOMAIN_ROOT}/benchmarks/${benchmark}"
+                else
+                  PLUGIN_DIRS="${PLUGIN_DIRS},${DOMAIN_ROOT}/benchmarks/${benchmark}"
+                fi
+              fi
+            done
+          fi
           
           # Check if metadata only
           NON_METADATA=$(echo "$CHANGED_FILES" | tr ' ' '\n' | grep -Ev "metadata\.ya?ml" || true)
