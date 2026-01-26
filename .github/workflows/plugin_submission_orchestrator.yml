@@ -1,6 +1,6 @@
 name: Plugin Submission Orchestrator
 
-# Professional, industry-standard orchestration workflow for LLM evaluations
+# Orchestration workflow for LLM evaluations
 # Single entry point for all plugin submissions (models, benchmarks, metrics, data)
 # Consolidates all submission logic into one clear, sequential flow
 
@@ -67,22 +67,63 @@ jobs:
             MERGE_COMMIT=$(git log --format='%H %P' --all | grep "$(git rev-parse FETCH_HEAD)$" | cut -f1 -d' ')
             CHANGED_FILES=$(git diff --name-only origin/main~1 $MERGE_COMMIT | tr '\n' ' ' || echo "")
           else
-            # Pre-merge: compare PR head to base
-            # For pull_request events, checkout@v4 already has the PR code, so we can use HEAD
-            # Compare base ref with HEAD (which contains the PR changes)
-            BASE_REF="${{ github.event.pull_request.base.ref }}"
-            CHANGED_FILES=$(git diff --name-only origin/${BASE_REF}...HEAD | tr '\n' ' ' || echo "")
+            # Pre-merge: use GitHub API to get changed files (more reliable than git diff)
+            # This works even when PR is reopened or refs are not set up correctly
+            CHANGED_FILES=$(gh pr view ${{ github.event.pull_request.number }} --json files --jq '.files[].path' | tr '\n' ' ' || echo "")
+            
+            # Fallback to git diff if API fails or returns empty
+            if [ -z "$CHANGED_FILES" ] || [ "$CHANGED_FILES" = " " ]; then
+              echo "GitHub API returned no files, trying git diff fallback..."
+              # Ensure base ref is fetched
+              BASE_REF="${{ github.event.pull_request.base.ref }}"
+              BASE_SHA="${{ github.event.pull_request.base.sha }}"
+              HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+              
+              # Fetch base branch and PR head
+              git fetch origin ${BASE_REF} || true
+              git fetch origin ${HEAD_SHA} || true
+              
+              # Try multiple methods to get changed files
+              if [ -n "$BASE_SHA" ] && [ -n "$HEAD_SHA" ]; then
+                CHANGED_FILES=$(git diff --name-only ${BASE_SHA}...${HEAD_SHA} | tr '\n' ' ' || echo "")
+              fi
+              
+              if [ -z "$CHANGED_FILES" ] || [ "$CHANGED_FILES" = " " ]; then
+                CHANGED_FILES=$(git diff --name-only origin/${BASE_REF}...HEAD | tr '\n' ' ' || echo "")
+              fi
+            fi
           fi
           echo "CHANGED_FILES=${CHANGED_FILES}" >> $GITHUB_ENV
           echo "Changed files: ${CHANGED_FILES}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Detect plugin changes
         id: detect
         run: |
+          # Handle empty CHANGED_FILES gracefully
+          CHANGED_FILES="${{ env.CHANGED_FILES }}"
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No changed files detected, using empty string"
+            CHANGED_FILES=""
+          fi
+          
+          # Get plugin info - handle errors gracefully
           PLUGIN_INFO=$(python -W ignore -c "
           from brainscore_core.plugin_management.parse_plugin_changes import get_scoring_info
-          get_scoring_info('${{ env.CHANGED_FILES }}', '${{ env.DOMAIN_ROOT }}')
-          " 2>/dev/null)
+          import json
+          try:
+              result = get_scoring_info('${CHANGED_FILES}', '${{ env.DOMAIN_ROOT }}')
+              print(json.dumps(result) if result else '{}')
+          except Exception as e:
+              print(json.dumps({'error': str(e)}))
+          " 2>/dev/null || echo '{}')
+          
+          # Validate JSON output
+          if ! echo "$PLUGIN_INFO" | jq empty 2>/dev/null; then
+            echo "Warning: Invalid JSON from get_scoring_info, using empty object"
+            PLUGIN_INFO='{}'
+          fi
           
           echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_ENV
           
@@ -107,7 +148,7 @@ jobs:
           PLUGIN_DIRS=$(echo "$PLUGIN_INFO" | jq -r 'if .changed_plugins then [.changed_plugins.models[]? // empty, .changed_plugins.benchmarks[]? // empty] | join(",") else "" end' | head -n 1)
           
           # Check if metadata only
-          NON_METADATA=$(echo "${{ env.CHANGED_FILES }}" | tr ' ' '\n' | grep -Ev "metadata\.ya?ml" || true)
+          NON_METADATA=$(echo "$CHANGED_FILES" | tr ' ' '\n' | grep -Ev "metadata\.ya?ml" || true)
           METADATA_ONLY="false"
           if [ -z "$NON_METADATA" ] && [ "$HAS_PLUGINS" = "true" ]; then
             METADATA_ONLY="true"
