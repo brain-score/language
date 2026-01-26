@@ -377,6 +377,10 @@ jobs:
           # Split comma-separated plugin directories
           IFS=',' read -ra PLUGIN_DIRS <<< "${{ needs.detect_changes.outputs.plugin_dirs }}"
           
+          # Track generated plugins by type for commit message
+          GENERATED_MODELS=()
+          GENERATED_BENCHMARKS=()
+          
           for dir in "${PLUGIN_DIRS[@]}"; do
             if [ -n "$dir" ]; then
               # Determine plugin type from directory path
@@ -389,6 +393,9 @@ jobs:
                 continue
               fi
               
+              # Extract plugin name from directory path
+              PLUGIN_NAME=$(basename "$dir")
+              
               # Check if metadata.yml exists
               if [ ! -f "${dir}/metadata.yml" ] && [ ! -f "${dir}/metadata.yaml" ]; then
                 echo "Generating metadata for: ${dir} (type: ${PLUGIN_TYPE})"
@@ -398,7 +405,24 @@ jobs:
                 # To switch to real metadata generation, change the import below to:
                 # from brainscore_core.plugin_management.handle_metadata import generate_metadata
                 # and replace the function call accordingly
-                python brainscore_language/submission/hardcoded_metadata.py "${dir}" "${PLUGIN_TYPE}" || echo "Metadata generation failed for ${dir}, continuing..."
+                if python brainscore_language/submission/hardcoded_metadata.py "${dir}" "${PLUGIN_TYPE}"; then
+                  # Add the generated metadata file to git immediately
+                  if [ -f "${dir}/metadata.yml" ]; then
+                    git add "${dir}/metadata.yml"
+                    echo "Added ${dir}/metadata.yml to git"
+                  elif [ -f "${dir}/metadata.yaml" ]; then
+                    git add "${dir}/metadata.yaml"
+                    echo "Added ${dir}/metadata.yaml to git"
+                  fi
+                  # Track this plugin by type for commit message
+                  if [ "$PLUGIN_TYPE" == "models" ]; then
+                    GENERATED_MODELS+=("${PLUGIN_NAME}")
+                  else
+                    GENERATED_BENCHMARKS+=("${PLUGIN_NAME}")
+                  fi
+                else
+                  echo "Metadata generation failed for ${dir}, continuing..."
+                fi
                 
                 # ACTUAL METADATA GENERATION (COMMENTED OUT - uncomment when ready):
                 # python -c "
@@ -415,20 +439,51 @@ jobs:
               fi
             fi
           done
+          
+          # Store generated plugins lists for commit message
+          if [ ${#GENERATED_MODELS[@]} -gt 0 ]; then
+            echo "GENERATED_MODELS=$(IFS=','; echo "${GENERATED_MODELS[*]}")" >> $GITHUB_ENV
+          fi
+          if [ ${#GENERATED_BENCHMARKS[@]} -gt 0 ]; then
+            echo "GENERATED_BENCHMARKS=$(IFS=','; echo "${GENERATED_BENCHMARKS[*]}")" >> $GITHUB_ENV
+          fi
 
       - name: Commit generated metadata files
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Check if any metadata files were generated
-          if git diff --name-only | grep -q "metadata\.ya?ml"; then
-            git add **/metadata.yml **/metadata.yaml
-            git commit -m "Auto-generate metadata.yml for new plugins" || echo "No changes to commit"
+          # Check if there are any staged changes (metadata files were added during generation)
+          if ! git diff --cached --quiet; then
+            echo "Committing staged metadata files..."
+            
+            # Build commit message grouped by plugin type
+            COMMIT_PARTS=()
+            
+            if [ -n "$GENERATED_MODELS" ]; then
+              COMMIT_PARTS+=("models: $GENERATED_MODELS")
+            fi
+            
+            if [ -n "$GENERATED_BENCHMARKS" ]; then
+              COMMIT_PARTS+=("benchmarks: $GENERATED_BENCHMARKS")
+            fi
+            
+            if [ ${#COMMIT_PARTS[@]} -gt 0 ]; then
+              COMMIT_MSG="Auto-generate metadata.yml for ${COMMIT_PARTS[0]}"
+              # If both types exist, add the second on a new line
+              if [ ${#COMMIT_PARTS[@]} -gt 1 ]; then
+                COMMIT_MSG="${COMMIT_MSG}"$'\n'"Auto-generate metadata.yml for ${COMMIT_PARTS[1]}"
+              fi
+            else
+              COMMIT_MSG="Auto-generate metadata.yml for new plugins"
+            fi
+            
+            git commit -m "$COMMIT_MSG" || echo "Commit failed"
+            
             # Configure git to use token for push (works for same-repo PRs, not fork PRs)
             git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git
             git push origin ${{ github.event.pull_request.head.ref }} || echo "Push failed (may be fork PR or no changes)"
           else
-            echo "No metadata files to commit"
+            echo "No metadata files staged for commit"
           fi
 
   # ============================================================================
