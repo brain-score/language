@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document explains the complete scoring flow for the Brain-Score language domain. The system uses a professional, industry-standard orchestration workflow to automatically score language models on benchmarks when plugins (models or benchmarks) are submitted via pull requests.
+This document explains the complete scoring flow for the Brain-Score language domain. The system uses an orchestration workflow to automatically score language models on benchmarks when plugins (models or benchmarks) are submitted via pull requests.
 
 ## High-Level Flow
 
@@ -440,13 +440,13 @@ On any PR, you'll see a single workflow run:
 
 ```
 Plugin Submission Orchestrator
-├─ 1. Detect Changes ✅
-├─ 2. Validate PR ✅
-├─ 3. Update Existing Metadata ⏭️ (skipped)
-├─ 4. Generate Metadata ⏭️ (skipped)
-├─ 5. Layer Mapping ⏭️ (skipped)
-├─ 6. Auto-merge ✅
-└─ 7. Post-Merge Scoring ✅
+├─ 1. Detect Changes (success)
+├─ 2. Validate PR (success)
+├─ 3. Update Existing Metadata (skipped)
+├─ 4. Generate Metadata (skipped)
+├─ 5. Layer Mapping (skipped)
+├─ 6. Auto-merge (success)
+└─ 7. Post-Merge Scoring (success)
 ```
 
 ### Check Jenkins Status

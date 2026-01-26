@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains a **professional, industry-standard orchestration workflow** for LLM evaluations in the Brain-Score language domain. The system consolidates all plugin submission logic into a single, clear, sequential flow.
+This directory contains an orchestration workflow for LLM evaluations in the Brain-Score language domain. The system consolidates all plugin submission logic into a single, clear, sequential flow.
 
 ## Architecture
 
@@ -70,23 +70,23 @@ PR Created/Updated
 
 ## Key Features
 
-### ✅ Industry Standard
+### Design Principles
 
-- **Single orchestrator** - One workflow to rule them all
+- **Single orchestrator** - One workflow manages all plugin submissions
 - **Sequential execution** - Clear dependencies between steps
 - **Conditional logic** - Steps only run when needed
-- **Error handling** - Comprehensive failure notifications
-- **Reusable components** - DRY principle applied
+- **Error handling** - Failure notifications for all errors
+- **Reusable components** - Shared workflows for common tasks
 
-### ✅ Professional Design
+### Structure
 
-- **Clear job names** - Numbered steps show flow
+- **Clear job names** - Numbered steps show execution flow
 - **Comprehensive outputs** - Each job exposes needed data
 - **Proper permissions** - Least privilege access
 - **Environment variables** - Domain-agnostic configuration
 - **Documentation** - Well-commented code
 
-### ✅ Maintainable
+### Maintainability
 
 - **Modular structure** - Reusable workflows
 - **Testable scripts** - Python helpers can be unit tested
@@ -156,13 +156,13 @@ On any PR, you'll see a single workflow run:
 
 ```
 Plugin Submission Orchestrator
-├─ 1. Detect Changes ✅
-├─ 2. Validate PR ✅
-├─ 3. Update Existing Metadata ⏭️ (skipped)
-├─ 4. Generate Metadata ⏭️ (skipped)
-├─ 5. Layer Mapping ⏭️ (skipped)
-├─ 6. Auto-merge ✅
-└─ 7. Post-Merge Scoring ✅
+├─ 1. Detect Changes (success)
+├─ 2. Validate PR (success)
+├─ 3. Update Existing Metadata (skipped)
+├─ 4. Generate Metadata (skipped)
+├─ 5. Layer Mapping (skipped)
+├─ 6. Auto-merge (success)
+└─ 7. Post-Merge Scoring (success)
 ```
 
 ### Debugging
