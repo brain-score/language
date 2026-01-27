@@ -515,11 +515,29 @@ jobs:
           fi
 
   # ============================================================================
+  # TERMINAL JOB: Metadata Generation Complete (Workflow ends here when metadata is generated)
+  # ============================================================================
+  metadata_generation_complete:
+    name: "Metadata Generation Complete"
+    needs: [detect_changes, validate_pr, generate_metadata]
+    if: |
+      github.event_name == 'pull_request' &&
+      needs.detect_changes.outputs.needs_metadata_generation == 'true' &&
+      needs.generate_metadata.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log completion
+        run: |
+          echo "Metadata generation completed and committed to PR branch"
+          echo "Workflow terminating to allow synchronize event to trigger fresh orchestrator run"
+          echo "On the next run, metadata will be detected and step 4 will be skipped"
+
+  # ============================================================================
   # JOB 5: Layer Mapping (Conditional - only for new models, vision domain only)
   # ============================================================================
   layer_mapping:
     name: "5. Layer Mapping"
-    needs: [detect_changes, validate_pr, generate_metadata]
+    needs: [detect_changes, validate_pr]
     if: |
       github.event_name == 'pull_request' &&
       needs.detect_changes.outputs.needs_mapping == 'true' &&
@@ -566,14 +584,13 @@ jobs:
   # ============================================================================
   automerge:
     name: "6. Auto-merge"
-    needs: [detect_changes, validate_pr, process_metadata, generate_metadata, layer_mapping]
+    needs: [detect_changes, validate_pr, process_metadata, layer_mapping]
     if: |
       github.event_name == 'pull_request' &&
       needs.validate_pr.outputs.is_automergeable == 'true' &&
       needs.validate_pr.outputs.all_tests_pass == 'true' &&
       needs.detect_changes.outputs.needs_metadata_generation == 'false' &&
       (needs.process_metadata.result == 'success' || needs.process_metadata.result == 'skipped') &&
-      (needs.generate_metadata.result == 'success' || needs.generate_metadata.result == 'skipped') &&
       (needs.layer_mapping.result == 'success' || needs.layer_mapping.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
@@ -730,7 +747,8 @@ jobs:
         needs.generate_metadata.result == 'failure' ||
         needs.automerge.result == 'failure' ||
         needs.post_merge_scoring.result == 'failure'
-      )
+      ) &&
+      (needs.detect_changes.outputs.needs_metadata_generation == 'false' || needs.generate_metadata.result == 'failure')
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
