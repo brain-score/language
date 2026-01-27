@@ -10,12 +10,6 @@ on:
   pull_request_target:
     types: [closed]
     branches: [main]
-  workflow_dispatch:
-    inputs:
-      triggered_by:
-        description: 'What triggered this workflow run'
-        required: false
-        default: 'manual'
 
 permissions:
   contents: write
@@ -510,18 +504,8 @@ jobs:
             git remote set-url origin https://x-access-token:${PUSH_TOKEN}@github.com/${{ github.repository }}.git
             if git push origin ${{ github.event.pull_request.head.ref }}; then
               echo "Successfully pushed metadata commit to PR branch"
-              # Manually trigger workflow rerun via GitHub API (workflows don't auto-retrigger themselves on PR events)
-              if [ -n "$GH_PAT" ]; then
-                echo "Triggering workflow rerun via GitHub API..."
-                WORKFLOW_FILE="plugin_submission_orchestrator.yml"
-                BRANCH_REF="${{ github.event.pull_request.head.ref }}"
-                curl -X POST \
-                  -H "Accept: application/vnd.github.v3+json" \
-                  -H "Authorization: token ${GH_PAT}" \
-                  "https://api.github.com/repos/${{ github.repository }}/actions/workflows/${WORKFLOW_FILE}/dispatches" \
-                  -d "{\"ref\":\"${BRANCH_REF}\",\"inputs\":{\"triggered_by\":\"metadata_generation\"}}" || \
-                echo "Note: Failed to trigger workflow via API - workflow will trigger on next PR sync"
-              fi
+              echo "Workflow will rerun automatically via synchronize event triggered by this commit"
+              echo "On the next run, metadata will be detected and step 4 will be skipped"
             else
               echo "Push failed - this may prevent workflow rerun. Check if PAT is configured correctly."
               exit 1
@@ -535,11 +519,12 @@ jobs:
   # ============================================================================
   layer_mapping:
     name: "5. Layer Mapping"
-    needs: [detect_changes, validate_pr]
+    needs: [detect_changes, validate_pr, generate_metadata]
     if: |
       github.event_name == 'pull_request' &&
       needs.detect_changes.outputs.needs_mapping == 'true' &&
-      needs.validate_pr.outputs.all_tests_pass == 'true'
+      needs.validate_pr.outputs.all_tests_pass == 'true' &&
+      needs.detect_changes.outputs.needs_metadata_generation == 'false'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -586,6 +571,7 @@ jobs:
       github.event_name == 'pull_request' &&
       needs.validate_pr.outputs.is_automergeable == 'true' &&
       needs.validate_pr.outputs.all_tests_pass == 'true' &&
+      needs.detect_changes.outputs.needs_metadata_generation == 'false' &&
       (needs.process_metadata.result == 'success' || needs.process_metadata.result == 'skipped') &&
       (needs.generate_metadata.result == 'success' || needs.generate_metadata.result == 'skipped') &&
       (needs.layer_mapping.result == 'success' || needs.layer_mapping.result == 'skipped')
