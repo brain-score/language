@@ -475,8 +475,10 @@ jobs:
               echo "Warning: GH_PAT not set, using GITHUB_TOKEN (commits won't trigger workflows)"
               PUSH_TOKEN="$GH_TOKEN"
             fi
+            # Set remote URL with token (GitHub Actions automatically masks secrets in logs)
             git remote set-url origin https://x-access-token:${PUSH_TOKEN}@github.com/${{ github.repository }}.git
-            if git push origin ${{ github.event.pull_request.head.ref }}; then
+            # Push and capture exit code without exposing token in error output
+            if git push origin ${{ github.event.pull_request.head.ref }} >/dev/null 2>&1; then
               echo "Successfully pushed mutations to PR branch"
               echo "Workflow terminating - synchronize event will trigger orchestrator workflow"
             else

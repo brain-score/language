@@ -242,7 +242,10 @@ jobs:
           echo "  Metadata only: ${METADATA_ONLY}"
           echo "  Needs metadata generation: ${NEEDS_METADATA_GENERATION}"
           echo "  Changed files: ${CHANGED_FILES}"
-          echo "  Plugin info JSON: ${PLUGIN_INFO}"
+          # Don't log full PLUGIN_INFO JSON - may contain sensitive data
+          # Only log summary (plugin type, counts, etc.)
+          PLUGIN_COUNT=$(echo "$PLUGIN_INFO" | jq -r '[.changed_plugins.models[]?, .changed_plugins.benchmarks[]?] | length' 2>/dev/null || echo "0")
+          echo "  Plugin count: ${PLUGIN_COUNT}"
 
   # ============================================================================
   # JOB 2: Validate PR (Pre-merge only)
@@ -314,8 +317,13 @@ jobs:
           echo "is_automergeable=${IS_AUTOMERGEABLE}" >> $GITHUB_OUTPUT
           echo "all_tests_pass=${ALL_TESTS_PASS}" >> $GITHUB_OUTPUT
           
+          # Log validation summary without exposing full JSON (may contain sensitive data)
           echo "Validation results:"
-          echo "$RESULT" | jq '.'
+          echo "  Is automergeable: ${IS_AUTOMERGEABLE}"
+          echo "  All tests pass: ${ALL_TESTS_PASS}"
+          # Extract and log test results summary only (no sensitive data)
+          TEST_RESULTS=$(echo "$RESULT" | jq -c '{is_automergeable, all_tests_pass, test_results: (.test_results // {})}' 2>/dev/null || echo "{}")
+          echo "  Test results summary: ${TEST_RESULTS}"
 
   # ============================================================================
   # JOB 3: Auto-merge (Conditional - only if validated and approved)
@@ -451,11 +459,12 @@ jobs:
               model_type: "artificialsubject",
               public: true
             }')
+          # Store PLUGIN_INFO in GITHUB_ENV for next step (contains email - will be masked by GitHub Actions)
           echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_ENV
           echo "plugin_info=${PLUGIN_INFO}" >> $GITHUB_OUTPUT
-          # Mask email in log output (email is already in PLUGIN_INFO JSON)
-          PLUGIN_INFO_MASKED=$(echo "$PLUGIN_INFO" | jq -c 'if .email then .email = "***MASKED***" else . end')
-          echo "Plugin info (email masked): ${PLUGIN_INFO_MASKED}"
+          # Mask email and other sensitive fields in log output
+          PLUGIN_INFO_MASKED=$(echo "$PLUGIN_INFO" | jq -c 'if .email then .email = "***MASKED***" else . end | if .BSC_DATABASESECRET then .BSC_DATABASESECRET = "***MASKED***" else . end' 2>/dev/null || echo "{}")
+          echo "Plugin info (sensitive data masked): ${PLUGIN_INFO_MASKED}"
 
       - name: Trigger Jenkins scoring
         env:
@@ -464,7 +473,13 @@ jobs:
           JENKINS_TRIGGER: ${{ secrets.JENKINS_TRIGGER }}
           PLUGIN_INFO: ${{ steps.build_info.outputs.plugin_info }}
         run: |
-          python -c 'from brainscore_core.submission.endpoints import call_jenkins; import os; call_jenkins(os.environ["PLUGIN_INFO"])'
+          # PLUGIN_INFO contains email - GitHub Actions automatically masks secrets in logs
+          # Suppress stdout/stderr to prevent any potential exposure of PLUGIN_INFO content
+          python -c 'from brainscore_core.submission.endpoints import call_jenkins; import os; call_jenkins(os.environ["PLUGIN_INFO"])' >/dev/null 2>&1 || {
+            echo "Jenkins scoring trigger failed (check Jenkins logs for details)"
+            exit 1
+          }
+          echo "Jenkins scoring job triggered successfully"
 
   # ============================================================================
   # JOB 5: Failure Notification (Runs if any job fails)
