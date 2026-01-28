@@ -193,6 +193,18 @@ jobs:
           else
             echo "plugin_info_json=" >> $GITHUB_OUTPUT
           fi
+          
+          echo "Detection results:"
+          echo "  Has plugins: ${HAS_PLUGINS}"
+          echo "  Plugin type: ${PLUGIN_TYPE}"
+          echo "  Plugin dirs: ${PLUGIN_DIRS}"
+          echo "  Has new models: ${HAS_NEW_MODELS}"
+          echo "  Metadata only: ${METADATA_ONLY}"
+          echo "  Needs scoring: ${NEEDS_SCORING}"
+          echo "  Needs mapping: ${NEEDS_MAPPING}"
+          echo "  Needs metadata generation: ${NEEDS_METADATA_GENERATION}"
+          echo "  Is automergeable: ${IS_AUTOMERGEABLE}"
+          echo "  Changed files: ${CHANGED_FILES}"
 
   # ============================================================================
   # JOB 2: Validate PR (Minimal validation to proceed with mutation)

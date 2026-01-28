@@ -237,10 +237,14 @@ jobs:
           
           echo "Detection results:"
           echo "  Has plugins: ${HAS_PLUGINS}"
+          echo "  Plugin type: ${PLUGIN_TYPE}"
+          echo "  Plugin dirs: ${PLUGIN_DIRS}"
+          echo "  Has new models: ${HAS_NEW_MODELS}"
+          echo "  Metadata only: ${METADATA_ONLY}"
           echo "  Needs scoring: ${NEEDS_SCORING}"
           echo "  Needs mapping: ${NEEDS_MAPPING}"
-          echo "  Metadata only: ${METADATA_ONLY}"
           echo "  Needs metadata generation: ${NEEDS_METADATA_GENERATION}"
+          echo "  Is automergeable: ${IS_AUTOMERGEABLE}"
           echo "  Changed files: ${CHANGED_FILES}"
           # Don't log full PLUGIN_INFO JSON - may contain sensitive data
           # Only log summary (plugin type, counts, etc.)
