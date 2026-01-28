@@ -1,8 +1,8 @@
-name: Plugin Submission Orchestrator
+name: Plugin Submission Validate
 
-# Orchestration workflow: Handles downstream steps after PR is structurally complete
-# Assumes metadata already exists (handled by plugin_submission_mutate.yml)
-# Runs on synchronize events after mutation workflow completes
+# Validate workflow: Handles downstream steps after PR is structurally complete
+# Assumes metadata already exists (handled by plugin_submission_prepare.yml)
+# Runs on synchronize events after prepare workflow completes
 
 on:
   pull_request:
@@ -25,10 +25,41 @@ env:
 
 jobs:
   # ============================================================================
+  # JOB 0: Check for pr_is_ready label (gatekeeper job)
+  # ============================================================================
+  check_label:
+    name: "0. Check PR Ready Label"
+    runs-on: ubuntu-latest
+    outputs:
+      has_pr_is_ready: ${{ steps.check.outputs.has_pr_is_ready }}
+    steps:
+      - name: Check for pr_is_ready label
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            LABELS_JSON=$(gh pr view ${{ github.event.pull_request.number }} --json labels)
+            if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "pr_is_ready")' >/dev/null; then
+              echo "has_pr_is_ready=true" >> $GITHUB_OUTPUT
+              echo "PR has pr_is_ready label - proceeding with validation"
+            else
+              echo "has_pr_is_ready=false" >> $GITHUB_OUTPUT
+              echo "PR does not have pr_is_ready label - skipping validation"
+            fi
+          else
+            # For pull_request_target (post-merge), always proceed
+            echo "has_pr_is_ready=true" >> $GITHUB_OUTPUT
+          fi
+  # ============================================================================
   # JOB 1: Detect and Classify Changes
   # ============================================================================
   detect_changes:
     name: "1. Detect Changes"
+    needs: check_label
+    if: |
+      (github.event_name == 'pull_request' && needs.check_label.outputs.has_pr_is_ready == 'true') ||
+      github.event_name == 'pull_request_target'
     runs-on: ubuntu-latest
     outputs:
       has_plugins: ${{ steps.detect.outputs.has_plugins }}
@@ -256,10 +287,10 @@ jobs:
   # ============================================================================
   validate_pr:
     name: "2. Validate PR"
-    needs: detect_changes
+    needs: [check_label, detect_changes]
     if: |
-      github.event_name == 'pull_request' &&
-      needs.detect_changes.outputs.has_plugins == 'true'
+      (github.event_name == 'pull_request' && needs.check_label.outputs.has_pr_is_ready == 'true' && needs.detect_changes.outputs.has_plugins == 'true') ||
+      (github.event_name == 'pull_request_target' && needs.detect_changes.outputs.has_plugins == 'true')
     runs-on: ubuntu-latest
     outputs:
       is_automergeable: ${{ steps.validate.outputs.is_automergeable }}
@@ -334,10 +365,10 @@ jobs:
   # ============================================================================
   update_existing_metadata:
     name: "3. Update Existing Metadata"
-    needs: [detect_changes, validate_pr]
+    needs: [check_label, detect_changes, validate_pr]
     if: |
-      github.event_name == 'pull_request' &&
-      needs.detect_changes.outputs.metadata_only == 'true'
+      (github.event_name == 'pull_request' && needs.check_label.outputs.has_pr_is_ready == 'true' && needs.detect_changes.outputs.metadata_only == 'true') ||
+      (github.event_name == 'pull_request_target' && needs.detect_changes.outputs.metadata_only == 'true')
     runs-on: ubuntu-latest
     steps:
       - name: Check for only_update_metadata label
@@ -384,12 +415,10 @@ jobs:
   # ============================================================================
   automerge:
     name: "4. Auto-merge"
-    needs: [detect_changes, validate_pr, update_existing_metadata]
+    needs: [check_label, detect_changes, validate_pr, update_existing_metadata]
     if: |
-      github.event_name == 'pull_request' &&
-      needs.validate_pr.outputs.is_automergeable == 'true' &&
-      needs.validate_pr.outputs.all_tests_pass == 'true' &&
-      (needs.update_existing_metadata.result == 'success' || needs.update_existing_metadata.result == 'skipped')
+      (github.event_name == 'pull_request' && needs.check_label.outputs.has_pr_is_ready == 'true' && needs.validate_pr.outputs.is_automergeable == 'true' && needs.validate_pr.outputs.all_tests_pass == 'true' && (needs.update_existing_metadata.result == 'success' || needs.update_existing_metadata.result == 'skipped')) ||
+      (github.event_name == 'pull_request_target' && needs.validate_pr.outputs.is_automergeable == 'true' && needs.validate_pr.outputs.all_tests_pass == 'true' && (needs.update_existing_metadata.result == 'success' || needs.update_existing_metadata.result == 'skipped'))
     runs-on: ubuntu-latest
     steps:
       - name: Auto Approve
@@ -541,15 +570,16 @@ jobs:
   # ============================================================================
   notify_on_failure:
     name: "6. Notify on Failure"
-    needs: [detect_changes, validate_pr, update_existing_metadata, automerge, post_merge_scoring]
+    needs: [check_label, detect_changes, validate_pr, update_existing_metadata, automerge, post_merge_scoring]
     if: |
       always() && (
-        needs.detect_changes.result == 'failure' ||
-        needs.validate_pr.result == 'failure' ||
+        (needs.check_label.result == 'failure') ||
+        (needs.detect_changes.result == 'failure') ||
+        (needs.validate_pr.result == 'failure') ||
         (needs.validate_pr.result == 'success' && needs.validate_pr.outputs.all_tests_pass == 'false') ||
-        needs.update_existing_metadata.result == 'failure' ||
-        needs.automerge.result == 'failure' ||
-        needs.post_merge_scoring.result == 'failure'
+        (needs.update_existing_metadata.result == 'failure') ||
+        (needs.automerge.result == 'failure') ||
+        (needs.post_merge_scoring.result == 'failure')
       )
     runs-on: ubuntu-latest
     steps:

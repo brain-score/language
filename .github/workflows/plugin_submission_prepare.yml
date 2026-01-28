@@ -1,8 +1,8 @@
-name: Plugin Submission Mutate
+name: Plugin Submission Prepare
 
-# Mutation workflow: Handles metadata generation/updates and commits to PR
+# Prepare workflow: Handles metadata generation/updates and commits to PR
 # This workflow terminates after pushing commits, relying on synchronize events
-# to trigger the orchestrator workflow for downstream steps
+# to trigger the validate workflow for downstream steps
 
 on:
   pull_request:
@@ -269,13 +269,14 @@ jobs:
       needs.detect_changes.outputs.metadata_only == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Add only_update_metadata label
+      - name: Add labels
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh pr edit ${{ github.event.pull_request.number }} --add-label "only_update_metadata" || echo "Label may already exist"
-          echo "Added 'only_update_metadata' label to PR"
-          echo "Workflow terminating - orchestrator will handle metadata update via Jenkins"
+          gh pr edit ${{ github.event.pull_request.number }} --add-label "pr_is_ready" || echo "Label may already exist"
+          echo "Added 'only_update_metadata' and 'pr_is_ready' labels to PR"
+          echo "Workflow terminating - validate workflow will handle metadata update via Jenkins"
 
   # ============================================================================
   # JOB 4: Generate Mutations and Commit (Metadata Generation + Layer Mapping)
@@ -456,7 +457,12 @@ jobs:
             # Push and capture exit code without exposing token in error output
             if git push origin ${{ github.event.pull_request.head.ref }} >/dev/null 2>&1; then
               echo "Successfully pushed mutations to PR branch"
-              echo "Workflow terminating - synchronize event will trigger orchestrator workflow"
+              
+              # Add pr_is_ready label to trigger validate workflow
+              echo "Adding pr_is_ready label to PR"
+              gh pr edit ${{ github.event.pull_request.number }} --add-label "pr_is_ready" || echo "Label may already exist"
+              
+              echo "Workflow terminating - validate workflow will run when it sees pr_is_ready label"
             else
               echo "Push failed - this may prevent workflow rerun. Check if PAT is configured correctly."
               exit 1

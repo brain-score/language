@@ -2,29 +2,29 @@
 
 ## Overview
 
-This directory contains two complementary workflows for LLM evaluations in the Brain-Score language domain. The system uses a two-phase approach: mutation (commits changes to PR) and orchestration (handles downstream steps after PR is complete).
+This directory contains two complementary workflows for LLM evaluations in the Brain-Score language domain. The system uses a two-phase approach: prepare (commits changes to PR) and validate (handles downstream steps after PR is complete).
 
 ## Architecture
 
 ### Two-Phase Workflow Design
 
-The workflow system is split into two separate workflows to respect GitHub Actions' non-reentrancy model. GitHub Actions prevents workflows from retriggering themselves when they push commits to the same PR branch. This design ensures mutations (metadata generation, layer mapping) are committed and the workflow terminates, then a fresh orchestrator run handles downstream steps.
+The workflow system is split into two separate workflows to respect GitHub Actions' non-reentrancy model. GitHub Actions prevents workflows from retriggering themselves when they push commits to the same PR branch. This design uses labels to coordinate between workflows: the prepare workflow commits changes and adds a `pr_is_ready` label, which triggers the validate workflow.
 
 **Why Two Workflows?**
 
 1. **GitHub Actions Limitation:** When a workflow commits to a PR branch, it cannot retrigger itself on the same workflow file, even with a PAT
 2. **State Transition Model:** Metadata generation is treated as a state transition - the workflow commits changes and terminates
-3. **Fresh Orchestrator Run:** The commit triggers a `synchronize` event, which starts a fresh orchestrator workflow run
-4. **Idempotent Design:** The orchestrator always operates on a PR that is structurally complete (metadata exists)
+3. **Label-Based Triggering:** The prepare workflow adds `pr_is_ready` label after successful mutations, which triggers the validate workflow via `labeled` event
+4. **Idempotent Design:** The validate workflow always operates on a PR that is structurally complete (metadata exists) and only runs when `pr_is_ready` label is present
 
 The workflow system is split into two separate workflows to respect GitHub Actions' non-reentrancy model:
 
-1. **`plugin_submission_mutate.yml`** - Mutation phase (commits to PR, then terminates)
-2. **`plugin_submission_orchestrator.yml`** - Orchestration phase (handles downstream steps)
+1. **`plugin_submission_prepare.yml`** - Prepare phase (commits to PR, then terminates)
+2. **`plugin_submission_validate.yml`** - Validate phase (handles downstream steps)
 
-### Mutation Workflow
+### Prepare Workflow
 
-**`plugin_submission_mutate.yml`** - Handles all repository mutations
+**`plugin_submission_prepare.yml`** - Handles all repository mutations
 
 This workflow detects changes, validates PRs, and commits mutations to the PR branch:
 
@@ -36,19 +36,21 @@ This workflow detects changes, validates PRs, and commits mutations to the PR br
    - Step 4b: Layer Mapping (stages files, vision domain only)
    - Step 4c: Commit and Push (commits all staged files, pushes, terminates)
 
-**Key Feature:** After committing and pushing, this workflow terminates. The commit triggers a `synchronize` event, which starts the orchestrator workflow.
+**Key Feature:** After committing and pushing, this workflow adds the `pr_is_ready` label to the PR, then terminates. The label addition triggers a `labeled` event, which starts the validate workflow.
 
-### Orchestration Workflow
+### Validate Workflow
 
-**`plugin_submission_orchestrator.yml`** - Handles downstream orchestration
+**`plugin_submission_validate.yml`** - Handles downstream validation and orchestration
 
-This workflow assumes the PR is structurally complete (metadata exists) and handles:
+This workflow only runs if the PR has the `pr_is_ready` label (added by prepare workflow). It assumes the PR is structurally complete (metadata exists) and handles:
 
-1. **Detect Changes** - Re-runs detection on normalized PR
-2. **Validate PR** - Full validation for automerge eligibility
-3. **Auto-merge** - Automatically merges approved PRs (conditional)
-4. **Post-Merge Scoring** - Triggers Jenkins scoring after merge (conditional)
-5. **Notify on Failure** - Sends failure notifications (always runs on failure)
+1. **Check PR Ready Label** - Verifies PR has `pr_is_ready` label (gatekeeper job)
+2. **Detect Changes** - Re-runs detection on normalized PR
+3. **Validate PR** - Full validation for automerge eligibility
+4. **Update Existing Metadata** - Triggers Jenkins for metadata-only PRs (conditional)
+5. **Auto-merge** - Automatically merges approved PRs (conditional)
+6. **Post-Merge Scoring** - Triggers Jenkins scoring after merge (conditional)
+7. **Notify on Failure** - Sends failure notifications (always runs on failure)
 
 ### Reusable Workflows
 
@@ -61,12 +63,12 @@ This workflow assumes the PR is structurally complete (metadata exists) and hand
 
 ## Workflow Flow
 
-### Phase 1: Mutation Workflow (`plugin_submission_mutate.yml`)
+### Phase 1: Prepare Workflow (`plugin_submission_prepare.yml`)
 
 ```
 PR Created/Updated
     ↓
-[Mutation Workflow Starts]
+[Prepare Workflow Starts]
     ↓
 [1] Detect Changes
     ├─→ Has plugins? → Continue
@@ -77,7 +79,7 @@ PR Created/Updated
     └─→ Tests fail? → Terminate
     ↓
 [3] Handle Metadata-Only PR (if metadata-only)
-    ├─→ Add "only_update_metadata" label
+    ├─→ Add "only_update_metadata" and "pr_is_ready" labels
     └─→ Workflow terminates
     ↓
 [4] Generate Mutations and Commit (single job with multiple steps)
@@ -88,17 +90,22 @@ PR Created/Updated
     └─→ Step 4c: Commit and Push
         ├─→ Commit all staged files (metadata + layer mapping)
         ├─→ Push to PR branch
+        ├─→ Add "pr_is_ready" label to PR
         └─→ Workflow terminates
     ↓
-[Commit triggers synchronize event]
+[Label addition triggers labeled event]
 ```
 
-### Phase 2: Orchestration Workflow (`plugin_submission_orchestrator.yml`)
+### Phase 2: Validate Workflow (`plugin_submission_validate.yml`)
 
 ```
-Synchronize Event (from mutation commit)
+Labeled Event (pr_is_ready label added by prepare workflow)
     ↓
-[Orchestration Workflow Starts]
+[Validate Workflow Starts]
+    ↓
+[0] Check PR Ready Label (gatekeeper)
+    ├─→ Has pr_is_ready label? → Continue
+    └─→ No label? → Skip all jobs
     ↓
 [1] Detect Changes (re-run on normalized PR)
     ├─→ Metadata exists? → Continue
@@ -109,16 +116,20 @@ Synchronize Event (from mutation commit)
     ├─→ Automergeable? → Continue
     └─→ Tests fail? → Notify user
     ↓
-[3] Auto-merge (if validated)
+[3] Update Existing Metadata (if metadata-only)
+    ├─→ Has only_update_metadata label? → Trigger Jenkins
+    └─→ Otherwise → Skip
+    ↓
+[4] Auto-merge (if validated)
     ├─→ Approve PR
     └─→ Merge to main
     ↓
-[4] Post-Merge Scoring (after merge)
+[5] Post-Merge Scoring (after merge)
     ├─→ Extract user email
     ├─→ Build plugin info
     └─→ Trigger Jenkins scoring
     ↓
-[5] Notify on Failure (if any step fails)
+[6] Notify on Failure (if any step fails)
     └─→ Send email notification
 ```
 
@@ -126,9 +137,10 @@ Synchronize Event (from mutation commit)
 
 ### Design Principles
 
-- **Two-phase architecture** - Mutation workflow commits changes, orchestrator handles downstream steps
+- **Two-phase architecture** - Prepare workflow commits changes and adds label, validate workflow handles downstream steps
+- **Label-based coordination** - Uses `pr_is_ready` label to coordinate between workflows instead of relying on synchronize events
 - **Non-reentrant design** - Respects GitHub Actions' limitation where workflows can't retrigger themselves
-- **State transition model** - Metadata generation is a terminal step that triggers fresh orchestrator run
+- **State transition model** - Metadata generation is a terminal step that adds label to trigger validate workflow
 - **Sequential execution** - Clear dependencies between steps
 - **Conditional logic** - Steps only run when needed
 - **Error handling** - Failure notifications for all errors
@@ -210,9 +222,9 @@ gh workflow run metadata_handler.yml \
 
 On any PR, you'll see two workflow runs:
 
-**First Run (Mutation - with metadata generation):**
+**First Run (Prepare - with metadata generation):**
 ```
-Plugin Submission Mutate
+Plugin Submission Prepare
 ├─ 1. Detect Changes (success)
 ├─ 2. Validate PR (success)
 ├─ 3. Handle Metadata-Only PR (skipped)
@@ -223,9 +235,9 @@ Plugin Submission Mutate
         └─→ Workflow terminates, commit triggers synchronize
 ```
 
-**First Run (Mutation - with layer mapping for vision):**
+**First Run (Prepare - with layer mapping for vision):**
 ```
-Plugin Submission Mutate
+Plugin Submission Prepare
 ├─ 1. Detect Changes (success)
 ├─ 2. Validate PR (success)
 ├─ 3. Handle Metadata-Only PR (skipped)
@@ -236,9 +248,9 @@ Plugin Submission Mutate
         └─→ Workflow terminates, commit triggers synchronize
 ```
 
-**Second Run (Orchestration):**
+**Second Run (Validate):**
 ```
-Plugin Submission Orchestrator
+Plugin Submission Validate
 ├─ 1. Detect Changes (success)
 ├─ 2. Validate PR (success)
 ├─ 3. Auto-merge (success)
@@ -259,7 +271,7 @@ This workflow system learns from vision's mistakes:
 | Aspect | Vision (Old) | Language (New) |
 |--------|-------------|----------------|
 | **Workflows** | 10 separate files | 2 main workflows + 2 reusable |
-| **Architecture** | Single workflow | Two-phase (mutation + orchestration) |
+| **Architecture** | Single workflow | Two-phase (prepare + validate) |
 | **Entry Point** | Multiple triggers | Clear separation of concerns |
 | **Dependencies** | Implicit, complex | Explicit, sequential |
 | **Visibility** | Hard to see flow | Clear numbered steps |
