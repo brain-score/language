@@ -2,24 +2,52 @@
 
 ## Overview
 
-This directory contains an orchestration workflow for LLM evaluations in the Brain-Score language domain. The system consolidates all plugin submission logic into a single, clear, sequential flow.
+This directory contains two complementary workflows for LLM evaluations in the Brain-Score language domain. The system uses a two-phase approach: mutation (commits changes to PR) and orchestration (handles downstream steps after PR is complete).
 
 ## Architecture
 
-### Main Orchestrator
+### Two-Phase Workflow Design
 
-**`plugin_submission_orchestrator.yml`** - Single entry point for all plugin submissions
+The workflow system is split into two separate workflows to respect GitHub Actions' non-reentrancy model. GitHub Actions prevents workflows from retriggering themselves when they push commits to the same PR branch. This design ensures mutations (metadata generation, layer mapping) are committed and the workflow terminates, then a fresh orchestrator run handles downstream steps.
 
-This workflow orchestrates the entire submission pipeline:
+**Why Two Workflows?**
+
+1. **GitHub Actions Limitation:** When a workflow commits to a PR branch, it cannot retrigger itself on the same workflow file, even with a PAT
+2. **State Transition Model:** Metadata generation is treated as a state transition - the workflow commits changes and terminates
+3. **Fresh Orchestrator Run:** The commit triggers a `synchronize` event, which starts a fresh orchestrator workflow run
+4. **Idempotent Design:** The orchestrator always operates on a PR that is structurally complete (metadata exists)
+
+The workflow system is split into two separate workflows to respect GitHub Actions' non-reentrancy model:
+
+1. **`plugin_submission_mutate.yml`** - Mutation phase (commits to PR, then terminates)
+2. **`plugin_submission_orchestrator.yml`** - Orchestration phase (handles downstream steps)
+
+### Mutation Workflow
+
+**`plugin_submission_mutate.yml`** - Handles all repository mutations
+
+This workflow detects changes, validates PRs, and commits mutations to the PR branch:
 
 1. **Detect Changes** - Identifies what plugins changed
-2. **Validate PR** - Checks if PR is automergeable (pre-merge only)
+2. **Validate PR** - Checks if PR tests pass (minimal validation to proceed)
 3. **Update Existing Metadata** - Handles metadata-only changes (conditional)
 4. **Generate Metadata** - Generates metadata for new plugins missing metadata.yml (conditional)
 5. **Layer Mapping** - Maps layers for new models (conditional, vision domain only - skipped for language)
-6. **Auto-merge** - Automatically merges approved PRs (conditional)
-7. **Post-Merge Scoring** - Triggers Jenkins scoring after merge (conditional)
-8. **Notify on Failure** - Sends failure notifications (always runs on failure)
+6. **Commit and Push** - Commits all mutations and pushes to PR branch, then terminates
+
+**Key Feature:** After committing and pushing, this workflow terminates. The commit triggers a `synchronize` event, which starts the orchestrator workflow.
+
+### Orchestration Workflow
+
+**`plugin_submission_orchestrator.yml`** - Handles downstream orchestration
+
+This workflow assumes the PR is structurally complete (metadata exists) and handles:
+
+1. **Detect Changes** - Re-runs detection on normalized PR
+2. **Validate PR** - Full validation for automerge eligibility
+3. **Auto-merge** - Automatically merges approved PRs (conditional)
+4. **Post-Merge Scoring** - Triggers Jenkins scoring after merge (conditional)
+5. **Notify on Failure** - Sends failure notifications (always runs on failure)
 
 ### Reusable Workflows
 
@@ -32,39 +60,67 @@ This workflow orchestrates the entire submission pipeline:
 
 ## Workflow Flow
 
+### Phase 1: Mutation Workflow (`plugin_submission_mutate.yml`)
+
 ```
 PR Created/Updated
+    ↓
+[Mutation Workflow Starts]
     ↓
 [1] Detect Changes
     ├─→ Has plugins? → Continue
     └─→ No plugins? → Skip
     ↓
-[2] Validate PR (pre-merge only)
+[2] Validate PR (minimal validation)
     ├─→ Tests pass? → Continue
-    └─→ Tests fail? → Notify user
+    └─→ Tests fail? → Terminate
     ↓
 [3] Update Existing Metadata (if metadata-only)
     ├─→ Process metadata
-    └─→ Create/merge metadata PRs
+    └─→ Stage changes
     ↓
 [4] Generate Metadata (if new plugins without metadata)
     ├─→ Generate metadata.yml
-    └─→ Commit to PR branch
+    └─→ Stage changes
     ↓
-[5] Layer Mapping (if new models)
+[5] Layer Mapping (if new models, vision only)
     ├─→ Language domain? → Skip (not needed)
-    └─→ Vision domain? → Trigger Jenkins mapping
+    └─→ Vision domain? → Generate layer mapping, stage changes
     ↓
-[6] Auto-merge (if validated)
+[6] Commit and Push
+    ├─→ Commit all staged changes
+    ├─→ Push to PR branch
+    └─→ Workflow terminates
+    ↓
+[Commit triggers synchronize event]
+```
+
+### Phase 2: Orchestration Workflow (`plugin_submission_orchestrator.yml`)
+
+```
+Synchronize Event (from mutation commit)
+    ↓
+[Orchestration Workflow Starts]
+    ↓
+[1] Detect Changes (re-run on normalized PR)
+    ├─→ Metadata exists? → Continue
+    └─→ No plugins? → Skip
+    ↓
+[2] Validate PR (full validation)
+    ├─→ Tests pass? → Continue
+    ├─→ Automergeable? → Continue
+    └─→ Tests fail? → Notify user
+    ↓
+[3] Auto-merge (if validated)
     ├─→ Approve PR
     └─→ Merge to main
     ↓
-[7] Post-Merge Scoring (after merge)
+[4] Post-Merge Scoring (after merge)
     ├─→ Extract user email
     ├─→ Build plugin info
     └─→ Trigger Jenkins scoring
     ↓
-[8] Notify on Failure (if any step fails)
+[5] Notify on Failure (if any step fails)
     └─→ Send email notification
 ```
 
@@ -72,7 +128,9 @@ PR Created/Updated
 
 ### Design Principles
 
-- **Single orchestrator** - One workflow manages all plugin submissions
+- **Two-phase architecture** - Mutation workflow commits changes, orchestrator handles downstream steps
+- **Non-reentrant design** - Respects GitHub Actions' limitation where workflows can't retrigger themselves
+- **State transition model** - Metadata generation is a terminal step that triggers fresh orchestrator run
 - **Sequential execution** - Clear dependencies between steps
 - **Conditional logic** - Steps only run when needed
 - **Error handling** - Failure notifications for all errors
@@ -152,17 +210,27 @@ gh workflow run metadata_handler.yml \
 
 ### View Workflow Status
 
-On any PR, you'll see a single workflow run:
+On any PR, you'll see two workflow runs:
 
+**First Run (Mutation):**
+```
+Plugin Submission Mutate
+├─ 1. Detect Changes (success)
+├─ 2. Validate PR (success)
+├─ 3. Update Existing Metadata (skipped)
+├─ 4. Generate Metadata (success)
+├─ 5. Layer Mapping (skipped - language domain)
+└─ 6. Commit and Push (success)
+    └─→ Workflow terminates, commit triggers synchronize
+```
+
+**Second Run (Orchestration):**
 ```
 Plugin Submission Orchestrator
 ├─ 1. Detect Changes (success)
 ├─ 2. Validate PR (success)
-├─ 3. Update Existing Metadata (skipped)
-├─ 4. Generate Metadata (skipped)
-├─ 5. Layer Mapping (skipped)
-├─ 6. Auto-merge (success)
-└─ 7. Post-Merge Scoring (success)
+├─ 3. Auto-merge (success)
+└─ 4. Post-Merge Scoring (success)
 ```
 
 ### Debugging
@@ -178,11 +246,13 @@ This workflow system learns from vision's mistakes:
 
 | Aspect | Vision (Old) | Language (New) |
 |--------|-------------|----------------|
-| **Workflows** | 10 separate files | 1 orchestrator + 2 reusable |
-| **Entry Point** | Multiple triggers | Single entry point |
+| **Workflows** | 10 separate files | 2 main workflows + 2 reusable |
+| **Architecture** | Single workflow | Two-phase (mutation + orchestration) |
+| **Entry Point** | Multiple triggers | Clear separation of concerns |
 | **Dependencies** | Implicit, complex | Explicit, sequential |
 | **Visibility** | Hard to see flow | Clear numbered steps |
 | **Error Handling** | Scattered | Centralized |
+| **Re-entrancy** | Attempts impossible continuation | Respects GitHub Actions model |
 | **Maintainability** | Hard to modify | Easy to extend |
 
 ## Future Improvements
