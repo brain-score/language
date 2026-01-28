@@ -312,6 +312,7 @@ jobs:
         env:
           BSC_DATABASESECRET: ${{ secrets.BSC_DATABASESECRET }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_PAT: ${{ secrets.GH_MFERG_PAT }}
         run: |
           IFS=',' read -ra PLUGIN_DIRS <<< "${{ needs.detect_changes.outputs.plugin_dirs }}"
           
@@ -356,15 +357,54 @@ jobs:
             fi
           done
           
-          if [ ${#GENERATED_MODELS[@]} -gt 0 ]; then
-            echo "GENERATED_MODELS=$(IFS=','; echo "${GENERATED_MODELS[*]}")" >> $GITHUB_ENV
+          # Commit and push metadata files if any were generated
+          if [ ${#GENERATED_MODELS[@]} -gt 0 ] || [ ${#GENERATED_BENCHMARKS[@]} -gt 0 ]; then
+            # Check if there are staged changes
+            if ! git diff --cached --quiet; then
+              echo "Committing generated metadata files..."
+              
+              # Build commit message
+              COMMIT_PARTS=()
+              if [ ${#GENERATED_MODELS[@]} -gt 0 ]; then
+                COMMIT_PARTS+=("models: $(IFS=', '; echo "${GENERATED_MODELS[*]}")")
+              fi
+              if [ ${#GENERATED_BENCHMARKS[@]} -gt 0 ]; then
+                COMMIT_PARTS+=("benchmarks: $(IFS=', '; echo "${GENERATED_BENCHMARKS[*]}")")
+              fi
+              
+              COMMIT_MSG="Auto-generate metadata.yml for ${COMMIT_PARTS[0]}"
+              if [ ${#COMMIT_PARTS[@]} -gt 1 ]; then
+                COMMIT_MSG="${COMMIT_MSG}"$'\n'"Auto-generate metadata.yml for ${COMMIT_PARTS[1]}"
+              fi
+              
+              git commit -m "$COMMIT_MSG" || echo "Commit failed (may be no changes)"
+              
+              # Use PAT for push to trigger workflow rerun (GITHUB_TOKEN commits don't trigger workflows)
+              if [ -n "$GH_PAT" ]; then
+                echo "Using PAT for push"
+                PUSH_TOKEN="$GH_PAT"
+              else
+                echo "Warning: GH_PAT not set, using GITHUB_TOKEN (commits won't trigger workflows)"
+                PUSH_TOKEN="$GH_TOKEN"
+              fi
+              
+              # Set remote URL with token (GitHub Actions automatically masks secrets in logs)
+              git remote set-url origin https://x-access-token:${PUSH_TOKEN}@github.com/${{ github.repository }}.git
+              
+              # Push and capture exit code without exposing token in error output
+              if git push origin ${{ github.event.pull_request.head.ref }} >/dev/null 2>&1; then
+                echo "Successfully pushed metadata commit to PR branch"
+                echo "Workflow terminating - synchronize event will trigger orchestrator workflow"
+              else
+                echo "Push failed - this may prevent workflow rerun. Check if PAT is configured correctly."
+                exit 1
+              fi
+            else
+              echo "No metadata files staged for commit"
+            fi
+          else
+            echo "No metadata files were generated"
           fi
-          if [ ${#GENERATED_BENCHMARKS[@]} -gt 0 ]; then
-            echo "GENERATED_BENCHMARKS=$(IFS=','; echo "${GENERATED_BENCHMARKS[*]}")" >> $GITHUB_ENV
-          fi
-          
-          # Note: Files are staged but not committed here
-          # Commit happens in the unified commit_and_push job
 
   # ============================================================================
   # JOB 5: Layer Mapping (Conditional - only for new models, vision domain only)
@@ -415,7 +455,8 @@ jobs:
             --source-branch ${{ github.event.pull_request.head.ref }}
 
   # ============================================================================
-  # JOB 6: Commit and Push All Mutations (Metadata + Layer Mapping)
+  # JOB 6: Commit and Push Remaining Mutations (Process Metadata + Layer Mapping)
+  # Note: generate_metadata commits and pushes directly, so it's excluded here
   # ============================================================================
   commit_and_push:
     name: "6. Commit and Push"
@@ -424,7 +465,6 @@ jobs:
       github.event_name == 'pull_request' &&
       (
         (needs.process_metadata.result == 'success') ||
-        (needs.generate_metadata.result == 'success') ||
         (needs.layer_mapping.result == 'success')
       )
     runs-on: ubuntu-latest
@@ -445,18 +485,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_PAT: ${{ secrets.GH_MFERG_PAT }}
         run: |
-          # Check for staged changes from previous jobs
-          if ! git diff --cached --quiet || [ -n "$(git status --porcelain)" ]; then
-            echo "Committing mutations (metadata and/or layer mapping)..."
+          # Check for unstaged changes from process_metadata or layer_mapping jobs
+          # Note: generate_metadata commits directly, so we only handle process_metadata and layer_mapping here
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Committing remaining mutations (metadata update and/or layer mapping)..."
             
-            # Stage any unstaged changes (layer mapping files, etc.)
+            # Stage any unstaged changes (layer mapping files, metadata updates, etc.)
             git add -A
             
             # Build commit message
             COMMIT_PARTS=()
-            if [ "${{ needs.generate_metadata.result }}" == "success" ]; then
-              COMMIT_PARTS+=("metadata generation")
-            fi
             if [ "${{ needs.process_metadata.result }}" == "success" ]; then
               COMMIT_PARTS+=("metadata update")
             fi

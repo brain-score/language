@@ -77,18 +77,20 @@ PR Created/Updated
     ↓
 [3] Update Existing Metadata (if metadata-only)
     ├─→ Process metadata
-    └─→ Stage changes
+    └─→ Stage changes (committed in step 6)
     ↓
 [4] Generate Metadata (if new plugins without metadata)
     ├─→ Generate metadata.yml
-    └─→ Stage changes
+    ├─→ Commit metadata files
+    ├─→ Push to PR branch
+    └─→ Workflow terminates (triggers synchronize event)
     ↓
 [5] Layer Mapping (if new models, vision only)
     ├─→ Language domain? → Skip (not needed)
     └─→ Vision domain? → Generate layer mapping, stage changes
     ↓
-[6] Commit and Push
-    ├─→ Commit all staged changes
+[6] Commit and Push (only if process_metadata or layer_mapping ran)
+    ├─→ Commit remaining staged changes
     ├─→ Push to PR branch
     └─→ Workflow terminates
     ↓
@@ -212,15 +214,31 @@ gh workflow run metadata_handler.yml \
 
 On any PR, you'll see two workflow runs:
 
-**First Run (Mutation):**
+**First Run (Mutation - with metadata generation):**
 ```
 Plugin Submission Mutate
 ├─ 1. Detect Changes (success)
 ├─ 2. Validate PR (success)
 ├─ 3. Update Existing Metadata (skipped)
 ├─ 4. Generate Metadata (success)
+│   └─→ Commits and pushes metadata directly
+│   └─→ Workflow terminates, commit triggers synchronize
 ├─ 5. Layer Mapping (skipped - language domain)
+└─ 6. Commit and Push (skipped - metadata already committed)
+```
+
+**First Run (Mutation - with process_metadata or layer_mapping):**
+```
+Plugin Submission Mutate
+├─ 1. Detect Changes (success)
+├─ 2. Validate PR (success)
+├─ 3. Update Existing Metadata (success)
+│   └─→ Stages changes (committed in step 6)
+├─ 4. Generate Metadata (skipped)
+├─ 5. Layer Mapping (success - vision domain)
+│   └─→ Stages changes (committed in step 6)
 └─ 6. Commit and Push (success)
+    └─→ Commits and pushes all staged changes
     └─→ Workflow terminates, commit triggers synchronize
 ```
 

@@ -71,7 +71,8 @@ def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str
     # Check required test contexts (adjust these for language domain)
     required_contexts = [
         "Language Unittests, Plugins",
-        "Language Unittests, Non-Plugins"
+        "Language Unittests, Non-Plugins",
+        "Language Integration Tests"
     ]
     
     start_time = time.time()

@@ -93,6 +93,7 @@ PR Created/Updated
 2. Verifies all required tests pass:
    - "Language Unittests, Plugins"
    - "Language Unittests, Non-Plugins"
+   - "Language Integration Tests"
 3. Confirms PR only modifies plugin files (no core code changes)
 
 **Outputs:**
@@ -144,8 +145,10 @@ PR Created/Updated
    - Generates `metadata.yml` using domain-specific metadata generators
    - Extracts model/benchmark information automatically
    - Creates metadata file in plugin directory
-   - Stages the file for commit
-3. **Note:** Files are staged but not committed here - commit happens in the unified commit job
+   - Stages and commits the file immediately
+   - Pushes commit to PR branch using PAT
+3. **Note:** Files are committed and pushed directly in this job - workflow terminates after push
+4. The commit triggers a `synchronize` event, which starts the orchestrator workflow
 
 **Metadata Generation:**
 - For models: Uses `ModelMetadataGenerator` to extract:
@@ -160,9 +163,9 @@ PR Created/Updated
 
 **Note:** 
 - This step is skipped if all plugins already have metadata files
-- Generated metadata is staged for commit (committed in unified commit job)
+- Generated metadata is committed and pushed directly in this job (not staged for later commit)
 - If generation fails for a plugin, workflow continues with other plugins
-- **After commit, the mutation workflow terminates and triggers orchestrator workflow**
+- **After commit and push, the mutation workflow terminates and triggers orchestrator workflow via synchronize event**
 
 ### 6. Layer Mapping (Conditional)
 
@@ -194,7 +197,7 @@ PR Created/Updated
 **Note:** 
 - This step is skipped if no new models are added
 - **Layer mapping is automatically skipped for language domain** (only needed for vision models)
-- Layer mapping files are staged for commit (committed in unified commit job)
+- Layer mapping files are staged for commit (committed in the `commit_and_push` job)
 - **After commit, the mutation workflow terminates and triggers orchestrator workflow**
 
 ### 7. Commit and Push (Mutation Workflow)
@@ -202,14 +205,16 @@ PR Created/Updated
 **Job:** `6. Commit and Push` (in mutation workflow)
 
 **When:** Only runs if:
-- At least one mutation job succeeded (metadata generation, metadata update, or layer mapping)
+- `process_metadata` job succeeded (metadata-only updates), OR
+- `layer_mapping` job succeeded (vision domain layer mapping)
+- **Note:** Does NOT run if only `generate_metadata` ran (metadata commits directly)
 
-**Purpose:** Commit all mutations and push to PR branch, then terminate workflow
+**Purpose:** Commit remaining mutations (process_metadata and layer_mapping) and push to PR branch, then terminate workflow
 
 **Process:**
-1. Checks for staged changes from previous jobs (metadata files, layer mapping files)
-2. Stages any additional unstaged changes
-3. Creates unified commit with all mutations
+1. Checks for unstaged changes from `process_metadata` or `layer_mapping` jobs
+2. Stages any unstaged changes (layer mapping files, metadata updates, etc.)
+3. Creates commit with remaining mutations
 4. Pushes commit to PR branch using PAT (to trigger workflows)
 5. **Workflow terminates** - relies on synchronize event to trigger orchestrator
 
@@ -217,6 +222,7 @@ PR Created/Updated
 - This is a terminal step - workflow ends here
 - The commit triggers a `pull_request.synchronize` event
 - The orchestrator workflow then runs on the updated PR
+- **Metadata generation commits directly in its own job, so this step only handles other mutations**
 
 ### 8. Auto-merge (Conditional)
 
@@ -395,10 +401,10 @@ brainscore_language/submission/
 3. Validates PR (tests must pass)
 4. **Generates metadata.yml** for the new model (since it's missing)
    - Extracts model architecture, parameters, etc.
-   - Stages metadata file
+   - Commits and pushes metadata file directly to PR branch
+   - **Mutation workflow terminates immediately after push**
 5. **Skips layer mapping** (language domain doesn't require it)
-6. **Commits and pushes** metadata to PR branch
-7. **Mutation workflow terminates**
+6. **Skips commit_and_push** (metadata already committed in step 4)
 
 **Phase 2 - Orchestration Workflow:**
 8. Commit triggers `synchronize` event
@@ -472,6 +478,7 @@ The workflow integrates with GitHub status checks:
 
 - **Language Unittests, Plugins** - Tests for plugin code
 - **Language Unittests, Non-Plugins** - Tests for core code
+- **Language Integration Tests** - Integration tests for language domain
 
 These must pass before auto-merge is allowed.
 
