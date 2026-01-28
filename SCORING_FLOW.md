@@ -2,19 +2,35 @@
 
 ## Overview
 
-This document explains the complete scoring flow for the Brain-Score language domain. The system uses an orchestration workflow to automatically score language models on benchmarks when plugins (models or benchmarks) are submitted via pull requests.
+This document explains the complete scoring flow for the Brain-Score language domain. The system uses a two-phase workflow architecture to automatically score language models on benchmarks when plugins (models or benchmarks) are submitted via pull requests.
+
+### Two-Phase Architecture
+
+The workflow system is split into two complementary workflows:
+
+1. **Mutation Workflow** (`plugin_submission_mutate.yml`): Handles repository mutations (metadata generation, layer mapping) and commits changes to the PR branch, then terminates
+2. **Orchestration Workflow** (`plugin_submission_orchestrator.yml`): Handles downstream orchestration (automerge, post-merge scoring, notifications) and assumes the PR is structurally complete
+
+This design respects GitHub Actions' non-reentrancy model, where workflows cannot retrigger themselves when they push commits to the same PR branch. The mutation workflow commits changes and terminates, then the commit triggers a `synchronize` event that starts a fresh orchestrator workflow run.
 
 ## High-Level Flow
 
 ```
 PR Created/Updated
     ↓
-[Orchestrator Workflow]
+[Phase 1: Mutation Workflow]
     ├─→ Detect Changes
-    ├─→ Validate PR (pre-merge)
+    ├─→ Validate PR (minimal validation)
     ├─→ Update Existing Metadata (if metadata-only changes)
     ├─→ Generate Metadata (if new plugins without metadata.yml)
     ├─→ Layer Mapping (if new models, vision only - skipped for language)
+    └─→ Commit and Push → Workflow terminates
+        ↓
+    [Commit triggers synchronize event]
+        ↓
+[Phase 2: Orchestration Workflow]
+    ├─→ Detect Changes (re-run on normalized PR)
+    ├─→ Validate PR (full validation)
     ├─→ Auto-merge (if approved)
     └─→ Post-Merge Scoring (after merge)
         └─→ Jenkins Scoring Job
@@ -31,8 +47,11 @@ PR Created/Updated
 - Labeled (`labeled` with `automerge` or `automerge-web`)
 
 **What Happens:**
-- The `plugin_submission_orchestrator.yml` workflow is triggered
+- The `plugin_submission_mutate.yml` workflow is triggered first
 - Workflow detects what files changed in the PR
+- If mutations are needed (metadata generation, layer mapping), they are committed
+- The commit triggers a `synchronize` event
+- The `plugin_submission_orchestrator.yml` workflow then runs on the normalized PR
 
 ### 2. Detect Changes
 
@@ -109,7 +128,7 @@ PR Created/Updated
 
 ### 5. Generate Metadata (Conditional)
 
-**Job:** `4. Generate Metadata`
+**Job:** `4. Generate Metadata` (in mutation workflow)
 
 **When:** Only runs if:
 - New plugins were added (`has_plugins == true`)
@@ -125,8 +144,8 @@ PR Created/Updated
    - Generates `metadata.yml` using domain-specific metadata generators
    - Extracts model/benchmark information automatically
    - Creates metadata file in plugin directory
-3. Commits generated metadata files to the PR branch
-4. Pushes changes back to PR
+   - Stages the file for commit
+3. **Note:** Files are staged but not committed here - commit happens in the unified commit job
 
 **Metadata Generation:**
 - For models: Uses `ModelMetadataGenerator` to extract:
@@ -141,21 +160,23 @@ PR Created/Updated
 
 **Note:** 
 - This step is skipped if all plugins already have metadata files
-- Generated metadata is committed to the current PR (not a separate PR)
+- Generated metadata is staged for commit (committed in unified commit job)
 - If generation fails for a plugin, workflow continues with other plugins
+- **After commit, the mutation workflow terminates and triggers orchestrator workflow**
 
 ### 6. Layer Mapping (Conditional)
 
-**Job:** `5. Layer Mapping`
+**Job:** `5. Layer Mapping` (in mutation workflow)
 
 **When:** Only runs if:
 - New models were added (`needs_mapping == true`)
 - All tests passed (`all_tests_pass == true`)
+- Metadata generation completed (or was skipped)
 
 **Purpose:** Map model layers for new model submissions (vision domain only)
 
 **Process:**
-1. **For language domain:** Step is skipped with message "Layer mapping skipped: language domain does not require layer mapping"
+1. **For language domain:** Step is skipped via `if: env.DOMAIN != 'language'` condition
 2. **For vision domain:**
    - Extracts list of new models from plugin info
    - Triggers Jenkins layer mapping job via `actions_helpers.py trigger_layer_mapping`
@@ -163,6 +184,7 @@ PR Created/Updated
      - Model identifiers
      - PR number
      - Source repository and branch
+   - Layer mapping files are generated and staged for commit
 
 **Jenkins Job (vision only):**
 - Runs layer mapping for new models
@@ -172,16 +194,38 @@ PR Created/Updated
 **Note:** 
 - This step is skipped if no new models are added
 - **Layer mapping is automatically skipped for language domain** (only needed for vision models)
+- Layer mapping files are staged for commit (committed in unified commit job)
+- **After commit, the mutation workflow terminates and triggers orchestrator workflow**
 
-### 7. Auto-merge (Conditional)
+### 7. Commit and Push (Mutation Workflow)
 
-**Job:** `6. Auto-merge`
+**Job:** `6. Commit and Push` (in mutation workflow)
+
+**When:** Only runs if:
+- At least one mutation job succeeded (metadata generation, metadata update, or layer mapping)
+
+**Purpose:** Commit all mutations and push to PR branch, then terminate workflow
+
+**Process:**
+1. Checks for staged changes from previous jobs (metadata files, layer mapping files)
+2. Stages any additional unstaged changes
+3. Creates unified commit with all mutations
+4. Pushes commit to PR branch using PAT (to trigger workflows)
+5. **Workflow terminates** - relies on synchronize event to trigger orchestrator
+
+**Note:**
+- This is a terminal step - workflow ends here
+- The commit triggers a `pull_request.synchronize` event
+- The orchestrator workflow then runs on the updated PR
+
+### 8. Auto-merge (Conditional)
+
+**Job:** `3. Auto-merge` (in orchestration workflow)
 
 **When:** Only runs if:
 - PR is validated (`is_automergeable == true`)
 - All tests pass (`all_tests_pass == true`)
-- Metadata processing completed (or skipped)
-- Layer mapping completed (or skipped)
+- PR is structurally complete (metadata exists)
 
 **Purpose:** Automatically merge approved PRs
 
@@ -195,9 +239,9 @@ PR Created/Updated
 
 **Result:** PR is merged to `main` branch
 
-### 8. Post-Merge Scoring
+### 9. Post-Merge Scoring
 
-**Job:** `7. Post-Merge Scoring`
+**Job:** `4. Post-Merge Scoring` (in orchestration workflow)
 
 **When:** Only runs if:
 - PR was merged to `main` (`pull_request_target` event, `merged == true`)
@@ -259,9 +303,9 @@ The Jenkins job receives the plugin information and:
      - Start/end timestamps
      - Error messages (if failed)
 
-### 9. Failure Notification
+### 10. Failure Notification
 
-**Job:** `8. Notify on Failure`
+**Job:** `5. Notify on Failure` (in orchestration workflow)
 
 **When:** Runs if any job in the workflow fails
 
@@ -284,22 +328,35 @@ The Jenkins job receives the plugin information and:
 
 ```
 .github/workflows/
-├── plugin_submission_orchestrator.yml  # Main orchestrator (single entry point)
-├── metadata_handler.yml                 # Reusable: processes metadata
+├── plugin_submission_mutate.yml         # Mutation workflow (commits changes, terminates)
+├── plugin_submission_orchestrator.yml   # Orchestration workflow (handles downstream steps)
+├── metadata_handler.yml                  # Reusable: processes metadata
 └── user_notification_handler.yml        # Reusable: handles notifications
 
 brainscore_language/submission/
-└── actions_helpers.py                   # Python utilities for workflows
+└── actions_helpers.py                    # Python utilities for workflows
 ```
 
 ## Key Components
+
+### Mutation Workflow
+
+**File:** `.github/workflows/plugin_submission_mutate.yml`
+
+**Key Features:**
+- Handles all repository mutations (metadata generation, layer mapping)
+- Commits changes to PR branch
+- Terminates after commit (relies on synchronize event for continuation)
+- Respects GitHub Actions' non-reentrancy model
 
 ### Orchestrator Workflow
 
 **File:** `.github/workflows/plugin_submission_orchestrator.yml`
 
 **Key Features:**
-- Single entry point for all plugin submissions
+- Assumes PR is structurally complete (metadata exists)
+- Handles downstream orchestration (automerge, scoring, notifications)
+- Runs on synchronize events triggered by mutation workflow commits
 - Sequential job execution with clear dependencies
 - Conditional logic for different scenarios
 - Comprehensive error handling
@@ -331,29 +388,44 @@ brainscore_language/submission/
 
 ### Scenario 1: New Model Submission (Without Metadata)
 
+**Phase 1 - Mutation Workflow:**
 1. User creates PR with new model in `brainscore_language/models/newmodel/`
    - Model code is added but no `metadata.yml` file
-2. Workflow detects new model
+2. Mutation workflow detects new model
 3. Validates PR (tests must pass)
 4. **Generates metadata.yml** for the new model (since it's missing)
    - Extracts model architecture, parameters, etc.
-   - Commits metadata to PR branch
+   - Stages metadata file
 5. **Skips layer mapping** (language domain doesn't require it)
-6. Auto-merges PR after validation
-7. Post-merge: triggers scoring
-   - New model scored on all public benchmarks
-   - Results stored in database
+6. **Commits and pushes** metadata to PR branch
+7. **Mutation workflow terminates**
+
+**Phase 2 - Orchestration Workflow:**
+8. Commit triggers `synchronize` event
+9. Orchestrator workflow detects changes (metadata now exists)
+10. Validates PR (full validation)
+11. Auto-merges PR after validation
+12. Post-merge: triggers scoring
+    - New model scored on all public benchmarks
+    - Results stored in database
 
 ### Scenario 1b: New Model Submission (With Metadata)
 
+**Phase 1 - Mutation Workflow:**
 1. User creates PR with new model in `brainscore_language/models/newmodel/`
    - Model code AND `metadata.yml` file are both provided
-2. Workflow detects new model
+2. Mutation workflow detects new model
 3. Validates PR (tests must pass)
 4. **Skips metadata generation** (metadata already exists)
 5. **Skips layer mapping** (language domain doesn't require it)
-6. Auto-merges PR after validation
-7. Post-merge: triggers scoring
+6. **No mutations to commit** - mutation workflow terminates immediately
+
+**Phase 2 - Orchestration Workflow:**
+7. Orchestrator workflow runs (may be triggered by PR creation or synchronize)
+8. Detects changes (metadata exists)
+9. Validates PR (full validation)
+10. Auto-merges PR after validation
+11. Post-merge: triggers scoring
 
 ### Scenario 2: New Benchmark Submission
 
@@ -436,18 +508,30 @@ The workflow requires these GitHub repository secrets:
 
 ### View Workflow Status
 
-On any PR, you'll see a single workflow run:
+On any PR, you'll see two workflow runs:
 
+**First Run (Mutation - if mutations needed):**
+```
+Plugin Submission Mutate
+├─ 1. Detect Changes (success)
+├─ 2. Validate PR (success)
+├─ 3. Update Existing Metadata (skipped)
+├─ 4. Generate Metadata (success)
+├─ 5. Layer Mapping (skipped - language domain)
+└─ 6. Commit and Push (success)
+    └─→ Workflow terminates, commit triggers synchronize
+```
+
+**Second Run (Orchestration):**
 ```
 Plugin Submission Orchestrator
 ├─ 1. Detect Changes (success)
 ├─ 2. Validate PR (success)
-├─ 3. Update Existing Metadata (skipped)
-├─ 4. Generate Metadata (skipped)
-├─ 5. Layer Mapping (skipped)
-├─ 6. Auto-merge (success)
-└─ 7. Post-Merge Scoring (success)
+├─ 3. Auto-merge (success)
+└─ 4. Post-Merge Scoring (success)
 ```
+
+**Note:** If no mutations are needed (metadata already exists), only the orchestrator workflow runs.
 
 ### Check Jenkins Status
 

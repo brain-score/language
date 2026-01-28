@@ -1,8 +1,8 @@
 name: Plugin Submission Orchestrator
 
-# Orchestration workflow for LLM evaluations
-# Single entry point for all plugin submissions (models, benchmarks, metrics, data)
-# Consolidates all submission logic into one clear, sequential flow
+# Orchestration workflow: Handles downstream steps after PR is structurally complete
+# Assumes metadata already exists (handled by plugin_submission_mutate.yml)
+# Runs on synchronize events after mutation workflow completes
 
 on:
   pull_request:
@@ -242,7 +242,10 @@ jobs:
           echo "  Metadata only: ${METADATA_ONLY}"
           echo "  Needs metadata generation: ${NEEDS_METADATA_GENERATION}"
           echo "  Changed files: ${CHANGED_FILES}"
-          echo "  Plugin info JSON: ${PLUGIN_INFO}"
+          # Don't log full PLUGIN_INFO JSON - may contain sensitive data
+          # Only log summary (plugin type, counts, etc.)
+          PLUGIN_COUNT=$(echo "$PLUGIN_INFO" | jq -r '[.changed_plugins.models[]?, .changed_plugins.benchmarks[]?] | length' 2>/dev/null || echo "0")
+          echo "  Plugin count: ${PLUGIN_COUNT}"
 
   # ============================================================================
   # JOB 2: Validate PR (Pre-merge only)
@@ -314,267 +317,24 @@ jobs:
           echo "is_automergeable=${IS_AUTOMERGEABLE}" >> $GITHUB_OUTPUT
           echo "all_tests_pass=${ALL_TESTS_PASS}" >> $GITHUB_OUTPUT
           
+          # Log validation summary without exposing full JSON (may contain sensitive data)
           echo "Validation results:"
-          echo "$RESULT" | jq '.'
+          echo "  Is automergeable: ${IS_AUTOMERGEABLE}"
+          echo "  All tests pass: ${ALL_TESTS_PASS}"
+          # Extract and log test results summary only (no sensitive data)
+          TEST_RESULTS=$(echo "$RESULT" | jq -c '{is_automergeable, all_tests_pass, test_results: (.test_results // {})}' 2>/dev/null || echo "{}")
+          echo "  Test results summary: ${TEST_RESULTS}"
 
   # ============================================================================
-  # JOB 3: Update Existing Metadata (Conditional - only if metadata-only changes)
-  # ============================================================================
-  process_metadata:
-    name: "3. Update Existing Metadata"
-    needs: [detect_changes, validate_pr]
-    if: |
-      github.event_name == 'pull_request' &&
-      needs.detect_changes.outputs.metadata_only == 'true'
-    uses: ./.github/workflows/metadata_handler.yml
-    with:
-      plugin-dir: ${{ needs.detect_changes.outputs.plugin_dirs }}
-      plugin-type: ${{ needs.detect_changes.outputs.plugin_type }}
-      domain: language
-      db-connection: true
-    secrets:
-      BSC_DATABASESECRET: ${{ secrets.BSC_DATABASESECRET }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      APPROVAL_TOKEN: ${{ secrets.APPROVAL_TOKEN }}
-
-  # ============================================================================
-  # JOB 4: Generate Metadata (Conditional - for new plugins without metadata.yml)
-  # ============================================================================
-  generate_metadata:
-    name: "4. Generate Metadata"
-    needs: [detect_changes, validate_pr]
-    if: |
-      github.event_name == 'pull_request' &&
-      needs.detect_changes.outputs.needs_metadata_generation == 'true' &&
-      needs.validate_pr.outputs.all_tests_pass == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools
-          python -m pip install ".[test]"
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: "us-east-1"
-
-      - name: Configure Git
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-
-      - name: Generate metadata for plugins
-        env:
-          BSC_DATABASESECRET: ${{ secrets.BSC_DATABASESECRET }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # TEMPORARY: Using hardcoded metadata until language metadata generation is fixed
-          # TODO: Replace with actual metadata generation once language metadata is working
-          
-          # Split comma-separated plugin directories
-          IFS=',' read -ra PLUGIN_DIRS <<< "${{ needs.detect_changes.outputs.plugin_dirs }}"
-          
-          # Track generated plugins by type for commit message
-          GENERATED_MODELS=()
-          GENERATED_BENCHMARKS=()
-          
-          for dir in "${PLUGIN_DIRS[@]}"; do
-            if [ -n "$dir" ]; then
-              # Determine plugin type from directory path
-              if [[ "$dir" == *"/models/"* ]]; then
-                PLUGIN_TYPE="models"
-              elif [[ "$dir" == *"/benchmarks/"* ]]; then
-                PLUGIN_TYPE="benchmarks"
-              else
-                echo "Could not determine plugin type for ${dir}, skipping"
-                continue
-              fi
-              
-              # Extract plugin name from directory path
-              PLUGIN_NAME=$(basename "$dir")
-              
-              # Check if metadata.yml exists
-              if [ ! -f "${dir}/metadata.yml" ] && [ ! -f "${dir}/metadata.yaml" ]; then
-                echo "Generating metadata for: ${dir} (type: ${PLUGIN_TYPE})"
-                
-                # TEMPORARY: Using hardcoded metadata until language metadata generation is fixed
-                # TODO: Replace hardcoded_metadata with actual metadata generation once language metadata is working
-                # To switch to real metadata generation, change the import below to:
-                # from brainscore_core.plugin_management.handle_metadata import generate_metadata
-                # and replace the function call accordingly
-                if python brainscore_language/submission/hardcoded_metadata.py "${dir}" "${PLUGIN_TYPE}"; then
-                  # Add the generated metadata file to git immediately
-                  if [ -f "${dir}/metadata.yml" ]; then
-                    git add "${dir}/metadata.yml"
-                    echo "Added ${dir}/metadata.yml to git"
-                  elif [ -f "${dir}/metadata.yaml" ]; then
-                    git add "${dir}/metadata.yaml"
-                    echo "Added ${dir}/metadata.yaml to git"
-                  fi
-                  # Track this plugin by type for commit message
-                  if [ "$PLUGIN_TYPE" == "models" ]; then
-                    GENERATED_MODELS+=("${PLUGIN_NAME}")
-                  else
-                    GENERATED_BENCHMARKS+=("${PLUGIN_NAME}")
-                  fi
-                else
-                  echo "Metadata generation failed for ${dir}, continuing..."
-                fi
-                
-                # ACTUAL METADATA GENERATION (COMMENTED OUT - uncomment when ready):
-                # python -c "
-                # from brainscore_core.plugin_management.handle_metadata import generate_metadata
-                # metadata_path = generate_metadata('$dir', '$PLUGIN_TYPE', domain='language')
-                # if metadata_path:
-                #     print(f'Generated metadata at: {metadata_path}')
-                # else:
-                #     print(f'Failed to generate metadata for {dir}')
-                #     exit(1)
-                # " || echo "Metadata generation failed for ${dir}, continuing..."
-              else
-                echo "Metadata already exists for: ${dir}, skipping generation"
-              fi
-            fi
-          done
-          
-          # Store generated plugins lists for commit message
-          if [ ${#GENERATED_MODELS[@]} -gt 0 ]; then
-            echo "GENERATED_MODELS=$(IFS=','; echo "${GENERATED_MODELS[*]}")" >> $GITHUB_ENV
-          fi
-          if [ ${#GENERATED_BENCHMARKS[@]} -gt 0 ]; then
-            echo "GENERATED_BENCHMARKS=$(IFS=','; echo "${GENERATED_BENCHMARKS[*]}")" >> $GITHUB_ENV
-          fi
-
-      - name: Commit generated metadata files
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_PAT: ${{ secrets.GH_MFERG_PAT }}
-        run: |
-          # Check if there are any staged changes (metadata files were added during generation)
-          if ! git diff --cached --quiet; then
-            echo "Committing staged metadata files..."
-            
-            # Build commit message grouped by plugin type
-            COMMIT_PARTS=()
-            
-            if [ -n "$GENERATED_MODELS" ]; then
-              COMMIT_PARTS+=("models: $GENERATED_MODELS")
-            fi
-            
-            if [ -n "$GENERATED_BENCHMARKS" ]; then
-              COMMIT_PARTS+=("benchmarks: $GENERATED_BENCHMARKS")
-            fi
-            
-            if [ ${#COMMIT_PARTS[@]} -gt 0 ]; then
-              COMMIT_MSG="Auto-generate metadata.yml for ${COMMIT_PARTS[0]}"
-              # If both types exist, add the second on a new line
-              if [ ${#COMMIT_PARTS[@]} -gt 1 ]; then
-                COMMIT_MSG="${COMMIT_MSG}"$'\n'"Auto-generate metadata.yml for ${COMMIT_PARTS[1]}"
-              fi
-            else
-              COMMIT_MSG="Auto-generate metadata.yml for new plugins"
-            fi
-            
-            git commit -m "$COMMIT_MSG" || echo "Commit failed"
-            
-            # Use PAT for push to trigger workflow rerun (GITHUB_TOKEN commits don't trigger workflows)
-            if [ -n "$GH_PAT" ]; then
-              echo "Using PAT for push"
-              PUSH_TOKEN="$GH_PAT"
-            else
-              echo "Warning: GH_PAT not set, using GITHUB_TOKEN (commits won't trigger workflows)"
-              PUSH_TOKEN="$GH_TOKEN"
-            fi
-            git remote set-url origin https://x-access-token:${PUSH_TOKEN}@github.com/${{ github.repository }}.git
-            if git push origin ${{ github.event.pull_request.head.ref }}; then
-              echo "Successfully pushed metadata commit to PR branch"
-              echo "Workflow will rerun automatically via synchronize event triggered by this commit"
-              echo "On the next run, metadata will be detected and step 4 will be skipped"
-            else
-              echo "Push failed - this may prevent workflow rerun. Check if PAT is configured correctly."
-              exit 1
-            fi
-          else
-            echo "No metadata files staged for commit"
-          fi
-
-  # ============================================================================
-  # JOB 5: Layer Mapping (Conditional - only for new models, vision domain only)
-  # ============================================================================
-  layer_mapping:
-    name: "5. Layer Mapping"
-    needs: [detect_changes, validate_pr, generate_metadata]
-    if: |
-      github.event_name == 'pull_request' &&
-      needs.detect_changes.outputs.needs_mapping == 'true' &&
-      needs.validate_pr.outputs.all_tests_pass == 'true' &&
-      needs.detect_changes.outputs.needs_metadata_generation == 'false'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools
-          python -m pip install ".[test]"
-
-      - name: Trigger layer mapping
-        if: ${{ env.DOMAIN != 'language' }}
-        env:
-          JENKINS_USER: ${{ secrets.JENKINS_MAPPING_USER }}
-          JENKINS_USER_API: ${{ secrets.JENKINS_MAPPING_USER_API }}
-          JENKINS_TOKEN: ${{ secrets.JENKINS_MAPPING_TOKEN }}
-          JENKINS_TRIGGER: ${{ secrets.JENKINS_MAPPING_URL }}
-        run: |
-          PLUGIN_INFO_B64='${{ needs.detect_changes.outputs.plugin_info_json }}'
-          PLUGIN_INFO=$(echo "$PLUGIN_INFO_B64" | base64 -d)
-          NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models // []')
-          python brainscore_language/submission/actions_helpers.py trigger_layer_mapping \
-            --new-models "$NEW_MODELS" \
-            --pr-number ${{ github.event.pull_request.number }} \
-            --source-repo ${{ github.event.pull_request.head.repo.clone_url }} \
-            --source-branch ${{ github.event.pull_request.head.ref }}
-
-  # ============================================================================
-  # JOB 6: Auto-merge (Conditional - only if validated and approved)
+  # JOB 3: Auto-merge (Conditional - only if validated and approved)
   # ============================================================================
   automerge:
-    name: "6. Auto-merge"
-    needs: [detect_changes, validate_pr, process_metadata, generate_metadata, layer_mapping]
+    name: "3. Auto-merge"
+    needs: [detect_changes, validate_pr]
     if: |
       github.event_name == 'pull_request' &&
       needs.validate_pr.outputs.is_automergeable == 'true' &&
-      needs.validate_pr.outputs.all_tests_pass == 'true' &&
-      needs.detect_changes.outputs.needs_metadata_generation == 'false' &&
-      (needs.process_metadata.result == 'success' || needs.process_metadata.result == 'skipped') &&
-      (needs.generate_metadata.result == 'success' || needs.generate_metadata.result == 'skipped') &&
-      (needs.layer_mapping.result == 'success' || needs.layer_mapping.result == 'skipped')
+      needs.validate_pr.outputs.all_tests_pass == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Auto Approve
@@ -619,10 +379,10 @@ jobs:
           auto-delete: "true"
 
   # ============================================================================
-  # JOB 7: Post-Merge Scoring (Runs after PR is merged)
+  # JOB 4: Post-Merge Scoring (Runs after PR is merged)
   # ============================================================================
   post_merge_scoring:
-    name: "7. Post-Merge Scoring"
+    name: "4. Post-Merge Scoring"
     needs: detect_changes
     if: |
       github.event_name == 'pull_request_target' &&
@@ -699,11 +459,12 @@ jobs:
               model_type: "artificialsubject",
               public: true
             }')
+          # Store PLUGIN_INFO in GITHUB_ENV for next step (contains email - will be masked by GitHub Actions)
           echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_ENV
           echo "plugin_info=${PLUGIN_INFO}" >> $GITHUB_OUTPUT
-          # Mask email in log output (email is already in PLUGIN_INFO JSON)
-          PLUGIN_INFO_MASKED=$(echo "$PLUGIN_INFO" | jq -c 'if .email then .email = "***MASKED***" else . end')
-          echo "Plugin info (email masked): ${PLUGIN_INFO_MASKED}"
+          # Mask email and other sensitive fields in log output
+          PLUGIN_INFO_MASKED=$(echo "$PLUGIN_INFO" | jq -c 'if .email then .email = "***MASKED***" else . end | if .BSC_DATABASESECRET then .BSC_DATABASESECRET = "***MASKED***" else . end' 2>/dev/null || echo "{}")
+          echo "Plugin info (sensitive data masked): ${PLUGIN_INFO_MASKED}"
 
       - name: Trigger Jenkins scoring
         env:
@@ -712,22 +473,25 @@ jobs:
           JENKINS_TRIGGER: ${{ secrets.JENKINS_TRIGGER }}
           PLUGIN_INFO: ${{ steps.build_info.outputs.plugin_info }}
         run: |
-          python -c 'from brainscore_core.submission.endpoints import call_jenkins; import os; call_jenkins(os.environ["PLUGIN_INFO"])'
+          # PLUGIN_INFO contains email - GitHub Actions automatically masks secrets in logs
+          # Suppress stdout/stderr to prevent any potential exposure of PLUGIN_INFO content
+          python -c 'from brainscore_core.submission.endpoints import call_jenkins; import os; call_jenkins(os.environ["PLUGIN_INFO"])' >/dev/null 2>&1 || {
+            echo "Jenkins scoring trigger failed (check Jenkins logs for details)"
+            exit 1
+          }
+          echo "Jenkins scoring job triggered successfully"
 
   # ============================================================================
-  # JOB 8: Failure Notification (Runs if any job fails)
+  # JOB 5: Failure Notification (Runs if any job fails)
   # ============================================================================
   notify_on_failure:
-    name: "8. Notify on Failure"
-    needs: [detect_changes, validate_pr, layer_mapping, process_metadata, generate_metadata, automerge, post_merge_scoring]
+    name: "5. Notify on Failure"
+    needs: [detect_changes, validate_pr, automerge, post_merge_scoring]
     if: |
       always() && (
         needs.detect_changes.result == 'failure' ||
         needs.validate_pr.result == 'failure' ||
         (needs.validate_pr.result == 'success' && needs.validate_pr.outputs.all_tests_pass == 'false') ||
-        needs.layer_mapping.result == 'failure' ||
-        needs.process_metadata.result == 'failure' ||
-        needs.generate_metadata.result == 'failure' ||
         needs.automerge.result == 'failure' ||
         needs.post_merge_scoring.result == 'failure'
       )
@@ -756,12 +520,6 @@ jobs:
             FAILED_JOB="Detect Changes"
           elif [ "${{ needs.validate_pr.result }}" == "failure" ]; then
             FAILED_JOB="Validate PR"
-          elif [ "${{ needs.layer_mapping.result }}" == "failure" ]; then
-            FAILED_JOB="Layer Mapping"
-          elif [ "${{ needs.process_metadata.result }}" == "failure" ]; then
-            FAILED_JOB="Update Existing Metadata"
-          elif [ "${{ needs.generate_metadata.result }}" == "failure" ]; then
-            FAILED_JOB="Generate Metadata"
           elif [ "${{ needs.automerge.result }}" == "failure" ]; then
             FAILED_JOB="Auto-merge"
           elif [ "${{ needs.post_merge_scoring.result }}" == "failure" ]; then
