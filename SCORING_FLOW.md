@@ -21,10 +21,11 @@ PR Created/Updated
 [Phase 1: Mutation Workflow]
     ├─→ Detect Changes
     ├─→ Validate PR (minimal validation)
-    ├─→ Update Existing Metadata (if metadata-only changes)
-    ├─→ Generate Metadata (if new plugins without metadata.yml)
-    ├─→ Layer Mapping (if new models, vision only - skipped for language)
-    └─→ Commit and Push → Workflow terminates
+    ├─→ Handle Metadata-Only PR (if metadata-only changes - adds label, terminates)
+    └─→ Generate Mutations and Commit (if new plugins need metadata or mapping)
+        ├─→ Step 4a: Generate Metadata (stages files)
+        ├─→ Step 4b: Layer Mapping (stages files, vision only)
+        └─→ Step 4c: Commit and Push (commits all staged files, terminates)
         ↓
     [Commit triggers synchronize event]
         ↓
@@ -93,6 +94,7 @@ PR Created/Updated
 2. Verifies all required tests pass:
    - "Language Unittests, Plugins"
    - "Language Unittests, Non-Plugins"
+   - "Language Integration Tests"
 3. Confirms PR only modifies plugin files (no core code changes)
 
 **Outputs:**
@@ -105,47 +107,59 @@ PR Created/Updated
 - If valid → proceed to layer mapping (if needed) or auto-merge
 - If invalid → notify user of failure
 
-### 4. Update Existing Metadata (Conditional)
+### 4. Handle Metadata-Only PR (Conditional)
 
-**Job:** `3. Update Existing Metadata`
+**Job:** `3. Handle Metadata-Only PR` (in mutation workflow)
 
 **When:** Only runs if `metadata_only == true` (only metadata.yml changed, no code changes)
 
-**Purpose:** Process metadata-only updates without triggering full scoring
+**Purpose:** Add label to PR and terminate workflow (orchestrator will handle metadata update)
 
 **Process:**
-1. Calls reusable `metadata_handler.yml` workflow
-2. Processes metadata.yml files for affected plugins
-3. Validates metadata structure
-4. Updates database with new metadata
-5. Creates PRs for metadata updates if needed
-6. Auto-approves and merges metadata PRs
+1. Detects that PR only contains metadata.yml changes
+2. Adds "only_update_metadata" label to PR
+3. **Workflow terminates** - no commits made
 
 **Note:** 
-- This step is skipped if code changes were made (not metadata-only)
-- Different from "Generate Metadata" which creates new metadata files
-- This is for when users only want to update existing metadata
+- This is a terminal step - workflow ends here
+- The orchestrator workflow will see the label and trigger Jenkins job for metadata update
+- Different from "Generate Mutations and Commit" which creates new metadata files
 
-### 5. Generate Metadata (Conditional)
+### 5. Generate Mutations and Commit (Conditional)
 
-**Job:** `4. Generate Metadata` (in mutation workflow)
+**Job:** `4. Generate Mutations and Commit` (in mutation workflow)
 
 **When:** Only runs if:
-- New plugins were added (`has_plugins == true`)
-- Not metadata-only (`metadata_only == false`)
-- Plugin directories are missing `metadata.yml` or `metadata.yaml`
+- New plugins need metadata generation (`needs_metadata_generation == true`), OR
+- New models need layer mapping (`needs_mapping == true`)
 - All tests passed (`all_tests_pass == true`)
 
-**Purpose:** Automatically generate metadata.yml files for new plugins that don't have one
+**Purpose:** Generate metadata and/or layer mapping files, then commit and push all mutations together
 
 **Process:**
+
+**Step 4a: Generate Metadata** (if `needs_metadata_generation == true`)
 1. Checks each plugin directory for existing metadata files
 2. For plugins missing metadata:
    - Generates `metadata.yml` using domain-specific metadata generators
    - Extracts model/benchmark information automatically
    - Creates metadata file in plugin directory
-   - Stages the file for commit
-3. **Note:** Files are staged but not committed here - commit happens in the unified commit job
+   - **Stages the file** with `git add` (does not commit)
+
+**Step 4b: Layer Mapping** (if `needs_mapping == true`, vision domain only)
+1. Triggers Jenkins layer mapping job
+2. Layer mapping files are generated
+   - **Stages the files** with `git add` (does not commit)
+
+**Step 4c: Commit and Push**
+1. Commits all staged files from steps 4a and 4b in a single commit
+2. Pushes commit to PR branch using PAT
+3. **Workflow terminates** - commit triggers `synchronize` event
+
+**Note:** 
+- All steps run in the same job, so staged files persist across steps
+- No intermediate commits - everything is committed together in step 4c
+- The commit triggers a `synchronize` event, which starts the orchestrator workflow
 
 **Metadata Generation:**
 - For models: Uses `ModelMetadataGenerator` to extract:
@@ -158,74 +172,65 @@ PR Created/Updated
   - Data metadata
   - Metric information
 
-**Note:** 
-- This step is skipped if all plugins already have metadata files
-- Generated metadata is staged for commit (committed in unified commit job)
-- If generation fails for a plugin, workflow continues with other plugins
-- **After commit, the mutation workflow terminates and triggers orchestrator workflow**
-
-### 6. Layer Mapping (Conditional)
-
-**Job:** `5. Layer Mapping` (in mutation workflow)
-
-**When:** Only runs if:
-- New models were added (`needs_mapping == true`)
-- All tests passed (`all_tests_pass == true`)
-- Metadata generation completed (or was skipped)
-
-**Purpose:** Map model layers for new model submissions (vision domain only)
-
-**Process:**
-1. **For language domain:** Step is skipped via `if: env.DOMAIN != 'language'` condition
-2. **For vision domain:**
-   - Extracts list of new models from plugin info
-   - Triggers Jenkins layer mapping job via `actions_helpers.py trigger_layer_mapping`
-   - Passes model information to Jenkins:
-     - Model identifiers
-     - PR number
-     - Source repository and branch
-   - Layer mapping files are generated and staged for commit
-
-**Jenkins Job (vision only):**
-- Runs layer mapping for new models
+**Layer Mapping (vision only):**
+- Triggers Jenkins job to map model layers
 - Maps model architecture layers
 - Updates model metadata
 
-**Note:** 
-- This step is skipped if no new models are added
-- **Layer mapping is automatically skipped for language domain** (only needed for vision models)
-- Layer mapping files are staged for commit (committed in unified commit job)
-- **After commit, the mutation workflow terminates and triggers orchestrator workflow**
+### 6. Handle Metadata-Only PR (Conditional)
 
-### 7. Commit and Push (Mutation Workflow)
-
-**Job:** `6. Commit and Push` (in mutation workflow)
+**Job:** `3. Handle Metadata-Only PR` (in mutation workflow)
 
 **When:** Only runs if:
-- At least one mutation job succeeded (metadata generation, metadata update, or layer mapping)
+- PR only changes metadata files (`metadata_only == true`)
 
-**Purpose:** Commit all mutations and push to PR branch, then terminate workflow
+**Purpose:** Add label to PR and terminate workflow (orchestrator will handle metadata update)
 
 **Process:**
-1. Checks for staged changes from previous jobs (metadata files, layer mapping files)
-2. Stages any additional unstaged changes
-3. Creates unified commit with all mutations
-4. Pushes commit to PR branch using PAT (to trigger workflows)
-5. **Workflow terminates** - relies on synchronize event to trigger orchestrator
+1. Detects that PR only contains metadata.yml changes
+2. Adds "only_update_metadata" label to PR
+3. **Workflow terminates** - no commits made
 
 **Note:**
 - This is a terminal step - workflow ends here
-- The commit triggers a `pull_request.synchronize` event
-- The orchestrator workflow then runs on the updated PR
+- The orchestrator workflow will see the label and trigger Jenkins job for metadata update
 
-### 8. Auto-merge (Conditional)
+### 6. Update Existing Metadata (Conditional)
 
-**Job:** `3. Auto-merge` (in orchestration workflow)
+**Job:** `3. Update Existing Metadata` (in orchestration workflow)
+
+**When:** Only runs if:
+- PR has "only_update_metadata" label (added by mutation workflow)
+- `metadata_only == true`
+
+**Purpose:** Trigger Jenkins job to update existing metadata in database
+
+**Process:**
+1. Checks for "only_update_metadata" label on PR
+2. Triggers Jenkins job "update_existing_metadata" via `actions_helpers.py trigger_update_existing_metadata`
+3. Passes plugin information to Jenkins:
+   - Plugin directories
+   - Plugin type
+   - Domain
+
+**Jenkins Job:**
+- Updates existing metadata in database
+- Processes metadata.yml files
+- No commits made to PR
+
+**Note:**
+- This step only runs if mutation workflow detected metadata-only PR and added the label
+- Different from "Generate Mutations and Commit" which creates new metadata files
+
+### 7. Auto-merge (Conditional)
+
+**Job:** `4. Auto-merge` (in orchestration workflow)
 
 **When:** Only runs if:
 - PR is validated (`is_automergeable == true`)
 - All tests pass (`all_tests_pass == true`)
 - PR is structurally complete (metadata exists)
+- Update Existing Metadata completed (or was skipped)
 
 **Purpose:** Automatically merge approved PRs
 
@@ -239,9 +244,9 @@ PR Created/Updated
 
 **Result:** PR is merged to `main` branch
 
-### 9. Post-Merge Scoring
+### 8. Post-Merge Scoring
 
-**Job:** `4. Post-Merge Scoring` (in orchestration workflow)
+**Job:** `5. Post-Merge Scoring` (in orchestration workflow)
 
 **When:** Only runs if:
 - PR was merged to `main` (`pull_request_target` event, `merged == true`)
@@ -303,9 +308,9 @@ The Jenkins job receives the plugin information and:
      - Start/end timestamps
      - Error messages (if failed)
 
-### 10. Failure Notification
+### 9. Failure Notification
 
-**Job:** `5. Notify on Failure` (in orchestration workflow)
+**Job:** `6. Notify on Failure` (in orchestration workflow)
 
 **When:** Runs if any job in the workflow fails
 
@@ -367,6 +372,7 @@ brainscore_language/submission/
 
 **Functions:**
 - `validate_pr()` - Validates PR for automerge eligibility
+- `trigger_update_existing_metadata()` - Triggers Jenkins update_existing_metadata job
 - `trigger_layer_mapping()` - Triggers Jenkins layer mapping job
 - `extract_email()` - Extracts user email from PR or database
 - `send_failure_email()` - Sends failure notification emails
@@ -393,12 +399,11 @@ brainscore_language/submission/
    - Model code is added but no `metadata.yml` file
 2. Mutation workflow detects new model
 3. Validates PR (tests must pass)
-4. **Generates metadata.yml** for the new model (since it's missing)
-   - Extracts model architecture, parameters, etc.
-   - Stages metadata file
-5. **Skips layer mapping** (language domain doesn't require it)
-6. **Commits and pushes** metadata to PR branch
-7. **Mutation workflow terminates**
+4. **Generate Mutations and Commit job** runs:
+   - **Step 4a:** Generates metadata.yml for the new model (stages file)
+   - **Step 4b:** Skips layer mapping (language domain doesn't require it)
+   - **Step 4c:** Commits staged metadata file and pushes to PR branch
+   - **Mutation workflow terminates after push**
 
 **Phase 2 - Orchestration Workflow:**
 8. Commit triggers `synchronize` event
@@ -416,16 +421,15 @@ brainscore_language/submission/
    - Model code AND `metadata.yml` file are both provided
 2. Mutation workflow detects new model
 3. Validates PR (tests must pass)
-4. **Skips metadata generation** (metadata already exists)
-5. **Skips layer mapping** (language domain doesn't require it)
-6. **No mutations to commit** - mutation workflow terminates immediately
+4. **Generate Mutations and Commit job** is skipped (no mutations needed)
+5. **Mutation workflow terminates** (no commits made)
 
 **Phase 2 - Orchestration Workflow:**
-7. Orchestrator workflow runs (may be triggered by PR creation or synchronize)
-8. Detects changes (metadata exists)
-9. Validates PR (full validation)
-10. Auto-merges PR after validation
-11. Post-merge: triggers scoring
+6. Orchestrator workflow runs (may be triggered by PR creation or synchronize)
+7. Detects changes (metadata exists)
+8. Validates PR (full validation)
+9. Auto-merges PR after validation
+10. Post-merge: triggers scoring
 
 ### Scenario 2: New Benchmark Submission
 
@@ -441,12 +445,22 @@ brainscore_language/submission/
 
 ### Scenario 3: Metadata-Only Update
 
+**Phase 1 - Mutation Workflow:**
 1. User creates PR with only `metadata.yml` changes
-2. Workflow detects metadata-only change
-3. Skips validation and scoring
-4. Processes metadata directly
-5. Updates database with new metadata
-6. No scoring triggered
+2. Mutation workflow detects metadata-only change (`metadata_only == true`)
+3. Validates PR (tests must pass)
+4. **Handle Metadata-Only PR job** runs:
+   - Adds "only_update_metadata" label to PR
+   - **Mutation workflow terminates** (no commits)
+
+**Phase 2 - Orchestration Workflow:**
+5. Orchestrator workflow runs (triggered by label or synchronize)
+6. Detects "only_update_metadata" label
+7. **Update Existing Metadata job** runs:
+   - Triggers Jenkins job "update_existing_metadata"
+   - Jenkins updates database with new metadata
+8. Auto-merges PR (if validated)
+9. Post-merge scoring skipped (`metadata_only == true`)
 
 ### Scenario 4: Web Submission
 
@@ -472,6 +486,7 @@ The workflow integrates with GitHub status checks:
 
 - **Language Unittests, Plugins** - Tests for plugin code
 - **Language Unittests, Non-Plugins** - Tests for core code
+- **Language Integration Tests** - Integration tests for language domain
 
 These must pass before auto-merge is allowed.
 
@@ -481,6 +496,7 @@ The workflow uses labels to control behavior:
 
 - **`automerge`** - Standard GitHub PR auto-merge
 - **`automerge-web`** - Web submission auto-merge
+- **`only_update_metadata`** - Added by mutation workflow for metadata-only PRs (triggers Jenkins update job)
 - **`failure-notified`** - User has been notified of failure (prevents duplicate emails)
 
 ## Secrets Required
@@ -515,11 +531,12 @@ On any PR, you'll see two workflow runs:
 Plugin Submission Mutate
 ├─ 1. Detect Changes (success)
 ├─ 2. Validate PR (success)
-├─ 3. Update Existing Metadata (skipped)
-├─ 4. Generate Metadata (success)
-├─ 5. Layer Mapping (skipped - language domain)
-└─ 6. Commit and Push (success)
-    └─→ Workflow terminates, commit triggers synchronize
+├─ 3. Handle Metadata-Only PR (skipped)
+└─ 4. Generate Mutations and Commit (success)
+    ├─→ Step 4a: Generate Metadata (stages files)
+    ├─→ Step 4b: Layer Mapping (skipped - language domain)
+    └─→ Step 4c: Commit and Push (commits staged files, pushes)
+        └─→ Workflow terminates, commit triggers synchronize
 ```
 
 **Second Run (Orchestration):**
