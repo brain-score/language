@@ -1,6 +1,6 @@
 """
 GitHub Actions helper functions for language domain
-Supports the plugin submission orchestrator workflow
+Supports the plugin submission prepare and validate workflows
 
 Functions:
 - validate_pr: Validate PR for automerge eligibility
