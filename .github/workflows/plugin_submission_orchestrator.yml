@@ -326,15 +326,66 @@ jobs:
           echo "  Test results summary: ${TEST_RESULTS}"
 
   # ============================================================================
-  # JOB 3: Auto-merge (Conditional - only if validated and approved)
+  # JOB 3: Update Existing Metadata (Conditional - only if only_update_metadata label present)
   # ============================================================================
-  automerge:
-    name: "3. Auto-merge"
+  update_existing_metadata:
+    name: "3. Update Existing Metadata"
     needs: [detect_changes, validate_pr]
     if: |
       github.event_name == 'pull_request' &&
+      needs.detect_changes.outputs.metadata_only == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for only_update_metadata label
+        id: check_label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LABELS_JSON=$(gh pr view ${{ github.event.pull_request.number }} --json labels)
+          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "only_update_metadata")' >/dev/null; then
+            echo "has_label=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_label=false" >> $GITHUB_OUTPUT
+            echo "Error: only_update_metadata label not found on PR"
+            exit 1
+          fi
+
+      - name: Set up Python
+        if: steps.check_label.outputs.has_label == 'true'
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        if: steps.check_label.outputs.has_label == 'true'
+        run: |
+          python -m pip install --upgrade pip setuptools
+          python -m pip install "."
+
+      - name: Trigger update_existing_metadata Jenkins job
+        if: steps.check_label.outputs.has_label == 'true'
+        env:
+          JENKINS_USER: ${{ secrets.JENKINS_USER }}
+          JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
+          JENKINS_TRIGGER: ${{ secrets.JENKINS_TRIGGER }}
+        run: |
+          python brainscore_language/submission/actions_helpers.py trigger_update_existing_metadata \
+            --plugin-dirs "${{ needs.detect_changes.outputs.plugin_dirs }}" \
+            --plugin-type "${{ needs.detect_changes.outputs.plugin_type }}" \
+            --domain "${{ env.DOMAIN }}"
+
+  # ============================================================================
+  # JOB 4: Auto-merge (Conditional - only if validated and approved)
+  # ============================================================================
+  automerge:
+    name: "4. Auto-merge"
+    needs: [detect_changes, validate_pr, update_existing_metadata]
+    if: |
+      github.event_name == 'pull_request' &&
       needs.validate_pr.outputs.is_automergeable == 'true' &&
-      needs.validate_pr.outputs.all_tests_pass == 'true'
+      needs.validate_pr.outputs.all_tests_pass == 'true' &&
+      (needs.update_existing_metadata.result == 'success' || needs.update_existing_metadata.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - name: Auto Approve
@@ -379,10 +430,10 @@ jobs:
           auto-delete: "true"
 
   # ============================================================================
-  # JOB 4: Post-Merge Scoring (Runs after PR is merged)
+  # JOB 5: Post-Merge Scoring (Runs after PR is merged)
   # ============================================================================
   post_merge_scoring:
-    name: "4. Post-Merge Scoring"
+    name: "5. Post-Merge Scoring"
     needs: detect_changes
     if: |
       github.event_name == 'pull_request_target' &&
@@ -482,16 +533,17 @@ jobs:
           echo "Jenkins scoring job triggered successfully"
 
   # ============================================================================
-  # JOB 5: Failure Notification (Runs if any job fails)
+  # JOB 6: Failure Notification (Runs if any job fails)
   # ============================================================================
   notify_on_failure:
-    name: "5. Notify on Failure"
-    needs: [detect_changes, validate_pr, automerge, post_merge_scoring]
+    name: "6. Notify on Failure"
+    needs: [detect_changes, validate_pr, update_existing_metadata, automerge, post_merge_scoring]
     if: |
       always() && (
         needs.detect_changes.result == 'failure' ||
         needs.validate_pr.result == 'failure' ||
         (needs.validate_pr.result == 'success' && needs.validate_pr.outputs.all_tests_pass == 'false') ||
+        needs.update_existing_metadata.result == 'failure' ||
         needs.automerge.result == 'failure' ||
         needs.post_merge_scoring.result == 'failure'
       )

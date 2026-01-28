@@ -30,10 +30,11 @@ This workflow detects changes, validates PRs, and commits mutations to the PR br
 
 1. **Detect Changes** - Identifies what plugins changed
 2. **Validate PR** - Checks if PR tests pass (minimal validation to proceed)
-3. **Update Existing Metadata** - Handles metadata-only changes (conditional)
-4. **Generate Metadata** - Generates metadata for new plugins missing metadata.yml (conditional)
-5. **Layer Mapping** - Maps layers for new models (conditional, vision domain only - skipped for language)
-6. **Commit and Push** - Commits all mutations and pushes to PR branch, then terminates
+3. **Handle Metadata-Only PR** - Adds label for metadata-only PRs, then terminates (conditional)
+4. **Generate Mutations and Commit** - Single job with multiple steps:
+   - Step 4a: Generate Metadata (stages files)
+   - Step 4b: Layer Mapping (stages files, vision domain only)
+   - Step 4c: Commit and Push (commits all staged files, pushes, terminates)
 
 **Key Feature:** After committing and pushing, this workflow terminates. The commit triggers a `synchronize` event, which starts the orchestrator workflow.
 
@@ -75,24 +76,19 @@ PR Created/Updated
     ├─→ Tests pass? → Continue
     └─→ Tests fail? → Terminate
     ↓
-[3] Update Existing Metadata (if metadata-only)
-    ├─→ Process metadata
-    └─→ Stage changes (committed in step 6)
-    ↓
-[4] Generate Metadata (if new plugins without metadata)
-    ├─→ Generate metadata.yml
-    ├─→ Commit metadata files
-    ├─→ Push to PR branch
-    └─→ Workflow terminates (triggers synchronize event)
-    ↓
-[5] Layer Mapping (if new models, vision only)
-    ├─→ Language domain? → Skip (not needed)
-    └─→ Vision domain? → Generate layer mapping, stage changes
-    ↓
-[6] Commit and Push (only if process_metadata or layer_mapping ran)
-    ├─→ Commit remaining staged changes
-    ├─→ Push to PR branch
+[3] Handle Metadata-Only PR (if metadata-only)
+    ├─→ Add "only_update_metadata" label
     └─→ Workflow terminates
+    ↓
+[4] Generate Mutations and Commit (single job with multiple steps)
+    ├─→ Step 4a: Generate Metadata (if needed)
+    │   └─→ Generate metadata.yml, stage files
+    ├─→ Step 4b: Layer Mapping (if needed, vision only)
+    │   └─→ Generate layer mapping, stage files
+    └─→ Step 4c: Commit and Push
+        ├─→ Commit all staged files (metadata + layer mapping)
+        ├─→ Push to PR branch
+        └─→ Workflow terminates
     ↓
 [Commit triggers synchronize event]
 ```
@@ -219,27 +215,25 @@ On any PR, you'll see two workflow runs:
 Plugin Submission Mutate
 ├─ 1. Detect Changes (success)
 ├─ 2. Validate PR (success)
-├─ 3. Update Existing Metadata (skipped)
-├─ 4. Generate Metadata (success)
-│   └─→ Commits and pushes metadata directly
-│   └─→ Workflow terminates, commit triggers synchronize
-├─ 5. Layer Mapping (skipped - language domain)
-└─ 6. Commit and Push (skipped - metadata already committed)
+├─ 3. Handle Metadata-Only PR (skipped)
+└─ 4. Generate Mutations and Commit (success)
+    ├─→ Step 4a: Generate Metadata (stages files)
+    ├─→ Step 4b: Layer Mapping (skipped - language domain)
+    └─→ Step 4c: Commit and Push (commits staged files, pushes)
+        └─→ Workflow terminates, commit triggers synchronize
 ```
 
-**First Run (Mutation - with process_metadata or layer_mapping):**
+**First Run (Mutation - with layer mapping for vision):**
 ```
 Plugin Submission Mutate
 ├─ 1. Detect Changes (success)
 ├─ 2. Validate PR (success)
-├─ 3. Update Existing Metadata (success)
-│   └─→ Stages changes (committed in step 6)
-├─ 4. Generate Metadata (skipped)
-├─ 5. Layer Mapping (success - vision domain)
-│   └─→ Stages changes (committed in step 6)
-└─ 6. Commit and Push (success)
-    └─→ Commits and pushes all staged changes
-    └─→ Workflow terminates, commit triggers synchronize
+├─ 3. Handle Metadata-Only PR (skipped)
+└─ 4. Generate Mutations and Commit (success)
+    ├─→ Step 4a: Generate Metadata (stages files)
+    ├─→ Step 4b: Layer Mapping (stages files)
+    └─→ Step 4c: Commit and Push (commits all staged files, pushes)
+        └─→ Workflow terminates, commit triggers synchronize
 ```
 
 **Second Run (Orchestration):**
