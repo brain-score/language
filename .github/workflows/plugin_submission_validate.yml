@@ -11,6 +11,9 @@ on:
     types: [closed]
     branches: [main]
 
+# Explicitly trigger on pr_is_ready label addition
+# This ensures the workflow runs when the prepare workflow adds the label
+
 permissions:
   contents: write
   pull-requests: write
@@ -44,13 +47,27 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ "${{ github.event_name }}" == "pull_request" ]; then
-            LABELS_JSON=$(gh pr view ${{ github.event.pull_request.number }} --json labels)
-            if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "pr_is_ready")' >/dev/null; then
-              echo "has_pr_is_ready=true" >> $GITHUB_OUTPUT
-              echo "PR has pr_is_ready label - proceeding with validation"
+            # If this is a labeled event, check if it's the pr_is_ready label
+            if [ "${{ github.event.action }}" == "labeled" ]; then
+              LABEL_NAME="${{ github.event.label.name }}"
+              echo "Label event detected: ${LABEL_NAME}"
+              if [ "${LABEL_NAME}" == "pr_is_ready" ]; then
+                echo "has_pr_is_ready=true" >> $GITHUB_OUTPUT
+                echo "pr_is_ready label was just added - proceeding with validation"
+              else
+                echo "has_pr_is_ready=false" >> $GITHUB_OUTPUT
+                echo "Label '${LABEL_NAME}' is not pr_is_ready - skipping validation"
+              fi
             else
-              echo "has_pr_is_ready=false" >> $GITHUB_OUTPUT
-              echo "PR does not have pr_is_ready label - skipping validation"
+              # For opened/synchronize events, check if label exists on PR
+              LABELS_JSON=$(gh pr view ${{ github.event.pull_request.number }} --json labels)
+              if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "pr_is_ready")' >/dev/null; then
+                echo "has_pr_is_ready=true" >> $GITHUB_OUTPUT
+                echo "PR has pr_is_ready label - proceeding with validation"
+              else
+                echo "has_pr_is_ready=false" >> $GITHUB_OUTPUT
+                echo "PR does not have pr_is_ready label - skipping validation"
+              fi
             fi
           else
             # For pull_request_target (post-merge), always proceed

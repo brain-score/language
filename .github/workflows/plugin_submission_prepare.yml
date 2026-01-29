@@ -124,8 +124,9 @@ jobs:
           IS_AUTOMERGEABLE_RAW=$(echo "$PLUGIN_INFO" | jq -r 'if .is_automergeable == true then "true" else "false" end' | head -n 1)
           IS_AUTOMERGEABLE=$(echo "$IS_AUTOMERGEABLE_RAW" | tr '[:upper:]' '[:lower:]')
           
-          NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models // []' | head -n 1)
-          HAS_NEW_MODELS=$(if [ "$NEW_MODELS" != "[]" ] && [ "$NEW_MODELS" != "null" ] && [ -n "$NEW_MODELS" ]; then echo "true"; else echo "false"; fi)
+          # Check if new_models array exists and has at least one element
+          NEW_MODELS_COUNT=$(echo "$PLUGIN_INFO" | jq -r '.new_models // [] | length' | head -n 1)
+          HAS_NEW_MODELS=$(if [ "$NEW_MODELS_COUNT" -gt 0 ] 2>/dev/null; then echo "true"; else echo "false"; fi)
           
           MODELS=$(echo "$PLUGIN_INFO" | jq -r '.changed_plugins.models[]? // empty' | head -n 1)
           BENCHMARKS=$(echo "$PLUGIN_INFO" | jq -r '.changed_plugins.benchmarks[]? // empty' | head -n 1)
@@ -165,14 +166,15 @@ jobs:
           fi
           
           NEEDS_METADATA_GENERATION="false"
+          MISSING_METADATA_DIRS=()
           if [ "$HAS_PLUGINS" = "true" ] && [ "$METADATA_ONLY" = "false" ]; then
             IFS=',' read -ra DIRS <<< "$PLUGIN_DIRS"
             for dir in "${DIRS[@]}"; do
               if [ -n "$dir" ]; then
                 if [ ! -f "${dir}/metadata.yml" ] && [ ! -f "${dir}/metadata.yaml" ]; then
                   NEEDS_METADATA_GENERATION="true"
+                  MISSING_METADATA_DIRS+=("${dir}")
                   echo "Plugin directory missing metadata: ${dir}"
-                  break
                 fi
               fi
             done
@@ -203,6 +205,9 @@ jobs:
           echo "  Needs scoring: ${NEEDS_SCORING}"
           echo "  Needs mapping: ${NEEDS_MAPPING}"
           echo "  Needs metadata generation: ${NEEDS_METADATA_GENERATION}"
+          if [ "${#MISSING_METADATA_DIRS[@]}" -gt 0 ]; then
+            echo "  Plugins missing metadata: ${MISSING_METADATA_DIRS[*]}"
+          fi
           echo "  Is automergeable: ${IS_AUTOMERGEABLE}"
           echo "  Changed files: ${CHANGED_FILES}"
 
@@ -273,8 +278,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh pr edit ${{ github.event.pull_request.number }} --add-label "only_update_metadata" || echo "Label may already exist"
-          gh pr edit ${{ github.event.pull_request.number }} --add-label "pr_is_ready" || echo "Label may already exist"
+          gh pr edit ${{ github.event.pull_request.number }} --add-label "only_update_metadata" || echo "Failed to add only_update_metadata label (may already exist on PR)"
+          gh pr edit ${{ github.event.pull_request.number }} --add-label "pr_is_ready" || echo "Failed to add pr_is_ready label (may already exist on PR)"
           echo "Added 'only_update_metadata' and 'pr_is_ready' labels to PR"
           echo "Workflow terminating - validate workflow will handle metadata update via Jenkins"
 
@@ -460,7 +465,7 @@ jobs:
               
               # Add pr_is_ready label to trigger validate workflow
               echo "Adding pr_is_ready label to PR"
-              gh pr edit ${{ github.event.pull_request.number }} --add-label "pr_is_ready" || echo "Label may already exist"
+              gh pr edit ${{ github.event.pull_request.number }} --add-label "pr_is_ready" || echo "Failed to add label (may already exist on PR)"
               
               echo "Workflow terminating - validate workflow will run when it sees pr_is_ready label"
             else
