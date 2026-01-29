@@ -74,7 +74,7 @@ def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str
         "Language Unittests, Non-Plugins",
         "Language Integration Tests",
         "docs/readthedocs.org:brain-score-language",
-        "Pylint / build (3.11) (push)"
+        "Pylint / build"
     ]
     
     start_time = time.time()
@@ -84,6 +84,10 @@ def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str
         # Get status checks
         statuses_url = f"{BASE_URL}/commits/{pr_head}/statuses"
         statuses_json = get_data(statuses_url, token)
+        
+        # Debug: Print all available status check contexts
+        all_contexts = [status['context'] for status in statuses_json]
+        print(f"Available status check contexts: {all_contexts}", file=sys.stderr)
         
         # Check each required context
         test_results = {}
