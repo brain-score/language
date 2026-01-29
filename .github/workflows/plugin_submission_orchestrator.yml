@@ -391,13 +391,13 @@ jobs:
           gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_validation_failure" || echo "Failed to add submission_validation_failure label (may already exist on PR)"
           echo "Added 'submission_validation_failure' label to PR (tests failed for metadata-only PR)"
       
-      - name: Add submission_prepare_failure label on job failure
+      - name: Add submission_preparation_failure label on job failure
         if: failure()
         env:
           GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
         run: |
-          gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_prepare_failure" || echo "Failed to add submission_prepare_failure label"
-          echo "Added 'submission_prepare_failure' label due to job failure"
+          gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_preparation_failure" || echo "Failed to add submission_preparation_failure label"
+          echo "Added 'submission_preparation_failure' label due to job failure"
 
   # ============================================================================
   # JOB 4: Generate Mutations and Commit (Metadata Generation + Layer Mapping)
@@ -579,8 +579,8 @@ jobs:
               gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_prepared" || echo "Failed to add label (may already exist on PR)"
             else
               echo "Push failed - this may prevent workflow rerun. Check if PAT is configured correctly."
-              # Add submission_prepare_failure label on failure
-              gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_prepare_failure" || echo "Failed to add submission_prepare_failure label"
+              # Add submission_preparation_failure label on failure
+              gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_preparation_failure" || echo "Failed to add submission_preparation_failure label"
               exit 1
             fi
           else
@@ -590,13 +590,13 @@ jobs:
             gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_prepared" || echo "Failed to add label (may already exist on PR)"
           fi
       
-      - name: Add submission_prepare_failure label on job failure
+      - name: Add submission_preparation_failure label on job failure
         if: failure()
         env:
           GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
         run: |
-          gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_prepare_failure" || echo "Failed to add submission_prepare_failure label"
-          echo "Added 'submission_prepare_failure' label due to job failure"
+          gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_preparation_failure" || echo "Failed to add submission_preparation_failure label"
+          echo "Added 'submission_preparation_failure' label due to job failure"
 
   # ============================================================================
   # JOB 5: Update Existing Metadata (Conditional - only if only_update_metadata label present)
