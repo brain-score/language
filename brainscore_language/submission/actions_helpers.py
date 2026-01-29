@@ -117,16 +117,29 @@ def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str
         result == "success" for result in test_results.values() if result is not None
     )
     
+    # Debug: Print final test statuses before validation results
+    print("Final test statuses before validation:", file=sys.stderr)
+    print(json.dumps(test_results, indent=2), file=sys.stderr)
+    print(f"All tests pass: {all_tests_pass}", file=sys.stderr)
+    
     # Check if PR is automergeable
-    # (PR must have automerge label and only modify plugins)
+    # (PR must have submission_validated label and all tests must pass)
     labels_url = f"{BASE_URL}/issues/{pr_number}/labels"
     labels_json = get_data(labels_url, token)
-    has_automerge_label = any(
-        label['name'] in ('automerge', 'automerge-web')
+    label_names = [label['name'] for label in labels_json]
+    has_submission_validated_label = any(
+        label['name'] == 'submission_validated'
         for label in labels_json
     )
     
-    is_automergeable = has_automerge_label and all_tests_pass
+    # Debug: Print label information
+    print(f"PR labels: {label_names}", file=sys.stderr)
+    print(f"Has submission_validated label: {has_submission_validated_label}", file=sys.stderr)
+    
+    is_automergeable = has_submission_validated_label and all_tests_pass
+    
+    # Debug: Print final determination
+    print(f"Is automergeable: {is_automergeable} (has_submission_validated_label={has_submission_validated_label}, all_tests_pass={all_tests_pass})", file=sys.stderr)
     
     return {
         "is_automergeable": is_automergeable,
