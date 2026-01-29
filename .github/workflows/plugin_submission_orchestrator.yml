@@ -250,7 +250,6 @@ jobs:
           if [ "${#MISSING_METADATA_DIRS[@]}" -gt 0 ]; then
             echo "  Plugins missing metadata: ${MISSING_METADATA_DIRS[*]}"
           fi
-          echo "  Is automergeable: ${IS_AUTOMERGEABLE}"
           echo "  Changed files: ${CHANGED_FILES}"
 
   # ============================================================================
@@ -699,7 +698,7 @@ jobs:
         uses: hmarr/auto-approve-action@v4
         with:
           pull-request-number: ${{ needs.validate_pr.outputs.pr_number }}
-          github-token: ${{ secrets.APPROVAL_TOKEN }}
+          github-token: ${{ secrets.GH_MFERG_PAT }}
 
       - name: Check for submission_validated label
         id: check_submission_validated
