@@ -73,7 +73,8 @@ def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str
         "Language Unittests, Plugins",
         "Language Unittests, Non-Plugins",
         "Language Integration Tests",
-        "docs/readthedocs.org:brain-score-language"
+        "docs/readthedocs.org:brain-score-language",
+        "Pylint / build (3.11) (push)"
     ]
     
     start_time = time.time()
