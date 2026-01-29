@@ -33,6 +33,11 @@ jobs:
     outputs:
       has_pr_is_ready: ${{ steps.check.outputs.has_pr_is_ready }}
     steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
       - name: Check for pr_is_ready label
         id: check
         env:
