@@ -82,7 +82,7 @@ jobs:
           echo "CHANGED_FILES=${CHANGED_FILES}" >> $GITHUB_ENV
           echo "Changed files: ${CHANGED_FILES}"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
 
       - name: Detect plugin changes
         id: detect
@@ -118,15 +118,27 @@ jobs:
           
           HAS_PLUGINS_RAW=$(echo "$PLUGIN_INFO" | jq -r 'if .modifies_plugins == true then "true" else "false" end' | head -n 1)
           HAS_PLUGINS=$(echo "$HAS_PLUGINS_RAW" | tr '[:upper:]' '[:lower:]')
-          PLUGIN_TYPE=$(echo "$PLUGIN_INFO" | jq -r '.plugin_type // ""' | head -n 1)
+          
+          # Infer plugin_type from changed_plugins structure
+          HAS_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.changed_plugins.models // [] | length' | head -n 1)
+          HAS_BENCHMARKS=$(echo "$PLUGIN_INFO" | jq -r '.changed_plugins.benchmarks // [] | length' | head -n 1)
+          PLUGIN_TYPE=""
+          if [ "$HAS_MODELS" -gt 0 ] 2>/dev/null && [ "$HAS_BENCHMARKS" -gt 0 ] 2>/dev/null; then
+            PLUGIN_TYPE="models,benchmarks"
+          elif [ "$HAS_MODELS" -gt 0 ] 2>/dev/null; then
+            PLUGIN_TYPE="models"
+          elif [ "$HAS_BENCHMARKS" -gt 0 ] 2>/dev/null; then
+            PLUGIN_TYPE="benchmarks"
+          fi
+          
           NEEDS_SCORING_RAW=$(echo "$PLUGIN_INFO" | jq -r '.run_score // "False"' | head -n 1)
           NEEDS_SCORING=$(echo "$NEEDS_SCORING_RAW" | tr '[:upper:]' '[:lower:]')
           IS_AUTOMERGEABLE_RAW=$(echo "$PLUGIN_INFO" | jq -r 'if .is_automergeable == true then "true" else "false" end' | head -n 1)
           IS_AUTOMERGEABLE=$(echo "$IS_AUTOMERGEABLE_RAW" | tr '[:upper:]' '[:lower:]')
           
-          # Check if new_models array exists and has at least one element
-          NEW_MODELS_COUNT=$(echo "$PLUGIN_INFO" | jq -r '.new_models // [] | length' | head -n 1)
-          HAS_NEW_MODELS=$(if [ "$NEW_MODELS_COUNT" -gt 0 ] 2>/dev/null; then echo "true"; else echo "false"; fi)
+          # Check if new_models string exists and is non-empty (it's a space-separated string, not an array)
+          NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models // ""' | head -n 1)
+          HAS_NEW_MODELS=$(if [ -n "$NEW_MODELS" ] && [ "$NEW_MODELS" != "null" ]; then echo "true"; else echo "false"; fi)
           
           MODELS=$(echo "$PLUGIN_INFO" | jq -r '.changed_plugins.models[]? // empty' | head -n 1)
           BENCHMARKS=$(echo "$PLUGIN_INFO" | jq -r '.changed_plugins.benchmarks[]? // empty' | head -n 1)
@@ -243,7 +255,7 @@ jobs:
       - name: Check for automerge-web label
         id: check_label
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
         run: |
           LABELS_JSON=$(gh pr view ${{ github.event.pull_request.number }} --json labels)
           if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "automerge-web")' >/dev/null; then
@@ -276,7 +288,7 @@ jobs:
     steps:
       - name: Add labels
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
         run: |
           gh pr edit ${{ github.event.pull_request.number }} --add-label "only_update_metadata" || echo "Failed to add only_update_metadata label (may already exist on PR)"
           gh pr edit ${{ github.event.pull_request.number }} --add-label "pr_is_ready" || echo "Failed to add pr_is_ready label (may already exist on PR)"
@@ -419,8 +431,7 @@ jobs:
       # Step 6: Commit and Push (commits all staged files from steps 4 and 5)
       - name: Commit and push all mutations
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_PAT: ${{ secrets.GH_MFERG_PAT }}
+          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
         run: |
           # Commit all staged changes (metadata from step 4 + layer mapping from step 5)
           # Staged files persist across steps within the same job
@@ -450,20 +461,16 @@ jobs:
             
             git commit -m "$COMMIT_MSG" || echo "Commit failed (may be no changes)"
             
-            if [ -n "$GH_PAT" ]; then
-              echo "Using PAT for push"
-              PUSH_TOKEN="$GH_PAT"
-            else
-              echo "Warning: GH_PAT not set, using GITHUB_TOKEN (commits won't trigger workflows)"
-              PUSH_TOKEN="$GH_TOKEN"
-            fi
+            # Use PAT for push (required to trigger workflows)
+            echo "Using PAT for push and PR operations"
+            PUSH_TOKEN="$GH_TOKEN"
             # Set remote URL with token (GitHub Actions automatically masks secrets in logs)
             git remote set-url origin https://x-access-token:${PUSH_TOKEN}@github.com/${{ github.repository }}.git
             # Push and capture exit code without exposing token in error output
             if git push origin ${{ github.event.pull_request.head.ref }} >/dev/null 2>&1; then
               echo "Successfully pushed mutations to PR branch"
               
-              # Add pr_is_ready label to trigger validate workflow
+              # Add pr_is_ready label to trigger validate workflow (using PAT)
               echo "Adding pr_is_ready label to PR"
               gh pr edit ${{ github.event.pull_request.number }} --add-label "pr_is_ready" || echo "Failed to add label (may already exist on PR)"
               
