@@ -344,8 +344,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
         run: |
-          gh pr edit ${{ steps.get_pr_info.outputs.pr_number }} --add-label "submission_validated" || echo "Failed to add submission_validated label (may already exist on PR)"
-          echo "Added 'submission_validated' label to PR (tests passed and submission_prepared exists)"
+          PR_NUM="${{ steps.get_pr_info.outputs.pr_number }}"
+          LABELS_JSON=$(gh pr view ${PR_NUM} --json labels)
+          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "submission_validated")' >/dev/null; then
+            echo "submission_validated label already exists on PR, skipping"
+          else
+            gh pr edit ${PR_NUM} --add-label "submission_validated"
+            echo "Added 'submission_validated' label to PR (tests passed and submission_prepared exists)"
+          fi
 
       - name: Add submission_validation_failure label if tests fail and submission_prepared exists
         if: |
@@ -381,8 +387,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
         run: |
-          gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_validated" || echo "Failed to add submission_validated label (may already exist on PR)"
-          echo "Added 'submission_validated' label to PR (tests passed for metadata-only PR)"
+          PR_NUM="${{ github.event.pull_request.number }}"
+          LABELS_JSON=$(gh pr view ${PR_NUM} --json labels)
+          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "submission_validated")' >/dev/null; then
+            echo "submission_validated label already exists on PR, skipping"
+          else
+            gh pr edit ${PR_NUM} --add-label "submission_validated"
+            echo "Added 'submission_validated' label to PR (tests passed for metadata-only PR)"
+          fi
       
       - name: Add submission_validation_failure label if tests failed (metadata-only PRs)
         if: needs.validate_pr.outputs.all_tests_pass == 'false'
@@ -658,13 +670,31 @@ jobs:
     name: "6. Auto-merge"
     needs: [detect_changes, validate_pr, update_existing_metadata, generate_and_commit_mutations]
     if: |
+      always() &&
       github.event_name == 'pull_request' &&
       needs.validate_pr.outputs.is_automergeable == 'true' &&
       needs.validate_pr.outputs.all_tests_pass == 'true' &&
-      (needs.update_existing_metadata.result == 'success' || needs.update_existing_metadata.result == 'skipped') &&
-      (needs.generate_and_commit_mutations.result == 'success' || needs.generate_and_commit_mutations.result == 'skipped')
+      (
+        needs.update_existing_metadata.result == 'success' || 
+        needs.update_existing_metadata.result == 'skipped' ||
+        needs.detect_changes.outputs.metadata_only != 'true'
+      ) &&
+      (
+        needs.generate_and_commit_mutations.result == 'success' || 
+        needs.generate_and_commit_mutations.result == 'skipped' ||
+        (needs.detect_changes.outputs.needs_metadata_generation != 'true' && needs.detect_changes.outputs.needs_mapping != 'true')
+      )
     runs-on: ubuntu-latest
     steps:
+      - name: Debug automerge conditions
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "is_automergeable: ${{ needs.validate_pr.outputs.is_automergeable }}"
+          echo "all_tests_pass: ${{ needs.validate_pr.outputs.all_tests_pass }}"
+          echo "update_existing_metadata.result: ${{ needs.update_existing_metadata.result }}"
+          echo "generate_and_commit_mutations.result: ${{ needs.generate_and_commit_mutations.result }}"
+          echo "PR number: ${{ needs.validate_pr.outputs.pr_number }}"
+
       - name: Auto Approve
         uses: hmarr/auto-approve-action@v4
         with:
@@ -678,10 +708,13 @@ jobs:
         run: |
           PR_NUM="${{ needs.validate_pr.outputs.pr_number }}"
           LABELS_JSON=$(gh pr view ${PR_NUM} --json labels)
+          echo "PR labels: $LABELS_JSON"
           if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "submission_validated")' >/dev/null; then
             echo "has_submission_validated=true" >> $GITHUB_OUTPUT
+            echo "Found submission_validated label"
           else
             echo "has_submission_validated=false" >> $GITHUB_OUTPUT
+            echo "submission_validated label not found"
           fi
           # Still check for automerge-web for email extraction purposes
           if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "automerge-web")' >/dev/null; then
