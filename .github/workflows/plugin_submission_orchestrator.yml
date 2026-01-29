@@ -325,6 +325,38 @@ jobs:
           echo "  Is automergeable: ${IS_AUTOMERGEABLE}"
           echo "  All tests pass: ${ALL_TESTS_PASS}"
 
+      - name: Check for submission_prepared label
+        id: check_submission_prepared
+        env:
+          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
+        run: |
+          LABELS_JSON=$(gh pr view ${{ steps.get_pr_info.outputs.pr_number }} --json labels)
+          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "submission_prepared")' >/dev/null; then
+            echo "has_submission_prepared=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_submission_prepared=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Add submission_validated label if tests pass and submission_prepared exists
+        if: |
+          steps.validate.outputs.all_tests_pass == 'true' &&
+          steps.check_submission_prepared.outputs.has_submission_prepared == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
+        run: |
+          gh pr edit ${{ steps.get_pr_info.outputs.pr_number }} --add-label "submission_validated" || echo "Failed to add submission_validated label (may already exist on PR)"
+          echo "Added 'submission_validated' label to PR (tests passed and submission_prepared exists)"
+
+      - name: Add submission_validation_failure label if tests fail and submission_prepared exists
+        if: |
+          steps.validate.outputs.all_tests_pass == 'false' &&
+          steps.check_submission_prepared.outputs.has_submission_prepared == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
+        run: |
+          gh pr edit ${{ steps.get_pr_info.outputs.pr_number }} --add-label "submission_validation_failure" || echo "Failed to add submission_validation_failure label (may already exist on PR)"
+          echo "Added 'submission_validation_failure' label to PR"
+
   # ============================================================================
   # JOB 3: Handle Metadata-Only PRs (Add label and terminate)
   # ============================================================================
@@ -341,8 +373,32 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
         run: |
           gh pr edit ${{ github.event.pull_request.number }} --add-label "only_update_metadata" || echo "Failed to add only_update_metadata label (may already exist on PR)"
-          gh pr edit ${{ github.event.pull_request.number }} --add-label "pr_is_ready" || echo "Failed to add pr_is_ready label (may already exist on PR)"
-          echo "Added 'only_update_metadata' and 'pr_is_ready' labels to PR"
+          gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_prepared" || echo "Failed to add submission_prepared label (may already exist on PR)"
+          echo "Added 'only_update_metadata' and 'submission_prepared' labels to PR"
+      
+      - name: Add submission_validated label if tests passed (metadata-only PRs)
+        if: needs.validate_pr.outputs.all_tests_pass == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
+        run: |
+          gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_validated" || echo "Failed to add submission_validated label (may already exist on PR)"
+          echo "Added 'submission_validated' label to PR (tests passed for metadata-only PR)"
+      
+      - name: Add submission_validation_failure label if tests failed (metadata-only PRs)
+        if: needs.validate_pr.outputs.all_tests_pass == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
+        run: |
+          gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_validation_failure" || echo "Failed to add submission_validation_failure label (may already exist on PR)"
+          echo "Added 'submission_validation_failure' label to PR (tests failed for metadata-only PR)"
+      
+      - name: Add submission_preparation_failure label on job failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
+        run: |
+          gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_preparation_failure" || echo "Failed to add submission_preparation_failure label"
+          echo "Added 'submission_preparation_failure' label due to job failure"
 
   # ============================================================================
   # JOB 4: Generate Mutations and Commit (Metadata Generation + Layer Mapping)
@@ -519,16 +575,29 @@ jobs:
             if git push origin ${{ github.event.pull_request.head.ref }} >/dev/null 2>&1; then
               echo "Successfully pushed mutations to PR branch"
               
-              # Add pr_is_ready label to PR (using PAT)
-              echo "Adding pr_is_ready label to PR"
-              gh pr edit ${{ github.event.pull_request.number }} --add-label "pr_is_ready" || echo "Failed to add label (may already exist on PR)"
+              # Add submission_prepared label to PR (using PAT)
+              echo "Adding submission_prepared label to PR"
+              gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_prepared" || echo "Failed to add label (may already exist on PR)"
             else
               echo "Push failed - this may prevent workflow rerun. Check if PAT is configured correctly."
+              # Add submission_preparation_failure label on failure
+              gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_preparation_failure" || echo "Failed to add submission_preparation_failure label"
               exit 1
             fi
           else
             echo "No staged changes to commit"
+            # If no changes were staged, still add submission_prepared label (metadata might already exist)
+            echo "No changes to commit, but adding submission_prepared label"
+            gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_prepared" || echo "Failed to add label (may already exist on PR)"
           fi
+      
+      - name: Add submission_preparation_failure label on job failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
+        run: |
+          gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_preparation_failure" || echo "Failed to add submission_preparation_failure label"
+          echo "Added 'submission_preparation_failure' label due to job failure"
 
   # ============================================================================
   # JOB 5: Update Existing Metadata (Conditional - only if only_update_metadata label present)
@@ -602,39 +671,31 @@ jobs:
           pull-request-number: ${{ needs.validate_pr.outputs.pr_number }}
           github-token: ${{ secrets.APPROVAL_TOKEN }}
 
-      - name: Check for automerge labels
-        id: check_automerge_labels
+      - name: Check for submission_validated label
+        id: check_submission_validated
         env:
           GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
         run: |
           PR_NUM="${{ needs.validate_pr.outputs.pr_number }}"
           LABELS_JSON=$(gh pr view ${PR_NUM} --json labels)
-          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "automerge")' >/dev/null; then
-            echo "has_automerge=true" >> $GITHUB_OUTPUT
+          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "submission_validated")' >/dev/null; then
+            echo "has_submission_validated=true" >> $GITHUB_OUTPUT
           else
-            echo "has_automerge=false" >> $GITHUB_OUTPUT
+            echo "has_submission_validated=false" >> $GITHUB_OUTPUT
           fi
+          # Still check for automerge-web for email extraction purposes
           if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "automerge-web")' >/dev/null; then
             echo "has_automerge_web=true" >> $GITHUB_OUTPUT
           else
             echo "has_automerge_web=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Auto Merge (GitHub submissions)
-        if: steps.check_automerge_labels.outputs.has_automerge == 'true'
+      - name: Auto Merge
+        if: steps.check_submission_validated.outputs.has_submission_validated == 'true'
         uses: plm9606/automerge_actions@1.2.2
         with:
           github-token: ${{ secrets.WORKFLOW_TOKEN }}
-          label-name: "automerge"
-          merge-method: "squash"
-          auto-delete: "true"
-
-      - name: Auto Merge (brain-score.org submissions)
-        if: steps.check_automerge_labels.outputs.has_automerge_web == 'true'
-        uses: plm9606/automerge_actions@1.2.2
-        with:
-          github-token: ${{ secrets.WORKFLOW_TOKEN }}
-          label-name: "automerge-web"
+          label-name: "submission_validated"
           merge-method: "squash"
           auto-delete: "true"
 
