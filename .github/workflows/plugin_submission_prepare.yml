@@ -137,8 +137,27 @@ jobs:
           IS_AUTOMERGEABLE=$(echo "$IS_AUTOMERGEABLE_RAW" | tr '[:upper:]' '[:lower:]')
           
           # Check if new_models string exists and is non-empty (it's a space-separated string, not an array)
+          # get_scoring_info sets new_models to a space-separated string of plugin IDs found in __init__.py files
           NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models // ""' | head -n 1)
-          HAS_NEW_MODELS=$(if [ -n "$NEW_MODELS" ] && [ "$NEW_MODELS" != "null" ]; then echo "true"; else echo "false"; fi)
+          # Debug: show what new_models contains
+          echo "DEBUG: new_models value from JSON: '${NEW_MODELS}'"
+          
+          # Check if we have models in changed_plugins (this is more reliable than new_models)
+          MODELS_COUNT=$(echo "$PLUGIN_INFO" | jq -r '.changed_plugins.models // [] | length' | head -n 1)
+          echo "DEBUG: changed_plugins.models count: ${MODELS_COUNT}"
+          
+          # Set has_new_models based on whether we have models in changed_plugins
+          # This is more reliable than relying on new_models which depends on get_plugin_ids finding registry entries
+          if [ -n "$MODELS_COUNT" ] && [ "$MODELS_COUNT" != "null" ] && [ "$MODELS_COUNT" != "0" ]; then
+            HAS_NEW_MODELS="true"
+            echo "DEBUG: Found ${MODELS_COUNT} model(s) in changed_plugins.models - setting has_new_models=true"
+          elif [ -n "$NEW_MODELS" ] && [ "$NEW_MODELS" != "null" ] && [ "$NEW_MODELS" != "" ]; then
+            HAS_NEW_MODELS="true"
+            echo "DEBUG: new_models contains: '${NEW_MODELS}' - setting has_new_models=true"
+          else
+            HAS_NEW_MODELS="false"
+            echo "DEBUG: No models found - setting has_new_models=false"
+          fi
           
           MODELS=$(echo "$PLUGIN_INFO" | jq -r '.changed_plugins.models[]? // empty' | head -n 1)
           BENCHMARKS=$(echo "$PLUGIN_INFO" | jq -r '.changed_plugins.benchmarks[]? // empty' | head -n 1)
