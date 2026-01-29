@@ -28,6 +28,9 @@ jobs:
   # ============================================================================
   detect_changes:
     name: "1. Detect Changes"
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'pull_request_target' && github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     outputs:
       has_plugins: ${{ steps.detect.outputs.has_plugins }}
