@@ -2,42 +2,34 @@
 
 ## Overview
 
-This document explains the complete scoring flow for the Brain-Score language domain. The system uses a two-phase workflow architecture to automatically score language models on benchmarks when plugins (models or benchmarks) are submitted via pull requests.
+This document explains the complete scoring flow for the Brain-Score language domain. The system uses a unified workflow architecture to automatically score language models on benchmarks when plugins (models or benchmarks) are submitted via pull requests.
 
-### Two-Phase Architecture
+### Unified Architecture
 
-The workflow system is split into two complementary workflows:
+The workflow system uses a single unified workflow:
 
-1. **Prepare Workflow** (`plugin_submission_prepare.yml`): Handles repository mutations (metadata generation, layer mapping) and commits changes to the PR branch, then terminates
-2. **Validate Workflow** (`plugin_submission_validate.yml`): Handles downstream validation and orchestration (automerge, post-merge scoring, notifications) and assumes the PR is structurally complete
+1. **Orchestrator Workflow** (`plugin_submission_orchestrator.yml`): Handles all phases from change detection through post-merge scoring in a single workflow run
 
-This design respects GitHub Actions' non-reentrancy model, where workflows cannot retrigger themselves when they push commits to the same PR branch. The prepare workflow commits changes, adds a `pr_is_ready` label, and terminates. The label addition triggers a `labeled` event that starts the validate workflow, which only proceeds if the `pr_is_ready` label is present.
+This unified design runs all jobs sequentially in one workflow execution, eliminating the need for label-based coordination between separate workflows.
 
 ## High-Level Flow
 
 ```
 PR Created/Updated
     ↓
-[Phase 1: Prepare Workflow]
+[Orchestrator Workflow]
     ├─→ Detect Changes
     ├─→ Validate PR (minimal validation)
     ├─→ Handle Metadata-Only PR (if metadata-only changes)
-    │   ├─→ Add "only_update_metadata" and "pr_is_ready" labels
-    │   └─→ Workflow terminates
-    └─→ Generate Mutations and Commit (if new plugins need metadata or mapping)
-        ├─→ Step 4a: Generate Metadata (stages files)
-        ├─→ Step 4b: Layer Mapping (stages files, vision only)
-        └─→ Step 4c: Commit and Push
-            ├─→ Commit all staged files
-            ├─→ Push to PR branch
-            ├─→ Add "pr_is_ready" label to PR
-            └─→ Workflow terminates
-        ↓
-    [Commit triggers synchronize event]
-        ↓
-[Phase 2: Validate Workflow]
-    ├─→ Detect Changes (re-run on normalized PR)
-    ├─→ Validate PR (full validation)
+    │   └─→ Add "only_update_metadata" and "pr_is_ready" labels
+    ├─→ Generate Mutations and Commit (if new plugins need metadata or mapping)
+    │   ├─→ Step 4a: Generate Metadata (stages files)
+    │   ├─→ Step 4b: Layer Mapping (stages files, vision only)
+    │   └─→ Step 4c: Commit and Push
+    │       ├─→ Commit all staged files
+    │       ├─→ Push to PR branch
+    │       └─→ Add "pr_is_ready" label to PR
+    ├─→ Update Existing Metadata (if metadata-only)
     ├─→ Auto-merge (if approved)
     └─→ Post-Merge Scoring (after merge)
         └─→ Jenkins Scoring Job
@@ -54,11 +46,10 @@ PR Created/Updated
 - Labeled (`labeled` with `automerge` or `automerge-web`)
 
 **What Happens:**
-- The `plugin_submission_prepare.yml` workflow is triggered first
+- The `plugin_submission_orchestrator.yml` workflow is triggered
 - Workflow detects what files changed in the PR
 - If mutations are needed (metadata generation, layer mapping), they are committed
-- The commit triggers a `synchronize` event
-- The `plugin_submission_validate.yml` workflow then runs on the normalized PR
+- All downstream steps (validation, automerge, scoring) run in the same workflow
 
 ### 2. Detect Changes
 
@@ -115,27 +106,26 @@ PR Created/Updated
 
 ### 4. Handle Metadata-Only PR (Conditional)
 
-**Job:** `3. Handle Metadata-Only PR` (in mutation workflow)
+**Job:** `3. Handle Metadata-Only PR`
 
 **When:** Only runs if `metadata_only == true` (only metadata.yml changed, no code changes)
 
-**Purpose:** Add label to PR and terminate workflow (orchestrator will handle metadata update)
+**Purpose:** Add label to PR for downstream metadata update job
 
 **Process:**
 1. Detects that PR only contains metadata.yml changes
 2. Adds "only_update_metadata" label to PR
-3. Adds "pr_is_ready" label to PR (to trigger validate workflow)
-4. **Workflow terminates** - no commits made
+3. Adds "pr_is_ready" label to PR (for informational purposes)
+4. Workflow continues to downstream jobs
 
 **Note:**
-- This is a terminal step - workflow ends here
-- The validate workflow will see the `pr_is_ready` label and proceed with validation
-- The validate workflow will also see the `only_update_metadata` label and trigger Jenkins job for metadata update
+- This job adds labels but doesn't terminate the workflow
+- The "Update Existing Metadata" job will see the `only_update_metadata` label and trigger Jenkins job
 - Different from "Generate Mutations and Commit" which creates new metadata files
 
 ### 5. Generate Mutations and Commit (Conditional)
 
-**Job:** `4. Generate Mutations and Commit` (in prepare workflow)
+**Job:** `4. Generate Mutations and Commit`
 
 **When:** Only runs if:
 - New plugins need metadata generation (`needs_metadata_generation == true`), OR
@@ -162,14 +152,14 @@ PR Created/Updated
 **Step 4c: Commit and Push**
 1. Commits all staged files from steps 4a and 4b in a single commit
 2. Pushes commit to PR branch using PAT (or GITHUB_TOKEN if PAT not configured)
-3. Adds `pr_is_ready` label to PR
-4. **Workflow terminates** - label addition triggers `labeled` event
+3. Adds `pr_is_ready` label to PR (for informational purposes)
+4. Workflow continues to downstream jobs
 
 **Note:** 
 - All steps run in the same job, so staged files persist across steps
 - No intermediate commits - everything is committed together in step 4c
-- The `pr_is_ready` label addition triggers a `labeled` event, which starts the validate workflow
-- The validate workflow only proceeds if the `pr_is_ready` label is present
+- The `pr_is_ready` label is added for informational purposes
+- Workflow continues to downstream validation and automerge jobs
 
 **Metadata Generation:**
 - For models: Uses `ModelMetadataGenerator` to extract:
@@ -187,49 +177,12 @@ PR Created/Updated
 - Maps model architecture layers
 - Updates model metadata
 
-### 6. Handle Metadata-Only PR (Conditional)
+### 6. Update Existing Metadata (Conditional)
 
-**Job:** `3. Handle Metadata-Only PR` (in prepare workflow)
-
-**When:** Only runs if:
-- PR only changes metadata files (`metadata_only == true`)
-
-**Purpose:** Add label to PR and terminate workflow (validate workflow will handle metadata update)
-
-**Process:**
-1. Detects that PR only contains metadata.yml changes
-2. Adds "only_update_metadata" label to PR
-3. **Workflow terminates** - no commits made
-
-**Note:**
-- This is a terminal step - workflow ends here
-- The orchestrator workflow will see the label and trigger Jenkins job for metadata update
-
-### 6. Check PR Ready Label (Gatekeeper)
-
-**Job:** `0. Check PR Ready Label` (in validate workflow)
-
-**When:** Always runs first for `pull_request` events
-
-**Purpose:** Verify PR has `pr_is_ready` label before proceeding with validation
-
-**Process:**
-1. Checks if PR has `pr_is_ready` label
-2. If label exists → sets `has_pr_is_ready = true` → validation proceeds
-3. If label doesn't exist → sets `has_pr_is_ready = false` → all downstream jobs are skipped
-4. For `pull_request_target` events (post-merge), always proceeds (label check skipped)
-
-**Note:**
-- This acts as a gatekeeper - validation only runs if prepare workflow successfully completed
-- Prevents validation from running prematurely or on PRs that haven't been prepared yet
-
-### 7. Update Existing Metadata (Conditional)
-
-**Job:** `3. Update Existing Metadata` (in validate workflow)
+**Job:** `5. Update Existing Metadata`
 
 **When:** Only runs if:
-- PR has `pr_is_ready` label (gatekeeper passed)
-- PR has "only_update_metadata" label (added by prepare workflow)
+- PR has "only_update_metadata" label (added by Handle Metadata-Only PR job)
 - `metadata_only == true`
 
 **Purpose:** Trigger Jenkins job to update existing metadata in database
@@ -248,12 +201,12 @@ PR Created/Updated
 - No commits made to PR
 
 **Note:**
-- This step only runs if prepare workflow detected metadata-only PR and added both labels
+- This step only runs if Handle Metadata-Only PR job detected metadata-only PR and added the label
 - Different from "Generate Mutations and Commit" which creates new metadata files
 
-### 8. Auto-merge (Conditional)
+### 7. Auto-merge (Conditional)
 
-**Job:** `4. Auto-merge` (in validate workflow)
+**Job:** `6. Auto-merge`
 
 **When:** Only runs if:
 - PR is validated (`is_automergeable == true`)
@@ -273,9 +226,9 @@ PR Created/Updated
 
 **Result:** PR is merged to `main` branch
 
-### 9. Post-Merge Scoring
+### 8. Post-Merge Scoring
 
-**Job:** `5. Post-Merge Scoring` (in validate workflow)
+**Job:** `7. Post-Merge Scoring`
 
 **When:** Only runs if:
 - PR was merged to `main` (`pull_request_target` event, `merged == true`)
@@ -337,9 +290,9 @@ The Jenkins job receives the plugin information and:
      - Start/end timestamps
      - Error messages (if failed)
 
-### 10. Failure Notification
+### 9. Failure Notification
 
-**Job:** `6. Notify on Failure` (in validate workflow)
+**Job:** `8. Notify on Failure`
 
 **When:** Runs if any job in the workflow fails
 
@@ -362,8 +315,7 @@ The Jenkins job receives the plugin information and:
 
 ```
 .github/workflows/
-├── plugin_submission_prepare.yml        # Prepare workflow (commits changes, terminates)
-├── plugin_submission_validate.yml       # Validate workflow (handles downstream steps)
+├── plugin_submission_orchestrator.yml   # Unified orchestrator workflow
 ├── metadata_handler.yml                  # Reusable: processes metadata
 └── user_notification_handler.yml        # Reusable: handles notifications
 
@@ -373,27 +325,17 @@ brainscore_language/submission/
 
 ## Key Components
 
-### Prepare Workflow
+### Orchestrator Workflow
 
-**File:** `.github/workflows/plugin_submission_prepare.yml`
-
-**Key Features:**
-- Handles all repository mutations (metadata generation, layer mapping)
-- Commits changes to PR branch
-- Terminates after commit (relies on synchronize event for continuation)
-- Respects GitHub Actions' non-reentrancy model
-
-### Validate Workflow
-
-**File:** `.github/workflows/plugin_submission_validate.yml`
+**File:** `.github/workflows/plugin_submission_orchestrator.yml`
 
 **Key Features:**
-- Assumes PR is structurally complete (metadata exists)
-- Handles downstream validation and orchestration (automerge, scoring, notifications)
-- Runs on synchronize events triggered by prepare workflow commits
+- Handles all repository operations in a single unified workflow
+- Detects changes, validates PRs, commits mutations, and handles downstream steps
 - Sequential job execution with clear dependencies
 - Conditional logic for different scenarios
 - Comprehensive error handling
+- All jobs run in one workflow execution
 
 ### Helper Script
 
@@ -423,86 +365,69 @@ brainscore_language/submission/
 
 ### Scenario 1: New Model Submission (Without Metadata)
 
-**Phase 1 - Prepare Workflow:**
+**Orchestrator Workflow:**
 1. User creates PR with new model in `brainscore_language/models/newmodel/`
    - Model code is added but no `metadata.yml` file
-2. Prepare workflow detects new model
+2. Workflow detects new model
 3. Validates PR (tests must pass)
 4. **Generate Mutations and Commit job** runs:
    - **Step 4a:** Generates metadata.yml for the new model (stages file)
    - **Step 4b:** Skips layer mapping (language domain doesn't require it)
    - **Step 4c:** Commits staged metadata file, pushes to PR branch, adds `pr_is_ready` label
-5. **Prepare workflow terminates**
-
-**Phase 2 - Validate Workflow:**
-6. Validate workflow runs (triggered by `labeled` event from `pr_is_ready` label)
-7. **Job 0:** Checks for `pr_is_ready` label → found, proceeds
-8. Detects changes (metadata now exists)
-9. Validates PR (full validation)
-10. Auto-merges PR
-11. Post-merge: triggers scoring
-    - New model scored on all public benchmarks
-    - Results stored in database
+5. Workflow continues to downstream jobs
+6. Validates PR (full validation)
+7. Auto-merges PR
+8. Post-merge: triggers scoring
+   - New model scored on all public benchmarks
+   - Results stored in database
 
 ### Scenario 1b: New Model Submission (With Metadata)
 
-**Phase 1 - Prepare Workflow:**
+**Orchestrator Workflow:**
 1. User creates PR with new model in `brainscore_language/models/newmodel/`
    - Model code AND `metadata.yml` file are both provided
-2. Prepare workflow detects new model
+2. Workflow detects new model
 3. Validates PR (tests must pass)
 4. **Generate Mutations and Commit job** is skipped (no mutations needed)
-5. **Prepare workflow terminates** (no commits made, no `pr_is_ready` label added)
-
-**Phase 2 - Validate Workflow:**
-6. Validate workflow runs (triggered by PR creation or synchronize event)
-7. **Job 0:** Checks for `pr_is_ready` label → not found, all jobs skipped
-8. **Note:** Since no `pr_is_ready` label exists, validation doesn't run automatically
-9. **Manual trigger:** User can manually add `pr_is_ready` label to trigger validation, or prepare workflow will add it if mutations are needed later
+5. Workflow continues to downstream jobs
+6. Validates PR (full validation)
+7. Auto-merges PR
+8. Post-merge: triggers scoring
 
 ### Scenario 2: New Benchmark Submission
 
-**Phase 1 - Prepare Workflow:**
+**Orchestrator Workflow:**
 1. User creates PR with new benchmark in `brainscore_language/benchmarks/newbenchmark/`
    - Benchmark code added (with or without metadata.yml)
-2. Prepare workflow detects new benchmark
+2. Workflow detects new benchmark
 3. Validates PR (tests must pass)
 4. **Generate Mutations and Commit job** runs:
    - **Step 4a:** Generates metadata.yml if missing (stages file)
    - **Step 4b:** Skips layer mapping (not needed for benchmarks)
    - **Step 4c:** Commits staged metadata file, pushes to PR branch, adds `pr_is_ready` label
-5. **Prepare workflow terminates**
-
-**Phase 2 - Validate Workflow:**
-6. Validate workflow runs (triggered by `labeled` event from `pr_is_ready` label)
-7. **Job 0:** Checks for `pr_is_ready` label → found, proceeds
-8. Detects changes (metadata exists)
-9. Validates PR (full validation)
-10. Auto-merges PR
-11. Post-merge: triggers scoring
-    - All public models scored on new benchmark
-    - Results stored in database
+5. Workflow continues to downstream jobs
+6. Validates PR (full validation)
+7. Auto-merges PR
+8. Post-merge: triggers scoring
+   - All public models scored on new benchmark
+   - Results stored in database
 
 ### Scenario 3: Metadata-Only Update
 
-**Phase 1 - Prepare Workflow:**
+**Orchestrator Workflow:**
 1. User creates PR with only `metadata.yml` changes
-2. Prepare workflow detects metadata-only change (`metadata_only == true`)
+2. Workflow detects metadata-only change (`metadata_only == true`)
 3. Validates PR (tests must pass)
 4. **Handle Metadata-Only PR job** runs:
    - Adds "only_update_metadata" label to PR
    - Adds "pr_is_ready" label to PR
-   - **Prepare workflow terminates** (no commits)
-
-**Phase 2 - Validate Workflow:**
-5. Validate workflow runs (triggered by `labeled` event from `pr_is_ready` label)
-6. **Job 0:** Checks for `pr_is_ready` label → found, proceeds
-7. Detects "only_update_metadata" label
-8. **Update Existing Metadata job** runs:
+5. Workflow continues to downstream jobs
+6. **Update Existing Metadata job** runs:
+   - Detects "only_update_metadata" label
    - Triggers Jenkins job "update_existing_metadata"
    - Jenkins updates database with new metadata
-9. Auto-merges PR (if validated)
-10. Post-merge scoring skipped (`metadata_only == true`)
+7. Auto-merges PR (if validated)
+8. Post-merge scoring skipped (`metadata_only == true`)
 
 ### Scenario 4: Web Submission
 
@@ -538,8 +463,8 @@ The workflow uses labels to control behavior:
 
 - **`automerge`** - Standard GitHub PR auto-merge
 - **`automerge-web`** - Web submission auto-merge
-- **`pr_is_ready`** - Added by prepare workflow after successful mutations (triggers validate workflow)
-- **`only_update_metadata`** - Added by prepare workflow for metadata-only PRs (triggers Jenkins update job)
+- **`pr_is_ready`** - Added after successful mutations (informational)
+- **`only_update_metadata`** - Added for metadata-only PRs (triggers Jenkins update job)
 - **`failure-notified`** - User has been notified of failure (prevents duplicate emails)
 
 ## Secrets Required
@@ -567,38 +492,38 @@ The workflow requires these GitHub repository secrets:
 
 ### View Workflow Status
 
-On any PR, you'll see two workflow runs:
+On any PR, you'll see a single unified workflow run:
 
-**First Run (Prepare - if mutations needed):**
+**Orchestrator Workflow (if mutations needed):**
 ```
-Plugin Submission Prepare
+Plugin Submission Orchestrator
 ├─ 1. Detect Changes (success)
 ├─ 2. Validate PR (success)
 ├─ 3. Handle Metadata-Only PR (skipped)
-└─ 4. Generate Mutations and Commit (success)
-    ├─→ Step 4a: Generate Metadata (stages files)
-    ├─→ Step 4b: Layer Mapping (skipped - language domain)
-    └─→ Step 4c: Commit and Push
-        ├─→ Commits staged files, pushes
-        ├─→ Adds "pr_is_ready" label to PR
-        └─→ Workflow terminates (label triggers validate workflow)
+├─ 4. Generate Mutations and Commit (success)
+│   ├─→ Step 4a: Generate Metadata (stages files)
+│   ├─→ Step 4b: Layer Mapping (skipped - language domain)
+│   └─→ Step 4c: Commit and Push
+│       ├─→ Commits staged files, pushes
+│       └─→ Adds "pr_is_ready" label to PR
+├─ 5. Update Existing Metadata (skipped)
+├─ 6. Auto-merge (success)
+├─ 7. Post-Merge Scoring (success)
+└─ 8. Notify on Failure (skipped - no failures)
 ```
 
-**Second Run (Validate):**
+**Orchestrator Workflow (if no mutations needed):**
 ```
-Plugin Submission Validate
-├─ 0. Check PR Ready Label (success - label found)
+Plugin Submission Orchestrator
 ├─ 1. Detect Changes (success)
 ├─ 2. Validate PR (success)
-├─ 3. Update Existing Metadata (skipped)
-├─ 4. Auto-merge (success)
-├─ 5. Post-Merge Scoring (success)
-└─ 6. Notify on Failure (skipped - no failures)
+├─ 3. Handle Metadata-Only PR (skipped)
+├─ 4. Generate Mutations and Commit (skipped - no mutations needed)
+├─ 5. Update Existing Metadata (skipped)
+├─ 6. Auto-merge (success)
+├─ 7. Post-Merge Scoring (success)
+└─ 8. Notify on Failure (skipped - no failures)
 ```
-
-**Note:** If no mutations are needed (metadata already exists), prepare workflow doesn't add `pr_is_ready` label, so validate workflow will skip all jobs. User can manually add the label to trigger validation.
-
-**Note:** If no mutations are needed (metadata already exists), only the validate workflow runs.
 
 ### Check Jenkins Status
 
