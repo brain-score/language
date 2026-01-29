@@ -746,7 +746,7 @@ jobs:
         if: steps.check_submission_validated.outputs.has_submission_validated == 'true'
         uses: plm9606/automerge_actions@1.2.2
         with:
-          github-token: ${{ secrets.WORKFLOW_TOKEN }}
+          github-token: ${{ secrets.GH_MFERG_PAT }}
           label-name: "submission_validated"
           merge-method: "squash"
           auto-delete: "true"
