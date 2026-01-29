@@ -260,7 +260,8 @@ jobs:
     name: "2. Validate PR"
     needs: detect_changes
     if: |
-      github.event_name == 'pull_request'
+      github.event_name == 'pull_request' &&
+      needs.detect_changes.outputs.has_plugins == 'true'
     runs-on: ubuntu-latest
     outputs:
       is_automergeable: ${{ steps.validate.outputs.is_automergeable }}
