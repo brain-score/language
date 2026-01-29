@@ -28,6 +28,9 @@ jobs:
   # ============================================================================
   detect_changes:
     name: "1. Detect Changes"
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'pull_request_target' && github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     outputs:
       has_plugins: ${{ steps.detect.outputs.has_plugins }}
@@ -304,6 +307,20 @@ jobs:
             echo "is_automerge_web=true" >> $GITHUB_OUTPUT
           else
             echo "is_automerge_web=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Add submission_prepared label if metadata already exists
+        if: needs.detect_changes.outputs.needs_metadata_generation == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
+        run: |
+          PR_NUM="${{ steps.get_pr_info.outputs.pr_number }}"
+          LABELS_JSON=$(gh pr view ${PR_NUM} --json labels)
+          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "submission_prepared")' >/dev/null; then
+            echo "submission_prepared label already exists on PR, skipping"
+          else
+            gh pr edit ${PR_NUM} --add-label "submission_prepared"
+            echo "Added 'submission_prepared' label to PR (metadata already exists)"
           fi
 
       - name: Validate PR
@@ -698,7 +715,7 @@ jobs:
         uses: hmarr/auto-approve-action@v4
         with:
           pull-request-number: ${{ needs.validate_pr.outputs.pr_number }}
-          github-token: ${{ secrets.GH_MFERG_PAT }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check for submission_validated label
         id: check_submission_validated
