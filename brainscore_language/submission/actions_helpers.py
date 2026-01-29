@@ -72,7 +72,8 @@ def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str
     required_contexts = [
         "Language Unittests, Plugins",
         "Language Unittests, Non-Plugins",
-        "Language Integration Tests"
+        "Language Integration Tests",
+        "docs/readthedocs.org:brain-score-language"
     ]
     
     start_time = time.time()
