@@ -250,7 +250,6 @@ jobs:
           if [ "${#MISSING_METADATA_DIRS[@]}" -gt 0 ]; then
             echo "  Plugins missing metadata: ${MISSING_METADATA_DIRS[*]}"
           fi
-          echo "  Is automergeable: ${IS_AUTOMERGEABLE}"
           echo "  Changed files: ${CHANGED_FILES}"
 
   # ============================================================================
