@@ -46,7 +46,7 @@ def get_statuses_result(context: str, statuses_json: dict) -> Union[str, None]:
     return last_status['result']
 
 
-def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str, 
+def validate_pr(pr_number: int, pr_head: str, token: str, 
                 poll_interval: int = 30, max_wait_time: int = 7200) -> dict:
     """
     Validate PR for automerge eligibility
@@ -57,7 +57,6 @@ def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str
     Args:
         pr_number: PR number
         pr_head: PR head commit SHA
-        is_automerge_web: Whether this is an automerge-web PR
         token: GitHub token
         poll_interval: Seconds to wait between polls (default: 30)
         max_wait_time: Maximum seconds to wait for tests (default: 7200 = 2 hours)
@@ -256,7 +255,6 @@ def main():
     validate_parser = subparsers.add_parser('validate_pr', help='Validate PR for automerge')
     validate_parser.add_argument('--pr-number', type=int, required=True)
     validate_parser.add_argument('--pr-head', type=str, required=True)
-    validate_parser.add_argument('--is-automerge-web', type=str, default='false')
     validate_parser.add_argument('--token', type=str, default=os.getenv('GITHUB_TOKEN'))
     
     # Trigger update existing metadata command
@@ -303,6 +301,10 @@ def main():
                 db_secret = os.getenv('BSC_DATABASESECRET')
                 user_manager = UserManager(db_secret=db_secret)
                 email = email_from_uid(int(bs_uid))
+                if not email:
+                    # Fallback to default email if database lookup returns no email
+                    email = "mferg@mit.edu"
+                    print(f"Could not find email in database for user {bs_uid}, using default: {email}", file=sys.stderr)
             else:
                 print("Could not extract user ID from PR title", file=sys.stderr)
                 sys.exit(1)
@@ -326,14 +328,14 @@ def main():
                     if email:
                         break
             if not email:
-                print("Could not find email for user", file=sys.stderr)
-                sys.exit(1)
+                # Fallback to default email if real email not found
+                email = "mferg@mit.edu"
+                print(f"Could not find email for user, using default Brain-Score submission (mferg): {email}", file=sys.stderr)
         
         print(email)
         
     elif args.command == 'validate_pr':
-        is_automerge_web = args.is_automerge_web.lower() == 'true'
-        result = validate_pr(args.pr_number, args.pr_head, is_automerge_web, args.token)
+        result = validate_pr(args.pr_number, args.pr_head, args.token)
         print(json.dumps(result))
         
     elif args.command == 'trigger_update_existing_metadata':
