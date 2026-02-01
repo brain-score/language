@@ -110,7 +110,8 @@ jobs:
           METADATA_AND_LAYER_MAP_B64='${{ steps.read_metadata.outputs.metadata_and_layer_map_b64 }}'
           METADATA_AND_LAYER_MAP=$(echo "$METADATA_AND_LAYER_MAP_B64" | base64 -d)
           
-          PLUGIN_INFO=$(jq -n \
+          # Build compact JSON (no newlines) to avoid GITHUB_ENV/GITHUB_OUTPUT format issues
+          PLUGIN_INFO=$(jq -c -n \
             --arg domain "language" \
             --arg email "${{ inputs.test_email }}" \
             --arg plugin_dirs "${{ inputs.plugin_dir }}" \
@@ -136,13 +137,13 @@ jobs:
               metadata_and_layer_map: $metadata_and_layer_map
             }')
           
-          # Mask email before storing in outputs (GitHub Actions will also mask secrets)
-          PLUGIN_INFO_MASKED=$(echo "$PLUGIN_INFO" | jq -c 'if .email then .email = "***MASKED***" else . end | if .BSC_DATABASESECRET then .BSC_DATABASESECRET = "***MASKED***" else . end' 2>/dev/null || echo "{}")
-          echo "Plugin info (sensitive data masked): ${PLUGIN_INFO_MASKED}"
-          
-          # Store PLUGIN_INFO in GITHUB_ENV for next step (contains email - already masked above)
+          # Store PLUGIN_INFO in GITHUB_ENV for next step (contains email - GitHub Actions will mask it)
           echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_ENV
           echo "plugin_info=${PLUGIN_INFO}" >> $GITHUB_OUTPUT
+          
+          # Mask email and other sensitive fields in log output
+          PLUGIN_INFO_MASKED=$(echo "$PLUGIN_INFO" | jq -c 'if .email then .email = "***MASKED***" else . end | if .BSC_DATABASESECRET then .BSC_DATABASESECRET = "***MASKED***" else . end' 2>/dev/null || echo "{}")
+          echo "Plugin info (sensitive data masked): ${PLUGIN_INFO_MASKED}"
 
       - name: Validate PLUGIN_INFO structure
         run: |
