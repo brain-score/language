@@ -44,24 +44,65 @@ jobs:
       is_automergeable: ${{ steps.detect.outputs.is_automergeable }}
       plugin_info_json: ${{ steps.detect.outputs.plugin_info_json }}
     steps:
+      - name: Check for failure labels
+        if: github.event_name == 'pull_request'
+        id: check_failure_labels
+        env:
+          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          LABELS_JSON=$(gh pr view ${PR_NUMBER} --json labels || echo '{"labels": []}')
+          
+          # Check for any failure labels
+          FAILURE_LABELS=("submission_preparation_failure" "submission_validation_failure" "failure-notified")
+          HAS_FAILURE_LABEL=false
+          
+          for label in "${FAILURE_LABELS[@]}"; do
+            if echo "$LABELS_JSON" | jq -e --arg lbl "$label" '.labels[] | select(.name == $lbl)' >/dev/null 2>&1; then
+              echo "Found failure label: $label"
+              HAS_FAILURE_LABEL=true
+              break
+            fi
+          done
+          
+          if [ "$HAS_FAILURE_LABEL" = "true" ]; then
+            echo "has_failure_label=true" >> $GITHUB_OUTPUT
+            echo "PR has a failure label - skipping workflow execution"
+          else
+            echo "has_failure_label=false" >> $GITHUB_OUTPUT
+            echo "No failure labels found - continuing workflow"
+          fi
+
       - name: Check out repository code
+        if: |
+          (github.event_name == 'pull_request_target') ||
+          (github.event_name == 'pull_request' && steps.check_failure_labels.outputs.has_failure_label != 'true')
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || '' }}
           fetch-depth: 0
 
       - name: Set up Python
+        if: |
+          (github.event_name == 'pull_request_target') ||
+          (github.event_name == 'pull_request' && steps.check_failure_labels.outputs.has_failure_label != 'true')
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
 
       - name: Install dependencies
+        if: |
+          (github.event_name == 'pull_request_target') ||
+          (github.event_name == 'pull_request' && steps.check_failure_labels.outputs.has_failure_label != 'true')
         run: |
           python -m pip install --upgrade pip setuptools
           python -m pip install ".[test]"
 
       - name: Get changed files
+        if: |
+          (github.event_name == 'pull_request_target') ||
+          (github.event_name == 'pull_request' && (steps.check_failure_labels.outputs.has_failure_label != 'true' || steps.check_failure_labels.outputs.has_failure_label == ''))
         id: changed_files
         run: |
           if [ "${{ github.event_name }}" == "pull_request_target" ] && [ "${{ github.event.pull_request.merged }}" == "true" ]; then
@@ -99,6 +140,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
 
       - name: Detect plugin changes
+        if: |
+          (github.event_name == 'pull_request_target') ||
+          (github.event_name == 'pull_request' && steps.check_failure_labels.outputs.has_failure_label != 'true')
         id: detect
         run: |
           CHANGED_FILES="${{ env.CHANGED_FILES }}"
