@@ -256,8 +256,15 @@ jobs:
           url_with_token = f'{base_url}?token={jenkins_trigger}'
           print(f"Jenkins URL (token masked): {base_url}?token=***MASKED***")
           
-          # Build payload (filter out empty values)
-          payload = {k: v for k, v in plugin_info.items() if plugin_info[k]}
+          # Build payload (filter out empty values and JSON-serialize nested structures)
+          payload = {}
+          for k, v in plugin_info.items():
+              if plugin_info[k]:  # Only include non-empty values
+                  # JSON-serialize nested dicts/lists (like metadata_and_layer_map)
+                  if isinstance(v, (dict, list)):
+                      payload[k] = json.dumps(v)
+                  else:
+                      payload[k] = v
           
           # Show payload structure (mask sensitive data)
           safe_payload = {}
@@ -270,6 +277,12 @@ jobs:
                   safe_payload[k] = v
           print(f"Payload keys: {list(payload.keys())}")
           print(f"Payload structure (sensitive data masked): {json.dumps(safe_payload, indent=2)}")
+          
+          # Verify credentials are set (without exposing values)
+          print(f"\nAuthentication check:")
+          print(f"  JENKINS_USER: {'SET' if jenkins_user else 'MISSING'} (length: {len(jenkins_user) if jenkins_user else 0})")
+          print(f"  JENKINS_TOKEN: {'SET' if jenkins_token else 'MISSING'} (length: {len(jenkins_token) if jenkins_token else 0})")
+          print(f"  JENKINS_TRIGGER: {'SET' if jenkins_trigger else 'MISSING'} (length: {len(jenkins_trigger) if jenkins_trigger else 0})")
           
           # Make request
           try:
@@ -320,6 +333,14 @@ jobs:
                       print(f"Job location: {response.headers['Location']}")
               elif response.status_code == 200:
                   print("⚠ Jenkins returned HTTP 200 (may indicate job was queued or already exists)")
+              elif response.status_code == 401:
+                  print("✗ Jenkins returned HTTP 401 Unauthorized")
+                  print("  This indicates an authentication failure.")
+                  print("  Possible causes:")
+                  print("    - JENKINS_USER or JENKINS_TOKEN are incorrect")
+                  print("    - Credentials don't have permission to trigger this job")
+                  print("    - Jenkins authentication method has changed")
+                  response.raise_for_status()
               else:
                   print(f"✗ Jenkins returned HTTP {response.status_code} (unexpected status)")
                   response.raise_for_status()
