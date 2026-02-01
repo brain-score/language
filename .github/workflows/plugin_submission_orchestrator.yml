@@ -534,9 +534,21 @@ jobs:
                   if [ -f "${dir}/metadata.yml" ]; then
                     git add "${dir}/metadata.yml"
                     echo "Staged ${dir}/metadata.yml"
+                    echo ""
+                    echo "Generated metadata for ${PLUGIN_NAME}:"
+                    echo "----------------------------------------"
+                    cat "${dir}/metadata.yml"
+                    echo "----------------------------------------"
+                    echo ""
                   elif [ -f "${dir}/metadata.yaml" ]; then
                     git add "${dir}/metadata.yaml"
                     echo "Staged ${dir}/metadata.yaml"
+                    echo ""
+                    echo "Generated metadata for ${PLUGIN_NAME}:"
+                    echo "----------------------------------------"
+                    cat "${dir}/metadata.yaml"
+                    echo "----------------------------------------"
+                    echo ""
                   fi
                   if [ "$PLUGIN_TYPE" == "models" ]; then
                     GENERATED_MODELS+=("${PLUGIN_NAME}")
