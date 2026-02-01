@@ -230,23 +230,117 @@ jobs:
           fi
           echo "Jenkins secrets configured (values masked)"
           
-          # Trigger Jenkins (suppress output to prevent exposure of sensitive data)
-          # Capture exit code separately
-          set +e
-          python3 -c 'from brainscore_core.submission.endpoints import call_jenkins; import os; call_jenkins(os.environ["PLUGIN_INFO"])' >/tmp/jenkins_output.log 2>&1
-          JENKINS_EXIT_CODE=$?
-          set -e
+          # Create a Python script to trigger Jenkins with debugging
+          python3 << 'PYTHON_SCRIPT'
+          import os
+          import json
+          import re
+          import requests
+          from requests.auth import HTTPBasicAuth
           
-          if [ $JENKINS_EXIT_CODE -ne 0 ]; then
-            echo "Jenkins scoring trigger failed (exit code: $JENKINS_EXIT_CODE)"
-            echo "Checking for error messages (sensitive data will be masked by GitHub Actions):"
-            # Show error output (GitHub Actions will mask secrets automatically)
-            # Filter out email patterns and token patterns, but keep PLUGIN_INFO for debugging
-            cat /tmp/jenkins_output.log | \
-              grep -v -E "@.*\.(com|org|edu|net)" | \
-              grep -v -i "token" | \
-              grep -v -i "secret" || \
-              cat /tmp/jenkins_output.log
-            exit 1
-          fi
-          echo "Jenkins scoring job triggered successfully"
+          jenkins_base = "http://www.brain-score-jenkins.com:8080"
+          jenkins_user = os.environ['JENKINS_USER']
+          jenkins_token = os.environ['JENKINS_TOKEN']
+          jenkins_trigger = os.environ['JENKINS_TRIGGER']
+          jenkins_job = "dev_score_plugins"
+          plugin_info_str = os.environ['PLUGIN_INFO']
+          
+          # Parse plugin_info
+          if isinstance(plugin_info_str, str):
+              plugin_info = json.loads(plugin_info_str)
+          else:
+              plugin_info = plugin_info_str
+          
+          # Build URL (show without token for debugging)
+          base_url = f'{jenkins_base}/job/{jenkins_job}/buildWithParameters'
+          url_with_token = f'{base_url}?token={jenkins_trigger}'
+          print(f"Jenkins URL (token masked): {base_url}?token=***MASKED***")
+          
+          # Build payload (filter out empty values)
+          payload = {k: v for k, v in plugin_info.items() if plugin_info[k]}
+          
+          # Show payload structure (mask sensitive data)
+          safe_payload = {}
+          for k, v in payload.items():
+              if k in ['email', 'BSC_DATABASESECRET']:
+                  safe_payload[k] = '***MASKED***'
+              elif isinstance(v, str) and len(v) > 200:
+                  safe_payload[k] = v[:200] + '... (truncated)'
+              else:
+                  safe_payload[k] = v
+          print(f"Payload keys: {list(payload.keys())}")
+          print(f"Payload structure (sensitive data masked): {json.dumps(safe_payload, indent=2)}")
+          
+          # Make request
+          try:
+              auth_basic = HTTPBasicAuth(username=jenkins_user, password=jenkins_token)
+              print(f"\nSending GET request to Jenkins...")
+              response = requests.get(url_with_token, params=payload, auth=auth_basic, timeout=30)
+              
+              # Show response details
+              print(f"Response status code: {response.status_code}")
+              print(f"Response headers (filtered):")
+              for key, value in response.headers.items():
+                  if key.lower() not in ['set-cookie', 'authorization']:
+                      print(f"  {key}: {value}")
+              
+              # Show response body (truncated, filtered for sensitive data)
+              response_text = response.text[:1000] if response.text else "(empty)"
+              
+              # Mask potential sensitive patterns in response
+              safe_response = response_text
+              
+              # Mask email addresses
+              safe_response = re.sub(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '***MASKED_EMAIL***', safe_response)
+              
+              # Mask tokens/API keys (long alphanumeric strings, typically 20+ chars)
+              safe_response = re.sub(r'\b[A-Za-z0-9]{20,}\b', lambda m: '***MASKED_TOKEN***' if not m.group().startswith('http') else m.group(), safe_response)
+              
+              # Mask URLs with tokens/credentials
+              safe_response = re.sub(r'https?://[^:]+:[^@\s]+@', 'https://***MASKED_CREDENTIALS***@', safe_response)
+              safe_response = re.sub(r'[?&](token|key|secret|password|auth)=[^&\s"\']+', r'\1=***MASKED***', safe_response, flags=re.IGNORECASE)
+              
+              # Mask common secret patterns
+              patterns_to_mask = [
+                  (r'["\']?token["\']?\s*[:=]\s*["\']?[^"\'\s]+', 'token=***MASKED***'),
+                  (r'["\']?api[_-]?key["\']?\s*[:=]\s*["\']?[^"\'\s]+', 'api_key=***MASKED***'),
+                  (r'["\']?secret["\']?\s*[:=]\s*["\']?[^"\'\s]+', 'secret=***MASKED***'),
+                  (r'["\']?password["\']?\s*[:=]\s*["\']?[^"\'\s]+', 'password=***MASKED***'),
+              ]
+              for pattern, replacement in patterns_to_mask:
+                  safe_response = re.sub(pattern, replacement, safe_response, flags=re.IGNORECASE)
+              
+              print(f"Response body (first 1000 chars, sensitive data masked): {safe_response}")
+              
+              # Check if successful
+              if response.status_code == 201:
+                  print("✓ Jenkins job triggered successfully (HTTP 201 Created)")
+                  # Try to extract queue URL if present
+                  if 'Location' in response.headers:
+                      print(f"Job location: {response.headers['Location']}")
+              elif response.status_code == 200:
+                  print("⚠ Jenkins returned HTTP 200 (may indicate job was queued or already exists)")
+              else:
+                  print(f"✗ Jenkins returned HTTP {response.status_code} (unexpected status)")
+                  response.raise_for_status()
+                  
+          except requests.exceptions.HTTPError as e:
+              print(f"✗ HTTP Error: {e}")
+              if hasattr(e, 'response') and e.response is not None:
+                  print(f"  Response status: {e.response.status_code}")
+                  # Apply same filtering to error response
+                  error_text = e.response.text[:1000] if e.response.text else "(empty)"
+                  safe_error = error_text
+                  safe_error = re.sub(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '***MASKED_EMAIL***', safe_error)
+                  safe_error = re.sub(r'\b[A-Za-z0-9]{20,}\b', lambda m: '***MASKED_TOKEN***' if not m.group().startswith('http') else m.group(), safe_error)
+                  safe_error = re.sub(r'https?://[^:]+:[^@\s]+@', 'https://***MASKED_CREDENTIALS***@', safe_error)
+                  safe_error = re.sub(r'[?&](token|key|secret|password|auth)=[^&\s"\']+', r'\1=***MASKED***', safe_error, flags=re.IGNORECASE)
+                  print(f"  Response body (first 1000 chars, sensitive data masked): {safe_error}")
+              raise
+          except requests.exceptions.RequestException as e:
+              print(f"✗ Request Error: {e}")
+              raise
+          except Exception as e:
+              print(f"✗ Unexpected Error: {e}")
+              raise
+          PYTHON_SCRIPT
