@@ -720,10 +720,10 @@ jobs:
           echo "Added 'submission_preparation_failure' label due to job failure"
 
   # ============================================================================
-  # JOB 6: Auto-merge (Conditional - only if validated and approved)
+  # JOB 5: Auto-merge (Conditional - only if validated and approved)
   # ============================================================================
   automerge:
-    name: "6. Auto-merge"
+    name: "5. Auto-merge"
     needs: [detect_changes, validate_pr, generate_and_commit_mutations]
     if: |
       always() &&
@@ -845,10 +845,10 @@ jobs:
           auto-delete: "true"
 
   # ============================================================================
-  # JOB 7: Post-Merge Kickoff (Runs after PR is merged)
+  # JOB 6: Post-Merge Kickoff (Runs after PR is merged)
   # ============================================================================
   post_merge_scoring:
-    name: "7. Post-Merge Kickoff"
+    name: "6. Post-Merge Kickoff"
     needs: detect_changes
     if: |
       github.event_name == 'pull_request_target' &&
@@ -1042,10 +1042,10 @@ jobs:
           echo "Added 'metadata_only_failure' label due to job failure"
 
   # ============================================================================
-  # JOB 8: Failure Notification (Runs if any job fails)
+  # JOB 7: Failure Notification (Runs if any job fails)
   # ============================================================================
   notify_on_failure:
-    name: "8. Notify on Failure"
+    name: "7. Notify on Failure"
     needs: [detect_changes, validate_pr, handle_metadata_only, generate_and_commit_mutations, automerge, post_merge_scoring]
     if: |
       always() && (
