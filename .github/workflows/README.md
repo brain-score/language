@@ -19,16 +19,12 @@ The workflow system uses a single unified workflow that runs all steps sequentia
 This workflow detects changes, validates PRs, commits mutations, and handles downstream steps:
 
 1. **Detect Changes** - Identifies what plugins changed
-2. **Validate PR** - Checks if PR tests pass (minimal validation to proceed)
-3. **Handle Metadata-Only PR** - Adds label for metadata-only PRs (conditional)
-4. **Generate Mutations and Commit** - Single job with multiple steps:
-   - Step 4a: Generate Metadata (stages files)
-   - Step 4b: Layer Mapping (stages files, vision domain only)
-   - Step 4c: Commit and Push (commits all staged files, pushes)
-5. **Update Existing Metadata** - Triggers Jenkins for metadata-only PRs (conditional)
-6. **Auto-merge** - Automatically merges approved PRs (conditional)
-7. **Post-Merge Scoring** - Triggers Jenkins scoring after merge (conditional)
-8. **Notify on Failure** - Sends failure notifications (always runs on failure)
+2. **Validate PR** - Checks if PR tests pass (only for plugin PRs, skipped for metadata-only)
+3. **Handle Metadata-Only PR** - Adds `only_update_metadata` label and exits (conditional, triggers new run)
+4. **Generate Mutations and Commit** - Generates metadata/layer mapping and commits (conditional)
+5. **Auto-merge** - Automatically merges approved PRs (conditional)
+6. **Post-Merge Kickoff** - Triggers Jenkins scoring (plugin PRs) or update metadata (metadata-only PRs)
+7. **Notify on Failure** - Sends failure notifications (always runs on failure)
 
 ### Reusable Workflows
 
@@ -50,40 +46,37 @@ PR Created/Updated
     ↓
 [1] Detect Changes
     ├─→ Has plugins? → Continue
+    ├─→ Metadata-only? → Set metadata_only flag
     └─→ No plugins? → Skip downstream jobs
     ↓
-[2] Validate PR (minimal validation)
-    ├─→ Tests pass? → Continue
-    └─→ Tests fail? → Skip mutation jobs
+[2] Validate PR (plugin PRs only, skipped for metadata-only)
+    ├─→ Tests pass? → Add submission_prepared (if metadata exists) or continue
+    ├─→ Tests pass (second time)? → Add submission_validated label
+    └─→ Tests fail? → Add submission_validation_failure label
     ↓
 [3] Handle Metadata-Only PR (if metadata-only)
-    ├─→ Add "only_update_metadata" and "pr_is_ready" labels
-    └─→ Continue to downstream jobs
+    ├─→ Add "only_update_metadata" label
+    └─→ Exit (triggers new orchestrator run)
     ↓
 [4] Generate Mutations and Commit (if needed)
-    ├─→ Step 4a: Generate Metadata (if needed)
-    │   └─→ Generate metadata.yml, stage files
-    ├─→ Step 4b: Layer Mapping (if needed, vision only)
-    │   └─→ Generate layer mapping, stage files
-    └─→ Step 4c: Commit and Push
-        ├─→ Commit all staged files (metadata + layer mapping)
+    ├─→ Generate Metadata (if needed)
+    ├─→ Layer Mapping (if needed, vision only)
+    └─→ Commit and Push
+        ├─→ Commit all staged files
         ├─→ Push to PR branch
-        └─→ Add "pr_is_ready" label to PR
+        └─→ Add "submission_prepared" label
     ↓
-[5] Update Existing Metadata (if metadata-only)
-    ├─→ Has only_update_metadata label? → Trigger Jenkins
-    └─→ Otherwise → Skip
-    ↓
-[6] Auto-merge (if validated)
+[5] Auto-merge (if validated)
+    ├─→ For metadata-only: Check tests directly, merge if pass
+    ├─→ For plugin PRs: Check submission_validated label, merge if present
     ├─→ Approve PR
     └─→ Merge to main
     ↓
-[7] Post-Merge Scoring (after merge)
-    ├─→ Extract user email
-    ├─→ Build plugin info
-    └─→ Trigger Jenkins scoring
+[6] Post-Merge Kickoff (after merge)
+    ├─→ For plugin PRs: Extract email, build plugin info, trigger Jenkins scoring
+    └─→ For metadata-only: Trigger update_existing_metadata Jenkins job
     ↓
-[8] Notify on Failure (if any step fails)
+[7] Notify on Failure (if any step fails)
     └─→ Send email notification
 ```
 
@@ -173,36 +166,74 @@ gh workflow run metadata_handler.yml \
 
 On any PR, you'll see a single unified workflow run:
 
-**Orchestrator Workflow (with metadata generation):**
+**Orchestrator Workflow (plugin PR with metadata generation):**
+
+**Run 1 (PR opened, metadata needs generation):**
 ```
 Plugin Submission Orchestrator
 ├─ 1. Detect Changes (success)
+│   └─→ Detects new plugin, needs_metadata_generation=true
 ├─ 2. Validate PR (success)
+│   └─→ Tests pass, but no submission_prepared yet (metadata doesn't exist)
 ├─ 3. Handle Metadata-Only PR (skipped)
 ├─ 4. Generate Mutations and Commit (success)
-│   ├─→ Step 4a: Generate Metadata (stages files)
-│   ├─→ Step 4b: Layer Mapping (skipped - language domain)
-│   └─→ Step 4c: Commit and Push (commits staged files, pushes)
-├─ 5. Update Existing Metadata (skipped)
-├─ 6. Auto-merge (success)
-├─ 7. Post-Merge Scoring (success)
-└─ 8. Notify on Failure (skipped - no failures)
+│   ├─→ Generate Metadata (stages files)
+│   └─→ Commit and Push (adds submission_prepared label)
+├─ 5. Auto-merge (skipped)
+│   └─→ submission_validated label not present yet
+└─ (workflow ends, commit triggers new run)
+
+Run 2 (triggered by commit sync, tests rerun):
+Plugin Submission Orchestrator
+├─ 1. Detect Changes (success)
+├─ 2. Validate PR (success)
+│   └─→ Tests pass again, adds submission_validated label
+├─ 3. Handle Metadata-Only PR (skipped)
+├─ 4. Generate Mutations and Commit (skipped - metadata already exists)
+├─ 5. Auto-merge (success)
+│   └─→ Sees submission_validated label, merges
+├─ 6. Post-Merge Kickoff (success)
+│   └─→ Triggers Jenkins scoring
+└─ 7. Notify on Failure (skipped - no failures)
 ```
 
-**Orchestrator Workflow (with layer mapping for vision):**
+**Orchestrator Workflow (plugin PR with metadata already present):**
 ```
 Plugin Submission Orchestrator
 ├─ 1. Detect Changes (success)
+│   └─→ Detects plugin, metadata already exists
 ├─ 2. Validate PR (success)
+│   └─→ Tests pass, adds submission_prepared label (metadata exists)
+│   └─→ Tests pass again, adds submission_validated label
 ├─ 3. Handle Metadata-Only PR (skipped)
-├─ 4. Generate Mutations and Commit (success)
-│   ├─→ Step 4a: Generate Metadata (stages files)
-│   ├─→ Step 4b: Layer Mapping (stages files)
-│   └─→ Step 4c: Commit and Push (commits all staged files, pushes)
-├─ 5. Update Existing Metadata (skipped)
-├─ 6. Auto-merge (success)
-├─ 7. Post-Merge Scoring (success)
-└─ 8. Notify on Failure (skipped - no failures)
+├─ 4. Generate Mutations and Commit (skipped - no mutations needed)
+├─ 5. Auto-merge (success)
+│   └─→ Sees submission_validated label, merges
+├─ 6. Post-Merge Kickoff (success)
+│   └─→ Triggers Jenkins scoring
+└─ 7. Notify on Failure (skipped - no failures)
+```
+
+**Orchestrator Workflow (metadata-only PR):**
+```
+Run 1:
+Plugin Submission Orchestrator
+├─ 1. Detect Changes (success, metadata_only=true)
+├─ 2. Validate PR (skipped)
+├─ 3. Handle Metadata-Only PR (success)
+│   └─→ Adds only_update_metadata label, exits
+└─ (workflow ends, label triggers new run)
+
+Run 2:
+Plugin Submission Orchestrator
+├─ 1. Detect Changes (success, metadata_only=true)
+├─ 2. Validate PR (skipped)
+├─ 3. Handle Metadata-Only PR (success, label exists, exits)
+├─ 5. Auto-merge (success)
+│   └─→ Checks tests directly, merges if pass
+├─ 6. Post-Merge Kickoff (success)
+│   └─→ Triggers update_existing_metadata Jenkins job
+└─ 7. Notify on Failure (skipped - no failures)
 ```
 
 ### Debugging

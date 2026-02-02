@@ -46,7 +46,7 @@ def get_statuses_result(context: str, statuses_json: dict) -> Union[str, None]:
     return last_status['result']
 
 
-def validate_pr(pr_number: int, pr_head: str, token: str, 
+def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str, 
                 poll_interval: int = 30, max_wait_time: int = 7200) -> dict:
     """
     Validate PR for automerge eligibility
@@ -57,6 +57,7 @@ def validate_pr(pr_number: int, pr_head: str, token: str,
     Args:
         pr_number: PR number
         pr_head: PR head commit SHA
+        is_automerge_web: Whether this is an automerge-web PR
         token: GitHub token
         poll_interval: Seconds to wait between polls (default: 30)
         max_wait_time: Maximum seconds to wait for tests (default: 7200 = 2 hours)
@@ -255,6 +256,7 @@ def main():
     validate_parser = subparsers.add_parser('validate_pr', help='Validate PR for automerge')
     validate_parser.add_argument('--pr-number', type=int, required=True)
     validate_parser.add_argument('--pr-head', type=str, required=True)
+    validate_parser.add_argument('--is-automerge-web', type=str, default='false')
     validate_parser.add_argument('--token', type=str, default=os.getenv('GITHUB_TOKEN'))
     
     # Trigger update existing metadata command
@@ -335,7 +337,8 @@ def main():
         print(email)
         
     elif args.command == 'validate_pr':
-        result = validate_pr(args.pr_number, args.pr_head, args.token)
+        is_automerge_web = args.is_automerge_web.lower() == 'true'
+        result = validate_pr(args.pr_number, args.pr_head, is_automerge_web, args.token)
         print(json.dumps(result))
         
     elif args.command == 'trigger_update_existing_metadata':
