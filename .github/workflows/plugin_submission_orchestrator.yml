@@ -403,22 +403,6 @@ jobs:
             echo "has_submission_prepared=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Add submission_validated label if tests pass and submission_prepared exists
-        if: |
-          steps.validate.outputs.all_tests_pass == 'true' &&
-          steps.check_submission_prepared.outputs.has_submission_prepared == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
-        run: |
-          PR_NUM="${{ steps.get_pr_info.outputs.pr_number }}"
-          LABELS_JSON=$(gh pr view ${PR_NUM} --json labels)
-          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "submission_validated")' >/dev/null; then
-            echo "submission_validated label already exists on PR, skipping"
-          else
-            gh pr edit ${PR_NUM} --add-label "submission_validated"
-            echo "Added 'submission_validated' label to PR (tests passed and submission_prepared exists)"
-          fi
-
       - name: Add submission_validation_failure label if tests fail and submission_prepared exists
         if: |
           steps.validate.outputs.all_tests_pass == 'false' &&
@@ -720,10 +704,10 @@ jobs:
           echo "Added 'submission_preparation_failure' label due to job failure"
 
   # ============================================================================
-  # JOB 6: Auto-merge (Conditional - only if validated and approved)
+  # JOB 5: Auto-merge (Conditional - only if validated and approved)
   # ============================================================================
   automerge:
-    name: "6. Auto-merge"
+    name: "5. Auto-merge"
     needs: [detect_changes, validate_pr, generate_and_commit_mutations]
     if: |
       always() &&
@@ -796,27 +780,28 @@ jobs:
           echo "Validation result: ${VALIDATION_RESULT}"
           echo "All tests pass: ${ALL_TESTS_PASS}"
 
-      - name: Check for submission_validated label (plugin PRs only)
+      - name: Check for submission_prepared label (plugin PRs only)
         if: needs.detect_changes.outputs.metadata_only != 'true'
-        id: check_submission_validated
+        id: check_submission_prepared_automerge
         env:
           GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
         run: |
           PR_NUM="${{ steps.get_pr_info.outputs.pr_number }}"
           LABELS_JSON=$(gh pr view ${PR_NUM} --json labels)
-          echo "PR labels: $LABELS_JSON"
-          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "submission_validated")' >/dev/null; then
-            echo "has_submission_validated=true" >> $GITHUB_OUTPUT
-            echo "Found submission_validated label"
+          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "submission_prepared")' >/dev/null; then
+            echo "has_submission_prepared=true" >> $GITHUB_OUTPUT
+            echo "Found submission_prepared label"
           else
-            echo "has_submission_validated=false" >> $GITHUB_OUTPUT
-            echo "submission_validated label not found"
+            echo "has_submission_prepared=false" >> $GITHUB_OUTPUT
+            echo "submission_prepared label not found"
           fi
 
       - name: Auto Approve
         if: |
           (needs.detect_changes.outputs.metadata_only == 'true' && steps.check_metadata_only_tests.outputs.all_tests_pass == 'true') ||
-          (needs.detect_changes.outputs.metadata_only != 'true' && steps.check_submission_validated.outputs.has_submission_validated == 'true')
+          (needs.detect_changes.outputs.metadata_only != 'true' && 
+           steps.check_submission_prepared_automerge.outputs.has_submission_prepared == 'true' &&
+           needs.validate_pr.outputs.all_tests_pass == 'true')
         uses: hmarr/auto-approve-action@v4
         with:
           pull-request-number: ${{ steps.get_pr_info.outputs.pr_number }}
@@ -836,19 +821,20 @@ jobs:
       - name: Auto Merge (plugin PRs)
         if: |
           needs.detect_changes.outputs.metadata_only != 'true' &&
-          steps.check_submission_validated.outputs.has_submission_validated == 'true'
+          steps.check_submission_prepared_automerge.outputs.has_submission_prepared == 'true' &&
+          needs.validate_pr.outputs.all_tests_pass == 'true'
         uses: plm9606/automerge_actions@1.2.2
         with:
           github-token: ${{ secrets.GH_MFERG_PAT }}
-          label-name: "submission_validated"
+          label-name: "submission_prepared"
           merge-method: "squash"
           auto-delete: "true"
 
   # ============================================================================
-  # JOB 7: Post-Merge Kickoff (Runs after PR is merged)
+  # JOB 6: Post-Merge Kickoff (Runs after PR is merged)
   # ============================================================================
   post_merge_scoring:
-    name: "7. Post-Merge Kickoff"
+    name: "6. Post-Merge Kickoff"
     needs: detect_changes
     if: |
       github.event_name == 'pull_request_target' &&
@@ -1096,10 +1082,10 @@ jobs:
           echo "Added 'metadata_only_failure' label due to job failure"
 
   # ============================================================================
-  # JOB 8: Failure Notification (Runs if any job fails)
+  # JOB 7: Failure Notification (Runs if any job fails)
   # ============================================================================
   notify_on_failure:
-    name: "8. Notify on Failure"
+    name: "7. Notify on Failure"
     needs: [detect_changes, validate_pr, handle_metadata_only, generate_and_commit_mutations, automerge, post_merge_scoring]
     if: false  # Temporarily disabled
     runs-on: ubuntu-latest
