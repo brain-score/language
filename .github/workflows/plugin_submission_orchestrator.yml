@@ -50,56 +50,18 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || '' }}
           fetch-depth: 0
 
-      - name: Check for failure labels
-        if: github.event_name == 'pull_request'
-        id: check_failure_labels
-        env:
-          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
-        run: |
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          LABELS_JSON=$(gh pr view ${PR_NUMBER} --json labels)
-          
-          # Check for any failure labels
-          FAILURE_LABELS=("submission_preparation_failure" "submission_validation_failure" "failure-notified" "metadata_only_failure")
-          HAS_FAILURE_LABEL=false
-          
-          for label in "${FAILURE_LABELS[@]}"; do
-            if echo "$LABELS_JSON" | jq -e --arg lbl "$label" '.labels[] | select(.name == $lbl)' >/dev/null 2>&1; then
-              echo "Found failure label: $label"
-              HAS_FAILURE_LABEL=true
-              break
-            fi
-          done
-          
-          if [ "$HAS_FAILURE_LABEL" = "true" ]; then
-            echo "has_failure_label=true" >> $GITHUB_OUTPUT
-            echo "PR has a failure label - skipping workflow execution"
-          else
-            echo "has_failure_label=false" >> $GITHUB_OUTPUT
-            echo "No failure labels found - continuing workflow"
-          fi
-
       - name: Set up Python
-        if: |
-          (github.event_name == 'pull_request_target') ||
-          (github.event_name == 'pull_request' && steps.check_failure_labels.outputs.has_failure_label != 'true')
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
 
       - name: Install dependencies
-        if: |
-          (github.event_name == 'pull_request_target') ||
-          (github.event_name == 'pull_request' && steps.check_failure_labels.outputs.has_failure_label != 'true')
         run: |
           python -m pip install --upgrade pip setuptools
           python -m pip install ".[test]"
 
       - name: Get changed files
-        if: |
-          (github.event_name == 'pull_request_target') ||
-          (github.event_name == 'pull_request' && steps.check_failure_labels.outputs.has_failure_label != 'true')
         id: changed_files
         run: |
           if [ "${{ github.event_name }}" == "pull_request_target" ] && [ "${{ github.event.pull_request.merged }}" == "true" ]; then
@@ -137,9 +99,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
 
       - name: Detect plugin changes
-        if: |
-          (github.event_name == 'pull_request_target') ||
-          (github.event_name == 'pull_request' && steps.check_failure_labels.outputs.has_failure_label != 'true')
         id: detect
         run: |
           CHANGED_FILES="${{ env.CHANGED_FILES }}"
@@ -358,21 +317,8 @@ jobs:
             exit 0
           fi
           
-          # Check if any failure labels exist
-          FAILURE_LABELS=("submission_preparation_failure" "submission_validation_failure" "failure-notified")
-          HAS_FAILURE=false
-          for label in "${FAILURE_LABELS[@]}"; do
-            if echo "$LABELS_JSON" | jq -e --arg lbl "$label" '.labels[] | select(.name == $lbl)' >/dev/null; then
-              echo "Found failure label: $label - not adding submission_prepared"
-              HAS_FAILURE=true
-              break
-            fi
-          done
-          
-          if [ "$HAS_FAILURE" = "false" ]; then
-            gh pr edit ${PR_NUM} --add-label "submission_prepared"
-            echo "Added 'submission_prepared' label to PR (metadata already exists)"
-          fi
+          gh pr edit ${PR_NUM} --add-label "submission_prepared"
+          echo "Added 'submission_prepared' label to PR (metadata already exists)"
 
       - name: Validate PR
         id: validate
@@ -402,16 +348,6 @@ jobs:
           else
             echo "has_submission_prepared=false" >> $GITHUB_OUTPUT
           fi
-
-      - name: Add submission_validation_failure label if tests fail and submission_prepared exists
-        if: |
-          steps.validate.outputs.all_tests_pass == 'false' &&
-          steps.check_submission_prepared.outputs.has_submission_prepared == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
-        run: |
-          gh pr edit ${{ steps.get_pr_info.outputs.pr_number }} --add-label "submission_validation_failure" || echo "Failed to add submission_validation_failure label (may already exist on PR)"
-          echo "Added 'submission_validation_failure' label to PR"
 
   # ============================================================================
   # JOB 3: Handle Metadata-Only PRs (Add label and terminate)
@@ -448,15 +384,6 @@ jobs:
           echo "Added 'only_update_metadata' label to PR (metadata-only PR - skipping submission_prepared/validated labels)"
           echo "Exiting this orchestrator run - a new run will be triggered by the label addition"
           exit 0
-      
-      - name: Add metadata_only_failure label on job failure
-        if: failure()
-        env:
-          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
-        run: |
-          PR_NUM="${{ github.event.pull_request.number }}"
-          gh pr edit ${PR_NUM} --add-label "metadata_only_failure" || echo "Failed to add metadata_only_failure label"
-          echo "Added 'metadata_only_failure' label due to job failure"
 
   # ============================================================================
   # JOB 4: Generate Mutations and Commit (Metadata Generation + Layer Mapping)
@@ -644,64 +571,20 @@ jobs:
             # Push and capture exit code without exposing token in error output
             if git push origin ${{ github.event.pull_request.head.ref }} >/dev/null 2>&1; then
               echo "Successfully pushed mutations to PR branch"
-              
-              # Check if any failure labels exist before adding submission_prepared
+              echo "Adding submission_prepared label to PR"
               PR_NUM="${{ github.event.pull_request.number }}"
-              LABELS_JSON=$(gh pr view ${PR_NUM} --json labels)
-              FAILURE_LABELS=("submission_preparation_failure" "submission_validation_failure" "failure-notified")
-              HAS_FAILURE=false
-              for label in "${FAILURE_LABELS[@]}"; do
-                if echo "$LABELS_JSON" | jq -e --arg lbl "$label" '.labels[] | select(.name == $lbl)' >/dev/null; then
-                  echo "Found failure label: $label - not adding submission_prepared"
-                  HAS_FAILURE=true
-                  break
-                fi
-              done
-              
-              if [ "$HAS_FAILURE" = "false" ]; then
-                echo "Adding submission_prepared label to PR"
-                gh pr edit ${PR_NUM} --add-label "submission_prepared" || echo "Failed to add label (may already exist on PR)"
-              fi
+              gh pr edit ${PR_NUM} --add-label "submission_prepared" || echo "Failed to add label (may already exist on PR)"
             else
               echo "Push failed - this may prevent workflow rerun. Check if PAT is configured correctly."
-              # Add submission_preparation_failure label on failure
-              gh pr edit ${{ github.event.pull_request.number }} --add-label "submission_preparation_failure" || echo "Failed to add submission_preparation_failure label"
               exit 1
             fi
           else
             echo "No staged changes to commit"
             # If no changes were staged, check if we should add submission_prepared label (metadata might already exist)
             PR_NUM="${{ github.event.pull_request.number }}"
-            LABELS_JSON=$(gh pr view ${PR_NUM} --json labels)
-            FAILURE_LABELS=("submission_preparation_failure" "submission_validation_failure" "failure-notified")
-            HAS_FAILURE=false
-            for label in "${FAILURE_LABELS[@]}"; do
-              if echo "$LABELS_JSON" | jq -e --arg lbl "$label" '.labels[] | select(.name == $lbl)' >/dev/null; then
-                echo "Found failure label: $label - not adding submission_prepared"
-                HAS_FAILURE=true
-                break
-              fi
-            done
-            
-            if [ "$HAS_FAILURE" = "false" ]; then
-              echo "No changes to commit, but adding submission_prepared label"
-              gh pr edit ${PR_NUM} --add-label "submission_prepared" || echo "Failed to add label (may already exist on PR)"
-            else
-              echo "Skipped adding submission_prepared label due to failure label"
-            fi
+            echo "No changes to commit, but adding submission_prepared label"
+            gh pr edit ${PR_NUM} --add-label "submission_prepared" || echo "Failed to add label (may already exist on PR)"
           fi
-      
-      - name: Add submission_preparation_failure label on job failure
-        if: failure()
-        env:
-          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
-        run: |
-          PR_NUM="${{ github.event.pull_request.number }}"
-          # Remove submission_prepared if it exists (shouldn't be there if job failed)
-          gh pr edit ${PR_NUM} --remove-label "submission_prepared" 2>/dev/null || true
-          # Add submission_preparation_failure label
-          gh pr edit ${PR_NUM} --add-label "submission_preparation_failure" || echo "Failed to add submission_preparation_failure label"
-          echo "Added 'submission_preparation_failure' label due to job failure"
 
   # ============================================================================
   # JOB 5: Auto-merge (Conditional - only if validated and approved)
@@ -1071,15 +954,6 @@ jobs:
             --domain "${{ env.DOMAIN }}" \
             --metadata-and-layer-map-b64 "$METADATA_B64"
           echo "Jenkins update_existing_metadata job triggered successfully"
-
-      - name: Add metadata_only_failure label on job failure
-        if: failure() && needs.detect_changes.outputs.metadata_only == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
-        run: |
-          PR_NUM="${{ github.event.pull_request.number }}"
-          gh pr edit ${PR_NUM} --add-label "metadata_only_failure" || echo "Failed to add metadata_only_failure label"
-          echo "Added 'metadata_only_failure' label due to job failure"
 
   # ============================================================================
   # JOB 7: Failure Notification (Runs if any job fails)

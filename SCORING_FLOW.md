@@ -21,15 +21,14 @@ PR Created/Updated
     ├─→ Detect Changes
     ├─→ Validate PR (minimal validation)
     ├─→ Handle Metadata-Only PR (if metadata-only changes)
-    │   └─→ Add "only_update_metadata" and "pr_is_ready" labels
+    │   └─→ Add "only_update_metadata" label
     ├─→ Generate Mutations and Commit (if new plugins need metadata or mapping)
     │   ├─→ Step 4a: Generate Metadata (stages files)
     │   ├─→ Step 4b: Layer Mapping (stages files, vision only)
     │   └─→ Step 4c: Commit and Push
     │       ├─→ Commit all staged files
     │       ├─→ Push to PR branch
-    │       └─→ Add "pr_is_ready" label to PR
-    ├─→ Update Existing Metadata (if metadata-only)
+    │       └─→ Add "submission_prepared" label to PR
     ├─→ Auto-merge (if approved)
     └─→ Post-Merge Scoring (after merge)
         └─→ Jenkins Scoring Job
@@ -184,7 +183,7 @@ PR Created/Updated
 
 **When:** Only runs if:
 - For metadata-only PRs: `metadata_only == true` and tests pass
-- For plugin PRs: `submission_validated` label exists and tests pass
+- For plugin PRs: `submission_prepared` label exists and tests pass
 
 **Purpose:** Automatically merge approved PRs
 
@@ -193,7 +192,7 @@ PR Created/Updated
    - Checks test status directly using `validate_pr`
    - If tests pass → auto-approves → auto-merges
 2. For plugin PRs:
-   - Checks for `submission_validated` label
+   - Checks for `submission_prepared` label
    - If label exists and tests pass → auto-approves → auto-merges
 3. Uses squash merge method
 4. Deletes branch after merge
@@ -290,7 +289,6 @@ The Jenkins job receives the plugin information and:
 1. Determines which job failed
 2. Extracts user email (same process as post-merge scoring)
 3. Sends failure notification email via `actions_helpers.py send_failure_email`
-4. Adds `failure-notified` label to PR to prevent duplicate notifications
 
 **Email Content:**
 - Subject: "Brain-Score Language Submission Failed"
@@ -366,19 +364,23 @@ brainscore_language/submission/
    - **Step 4a:** Generates metadata.yml for the new model (stages file)
    - **Step 4c:** Commits staged metadata file, pushes to PR branch
    - Adds `submission_prepared` label to PR
-5. **Auto-merge** skipped (no `submission_validated` label yet)
+5. **Auto-merge** skipped (tests need to pass again after commit)
 6. Workflow ends (commit triggers new run via synchronize event)
 
 **Run 2 (triggered by commit sync, tests rerun):**
 1. **Detect Changes** runs again
 2. **Validate PR** runs:
    - Tests pass again (after metadata commit)
-   - Adds `submission_validated` label to PR
+   - `submission_prepared` label exists
 3. **Generate Mutations and Commit** skipped (metadata already exists)
 4. **Auto-merge** runs:
-   - Sees `submission_validated` label
+   - Sees `submission_prepared` label and tests pass
    - Auto-approves and merges PR
-5. **Post-Merge Kickoff** runs:
+5. Workflow ends (merge triggers new run)
+
+**Run 3 (triggered by merge):**
+1. **Detect Changes** runs
+2. **Post-Merge Kickoff** runs:
    - Triggers Jenkins scoring
    - New model scored on all public benchmarks
    - Results stored in database
@@ -386,18 +388,23 @@ brainscore_language/submission/
 ### Scenario 1b: New Model Submission (With Metadata)
 
 **Orchestrator Workflow:**
+
+**Run 1:**
 1. User creates PR with new model in `brainscore_language/models/newmodel/`
    - Model code AND `metadata.yml` file are both provided
 2. **Detect Changes** detects new model, metadata already exists
 3. **Validate PR** runs:
    - Tests pass
    - Adds `submission_prepared` label (metadata exists)
-   - Tests pass again, adds `submission_validated` label
 4. **Generate Mutations and Commit** skipped (no mutations needed)
 5. **Auto-merge** runs:
-   - Sees `submission_validated` label
+   - Sees `submission_prepared` label and tests pass
    - Auto-approves and merges PR
-6. **Post-Merge Kickoff** runs:
+6. Workflow ends (merge triggers new run)
+
+**Run 2 (triggered by merge):**
+1. **Detect Changes** runs
+2. **Post-Merge Kickoff** runs:
    - Triggers Jenkins scoring
    - New model scored on all public benchmarks
    - Results stored in database
@@ -417,19 +424,23 @@ brainscore_language/submission/
    - **Step 4a:** Generates metadata.yml if missing (stages file)
    - **Step 4c:** Commits staged metadata file, pushes to PR branch
    - Adds `submission_prepared` label to PR
-5. **Auto-merge** skipped (no `submission_validated` label yet)
+5. **Auto-merge** skipped (tests need to pass again after commit)
 6. Workflow ends (commit triggers new run via synchronize event)
 
 **Run 2 (triggered by commit sync, tests rerun):**
 1. **Detect Changes** runs again
 2. **Validate PR** runs:
    - Tests pass again (after metadata commit)
-   - Adds `submission_validated` label to PR
+   - `submission_prepared` label exists
 3. **Generate Mutations and Commit** skipped (metadata already exists)
 4. **Auto-merge** runs:
-   - Sees `submission_validated` label
+   - Sees `submission_prepared` label and tests pass
    - Auto-approves and merges PR
-5. **Post-Merge Kickoff** runs:
+5. Workflow ends (merge triggers new run)
+
+**Run 3 (triggered by merge):**
+1. **Detect Changes** runs
+2. **Post-Merge Kickoff** runs:
    - Triggers Jenkins scoring
    - All public models scored on new benchmark
    - Results stored in database
@@ -490,14 +501,8 @@ These must pass before auto-merge is allowed.
 The workflow uses labels to control behavior:
 
 - **`automerge`** - Standard GitHub PR auto-merge
-- **`automerge-web`** - Web submission auto-merge
-- **`submission_prepared`** - Added after metadata is generated/committed (indicates ready for validation)
-- **`submission_validated`** - Added after tests pass second time (indicates ready for automerge)
+- **`submission_prepared`** - Added after metadata is generated/committed (indicates ready for automerge)
 - **`only_update_metadata`** - Added for metadata-only PRs (indicates metadata update needed)
-- **`submission_preparation_failure`** - Added when metadata generation/commit fails
-- **`submission_validation_failure`** - Added when validation fails
-- **`metadata_only_failure`** - Added when metadata-only PR processing fails
-- **`failure-notified`** - User has been notified of failure (prevents duplicate emails)
 
 ## Secrets Required
 
@@ -540,18 +545,23 @@ Plugin Submission Orchestrator
 │   ├─→ Generate Metadata (stages files)
 │   └─→ Commit and Push (adds submission_prepared label)
 ├─ 5. Auto-merge (skipped)
-│   └─→ submission_validated label not present yet
+│   └─→ Tests need to pass again after commit
 └─ (workflow ends, commit triggers new run)
 
 Run 2 (triggered by commit sync, tests rerun):
 Plugin Submission Orchestrator
 ├─ 1. Detect Changes (success)
 ├─ 2. Validate PR (success)
-│   └─→ Tests pass again, adds submission_validated label
+│   └─→ Tests pass, submission_prepared label exists
 ├─ 3. Handle Metadata-Only PR (skipped)
 ├─ 4. Generate Mutations and Commit (skipped - metadata already exists)
 ├─ 5. Auto-merge (success)
-│   └─→ Sees submission_validated label, merges
+│   └─→ Sees submission_prepared label and tests pass, merges
+└─ (workflow ends, merge triggers new run)
+
+Run 3 (triggered by merge):
+Plugin Submission Orchestrator
+├─ 1. Detect Changes (success)
 ├─ 6. Post-Merge Kickoff (success)
 │   └─→ Triggers Jenkins scoring
 └─ 7. Notify on Failure (skipped - no failures)
@@ -559,16 +569,21 @@ Plugin Submission Orchestrator
 
 **Orchestrator Workflow (plugin PR with metadata already present):**
 ```
+Run 1:
 Plugin Submission Orchestrator
 ├─ 1. Detect Changes (success)
 │   └─→ Detects plugin, metadata already exists
 ├─ 2. Validate PR (success)
 │   └─→ Tests pass, adds submission_prepared label (metadata exists)
-│   └─→ Tests pass again, adds submission_validated label
 ├─ 3. Handle Metadata-Only PR (skipped)
 ├─ 4. Generate Mutations and Commit (skipped - no mutations needed)
 ├─ 5. Auto-merge (success)
-│   └─→ Sees submission_validated label, merges
+│   └─→ Sees submission_prepared label and tests pass, merges
+└─ (workflow ends, merge triggers new run)
+
+Run 2 (triggered by merge):
+Plugin Submission Orchestrator
+├─ 1. Detect Changes (success)
 ├─ 6. Post-Merge Kickoff (success)
 │   └─→ Triggers Jenkins scoring
 └─ 7. Notify on Failure (skipped - no failures)
@@ -651,8 +666,7 @@ Scoring results are stored in the Brain-Score database and can be viewed:
 **Check:**
 1. Is email properly extracted? (check logs)
 2. Are Gmail credentials correct?
-3. Check for `failure-notified` label (prevents duplicates)
-4. Review email sending logs
+3. Review email sending logs
 
 ## Best Practices
 
