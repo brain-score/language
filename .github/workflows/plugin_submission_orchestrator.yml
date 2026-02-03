@@ -29,7 +29,7 @@ jobs:
   detect_changes:
     name: "1. Detect Changes"
     if: |
-      (github.event_name == 'pull_request' && !(github.event.action == 'labeled' && github.event.label.name == 'automerge-web')) ||
+      (github.event_name == 'pull_request') ||
       (github.event_name == 'pull_request_target' && github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     outputs:
@@ -883,19 +883,6 @@ jobs:
           python -m pip install --upgrade pip setuptools
           python -m pip install "." PyYAML
 
-      - name: Check for automerge-web label
-        if: needs.detect_changes.outputs.metadata_only != 'true'
-        id: check_automerge_web
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          LABELS_JSON=$(gh pr view ${{ github.event.number }} --json labels)
-          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "automerge-web")' >/dev/null; then
-            echo "is_automerge_web=true" >> $GITHUB_OUTPUT
-          else
-            echo "is_automerge_web=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Extract user email
         if: needs.detect_changes.outputs.metadata_only != 'true'
         id: extract_email
@@ -906,7 +893,7 @@ jobs:
           EMAIL=$(python brainscore_language/submission/actions_helpers.py extract_email \
             --pr-username "${{ github.event.pull_request.user.login }}" \
             --pr-title "${{ github.event.pull_request.title }}" \
-            --is-automerge-web ${{ steps.check_automerge_web.outputs.is_automerge_web }})
+            --is-automerge-web false)
           echo "::add-mask::$EMAIL"
           echo "email=$EMAIL" >> $GITHUB_OUTPUT
 
@@ -1114,16 +1101,7 @@ jobs:
   notify_on_failure:
     name: "8. Notify on Failure"
     needs: [detect_changes, validate_pr, handle_metadata_only, generate_and_commit_mutations, automerge, post_merge_scoring]
-    if: |
-      always() && (
-        (needs.detect_changes.result == 'failure') ||
-        (needs.validate_pr.result == 'failure') ||
-        (needs.validate_pr.result == 'success' && needs.validate_pr.outputs.all_tests_pass == 'false') ||
-        (needs.handle_metadata_only.result == 'failure') ||
-        (needs.generate_and_commit_mutations.result == 'failure') ||
-        (needs.automerge.result == 'failure') ||
-        (needs.post_merge_scoring.result == 'failure')
-      )
+    if: false  # Temporarily disabled
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -1163,20 +1141,6 @@ jobs:
           echo "failed_job=${FAILED_JOB}" >> $GITHUB_OUTPUT
           echo "Failed job: ${FAILED_JOB}"
 
-      - name: Check for automerge-web label
-        if: github.event_name == 'pull_request'
-        id: check_automerge_web_notify
-        env:
-          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
-        run: |
-          PR_NUM="${{ needs.validate_pr.outputs.pr_number }}"
-          LABELS_JSON=$(gh pr view ${PR_NUM} --json labels)
-          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "automerge-web")' >/dev/null; then
-            echo "is_automerge_web=true" >> $GITHUB_OUTPUT
-          else
-            echo "is_automerge_web=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Extract email for notification
         if: github.event_name == 'pull_request'
         id: get_email
@@ -1187,7 +1151,7 @@ jobs:
           EMAIL=$(python brainscore_language/submission/actions_helpers.py extract_email \
             --pr-username "${{ github.event.pull_request.user.login }}" \
             --pr-title "${{ github.event.pull_request.title }}" \
-            --is-automerge-web ${{ steps.check_automerge_web_notify.outputs.is_automerge_web }} || echo "")
+            --is-automerge-web false || echo "")
           if [ -z "$EMAIL" ]; then
             echo "Warning: Could not extract email for user ${{ github.event.pull_request.user.login }}"
             echo "email=" >> $GITHUB_OUTPUT
