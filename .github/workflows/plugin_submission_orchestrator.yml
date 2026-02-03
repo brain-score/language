@@ -720,10 +720,10 @@ jobs:
           echo "Added 'submission_preparation_failure' label due to job failure"
 
   # ============================================================================
-  # JOB 5: Auto-merge (Conditional - only if validated and approved)
+  # JOB 6: Auto-merge (Conditional - only if validated and approved)
   # ============================================================================
   automerge:
-    name: "5. Auto-merge"
+    name: "6. Auto-merge"
     needs: [detect_changes, validate_pr, generate_and_commit_mutations]
     if: |
       always() &&
@@ -845,10 +845,10 @@ jobs:
           auto-delete: "true"
 
   # ============================================================================
-  # JOB 6: Post-Merge Kickoff (Runs after PR is merged)
+  # JOB 7: Post-Merge Kickoff (Runs after PR is merged)
   # ============================================================================
   post_merge_scoring:
-    name: "6. Post-Merge Kickoff"
+    name: "7. Post-Merge Kickoff"
     needs: detect_changes
     if: |
       github.event_name == 'pull_request_target' &&
@@ -1019,6 +1019,65 @@ jobs:
           }
           echo "Jenkins scoring job triggered successfully"
 
+      - name: Read metadata and layer mapping files (metadata-only PRs)
+        if: needs.detect_changes.outputs.metadata_only == 'true'
+        id: read_metadata_metadata_only
+        run: |
+          PLUGIN_DIRS="${{ needs.detect_changes.outputs.plugin_dirs }}"
+          
+          # Write Python script to read metadata
+          cat > /tmp/read_metadata.py << 'PYTHON_SCRIPT'
+          import yaml
+          import json
+          import os
+          import sys
+          
+          plugin_dirs_str = os.environ.get('PLUGIN_DIRS', '')
+          metadata_dict = {}
+          
+          if plugin_dirs_str:
+              plugin_dirs = [d.strip() for d in plugin_dirs_str.split(',') if d.strip()]
+              
+              for plugin_dir in plugin_dirs:
+                  if not plugin_dir:
+                      continue
+                      
+                  plugin_name = os.path.basename(plugin_dir.rstrip('/'))
+                  metadata_file = None
+                  
+                  # Check for metadata.yml or metadata.yaml
+                  if os.path.isfile(os.path.join(plugin_dir, 'metadata.yml')):
+                      metadata_file = os.path.join(plugin_dir, 'metadata.yml')
+                  elif os.path.isfile(os.path.join(plugin_dir, 'metadata.yaml')):
+                      metadata_file = os.path.join(plugin_dir, 'metadata.yaml')
+                  
+                  if metadata_file:
+                      try:
+                          with open(metadata_file, 'r') as f:
+                              metadata_content = yaml.safe_load(f)
+                              if metadata_content:
+                                  metadata_dict[plugin_name] = metadata_content
+                      except Exception as e:
+                          print(f'Error reading {metadata_file}: {e}', file=sys.stderr)
+          
+          # Build the final structure
+          result = {
+              'metadata': metadata_dict,
+              'layer_mapping': None  # Language domain doesn't have layer mapping
+          }
+          
+          print(json.dumps(result))
+          PYTHON_SCRIPT
+          
+          # Execute the script
+          export PLUGIN_DIRS
+          METADATA_AND_LAYER_MAP=$(python /tmp/read_metadata.py 2>/dev/null || echo '{"metadata": {}, "layer_mapping": null}')
+          
+          # Base64 encode for safe storage
+          METADATA_AND_LAYER_MAP_B64=$(echo "$METADATA_AND_LAYER_MAP" | base64 | tr -d '\n')
+          echo "metadata_and_layer_map_b64=${METADATA_AND_LAYER_MAP_B64}" >> $GITHUB_OUTPUT
+          echo "Read metadata for plugins: $PLUGIN_DIRS"
+
       - name: Trigger update_existing_metadata Jenkins job (metadata-only PRs)
         if: needs.detect_changes.outputs.metadata_only == 'true'
         env:
@@ -1026,10 +1085,18 @@ jobs:
           JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
           JENKINS_TRIGGER: ${{ secrets.JENKINS_TRIGGER }}
         run: |
+          # Decode metadata_and_layer_map
+          METADATA_AND_LAYER_MAP_B64='${{ steps.read_metadata_metadata_only.outputs.metadata_and_layer_map_b64 }}'
+          METADATA_AND_LAYER_MAP=$(echo "$METADATA_AND_LAYER_MAP_B64" | base64 -d)
+          
+          # Base64 encode metadata_and_layer_map for passing to Python script
+          METADATA_B64=$(echo "$METADATA_AND_LAYER_MAP" | base64 | tr -d '\n')
+          
           python brainscore_language/submission/actions_helpers.py trigger_update_existing_metadata \
             --plugin-dirs "${{ needs.detect_changes.outputs.plugin_dirs }}" \
             --plugin-type "${{ needs.detect_changes.outputs.plugin_type }}" \
-            --domain "${{ env.DOMAIN }}"
+            --domain "${{ env.DOMAIN }}" \
+            --metadata-and-layer-map-b64 "$METADATA_B64"
           echo "Jenkins update_existing_metadata job triggered successfully"
 
       - name: Add metadata_only_failure label on job failure
@@ -1042,10 +1109,10 @@ jobs:
           echo "Added 'metadata_only_failure' label due to job failure"
 
   # ============================================================================
-  # JOB 7: Failure Notification (Runs if any job fails)
+  # JOB 8: Failure Notification (Runs if any job fails)
   # ============================================================================
   notify_on_failure:
-    name: "7. Notify on Failure"
+    name: "8. Notify on Failure"
     needs: [detect_changes, validate_pr, handle_metadata_only, generate_and_commit_mutations, automerge, post_merge_scoring]
     if: |
       always() && (
