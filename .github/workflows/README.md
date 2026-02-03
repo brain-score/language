@@ -51,8 +51,7 @@ PR Created/Updated
     ↓
 [2] Validate PR (plugin PRs only, skipped for metadata-only)
     ├─→ Tests pass? → Add submission_prepared (if metadata exists) or continue
-    ├─→ Tests pass (second time)? → Add submission_validated label
-    └─→ Tests fail? → Add submission_validation_failure label
+    └─→ Tests fail? → Skip automerge (UI shows failure)
     ↓
 [3] Handle Metadata-Only PR (if metadata-only)
     ├─→ Add "only_update_metadata" label
@@ -68,7 +67,7 @@ PR Created/Updated
     ↓
 [5] Auto-merge (if validated)
     ├─→ For metadata-only: Check tests directly, merge if pass
-    ├─→ For plugin PRs: Check submission_validated label, merge if present
+    ├─→ For plugin PRs: Check submission_prepared label and tests, merge if both pass
     ├─→ Approve PR
     └─→ Merge to main
     ↓
@@ -180,18 +179,23 @@ Plugin Submission Orchestrator
 │   ├─→ Generate Metadata (stages files)
 │   └─→ Commit and Push (adds submission_prepared label)
 ├─ 5. Auto-merge (skipped)
-│   └─→ submission_validated label not present yet
+│   └─→ Tests need to pass again after commit
 └─ (workflow ends, commit triggers new run)
 
 Run 2 (triggered by commit sync, tests rerun):
 Plugin Submission Orchestrator
 ├─ 1. Detect Changes (success)
 ├─ 2. Validate PR (success)
-│   └─→ Tests pass again, adds submission_validated label
+│   └─→ Tests pass, submission_prepared label exists
 ├─ 3. Handle Metadata-Only PR (skipped)
 ├─ 4. Generate Mutations and Commit (skipped - metadata already exists)
 ├─ 5. Auto-merge (success)
-│   └─→ Sees submission_validated label, merges
+│   └─→ Sees submission_prepared label and tests pass, merges
+└─ (workflow ends, merge triggers new run)
+
+Run 3 (triggered by merge):
+Plugin Submission Orchestrator
+├─ 1. Detect Changes (success)
 ├─ 6. Post-Merge Kickoff (success)
 │   └─→ Triggers Jenkins scoring
 └─ 7. Notify on Failure (skipped - no failures)
@@ -199,16 +203,21 @@ Plugin Submission Orchestrator
 
 **Orchestrator Workflow (plugin PR with metadata already present):**
 ```
+Run 1:
 Plugin Submission Orchestrator
 ├─ 1. Detect Changes (success)
 │   └─→ Detects plugin, metadata already exists
 ├─ 2. Validate PR (success)
 │   └─→ Tests pass, adds submission_prepared label (metadata exists)
-│   └─→ Tests pass again, adds submission_validated label
 ├─ 3. Handle Metadata-Only PR (skipped)
 ├─ 4. Generate Mutations and Commit (skipped - no mutations needed)
 ├─ 5. Auto-merge (success)
-│   └─→ Sees submission_validated label, merges
+│   └─→ Sees submission_prepared label and tests pass, merges
+└─ (workflow ends, merge triggers new run)
+
+Run 2 (triggered by merge):
+Plugin Submission Orchestrator
+├─ 1. Detect Changes (success)
 ├─ 6. Post-Merge Kickoff (success)
 │   └─→ Triggers Jenkins scoring
 └─ 7. Notify on Failure (skipped - no failures)
