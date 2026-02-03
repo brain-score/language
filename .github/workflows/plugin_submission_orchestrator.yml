@@ -29,7 +29,7 @@ jobs:
   detect_changes:
     name: "1. Detect Changes"
     if: |
-      (github.event_name == 'pull_request' && !(github.event.action == 'labeled' && github.event.label.name == 'automerge-web')) ||
+      (github.event_name == 'pull_request') ||
       (github.event_name == 'pull_request_target' && github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     outputs:
@@ -401,22 +401,6 @@ jobs:
             echo "has_submission_prepared=true" >> $GITHUB_OUTPUT
           else
             echo "has_submission_prepared=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Add submission_validated label if tests pass and submission_prepared exists
-        if: |
-          steps.validate.outputs.all_tests_pass == 'true' &&
-          steps.check_submission_prepared.outputs.has_submission_prepared == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
-        run: |
-          PR_NUM="${{ steps.get_pr_info.outputs.pr_number }}"
-          LABELS_JSON=$(gh pr view ${PR_NUM} --json labels)
-          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "submission_validated")' >/dev/null; then
-            echo "submission_validated label already exists on PR, skipping"
-          else
-            gh pr edit ${PR_NUM} --add-label "submission_validated"
-            echo "Added 'submission_validated' label to PR (tests passed and submission_prepared exists)"
           fi
 
       - name: Add submission_validation_failure label if tests fail and submission_prepared exists
@@ -796,27 +780,28 @@ jobs:
           echo "Validation result: ${VALIDATION_RESULT}"
           echo "All tests pass: ${ALL_TESTS_PASS}"
 
-      - name: Check for submission_validated label (plugin PRs only)
+      - name: Check for submission_prepared label (plugin PRs only)
         if: needs.detect_changes.outputs.metadata_only != 'true'
-        id: check_submission_validated
+        id: check_submission_prepared_automerge
         env:
           GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
         run: |
           PR_NUM="${{ steps.get_pr_info.outputs.pr_number }}"
           LABELS_JSON=$(gh pr view ${PR_NUM} --json labels)
-          echo "PR labels: $LABELS_JSON"
-          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "submission_validated")' >/dev/null; then
-            echo "has_submission_validated=true" >> $GITHUB_OUTPUT
-            echo "Found submission_validated label"
+          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "submission_prepared")' >/dev/null; then
+            echo "has_submission_prepared=true" >> $GITHUB_OUTPUT
+            echo "Found submission_prepared label"
           else
-            echo "has_submission_validated=false" >> $GITHUB_OUTPUT
-            echo "submission_validated label not found"
+            echo "has_submission_prepared=false" >> $GITHUB_OUTPUT
+            echo "submission_prepared label not found"
           fi
 
       - name: Auto Approve
         if: |
           (needs.detect_changes.outputs.metadata_only == 'true' && steps.check_metadata_only_tests.outputs.all_tests_pass == 'true') ||
-          (needs.detect_changes.outputs.metadata_only != 'true' && steps.check_submission_validated.outputs.has_submission_validated == 'true')
+          (needs.detect_changes.outputs.metadata_only != 'true' && 
+           steps.check_submission_prepared_automerge.outputs.has_submission_prepared == 'true' &&
+           needs.validate_pr.outputs.all_tests_pass == 'true')
         uses: hmarr/auto-approve-action@v4
         with:
           pull-request-number: ${{ steps.get_pr_info.outputs.pr_number }}
@@ -836,11 +821,12 @@ jobs:
       - name: Auto Merge (plugin PRs)
         if: |
           needs.detect_changes.outputs.metadata_only != 'true' &&
-          steps.check_submission_validated.outputs.has_submission_validated == 'true'
+          steps.check_submission_prepared_automerge.outputs.has_submission_prepared == 'true' &&
+          needs.validate_pr.outputs.all_tests_pass == 'true'
         uses: plm9606/automerge_actions@1.2.2
         with:
           github-token: ${{ secrets.GH_MFERG_PAT }}
-          label-name: "submission_validated"
+          label-name: "submission_prepared"
           merge-method: "squash"
           auto-delete: "true"
 
@@ -883,19 +869,6 @@ jobs:
           python -m pip install --upgrade pip setuptools
           python -m pip install "." PyYAML
 
-      - name: Check for automerge-web label
-        if: needs.detect_changes.outputs.metadata_only != 'true'
-        id: check_automerge_web
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          LABELS_JSON=$(gh pr view ${{ github.event.number }} --json labels)
-          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "automerge-web")' >/dev/null; then
-            echo "is_automerge_web=true" >> $GITHUB_OUTPUT
-          else
-            echo "is_automerge_web=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Extract user email
         if: needs.detect_changes.outputs.metadata_only != 'true'
         id: extract_email
@@ -906,7 +879,7 @@ jobs:
           EMAIL=$(python brainscore_language/submission/actions_helpers.py extract_email \
             --pr-username "${{ github.event.pull_request.user.login }}" \
             --pr-title "${{ github.event.pull_request.title }}" \
-            --is-automerge-web ${{ steps.check_automerge_web.outputs.is_automerge_web }})
+            --is-automerge-web false)
           echo "::add-mask::$EMAIL"
           echo "email=$EMAIL" >> $GITHUB_OUTPUT
 
@@ -1019,6 +992,65 @@ jobs:
           }
           echo "Jenkins scoring job triggered successfully"
 
+      - name: Read metadata and layer mapping files (metadata-only PRs)
+        if: needs.detect_changes.outputs.metadata_only == 'true'
+        id: read_metadata_metadata_only
+        run: |
+          PLUGIN_DIRS="${{ needs.detect_changes.outputs.plugin_dirs }}"
+          
+          # Write Python script to read metadata
+          cat > /tmp/read_metadata.py << 'PYTHON_SCRIPT'
+          import yaml
+          import json
+          import os
+          import sys
+          
+          plugin_dirs_str = os.environ.get('PLUGIN_DIRS', '')
+          metadata_dict = {}
+          
+          if plugin_dirs_str:
+              plugin_dirs = [d.strip() for d in plugin_dirs_str.split(',') if d.strip()]
+              
+              for plugin_dir in plugin_dirs:
+                  if not plugin_dir:
+                      continue
+                      
+                  plugin_name = os.path.basename(plugin_dir.rstrip('/'))
+                  metadata_file = None
+                  
+                  # Check for metadata.yml or metadata.yaml
+                  if os.path.isfile(os.path.join(plugin_dir, 'metadata.yml')):
+                      metadata_file = os.path.join(plugin_dir, 'metadata.yml')
+                  elif os.path.isfile(os.path.join(plugin_dir, 'metadata.yaml')):
+                      metadata_file = os.path.join(plugin_dir, 'metadata.yaml')
+                  
+                  if metadata_file:
+                      try:
+                          with open(metadata_file, 'r') as f:
+                              metadata_content = yaml.safe_load(f)
+                              if metadata_content:
+                                  metadata_dict[plugin_name] = metadata_content
+                      except Exception as e:
+                          print(f'Error reading {metadata_file}: {e}', file=sys.stderr)
+          
+          # Build the final structure
+          result = {
+              'metadata': metadata_dict,
+              'layer_mapping': None  # Language domain doesn't have layer mapping
+          }
+          
+          print(json.dumps(result))
+          PYTHON_SCRIPT
+          
+          # Execute the script
+          export PLUGIN_DIRS
+          METADATA_AND_LAYER_MAP=$(python /tmp/read_metadata.py 2>/dev/null || echo '{"metadata": {}, "layer_mapping": null}')
+          
+          # Base64 encode for safe storage
+          METADATA_AND_LAYER_MAP_B64=$(echo "$METADATA_AND_LAYER_MAP" | base64 | tr -d '\n')
+          echo "metadata_and_layer_map_b64=${METADATA_AND_LAYER_MAP_B64}" >> $GITHUB_OUTPUT
+          echo "Read metadata for plugins: $PLUGIN_DIRS"
+
       - name: Trigger update_existing_metadata Jenkins job (metadata-only PRs)
         if: needs.detect_changes.outputs.metadata_only == 'true'
         env:
@@ -1026,10 +1058,18 @@ jobs:
           JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
           JENKINS_TRIGGER: ${{ secrets.JENKINS_TRIGGER }}
         run: |
+          # Decode metadata_and_layer_map
+          METADATA_AND_LAYER_MAP_B64='${{ steps.read_metadata_metadata_only.outputs.metadata_and_layer_map_b64 }}'
+          METADATA_AND_LAYER_MAP=$(echo "$METADATA_AND_LAYER_MAP_B64" | base64 -d)
+          
+          # Base64 encode metadata_and_layer_map for passing to Python script
+          METADATA_B64=$(echo "$METADATA_AND_LAYER_MAP" | base64 | tr -d '\n')
+          
           python brainscore_language/submission/actions_helpers.py trigger_update_existing_metadata \
             --plugin-dirs "${{ needs.detect_changes.outputs.plugin_dirs }}" \
             --plugin-type "${{ needs.detect_changes.outputs.plugin_type }}" \
-            --domain "${{ env.DOMAIN }}"
+            --domain "${{ env.DOMAIN }}" \
+            --metadata-and-layer-map-b64 "$METADATA_B64"
           echo "Jenkins update_existing_metadata job triggered successfully"
 
       - name: Add metadata_only_failure label on job failure
@@ -1047,16 +1087,7 @@ jobs:
   notify_on_failure:
     name: "7. Notify on Failure"
     needs: [detect_changes, validate_pr, handle_metadata_only, generate_and_commit_mutations, automerge, post_merge_scoring]
-    if: |
-      always() && (
-        (needs.detect_changes.result == 'failure') ||
-        (needs.validate_pr.result == 'failure') ||
-        (needs.validate_pr.result == 'success' && needs.validate_pr.outputs.all_tests_pass == 'false') ||
-        (needs.handle_metadata_only.result == 'failure') ||
-        (needs.generate_and_commit_mutations.result == 'failure') ||
-        (needs.automerge.result == 'failure') ||
-        (needs.post_merge_scoring.result == 'failure')
-      )
+    if: false  # Temporarily disabled
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -1096,20 +1127,6 @@ jobs:
           echo "failed_job=${FAILED_JOB}" >> $GITHUB_OUTPUT
           echo "Failed job: ${FAILED_JOB}"
 
-      - name: Check for automerge-web label
-        if: github.event_name == 'pull_request'
-        id: check_automerge_web_notify
-        env:
-          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
-        run: |
-          PR_NUM="${{ needs.validate_pr.outputs.pr_number }}"
-          LABELS_JSON=$(gh pr view ${PR_NUM} --json labels)
-          if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "automerge-web")' >/dev/null; then
-            echo "is_automerge_web=true" >> $GITHUB_OUTPUT
-          else
-            echo "is_automerge_web=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Extract email for notification
         if: github.event_name == 'pull_request'
         id: get_email
@@ -1120,7 +1137,7 @@ jobs:
           EMAIL=$(python brainscore_language/submission/actions_helpers.py extract_email \
             --pr-username "${{ github.event.pull_request.user.login }}" \
             --pr-title "${{ github.event.pull_request.title }}" \
-            --is-automerge-web ${{ steps.check_automerge_web_notify.outputs.is_automerge_web }} || echo "")
+            --is-automerge-web false || echo "")
           if [ -z "$EMAIL" ]; then
             echo "Warning: Could not extract email for user ${{ github.event.pull_request.user.login }}"
             echo "email=" >> $GITHUB_OUTPUT
