@@ -76,8 +76,14 @@ def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str
         "docs/readthedocs.org:brain-score-language"
     ]
     
+    RTD_CONTEXT = "docs/readthedocs.org:brain-score-language"
+    RTD_NULL_THRESHOLD = 4  # Number of consecutive nulls before ignoring
+    RTD_TIMEOUT_SECONDS = 120  # 2 minutes
+    
     start_time = time.time()
     test_results = {}
+    rtd_null_count = 0
+    ignore_rtd = False
     
     while True:
         # Get status checks
@@ -88,12 +94,40 @@ def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str
         test_results = {}
         has_pending = False
         
+        elapsed = time.time() - start_time
+        
         for context in required_contexts:
             result = get_statuses_result(context, statuses_json)
             test_results[context] = result
             
-            # Check if any test is still pending
-            if result is None or result == "pending":
+            # Special handling for ReadTheDocs: track consecutive nulls within 2 minutes
+            if context == RTD_CONTEXT:
+                if result is None:
+                    # Only track nulls if we're still within the 2-minute window
+                    if elapsed <= RTD_TIMEOUT_SECONDS:
+                        rtd_null_count += 1
+                        print(f"ReadTheDocs check returned null (consecutive null count: {rtd_null_count}, elapsed: {elapsed:.1f}s)", file=sys.stderr)
+                        
+                        # If we hit the threshold, ignore RTD
+                        if rtd_null_count >= RTD_NULL_THRESHOLD and not ignore_rtd:
+                            ignore_rtd = True
+                            print(f"ReadTheDocs has returned null {RTD_NULL_THRESHOLD} consecutive times within {elapsed:.1f}s. Ignoring RTD check.", file=sys.stderr)
+                    else:
+                        # We're past the 2-minute window, don't track nulls anymore
+                        if not ignore_rtd:
+                            print(f"ReadTheDocs check returned null but we're past {RTD_TIMEOUT_SECONDS}s timeout. Will not ignore RTD.", file=sys.stderr)
+                else:
+                    # RTD returned a non-null result, reset counter (only if we haven't already ignored it)
+                    if rtd_null_count > 0 and not ignore_rtd:
+                        print(f"ReadTheDocs check returned non-null result ({result}), resetting null counter", file=sys.stderr)
+                    if not ignore_rtd:
+                        rtd_null_count = 0
+            
+            # Check if any test is still pending (skip RTD if we're ignoring it)
+            if context == RTD_CONTEXT and ignore_rtd:
+                # Skip RTD from pending check if we're ignoring it
+                continue
+            elif result is None or result == "pending":
                 has_pending = True
         
         # If no pending tests, we're done
@@ -111,9 +145,14 @@ def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str
         print(f"Current status: {json.dumps(test_results)}", file=sys.stderr)
         time.sleep(poll_interval)
     
-    # Determine if all tests pass
+    # Determine if all tests pass (exclude RTD if we're ignoring it)
+    tests_to_check = test_results.copy()
+    if ignore_rtd:
+        print(f"Excluding ReadTheDocs from validation check (was null {RTD_NULL_THRESHOLD} consecutive times)", file=sys.stderr)
+        tests_to_check.pop(RTD_CONTEXT, None)
+    
     all_tests_pass = all(
-        result == "success" for result in test_results.values() if result is not None
+        result == "success" for result in tests_to_check.values() if result is not None
     )
     
     # Debug: Print final test statuses before validation results
@@ -122,23 +161,23 @@ def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str
     print(f"All tests pass: {all_tests_pass}", file=sys.stderr)
     
     # Check if PR is automergeable
-    # (PR must have submission_validated label and all tests must pass)
+    # (PR must have submission_prepared label and all tests must pass)
     labels_url = f"{BASE_URL}/issues/{pr_number}/labels"
     labels_json = get_data(labels_url, token)
     label_names = [label['name'] for label in labels_json]
-    has_submission_validated_label = any(
-        label['name'] == 'submission_validated'
+    has_submission_prepared_label = any(
+        label['name'] == 'submission_prepared'
         for label in labels_json
     )
     
     # Debug: Print label information
     print(f"PR labels: {label_names}", file=sys.stderr)
-    print(f"Has submission_validated label: {has_submission_validated_label}", file=sys.stderr)
+    print(f"Has submission_prepared label: {has_submission_prepared_label}", file=sys.stderr)
     
-    is_automergeable = has_submission_validated_label and all_tests_pass
+    is_automergeable = has_submission_prepared_label and all_tests_pass
     
     # Debug: Print final determination
-    print(f"Is automergeable: {is_automergeable} (has_submission_validated_label={has_submission_validated_label}, all_tests_pass={all_tests_pass})", file=sys.stderr)
+    print(f"Is automergeable: {is_automergeable} (has_submission_prepared_label={has_submission_prepared_label}, all_tests_pass={all_tests_pass})", file=sys.stderr)
     
     return {
         "is_automergeable": is_automergeable,
@@ -148,7 +187,8 @@ def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str
 
 
 def trigger_update_existing_metadata(plugin_dirs: str, plugin_type: str, domain: str,
-                                     jenkins_user: str, jenkins_token: str, jenkins_trigger: str):
+                                     jenkins_user: str, jenkins_token: str, jenkins_trigger: str,
+                                     metadata_and_layer_map: dict = None):
     """Trigger Jenkins update_existing_metadata job"""
     import json
     
@@ -163,6 +203,10 @@ def trigger_update_existing_metadata(plugin_dirs: str, plugin_type: str, domain:
         "plugin_type": plugin_type,
         "update_metadata_only": "true"
     }
+    
+    # Add metadata_and_layer_map if provided (JSON-serialize nested dict)
+    if metadata_and_layer_map:
+        payload["metadata_and_layer_map"] = json.dumps(metadata_and_layer_map)
     
     # Trigger Jenkins
     from requests.auth import HTTPBasicAuth
@@ -264,6 +308,7 @@ def main():
     update_metadata_parser.add_argument('--plugin-dirs', type=str, required=True)
     update_metadata_parser.add_argument('--plugin-type', type=str, required=True)
     update_metadata_parser.add_argument('--domain', type=str, default='language')
+    update_metadata_parser.add_argument('--metadata-and-layer-map-b64', type=str, default='')
     
     # Trigger layer mapping command
     mapping_parser = subparsers.add_parser('trigger_layer_mapping', help='Trigger layer mapping')
@@ -342,10 +387,21 @@ def main():
         print(json.dumps(result))
         
     elif args.command == 'trigger_update_existing_metadata':
+        # Decode metadata_and_layer_map if provided
+        metadata_and_layer_map = None
+        if args.metadata_and_layer_map_b64:
+            import base64
+            try:
+                metadata_json = base64.b64decode(args.metadata_and_layer_map_b64).decode('utf-8')
+                metadata_and_layer_map = json.loads(metadata_json)
+            except Exception as e:
+                print(f"Warning: Failed to decode metadata_and_layer_map: {e}", file=sys.stderr)
+        
         trigger_update_existing_metadata(
             plugin_dirs=args.plugin_dirs,
             plugin_type=args.plugin_type,
             domain=args.domain,
+            metadata_and_layer_map=metadata_and_layer_map,
             jenkins_user=os.getenv('JENKINS_USER'),
             jenkins_token=os.getenv('JENKINS_TOKEN'),
             jenkins_trigger=os.getenv('JENKINS_TRIGGER')
