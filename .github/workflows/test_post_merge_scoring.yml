@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       plugin_dir:
-        description: 'Plugin directory path (e.g., brainscore_language/models/test_embedding_2)'
+        description: 'Plugin directory path relative to repo root (e.g., brainscore_language/models/test_embedding_2)'
         required: true
         type: string
       plugin_type:
@@ -100,45 +100,21 @@ jobs:
           plugin_dirs_str = os.environ.get('PLUGIN_DIRS', '')
           metadata_dict = {}
           
-          print(f"PLUGIN_DIRS environment variable: {plugin_dirs_str}", file=sys.stderr)
-          
           if plugin_dirs_str:
               plugin_dirs = [d.strip() for d in plugin_dirs_str.split(',') if d.strip()]
-              print(f"Parsed plugin directories: {plugin_dirs}", file=sys.stderr)
               
               for plugin_dir in plugin_dirs:
                   if not plugin_dir:
                       continue
-                  
-                  # Check if path is absolute or relative
-                  if not os.path.isabs(plugin_dir):
-                      # Assume relative to repository root
-                      plugin_dir = os.path.join(os.getcwd(), plugin_dir)
-                  
-                  print(f"Checking plugin directory: {plugin_dir}", file=sys.stderr)
-                  print(f"Directory exists: {os.path.isdir(plugin_dir)}", file=sys.stderr)
-                  
-                  if not os.path.isdir(plugin_dir):
-                      print(f"Warning: Plugin directory does not exist: {plugin_dir}", file=sys.stderr)
-                      continue
-                  
+                      
                   plugin_name = os.path.basename(plugin_dir.rstrip('/'))
                   metadata_file = None
                   
                   # Check for metadata.yml or metadata.yaml
-                  metadata_yml = os.path.join(plugin_dir, 'metadata.yml')
-                  metadata_yaml = os.path.join(plugin_dir, 'metadata.yaml')
-                  
-                  if os.path.isfile(metadata_yml):
-                      metadata_file = metadata_yml
-                      print(f"Found metadata.yml at: {metadata_file}", file=sys.stderr)
-                  elif os.path.isfile(metadata_yaml):
-                      metadata_file = metadata_yaml
-                      print(f"Found metadata.yaml at: {metadata_file}", file=sys.stderr)
-                  else:
-                      print(f"No metadata file found in {plugin_dir}", file=sys.stderr)
-                      print(f"  Checked: {metadata_yml}", file=sys.stderr)
-                      print(f"  Checked: {metadata_yaml}", file=sys.stderr)
+                  if os.path.isfile(os.path.join(plugin_dir, 'metadata.yml')):
+                      metadata_file = os.path.join(plugin_dir, 'metadata.yml')
+                  elif os.path.isfile(os.path.join(plugin_dir, 'metadata.yaml')):
+                      metadata_file = os.path.join(plugin_dir, 'metadata.yaml')
                   
                   if metadata_file:
                       try:
@@ -146,9 +122,6 @@ jobs:
                               metadata_content = yaml.safe_load(f)
                               if metadata_content:
                                   metadata_dict[plugin_name] = metadata_content
-                                  print(f"Successfully loaded metadata for {plugin_name}", file=sys.stderr)
-                              else:
-                                  print(f"Warning: metadata file {metadata_file} is empty", file=sys.stderr)
                       except Exception as e:
                           print(f'Error reading {metadata_file}: {e}', file=sys.stderr)
           
@@ -158,25 +131,12 @@ jobs:
               'layer_mapping': None  # Language domain doesn't have layer mapping
           }
           
-          print(f"Final metadata dict has {len(metadata_dict)} plugin(s)", file=sys.stderr)
           print(json.dumps(result))
           PYTHON_SCRIPT
           
-          # Execute the script (capture both stdout and stderr)
+          # Execute the script
           export PLUGIN_DIRS
-          # Run script and separate JSON output from debug messages
-          SCRIPT_OUTPUT=$(python /tmp/read_metadata.py 2>&1)
-          # Extract JSON (should be the last line)
-          METADATA_AND_LAYER_MAP=$(echo "$SCRIPT_OUTPUT" | tail -1)
-          # Show debug messages (filtered)
-          echo "$SCRIPT_OUTPUT" | grep -v "^$" | head -20
-          
-          # Check if we got valid JSON
-          if ! echo "$METADATA_AND_LAYER_MAP" | jq . >/dev/null 2>&1; then
-            echo "Error: Failed to read metadata, got invalid JSON"
-            echo "Last line of output: $METADATA_AND_LAYER_MAP"
-            METADATA_AND_LAYER_MAP='{"metadata": {}, "layer_mapping": null}'
-          fi
+          METADATA_AND_LAYER_MAP=$(python /tmp/read_metadata.py 2>/dev/null || echo '{"metadata": {}, "layer_mapping": null}')
           
           # Base64 encode for safe storage
           METADATA_AND_LAYER_MAP_B64=$(echo "$METADATA_AND_LAYER_MAP" | base64 | tr -d '\n')
@@ -185,7 +145,9 @@ jobs:
           # Show metadata structure summary
           METADATA_COUNT=$(echo "$METADATA_AND_LAYER_MAP" | jq '.metadata | length' 2>/dev/null || echo "0")
           echo "Metadata found for $METADATA_COUNT plugin(s)"
-          echo "Metadata plugin names: $(echo "$METADATA_AND_LAYER_MAP" | jq -c '.metadata | keys' 2>/dev/null || echo '[]')"
+          if [ "$METADATA_COUNT" -gt 0 ]; then
+            echo "Metadata plugin names: $(echo "$METADATA_AND_LAYER_MAP" | jq -c '.metadata | keys' 2>/dev/null || echo '[]')"
+          fi
 
       - name: Build plugin info
         id: build_info
@@ -259,6 +221,7 @@ jobs:
           JENKINS_USER: ${{ secrets.JENKINS_USER }}
           JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
           JENKINS_TRIGGER: ${{ secrets.JENKINS_TRIGGER }}
+          BSC_DATABASESECRET: ${{ secrets.BSC_DATABASESECRET }}
           PLUGIN_INFO: ${{ steps.build_info.outputs.plugin_info }}
         run: |
           # Check that required secrets are set (without exposing values)
