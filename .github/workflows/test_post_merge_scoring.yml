@@ -82,12 +82,13 @@ jobs:
           fi
           echo "::add-mask::$EMAIL"
           echo "email=$EMAIL" >> $GITHUB_OUTPUT
-          echo "Using email: $EMAIL"
+          echo "Email extracted successfully (masked in logs)"
 
       - name: Read metadata and layer mapping files
         id: read_metadata
         run: |
           PLUGIN_DIRS="${{ inputs.plugin_dir }}"
+          echo "Looking for metadata in: $PLUGIN_DIRS"
           
           # Write Python script to read metadata
           cat > /tmp/read_metadata.py << 'PYTHON_SCRIPT'
@@ -99,21 +100,45 @@ jobs:
           plugin_dirs_str = os.environ.get('PLUGIN_DIRS', '')
           metadata_dict = {}
           
+          print(f"PLUGIN_DIRS environment variable: {plugin_dirs_str}", file=sys.stderr)
+          
           if plugin_dirs_str:
               plugin_dirs = [d.strip() for d in plugin_dirs_str.split(',') if d.strip()]
+              print(f"Parsed plugin directories: {plugin_dirs}", file=sys.stderr)
               
               for plugin_dir in plugin_dirs:
                   if not plugin_dir:
                       continue
-                      
+                  
+                  # Check if path is absolute or relative
+                  if not os.path.isabs(plugin_dir):
+                      # Assume relative to repository root
+                      plugin_dir = os.path.join(os.getcwd(), plugin_dir)
+                  
+                  print(f"Checking plugin directory: {plugin_dir}", file=sys.stderr)
+                  print(f"Directory exists: {os.path.isdir(plugin_dir)}", file=sys.stderr)
+                  
+                  if not os.path.isdir(plugin_dir):
+                      print(f"Warning: Plugin directory does not exist: {plugin_dir}", file=sys.stderr)
+                      continue
+                  
                   plugin_name = os.path.basename(plugin_dir.rstrip('/'))
                   metadata_file = None
                   
                   # Check for metadata.yml or metadata.yaml
-                  if os.path.isfile(os.path.join(plugin_dir, 'metadata.yml')):
-                      metadata_file = os.path.join(plugin_dir, 'metadata.yml')
-                  elif os.path.isfile(os.path.join(plugin_dir, 'metadata.yaml')):
-                      metadata_file = os.path.join(plugin_dir, 'metadata.yaml')
+                  metadata_yml = os.path.join(plugin_dir, 'metadata.yml')
+                  metadata_yaml = os.path.join(plugin_dir, 'metadata.yaml')
+                  
+                  if os.path.isfile(metadata_yml):
+                      metadata_file = metadata_yml
+                      print(f"Found metadata.yml at: {metadata_file}", file=sys.stderr)
+                  elif os.path.isfile(metadata_yaml):
+                      metadata_file = metadata_yaml
+                      print(f"Found metadata.yaml at: {metadata_file}", file=sys.stderr)
+                  else:
+                      print(f"No metadata file found in {plugin_dir}", file=sys.stderr)
+                      print(f"  Checked: {metadata_yml}", file=sys.stderr)
+                      print(f"  Checked: {metadata_yaml}", file=sys.stderr)
                   
                   if metadata_file:
                       try:
@@ -121,6 +146,9 @@ jobs:
                               metadata_content = yaml.safe_load(f)
                               if metadata_content:
                                   metadata_dict[plugin_name] = metadata_content
+                                  print(f"Successfully loaded metadata for {plugin_name}", file=sys.stderr)
+                              else:
+                                  print(f"Warning: metadata file {metadata_file} is empty", file=sys.stderr)
                       except Exception as e:
                           print(f'Error reading {metadata_file}: {e}', file=sys.stderr)
           
@@ -130,18 +158,34 @@ jobs:
               'layer_mapping': None  # Language domain doesn't have layer mapping
           }
           
+          print(f"Final metadata dict has {len(metadata_dict)} plugin(s)", file=sys.stderr)
           print(json.dumps(result))
           PYTHON_SCRIPT
           
-          # Execute the script
+          # Execute the script (capture both stdout and stderr)
           export PLUGIN_DIRS
-          METADATA_AND_LAYER_MAP=$(python /tmp/read_metadata.py 2>/dev/null || echo '{"metadata": {}, "layer_mapping": null}')
+          # Run script and separate JSON output from debug messages
+          SCRIPT_OUTPUT=$(python /tmp/read_metadata.py 2>&1)
+          # Extract JSON (should be the last line)
+          METADATA_AND_LAYER_MAP=$(echo "$SCRIPT_OUTPUT" | tail -1)
+          # Show debug messages (filtered)
+          echo "$SCRIPT_OUTPUT" | grep -v "^$" | head -20
+          
+          # Check if we got valid JSON
+          if ! echo "$METADATA_AND_LAYER_MAP" | jq . >/dev/null 2>&1; then
+            echo "Error: Failed to read metadata, got invalid JSON"
+            echo "Last line of output: $METADATA_AND_LAYER_MAP"
+            METADATA_AND_LAYER_MAP='{"metadata": {}, "layer_mapping": null}'
+          fi
           
           # Base64 encode for safe storage
           METADATA_AND_LAYER_MAP_B64=$(echo "$METADATA_AND_LAYER_MAP" | base64 | tr -d '\n')
           echo "metadata_and_layer_map_b64=${METADATA_AND_LAYER_MAP_B64}" >> $GITHUB_OUTPUT
           echo "Read metadata for plugins: $PLUGIN_DIRS"
-          echo "Metadata structure: $(echo "$METADATA_AND_LAYER_MAP" | jq -c .)"
+          # Show metadata structure summary
+          METADATA_COUNT=$(echo "$METADATA_AND_LAYER_MAP" | jq '.metadata | length' 2>/dev/null || echo "0")
+          echo "Metadata found for $METADATA_COUNT plugin(s)"
+          echo "Metadata plugin names: $(echo "$METADATA_AND_LAYER_MAP" | jq -c '.metadata | keys' 2>/dev/null || echo '[]')"
 
       - name: Build plugin info
         id: build_info
@@ -217,10 +261,42 @@ jobs:
           JENKINS_TRIGGER: ${{ secrets.JENKINS_TRIGGER }}
           PLUGIN_INFO: ${{ steps.build_info.outputs.plugin_info }}
         run: |
-          # PLUGIN_INFO contains email - GitHub Actions automatically masks secrets in logs
-          # Suppress stdout/stderr to prevent any potential exposure of PLUGIN_INFO content
-          python -c 'from brainscore_language.submission.endpoints import call_jenkins_language; import os; call_jenkins_language(os.environ["PLUGIN_INFO"])' >/dev/null 2>&1 || {
-            echo "Jenkins scoring trigger failed (check Jenkins logs for details)"
+          # Check that required secrets are set (without exposing values)
+          if [ -z "$JENKINS_USER" ] || [ -z "$JENKINS_TOKEN" ] || [ -z "$JENKINS_TRIGGER" ]; then
+            echo "Error: Missing required Jenkins secrets (JENKINS_USER, JENKINS_TOKEN, or JENKINS_TRIGGER)"
             exit 1
-          }
+          fi
+          echo "Jenkins secrets configured (values masked)"
+          echo "JENKINS_USER length: ${#JENKINS_USER}"
+          echo "JENKINS_TOKEN length: ${#JENKINS_TOKEN}"
+          echo "JENKINS_TRIGGER length: ${#JENKINS_TRIGGER}"
+          
+          # Validate PLUGIN_INFO JSON
+          if ! echo "$PLUGIN_INFO" | jq . >/dev/null 2>&1; then
+            echo "Error: PLUGIN_INFO is not valid JSON"
+            echo "PLUGIN_INFO preview (first 200 chars): ${PLUGIN_INFO:0:200}..."
+            exit 1
+          fi
+          echo "PLUGIN_INFO is valid JSON"
+          
+          # Trigger Jenkins (capture output for debugging)
+          set +e
+          python -c 'from brainscore_language.submission.endpoints import call_jenkins_language; import os; call_jenkins_language(os.environ["PLUGIN_INFO"])' >/tmp/jenkins_output.log 2>&1
+          JENKINS_EXIT_CODE=$?
+          set -e
+          
+          if [ $JENKINS_EXIT_CODE -ne 0 ]; then
+            echo "Jenkins scoring trigger failed (exit code: $JENKINS_EXIT_CODE)"
+            echo "Error output (sensitive data filtered):"
+            # Filter sensitive patterns from output
+            cat /tmp/jenkins_output.log | \
+              sed -E 's/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/***MASKED_EMAIL***/g' | \
+              sed -E 's/[A-Za-z0-9]{20,}/***MASKED_TOKEN***/g' | \
+              sed -E 's/(token|password|secret|key|auth)[=:]\s*[^\s]+/***MASKED_SECRET***/gi' | \
+              sed -E 's/https?:\/\/[^:]+:[^@]+@[^\s]+/***MASKED_URL***/g' | \
+              head -50
+            echo ""
+            echo "Full error log saved (check workflow logs - GitHub Actions will mask secrets automatically)"
+            exit 1
+          fi
           echo "Jenkins scoring job triggered successfully"
