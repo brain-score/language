@@ -248,18 +248,20 @@ jobs:
           JENKINS_EXIT_CODE=$?
           set -e
           
+          # Always show output (filtered for sensitive data) to debug even on success
+          echo "Jenkins trigger output (sensitive data filtered):"
+          cat /tmp/jenkins_output.log | \
+            sed -E 's/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/***MASKED_EMAIL***/g' | \
+            sed -E 's/[A-Za-z0-9]{20,}/***MASKED_TOKEN***/g' | \
+            sed -E 's/(token|password|secret|key|auth)[=:]\s*[^\s]+/***MASKED_SECRET***/gi' | \
+            sed -E 's/https?:\/\/[^:]+:[^@]+@[^\s]+/***MASKED_URL***/g' | \
+            head -50
+          
           if [ $JENKINS_EXIT_CODE -ne 0 ]; then
-            echo "Jenkins scoring trigger failed (exit code: $JENKINS_EXIT_CODE)"
-            echo "Error output (sensitive data filtered):"
-            # Filter sensitive patterns from output
-            cat /tmp/jenkins_output.log | \
-              sed -E 's/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/***MASKED_EMAIL***/g' | \
-              sed -E 's/[A-Za-z0-9]{20,}/***MASKED_TOKEN***/g' | \
-              sed -E 's/(token|password|secret|key|auth)[=:]\s*[^\s]+/***MASKED_SECRET***/gi' | \
-              sed -E 's/https?:\/\/[^:]+:[^@]+@[^\s]+/***MASKED_URL***/g' | \
-              head -50
             echo ""
+            echo "Jenkins scoring trigger failed (exit code: $JENKINS_EXIT_CODE)"
             echo "Full error log saved (check workflow logs - GitHub Actions will mask secrets automatically)"
             exit 1
           fi
-          echo "Jenkins scoring job triggered successfully"
+          echo ""
+          echo "Jenkins scoring job triggered successfully (check Jenkins UI to verify job was created)"

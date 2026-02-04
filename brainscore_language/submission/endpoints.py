@@ -65,9 +65,35 @@ def call_jenkins_language(plugin_info: Union[str, Dict[str, Union[List[str], str
     payload = {k: v for k, v in plugin_info.items() if plugin_info[k]}
     try:
         auth_basic = HTTPBasicAuth(username=jenkins_user, password=jenkins_token)
-        requests.get(url, params=payload, auth=auth_basic)
+        print(f'Triggering Jenkins job: {jenkins_job}')
+        # Mask token in URL before printing
+        url_masked = url.replace(jenkins_trigger, '***MASKED_TOKEN***')
+        print(f'URL: {url_masked}')
+        print(f'Payload keys: {list(payload.keys())}')
+        response = requests.get(url, params=payload, auth=auth_basic)
+        print(f'HTTP Status: {response.status_code} {response.reason}')
+        # Filter response headers for sensitive data
+        headers_safe = {k: '***MASKED***' if k.lower() in ['authorization', 'cookie', 'set-cookie'] else v 
+                       for k, v in response.headers.items()}
+        print(f'Response headers: {headers_safe}')
+        # Response body should be safe (Jenkins doesn't echo tokens), but filter just in case
+        response_body = response.text[:500]
+        response_body_masked = response_body.replace(jenkins_trigger, '***MASKED_TOKEN***')
+        print(f'Response body (first 500 chars): {response_body_masked}')
+        response.raise_for_status()  # Raise an exception for bad status codes
+        print(f'Successfully triggered Jenkins job: {jenkins_job}')
+    except requests.exceptions.HTTPError as e:
+        print(f'HTTP error when triggering Jenkins job: {e.response.status_code} - {e.response.reason}')
+        # Mask token in URL before printing
+        url_masked = url.replace(jenkins_trigger, '***MASKED_TOKEN***')
+        print(f'URL: {url_masked}')
+        response_body = e.response.text[:500]
+        response_body_masked = response_body.replace(jenkins_trigger, '***MASKED_TOKEN***')
+        print(f'Response body: {response_body_masked}')
+        raise
     except Exception as e:
         print(f'Could not initiate Jenkins job because of {e}')
+        raise
 
 
 if __name__ == '__main__':
