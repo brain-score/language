@@ -62,7 +62,16 @@ def call_jenkins_language(plugin_info: Union[str, Dict[str, Union[List[str], str
         # Check if plugin_info is a String object, in which case JSON-deserialize it into Dict
         plugin_info = json.loads(plugin_info)
 
-    payload = {k: v for k, v in plugin_info.items() if plugin_info[k]}
+    # Build payload, JSON-serializing nested structures
+    payload = {}
+    for k, v in plugin_info.items():
+        if not v:  # Skip empty values
+            continue
+        # JSON-serialize nested dictionaries (like metadata_and_layer_map)
+        if isinstance(v, dict):
+            payload[k] = json.dumps(v)
+        else:
+            payload[k] = v
     try:
         auth_basic = HTTPBasicAuth(username=jenkins_user, password=jenkins_token)
         print(f'Triggering Jenkins job: {jenkins_job}')
