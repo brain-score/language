@@ -60,25 +60,27 @@ def call_jenkins_language(plugin_info: Union[str, Dict[str, Union[List[str], str
         # Check if plugin_info is a String object, in which case JSON-deserialize it into Dict
         plugin_info = json.loads(plugin_info)
 
-    # Build payload, JSON-serializing nested structures
-    # Skip metadata_and_layer_map - not sent to Jenkins
-    payload = {}
-    for k, v in plugin_info.items():
-        if not v:  # Skip empty values
-            continue
-        # Skip metadata_and_layer_map
-        if k == 'metadata_and_layer_map':
-            continue
-        # JSON-serialize nested dictionaries and lists (like changed_plugins)
-        if isinstance(v, dict):
-            payload[k] = json.dumps(v)
-        elif isinstance(v, list):
-            payload[k] = json.dumps(v)
-        else:
-            payload[k] = v
+    # Build payload with only Jenkins-defined job parameters
+    # Jenkins expects: new_models, new_benchmarks, email, author_email, model_type, 
+    # competition, public, specified_only, domain, user_id, BSC_DATABASESECRET
+    allowed_params = ['new_models', 'new_benchmarks', 'email', 'author_email', 
+                      'model_type', 'competition', 'public', 'specified_only', 
+                      'domain', 'user_id', 'BSC_DATABASESECRET']
     
-    # Add trigger token to payload
-    payload['token'] = jenkins_trigger
+    payload = {}
+    for param in allowed_params:
+        if param in plugin_info and plugin_info[param] is not None:
+            value = plugin_info[param]
+            # Convert to string (Jenkins expects string parameters)
+            payload[param] = str(value) if not isinstance(value, (dict, list)) else json.dumps(value)
+    
+    # Map email to author_email if author_email not provided
+    if 'email' in payload and 'author_email' not in payload:
+        payload['author_email'] = payload['email']
+    
+    # Add BSC_DATABASESECRET from environment if not in plugin_info
+    if 'BSC_DATABASESECRET' not in payload and 'BSC_DATABASESECRET' in os.environ:
+        payload['BSC_DATABASESECRET'] = os.environ['BSC_DATABASESECRET']
     
     auth_basic = HTTPBasicAuth(username=jenkins_user, password=jenkins_token)
     
@@ -94,13 +96,14 @@ def call_jenkins_language(plugin_info: Union[str, Dict[str, Union[List[str], str
         print(f'CSRF crumb fetched successfully (field: {crumb_field})')
         
         # Step 2: Trigger Jenkins job with POST request including crumb in headers
-        url = f'{jenkins_base}/job/{jenkins_job}/buildWithParameters'
+        # Token must be in query string, not POST body
+        url = f'{jenkins_base}/job/{jenkins_job}/buildWithParameters?token={jenkins_trigger}'
         headers = {
             crumb_field: crumb_value
         }
         
         print(f'Triggering Jenkins job: {jenkins_job}')
-        url_masked = url.replace(jenkins_trigger, '***MASKED_TOKEN***') if jenkins_trigger in url else url
+        url_masked = url.replace(jenkins_trigger, '***MASKED_TOKEN***')
         print(f'URL: {url_masked}')
         print(f'Payload keys: {list(payload.keys())}')
         
