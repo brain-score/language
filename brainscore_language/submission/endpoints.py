@@ -97,7 +97,7 @@ def call_jenkins_language(plugin_info: Union[str, Dict[str, Union[List[str], str
         
         # Step 2: Trigger Jenkins job with POST request including crumb in headers
         # Token must be in query string, not POST body
-        url = f'{jenkins_base}/job/{jenkins_job}/buildWithParameters?token={jenkins_trigger}'
+        url = f'{jenkins_base}/job/{jenkins_job}/buildWithParameters?token={jenkins_trigger}&delay=0sec'
         headers = {
             crumb_field: crumb_value
         }
