@@ -63,12 +63,18 @@ def call_jenkins_language(plugin_info: Union[str, Dict[str, Union[List[str], str
         plugin_info = json.loads(plugin_info)
 
     # Build payload, JSON-serializing nested structures
+    # Skip metadata_and_layer_map - not sent to Jenkins
     payload = {}
     for k, v in plugin_info.items():
         if not v:  # Skip empty values
             continue
-        # JSON-serialize nested dictionaries (like metadata_and_layer_map)
+        # Skip metadata_and_layer_map
+        if k == 'metadata_and_layer_map':
+            continue
+        # JSON-serialize nested dictionaries and lists (like changed_plugins)
         if isinstance(v, dict):
+            payload[k] = json.dumps(v)
+        elif isinstance(v, list):
             payload[k] = json.dumps(v)
         else:
             payload[k] = v
