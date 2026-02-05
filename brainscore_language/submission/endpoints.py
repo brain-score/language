@@ -48,15 +48,13 @@ def send_email_to_submitter(uid: int, domain: str, pr_number: str,
 def call_jenkins_language(plugin_info: Union[str, Dict[str, Union[List[str], str]]]):
     """
     Language-specific Jenkins trigger that uses 'score_plugins' job instead of 'dev_score_plugins'.
-    Same as call_jenkins from core but with different job name and path.
+    Handles CSRF protection by fetching a crumb before triggering the job.
     """
     jenkins_base = "http://www.brain-score-jenkins.com:8080"
     jenkins_user = os.environ['JENKINS_USER']
     jenkins_token = os.environ['JENKINS_TOKEN']
     jenkins_trigger = os.environ['JENKINS_TRIGGER']
     jenkins_job = "core/job/score_plugins"  # Language domain uses core/job/score_plugins instead of dev_score_plugins
-
-    url = f'{jenkins_base}/job/{jenkins_job}/buildWithParameters?token={jenkins_trigger}'
 
     if isinstance(plugin_info, str):
         # Check if plugin_info is a String object, in which case JSON-deserialize it into Dict
@@ -78,32 +76,59 @@ def call_jenkins_language(plugin_info: Union[str, Dict[str, Union[List[str], str
             payload[k] = json.dumps(v)
         else:
             payload[k] = v
+    
+    # Add trigger token to payload
+    payload['token'] = jenkins_trigger
+    
+    auth_basic = HTTPBasicAuth(username=jenkins_user, password=jenkins_token)
+    
     try:
-        auth_basic = HTTPBasicAuth(username=jenkins_user, password=jenkins_token)
+        # Step 1: Fetch CSRF crumb
+        print(f'Fetching CSRF crumb from Jenkins...')
+        crumb_url = f'{jenkins_base}/crumbIssuer/api/json'
+        crumb_response = requests.get(crumb_url, auth=auth_basic)
+        crumb_response.raise_for_status()
+        crumb_data = crumb_response.json()
+        crumb_value = crumb_data['crumb']
+        crumb_field = crumb_data['crumbRequestField']
+        print(f'CSRF crumb fetched successfully (field: {crumb_field})')
+        
+        # Step 2: Trigger Jenkins job with POST request including crumb in headers
+        url = f'{jenkins_base}/job/{jenkins_job}/buildWithParameters'
+        headers = {
+            crumb_field: crumb_value
+        }
+        
         print(f'Triggering Jenkins job: {jenkins_job}')
-        # Mask token in URL before printing
-        url_masked = url.replace(jenkins_trigger, '***MASKED_TOKEN***')
+        url_masked = url.replace(jenkins_trigger, '***MASKED_TOKEN***') if jenkins_trigger in url else url
         print(f'URL: {url_masked}')
         print(f'Payload keys: {list(payload.keys())}')
-        response = requests.get(url, params=payload, auth=auth_basic)
+        
+        response = requests.post(url, data=payload, headers=headers, auth=auth_basic)
         print(f'HTTP Status: {response.status_code} {response.reason}')
+        
         # Filter response headers for sensitive data
-        headers_safe = {k: '***MASKED***' if k.lower() in ['authorization', 'cookie', 'set-cookie'] else v 
+        headers_safe = {k: '***MASKED***' if k.lower() in ['authorization', 'cookie', 'set-cookie', crumb_field.lower()] else v 
                        for k, v in response.headers.items()}
         print(f'Response headers: {headers_safe}')
+        
         # Response body should be safe (Jenkins doesn't echo tokens), but filter just in case
         response_body = response.text[:500]
         response_body_masked = response_body.replace(jenkins_trigger, '***MASKED_TOKEN***')
+        response_body_masked = response_body_masked.replace(crumb_value, '***MASKED_CRUMB***')
         print(f'Response body (first 500 chars): {response_body_masked}')
+        
         response.raise_for_status()  # Raise an exception for bad status codes
         print(f'Successfully triggered Jenkins job: {jenkins_job}')
+        
     except requests.exceptions.HTTPError as e:
         print(f'HTTP error when triggering Jenkins job: {e.response.status_code} - {e.response.reason}')
-        # Mask token in URL before printing
-        url_masked = url.replace(jenkins_trigger, '***MASKED_TOKEN***')
+        url_masked = url.replace(jenkins_trigger, '***MASKED_TOKEN***') if jenkins_trigger in url else url
         print(f'URL: {url_masked}')
         response_body = e.response.text[:500]
         response_body_masked = response_body.replace(jenkins_trigger, '***MASKED_TOKEN***')
+        if 'crumb_value' in locals():
+            response_body_masked = response_body_masked.replace(crumb_value, '***MASKED_CRUMB***')
         print(f'Response body: {response_body_masked}')
         raise
     except Exception as e:
