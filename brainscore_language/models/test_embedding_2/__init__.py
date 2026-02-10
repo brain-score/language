@@ -9,7 +9,7 @@ from brainscore_language import ArtificialSubject
 from brainscore_language.model_helpers.huggingface import HuggingfaceSubject
 
 # Register the test model using distilgpt2 (smallest/fastest GPT model)
-model_registry['test-embedding_2'] = lambda: HuggingfaceSubject(
+model_registry['test_embedding_2'] = lambda: HuggingfaceSubject(
     model_id='distilgpt2',
     region_layer_mapping={
         ArtificialSubject.RecordingTarget.language_system: 'transformer.h.5'

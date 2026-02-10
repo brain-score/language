@@ -1,6 +1,6 @@
 models:
   test_embedding_2:
-    architecture: DCNN
+    architecture: Transformer
     model_family: test_embedding_2
     total_parameter_count: 1234567
     trainable_parameter_count: 1234567
@@ -11,5 +11,5 @@ models:
     task_specialization: null
     brainscore_link: https://github.com/brain-score/language/tree/master/brainscore_language/models/test_embedding_2
     huggingface_link: null
-    extra_notes: Temporary hardcoded metadata - will be replaced with actual generation
+    extra_notes: Temporary Mike-generated metadata. Will be removed. 
     runnable: true
