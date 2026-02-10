@@ -9,10 +9,30 @@ from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.data.pereira2018 import BIBTEX
 from brainscore_language.utils.ceiling import ceiling_normalize
 from brainscore_language.utils.s3 import load_from_s3
+from brainscore_language.benchmarks.blank2014.ceiling import ExtrapolationCeiling
 
 
 def Pereira2018_243sentences_ridge():
-    return _Pereira2018Experiment(experiment='243sentences', metric="ridge_pearsonr", ceiling_s3_kwargs=dict(
+    return _Pereira2018Experiment(experiment='243sentences', metric="ridge_pearsonr",
+    crossvalidation_kwargs=dict(
+        split_coord="story",
+        kfold="group",
+        random_state=1234
+    )
+)
+
+def Pereira2018_384sentences_ridge():
+    return _Pereira2018Experiment(experiment='384sentences', metric="ridge_pearsonr",
+    crossvalidation_kwargs=dict(
+        split_coord="story",
+        kfold="group",
+        random_state=1234
+    )
+)
+
+
+def Pereira2018_243sentences_linear():
+    return _Pereira2018Experiment(experiment='243sentences', metric="linear_pearsonr", ceiling_s3_kwargs=dict(
         version_id='CHl_9aFHIWVnPW_njePfy28yzggKuUPw',
         sha1='5e23de899883828f9c886aec304bc5aa0f58f66c',
         raw_kwargs=dict(
@@ -31,8 +51,8 @@ def Pereira2018_243sentences_ridge():
     )
 )
 
-def Pereira2018_384sentences_ridge():
-    return _Pereira2018Experiment(experiment='384sentences', metric="ridge_pearsonr", ceiling_s3_kwargs=dict(
+def Pereira2018_384sentences_linear():
+    return _Pereira2018Experiment(experiment='384sentences', metric="linear_pearsonr", ceiling_s3_kwargs=dict(
         version_id='sjlnXr5wXUoGv6exoWu06C4kYI0KpZLk',
         sha1='fc895adc52fd79cea3040961d65d8f736a9d3e29',
         raw_kwargs=dict(
@@ -71,14 +91,19 @@ class _Pereira2018Experiment(BenchmarkBase):
 
     def __init__(self, experiment: str,
             metric: str, 
-            ceiling_s3_kwargs: dict, 
+            ceiling_s3_kwargs: dict = {}, 
             crossvalidation_kwargs: dict = {}, 
             atlas: str = 'language',
         ):
         self.data = self._load_data(experiment, atlas=atlas)
         self.metric = load_metric(metric, crossvalidation_kwargs=crossvalidation_kwargs)
-        identifier = f'Pereira2018.{experiment}-{metric}-{atlas}'
-        ceiling = self._load_ceiling(identifier=f'Pereira2018.{experiment}-linear', **ceiling_s3_kwargs)
+        identifier = f"Pereira2018.{experiment}-{metric.split('_')[0]}"
+        if ceiling_s3_kwargs:
+            ceiling = self._load_ceiling(identifier=identifier, **ceiling_s3_kwargs)
+        else:
+            ceiler = ExtrapolationCeiling(subject_column='subject')
+            ceiling = ceiler(assembly=self.data, metric=self.metric)
+
         super(_Pereira2018Experiment, self).__init__(
             identifier=identifier,
             version=1,
@@ -117,17 +142,13 @@ class _Pereira2018Experiment(BenchmarkBase):
             passage_predictions['story'] = 'presentation', passage_stimuli['story'].values
             predictions.append(passage_predictions)
     
+        scores = {}
         predictions = xr.concat(predictions, dim='presentation')
-        if hasattr(candidate, "evaluate_each_layer") and candidate.evaluate_each_layer:
-            layer_names = np.unique(predictions['layer'].data)
-            scores = {}
-            for layer_name in layer_names:
-                raw_score = self.metric(predictions.sel(layer=layer_name), self.data)
-                final_score = ceiling_normalize(raw_score, self.ceiling)
-                scores[layer_name] = final_score
-                print(f"> {layer_name}: {final_score.raw.data}")
-        else:
-            raw_score = self.metric(predictions, self.data)
-            scores = ceiling_normalize(raw_score, self.ceiling)
-
+        layer_names = np.unique(predictions['layer'].data)
+        layer_names = [layer_names] if isinstance(layer_names, str) else layer_names  # if only one layer, make it a list for consistency
+        for layer_name in layer_names:
+            raw_score = self.metric(predictions.sel(layer=layer_name), self.data)
+            final_score = ceiling_normalize(raw_score, self.ceiling)
+            scores[layer_name] = final_score
+    
         return scores
