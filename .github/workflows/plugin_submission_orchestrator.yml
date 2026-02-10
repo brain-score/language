@@ -605,6 +605,7 @@ jobs:
     if: |
       always() &&
       github.event_name == 'pull_request' &&
+      needs.detect_changes.outputs.plugin_type != 'benchmarks' &&
       (
         needs.detect_changes.outputs.metadata_only == 'true' ||
         (needs.detect_changes.outputs.metadata_only != 'true' &&
