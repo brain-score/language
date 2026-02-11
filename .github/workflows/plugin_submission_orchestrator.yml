@@ -772,7 +772,7 @@ jobs:
             echo "is_web_submission=true" >> $GITHUB_OUTPUT
             USER_ID=$(echo "$PR_TITLE" | sed -E 's/.*\(user:([^)]+)\).*/\1/')
             echo "user_id=${USER_ID}" >> $GITHUB_OUTPUT
-            echo "Extracted user_id from PR title: ${USER_ID}"
+            echo "Extracted user_id from PR title (masked)"
           else
             echo "is_web_submission=false" >> $GITHUB_OUTPUT
             echo "user_id=" >> $GITHUB_OUTPUT
@@ -823,10 +823,11 @@ jobs:
           BSC_DATABASESECRET: ${{ secrets.BSC_DATABASESECRET }}
         run: |
           BS_UID=$(echo "$PR_TITLE" | sed -E 's/.*\(user:([^)]+)\).*/\1/')
-          EMAIL=$(python -c "from brainscore_core.submission.database import email_from_uid; from brainscore_core.submission.endpoints import UserManager; import os; user_manager=UserManager(db_secret=os.environ['BSC_DATABASESECRET']); print(email_from_uid(int('$BS_UID')))")
+          EMAIL=$(python -c "from brainscore_core.submission.database import email_from_uid; from brainscore_core.submission.endpoints import UserManager; import os; user_manager=UserManager(db_secret=os.environ['BSC_DATABASESECRET']); print(email_from_uid(int('$BS_UID')))" 2>/dev/null)
           if [ -z "$EMAIL" ] || [ "$EMAIL" = "None" ]; then
             EMAIL="mferg@mit.edu"
-            echo "Could not find email in database for user $BS_UID, using default: $EMAIL" >&2
+            echo "Could not find email in database for user $BS_UID, using default email" >&2
+            echo "::add-mask::$EMAIL"
           fi
           echo "::add-mask::$EMAIL"
           ENCRYPTED_EMAIL=$(echo -n "$EMAIL" | openssl enc -aes-256-cbc -a -A -salt -pass pass:${{ secrets.EMAIL_ENCRYPTION_KEY }})
@@ -1123,7 +1124,8 @@ jobs:
           EMAIL="${{ steps.getemail.outputs.email }}"
           if [ -z "$EMAIL" ]; then
             EMAIL="mferg@mit.edu"
-            echo "Could not find email for user ${{ github.event.pull_request.user.login }}, using default: $EMAIL" >&2
+            echo "Could not find email for user ${{ github.event.pull_request.user.login }}, using default email" >&2
+            echo "::add-mask::$EMAIL"
           fi
           echo "::add-mask::$EMAIL"
           ENCRYPTED_EMAIL=$(echo -n "$EMAIL" | openssl enc -aes-256-cbc -a -A -salt -pass pass:${{ secrets.EMAIL_ENCRYPTION_KEY }})
@@ -1150,10 +1152,11 @@ jobs:
           BSC_DATABASESECRET: ${{ secrets.BSC_DATABASESECRET }}
         run: |
           BS_UID=$(echo "$PR_TITLE" | sed -E 's/.*\(user:([^)]+)\).*/\1/')
-          EMAIL=$(python -c "from brainscore_core.submission.database import email_from_uid; from brainscore_core.submission.endpoints import UserManager; import os; user_manager=UserManager(db_secret=os.environ['BSC_DATABASESECRET']); print(email_from_uid(int('$BS_UID')))")
+          EMAIL=$(python -c "from brainscore_core.submission.database import email_from_uid; from brainscore_core.submission.endpoints import UserManager; import os; user_manager=UserManager(db_secret=os.environ['BSC_DATABASESECRET']); print(email_from_uid(int('$BS_UID')))" 2>/dev/null)
           if [ -z "$EMAIL" ] || [ "$EMAIL" = "None" ]; then
             EMAIL="mferg@mit.edu"
-            echo "Could not find email in database for user $BS_UID, using default: $EMAIL" >&2
+            echo "Could not find email in database for user $BS_UID, using default email" >&2
+            echo "::add-mask::$EMAIL"
           fi
           echo "::add-mask::$EMAIL"
           ENCRYPTED_EMAIL=$(echo -n "$EMAIL" | openssl enc -aes-256-cbc -a -A -salt -pass pass:${{ secrets.EMAIL_ENCRYPTION_KEY }})
