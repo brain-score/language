@@ -37,15 +37,16 @@ class TestBenchmark:
                                               coords={'stimulus_seq': ('presentation', np.arange(num_stimuli)),
                                                       'stimulus_num': ('presentation', np.arange(num_stimuli)),
                                                       'neuroid_id': ('neuroid', np.arange(25)),
-                                                      'region': ('neuroid', ['some_region'] * 25)},
+                                                      'region': ('neuroid', ['some_region'] * 25),
+                                                      'layer': ('neuroid', ['test_layer'] * 25)},
                                               dims=['presentation', 'neuroid'])
             neural_activity['stimulus'] = 'presentation', stimuli  # copy over
             return neural_activity
 
         benchmark = load_benchmark(f'Pereira2018.{experiment}sentences-linear')
         dummy_model = TestBenchmark.DummyModel(activity_for_text=activity_for_text)
-        score = benchmark(dummy_model)
-        assert score == expected_score
+        scores = benchmark(dummy_model)
+        assert scores['test_layer'] == expected_score
 
     @pytest.mark.parametrize('experiment', [
         243,
@@ -61,12 +62,13 @@ class TestBenchmark:
             # remove stimulus_id and stimulus coordinates to not trip up benchmark
             passage_activity = passage_activity.reset_index('presentation')
             del passage_activity['stimulus_id']
+            passage_activity['layer'] = 'neuroid', ['test_layer'] * passage_activity.sizes['neuroid']
             passage_activity = NeuroidAssembly(passage_activity)  # index
             return passage_activity
 
         dummy_model = TestBenchmark.DummyModel(activity_for_text=activity_for_text)
-        score = benchmark(dummy_model)
-        assert score == approx(1)
+        scores = benchmark(dummy_model)
+        assert scores['test_layer'] == approx(1)
 
     @pytest.mark.parametrize('experiment, expected_ceiling', [
         (243, .35378928),

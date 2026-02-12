@@ -138,17 +138,18 @@ class _Pereira2018Experiment(BenchmarkBase):
             passage_stimuli = stimuli[passage_indexer]
             passage_predictions = candidate.digest_text(passage_stimuli.values)['neural']
             passage_predictions['stimulus_id'] = 'presentation', passage_stimuli['stimulus_id'].values
-            passage_predictions['passage_index'] = 'presentation', passage_stimuli['passage_index'].values
-            passage_predictions['story'] = 'presentation', passage_stimuli['story'].values
+            if 'passage_index' not in passage_predictions.coords:
+                passage_predictions['passage_index'] = 'presentation', passage_stimuli['passage_index'].values
+            if 'story' not in passage_predictions.coords:
+                passage_predictions['story'] = 'presentation', passage_stimuli['story'].values
             predictions.append(passage_predictions)
     
-        scores = {}
         predictions = xr.concat(predictions, dim='presentation')
+        scores = {}
         layer_names = np.unique(predictions['layer'].data)
-        layer_names = [layer_names] if isinstance(layer_names, str) else layer_names  # if only one layer, make it a list for consistency
+        layer_names = [layer_names] if isinstance(layer_names, str) else layer_names
         for layer_name in layer_names:
             raw_score = self.metric(predictions.sel(layer=layer_name), self.data)
             final_score = ceiling_normalize(raw_score, self.ceiling)
             scores[layer_name] = final_score
-    
         return scores

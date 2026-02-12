@@ -33,15 +33,16 @@ class TestBenchmark:
                                               coords={'stimulus_seq': ('presentation', np.arange(num_stimuli)),
                                                       'stimulus_num': ('presentation', np.arange(num_stimuli)),
                                                       'neuroid_id': ('neuroid', np.arange(num_neuroids)),
-                                                      'region': ('neuroid', ['some_region'] * num_neuroids)},
+                                                      'region': ('neuroid', ['some_region'] * num_neuroids),
+                                                      'layer': ('neuroid', ['test_layer'] * num_neuroids)},
                                               dims=['presentation', 'neuroid'])
             neural_activity['stimulus'] = 'presentation', stimuli  # copy over
             return neural_activity
 
         benchmark = load_benchmark('Blank2014-linear')
         dummy_model = TestBenchmark.DummyModel(activity_for_text=activity_for_text)
-        score = benchmark(dummy_model)
-        assert score == 0
+        scores = benchmark(dummy_model)
+        assert scores['test_layer'] == 0
 
     def test_exact(self):
         benchmark = load_benchmark('Blank2014-linear')
@@ -53,12 +54,13 @@ class TestBenchmark:
             # remove stimulus_id and stimulus coordinates to not trip up benchmark
             passage_activity = passage_activity.reset_index('presentation')
             del passage_activity['stimulus_id']
+            passage_activity['layer'] = 'neuroid', ['test_layer'] * passage_activity.sizes['neuroid']
             passage_activity = NeuroidAssembly(passage_activity)  # index
             return passage_activity
 
         dummy_model = TestBenchmark.DummyModel(activity_for_text=activity_for_text)
-        score = benchmark(dummy_model)
-        assert score == approx(1)
+        scores = benchmark(dummy_model)
+        assert scores['test_layer'] == approx(1)
 
     def test_ceiling(self):
         benchmark = load_benchmark(f'Blank2014-linear')
