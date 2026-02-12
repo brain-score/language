@@ -41,8 +41,8 @@ class TestBenchmark:
 
         benchmark = load_benchmark('Blank2014-linear')
         dummy_model = TestBenchmark.DummyModel(activity_for_text=activity_for_text)
-        scores = benchmark(dummy_model)
-        assert scores['test_layer'] == 0
+        score = benchmark(dummy_model)
+        assert score == 0
 
     def test_exact(self):
         benchmark = load_benchmark('Blank2014-linear')
@@ -59,8 +59,8 @@ class TestBenchmark:
             return passage_activity
 
         dummy_model = TestBenchmark.DummyModel(activity_for_text=activity_for_text)
-        scores = benchmark(dummy_model)
-        assert scores['test_layer'] == approx(1)
+        score = benchmark(dummy_model)
+        assert score == approx(1)
 
     def test_ceiling(self):
         benchmark = load_benchmark(f'Blank2014-linear')

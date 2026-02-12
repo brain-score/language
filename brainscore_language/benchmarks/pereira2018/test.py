@@ -45,8 +45,8 @@ class TestBenchmark:
 
         benchmark = load_benchmark(f'Pereira2018.{experiment}sentences-linear')
         dummy_model = TestBenchmark.DummyModel(activity_for_text=activity_for_text)
-        scores = benchmark(dummy_model)
-        assert scores['test_layer'] == expected_score
+        score = benchmark(dummy_model)
+        assert score == expected_score
 
     @pytest.mark.parametrize('experiment', [
         243,
@@ -67,8 +67,8 @@ class TestBenchmark:
             return passage_activity
 
         dummy_model = TestBenchmark.DummyModel(activity_for_text=activity_for_text)
-        scores = benchmark(dummy_model)
-        assert scores['test_layer'] == approx(1)
+        score = benchmark(dummy_model)
+        assert score == approx(1)
 
     @pytest.mark.parametrize('experiment, expected_ceiling', [
         (243, .35378928),

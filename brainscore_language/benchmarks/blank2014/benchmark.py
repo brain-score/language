@@ -66,13 +66,14 @@ class Blank2014(BenchmarkBase):
             story_predictions['stimulus_id'] = 'presentation', story_stimuli['stimulus_id'].values
             predictions.append(story_predictions)
 
-        scores = {}
         predictions = xr.concat(predictions, dim='presentation')
         layer_names = np.unique(predictions['layer'].data)
-        layer_names = [layer_names] if isinstance(layer_names, str) else layer_names  # if only one layer, make it a list for consistency
+        layer_names = [layer_names] if isinstance(layer_names, str) else layer_names
+        layer_scores = {}
         for layer_name in layer_names:
             raw_score = self.metric(predictions.sel(layer=layer_name), self.data)
-            final_score = ceiling_normalize(raw_score, self.ceiling)
-            scores[layer_name] = final_score
+            layer_scores[layer_name] = ceiling_normalize(raw_score, self.ceiling)
 
-        return scores
+        score = Score(np.mean(list(layer_scores.values())))
+        score.attrs['layer_scores'] = layer_scores
+        return score

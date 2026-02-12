@@ -51,13 +51,15 @@ class _Tuckute2024(BenchmarkBase):
             sentence_predictions['stimulus_id'] = 'presentation', sentence_stimuli['stimulus_id'].values
             predictions.append(sentence_predictions)
             
-        scores = {}
         predictions = xr.concat(predictions, dim='presentation')
         layer_names = np.unique(predictions['layer'].data)
-        layer_names = [layer_names] if isinstance(layer_names, str) else layer_names  # if only one layer, make it a list for consistency
+        layer_names = [layer_names] if isinstance(layer_names, str) else layer_names
+        layer_scores = {}
         for layer_name in layer_names:
             raw_score = self.metric(predictions.sel(layer=layer_name), self.data)
-            scores[layer_name] = raw_score
+            layer_scores[layer_name] = raw_score
 
-        return scores
+        score = Score(np.mean(list(layer_scores.values())))
+        score.attrs['layer_scores'] = layer_scores
+        return score
     

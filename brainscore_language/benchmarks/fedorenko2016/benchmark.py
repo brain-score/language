@@ -2,6 +2,7 @@ import numpy as np
 import xarray as xr
 
 from brainscore_core.benchmarks import BenchmarkBase
+from brainscore_core.metrics import Score
 from brainscore_language import load_dataset, load_metric
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.benchmarks.blank2014.ceiling import ExtrapolationCeiling
@@ -62,13 +63,14 @@ class Fedorenko2016(BenchmarkBase):
             sentence_predictions['stimulus_id'] = 'presentation', sentence_stimuli['stimulus_id'].values
             predictions.append(sentence_predictions)
             
-        scores = {}
         predictions = xr.concat(predictions, dim='presentation')
         layer_names = np.unique(predictions['layer'].data)
-        layer_names = [layer_names] if isinstance(layer_names, str) else layer_names  # if only one layer, make it a list for consistency
+        layer_names = [layer_names] if isinstance(layer_names, str) else layer_names
+        layer_scores = {}
         for layer_name in layer_names:
             raw_score = self.metric(predictions.sel(layer=layer_name), self.data)
-            final_score = ceiling_normalize(raw_score, self.ceiling)
-            scores[layer_name] = final_score
+            layer_scores[layer_name] = ceiling_normalize(raw_score, self.ceiling)
 
-        return scores
+        score = Score(np.mean(list(layer_scores.values())))
+        score.attrs['layer_scores'] = layer_scores
+        return score

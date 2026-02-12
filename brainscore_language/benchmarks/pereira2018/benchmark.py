@@ -145,11 +145,13 @@ class _Pereira2018Experiment(BenchmarkBase):
             predictions.append(passage_predictions)
     
         predictions = xr.concat(predictions, dim='presentation')
-        scores = {}
         layer_names = np.unique(predictions['layer'].data)
         layer_names = [layer_names] if isinstance(layer_names, str) else layer_names
+        layer_scores = {}
         for layer_name in layer_names:
             raw_score = self.metric(predictions.sel(layer=layer_name), self.data)
-            final_score = ceiling_normalize(raw_score, self.ceiling)
-            scores[layer_name] = final_score
-        return scores
+            layer_scores[layer_name] = ceiling_normalize(raw_score, self.ceiling)
+
+        score = Score(np.mean(list(layer_scores.values())))
+        score.attrs['layer_scores'] = layer_scores
+        return score
