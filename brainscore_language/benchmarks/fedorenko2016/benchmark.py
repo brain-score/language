@@ -22,13 +22,7 @@ def Fedorenko2016_ridge():
 )
 
 def Fedorenko2016_linear():
-    return Fedorenko2016(metric="linear_pearsonr", 
-    cross_validation_kwargs=dict(
-        split_coord="sentence_id",
-        kfold="group",
-        random_state=1234
-    )
-)
+    return Fedorenko2016(metric="linear_pearsonr")
 
 class Fedorenko2016(BenchmarkBase):
 

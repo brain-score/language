@@ -65,7 +65,7 @@ class TestBenchmark:
     def test_ceiling(self):
         benchmark = load_benchmark(f'Blank2014-linear')
         ceiling = benchmark.ceiling
-        assert ceiling == approx(.14458887, abs=.0005)
+        assert ceiling == approx(.21026591, abs=.0005)
 
     def test_ceiling_raw(self):
         benchmark = load_benchmark(f'Blank2014-linear')

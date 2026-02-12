@@ -62,7 +62,7 @@ class Split:
         stratification_coord = None
         unique_split_values = False
         random_state = 1
-        kfold = "group"
+        kfold = False
 
     def __init__(self,
                  splits=Defaults.splits, train_size=None, test_size=None,

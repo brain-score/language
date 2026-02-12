@@ -37,7 +37,7 @@ class TestMetric:
         target = self._make_assembly(target)
         metric = load_metric('linear_pearsonr')
         score = metric(assembly1=source, assembly2=target)
-        assert score == approx(.04101286, abs=.00001)
+        assert score == approx(.02826294, abs=.00001)
 
     def test_weights_stored(self):
         assembly = self._make_assembly()

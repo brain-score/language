@@ -21,14 +21,7 @@ def Blank2014_ridge():
 )
 
 def Blank2014_linear():
-    return Blank2014(metric="linear_pearsonr", 
-    cross_validation_kwargs=dict(
-        splits=8,
-        split_coord="story",
-        kfold="group",
-        random_state=1234
-    )
-)
+    return Blank2014(metric="linear_pearsonr")
 
 class Blank2014(BenchmarkBase):
     """

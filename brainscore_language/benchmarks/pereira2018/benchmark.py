@@ -43,11 +43,6 @@ def Pereira2018_243sentences_linear():
                 sha1='34ba453dc7e8a19aed18cc9bca160e97b4a80be5'
             )
         ),
-    ),
-    crossvalidation_kwargs=dict(
-        split_coord="story",
-        kfold="group",
-        random_state=1234
     )
 )
 
@@ -63,11 +58,6 @@ def Pereira2018_384sentences_linear():
                 sha1='fe9fb24b34fd5602e18e34006ac5ccc7d4c825b8'
             )
         ),
-    ),
-    crossvalidation_kwargs=dict(
-        split_coord="story",
-        kfold="group",
-        random_state=1234
     )
 )
 
