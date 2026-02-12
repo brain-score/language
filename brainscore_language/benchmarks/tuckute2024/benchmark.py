@@ -1,3 +1,4 @@
+import numpy as np
 import xarray as xr
 
 from brainscore_core.benchmarks import BenchmarkBase
@@ -51,7 +52,14 @@ class _Tuckute2024(BenchmarkBase):
             predictions.append(sentence_predictions)
             
         predictions = xr.concat(predictions, dim='presentation')
-            
-        raw_score = self.metric(predictions, self.data)
-        return raw_score
+        layer_names = np.unique(predictions['layer'].data)
+        layer_names = [layer_names] if isinstance(layer_names, str) else layer_names
+        layer_scores = {}
+        for layer_name in layer_names:
+            raw_score = self.metric(predictions.sel(layer=layer_name), self.data)
+            layer_scores[layer_name] = raw_score
+
+        score = Score(np.mean(list(layer_scores.values())))
+        score.attrs['layer_scores'] = layer_scores
+        return score
     

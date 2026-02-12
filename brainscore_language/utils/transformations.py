@@ -3,7 +3,7 @@ import math
 
 import numpy as np
 import xarray as xr
-from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit, KFold, StratifiedKFold
+from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit, KFold, StratifiedKFold, GroupKFold
 from tqdm import tqdm
 
 from brainscore_core.supported_data_standards.brainio.transform import subset
@@ -62,15 +62,19 @@ class Split:
         stratification_coord = None
         unique_split_values = False
         random_state = 1
+        kfold = False
 
     def __init__(self,
                  splits=Defaults.splits, train_size=None, test_size=None,
-                 split_coord=Defaults.split_coord, stratification_coord=Defaults.stratification_coord, kfold=False,
+                 split_coord=Defaults.split_coord, stratification_coord=Defaults.stratification_coord, kfold=Defaults.kfold,
                  unique_split_values=Defaults.unique_split_values, random_state=Defaults.random_state):
         super().__init__()
         if train_size is None and test_size is None:
             train_size = self.Defaults.train_size
-        if kfold:
+
+        if kfold == "group":
+            self._split = GroupKFold(n_splits=splits, shuffle=True, random_state=random_state)
+        elif kfold:
             assert (train_size is None or train_size == self.Defaults.train_size) and test_size is None
             if stratification_coord:
                 self._split = StratifiedKFold(n_splits=splits, shuffle=True, random_state=random_state)
@@ -86,6 +90,7 @@ class Split:
         self._split_coord = split_coord
         self._stratification_coord = stratification_coord
         self._unique_split_values = unique_split_values
+        self._kfold = kfold
 
         self._logger = logging.getLogger(fullname(self))
 
@@ -97,7 +102,10 @@ class Split:
         cross_validation_values, indices = extract_coord(assembly, self._split_coord, unique=self._unique_split_values)
         data_shape = np.zeros(len(cross_validation_values))
         args = [assembly[self._stratification_coord].values[indices]] if self.do_stratify else []
-        splits = self._split.split(data_shape, *args)
+        if self._kfold == "group":
+            splits = self._split.split(data_shape, groups=assembly[self._split_coord].values[indices])
+        else:
+            splits = self._split.split(data_shape, *args)
         return cross_validation_values, list(splits)
 
     @classmethod
@@ -144,11 +152,12 @@ class CrossValidationSingle(Transformation):
     def __init__(self,
                  splits=Split.Defaults.splits, train_size=None, test_size=None,
                  split_coord=Split.Defaults.split_coord, stratification_coord=Split.Defaults.stratification_coord,
-                 unique_split_values=Split.Defaults.unique_split_values, random_state=Split.Defaults.random_state):
+                 unique_split_values=Split.Defaults.unique_split_values, random_state=Split.Defaults.random_state,
+                 kfold=Split.Defaults.kfold):
         super().__init__()
         self._split = Split(splits=splits, split_coord=split_coord,
                             stratification_coord=stratification_coord, unique_split_values=unique_split_values,
-                            train_size=train_size, test_size=test_size, random_state=random_state)
+                            train_size=train_size, test_size=test_size, random_state=random_state, kfold=kfold)
         self._logger = logging.getLogger(fullname(self))
 
     def pipe(self, assembly):
