@@ -1,5 +1,5 @@
 import numpy as np
-import scipy.stats
+import scipy.linalg
 from sklearn.linear_model import LinearRegression, RidgeCV
 from sklearn.preprocessing import scale
 
@@ -209,6 +209,10 @@ def linear_regression(xarray_kwargs=None):
     return regression
 
 def pearsonr_correlation(xarray_kwargs=None):
+    # Uses XarrayCorrelationBatched which computes Pearson r via vectorized matrix operations
+    # with a +1e-8 epsilon for numerical stability (see `pearsonr` function above).
+    # This replaces the previous per-neuroid scipy.stats.pearsonr loop (XarrayCorrelation),
+    # producing slightly different values due to the epsilon normalization.
     xarray_kwargs = xarray_kwargs or {}
     return XarrayCorrelationBatched(**xarray_kwargs)
 
