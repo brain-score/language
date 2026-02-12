@@ -284,6 +284,7 @@ jobs:
       is_automergeable: ${{ steps.validate.outputs.is_automergeable }}
       all_tests_pass: ${{ steps.validate.outputs.all_tests_pass }}
       pr_number: ${{ steps.get_pr_info.outputs.pr_number }}
+      test_results_json: ${{ steps.validate.outputs.test_results_json }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -320,9 +321,12 @@ jobs:
           
           IS_AUTOMERGEABLE=$(echo "$RESULT" | jq -r '.is_automergeable // false' | head -n 1)
           ALL_TESTS_PASS=$(echo "$RESULT" | jq -r '.all_tests_pass // false' | head -n 1)
+          TEST_RESULTS_JSON=$(echo "$RESULT" | jq -c '.test_results // {}' | head -n 1)
           
           echo "is_automergeable=${IS_AUTOMERGEABLE}" >> $GITHUB_OUTPUT
           echo "all_tests_pass=${ALL_TESTS_PASS}" >> $GITHUB_OUTPUT
+          TEST_RESULTS_B64=$(echo "$TEST_RESULTS_JSON" | base64 | tr -d '\n')
+          echo "test_results_json=${TEST_RESULTS_B64}" >> $GITHUB_OUTPUT
           
           echo "Validation results:"
           echo "  Is automergeable: ${IS_AUTOMERGEABLE}"
@@ -846,75 +850,12 @@ jobs:
           echo "::add-mask::$EMAIL"
           echo "email=$EMAIL" >> $GITHUB_OUTPUT
 
-      - name: Read metadata and layer mapping files
-        if: needs.detect_changes.outputs.metadata_only != 'true'
-        id: read_metadata
-        run: |
-          PLUGIN_DIRS="${{ needs.detect_changes.outputs.plugin_dirs }}"
-          
-          # Write Python script to read metadata
-          cat > /tmp/read_metadata.py << 'PYTHON_SCRIPT'
-          import yaml
-          import json
-          import os
-          import sys
-          
-          plugin_dirs_str = os.environ.get('PLUGIN_DIRS', '')
-          metadata_dict = {}
-          
-          if plugin_dirs_str:
-              plugin_dirs = [d.strip() for d in plugin_dirs_str.split(',') if d.strip()]
-              
-              for plugin_dir in plugin_dirs:
-                  if not plugin_dir:
-                      continue
-                      
-                  plugin_name = os.path.basename(plugin_dir.rstrip('/'))
-                  metadata_file = None
-                  
-                  # Check for metadata.yml or metadata.yaml
-                  if os.path.isfile(os.path.join(plugin_dir, 'metadata.yml')):
-                      metadata_file = os.path.join(plugin_dir, 'metadata.yml')
-                  elif os.path.isfile(os.path.join(plugin_dir, 'metadata.yaml')):
-                      metadata_file = os.path.join(plugin_dir, 'metadata.yaml')
-                  
-                  if metadata_file:
-                      try:
-                          with open(metadata_file, 'r') as f:
-                              metadata_content = yaml.safe_load(f)
-                              if metadata_content:
-                                  metadata_dict[plugin_name] = metadata_content
-                      except Exception as e:
-                          print(f'Error reading {metadata_file}: {e}', file=sys.stderr)
-          
-          # Build the final structure
-          result = {
-              'metadata': metadata_dict,
-              'layer_mapping': None  # Language domain doesn't have layer mapping
-          }
-          
-          print(json.dumps(result))
-          PYTHON_SCRIPT
-          
-          # Execute the script
-          export PLUGIN_DIRS
-          METADATA_AND_LAYER_MAP=$(python /tmp/read_metadata.py 2>/dev/null || echo '{"metadata": {}, "layer_mapping": null}')
-          
-          # Base64 encode for safe storage
-          METADATA_AND_LAYER_MAP_B64=$(echo "$METADATA_AND_LAYER_MAP" | base64 | tr -d '\n')
-          echo "metadata_and_layer_map_b64=${METADATA_AND_LAYER_MAP_B64}" >> $GITHUB_OUTPUT
-          echo "Read metadata for plugins: $PLUGIN_DIRS"
-
       - name: Build plugin info
         if: needs.detect_changes.outputs.metadata_only != 'true'
         id: build_info
         run: |
           PLUGIN_INFO_B64='${{ needs.detect_changes.outputs.plugin_info_json }}'
           PLUGIN_INFO_DECODED=$(echo "$PLUGIN_INFO_B64" | base64 -d)
-          
-          # Decode metadata_and_layer_map
-          METADATA_AND_LAYER_MAP_B64='${{ steps.read_metadata.outputs.metadata_and_layer_map_b64 }}'
-          METADATA_AND_LAYER_MAP=$(echo "$METADATA_AND_LAYER_MAP_B64" | base64 -d)
           
           USER_ID="${{ steps.check_web_submission.outputs.user_id }}"
           PLUGIN_INFO=$(echo "$PLUGIN_INFO_DECODED" | jq -c \
@@ -923,7 +864,6 @@ jobs:
             --arg plugin_dirs "${{ needs.detect_changes.outputs.plugin_dirs }}" \
             --arg plugin_type "${{ needs.detect_changes.outputs.plugin_type }}" \
             --arg user_id "$USER_ID" \
-            --argjson metadata_and_layer_map "$METADATA_AND_LAYER_MAP" \
             '. + {
               domain: $domain,
               email: $email,
@@ -932,8 +872,7 @@ jobs:
               competition: "None",
               model_type: "artificialsubject",
               public: true,
-              user_id: (if $user_id != "" then $user_id else null end),
-              metadata_and_layer_map: $metadata_and_layer_map
+              user_id: (if $user_id != "" then $user_id else null end)
             }')
           # Store PLUGIN_INFO in GITHUB_ENV for next step (contains email - will be masked by GitHub Actions)
           echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_ENV
@@ -1050,6 +989,7 @@ jobs:
       (
         needs.detect_changes.result == 'failure' ||
         needs.validate_pr.result == 'failure' ||
+        (needs.validate_pr.result == 'success' && needs.validate_pr.outputs.all_tests_pass == 'false') ||
         needs.handle_metadata_only.result == 'failure' ||
         needs.generate_and_commit_mutations.result == 'failure' ||
         needs.automerge.result == 'failure' ||
@@ -1078,26 +1018,48 @@ jobs:
           python -m pip install --upgrade pip setuptools
           python -m pip install "."
 
-      - name: Determine which job failed
+      - name: Determine which job failed and extract failed tests
         id: failed_job
         run: |
           if [ "${{ needs.detect_changes.result }}" == "failure" ]; then
             FAILED_JOB="Detect Changes"
-          elif [ "${{ needs.validate_pr.result }}" == "failure" ]; then
+            FAILED_TESTS=""
+          elif [ "${{ needs.validate_pr.result }}" == "failure" ] || [ "${{ needs.validate_pr.outputs.all_tests_pass }}" == "false" ]; then
             FAILED_JOB="Validate PR"
+            # Extract failed tests from test_results
+            TEST_RESULTS_B64="${{ needs.validate_pr.outputs.test_results_json }}"
+            if [ -n "$TEST_RESULTS_B64" ] && [ "$TEST_RESULTS_B64" != "null" ]; then
+              TEST_RESULTS=$(echo "$TEST_RESULTS_B64" | base64 -d)
+              FAILED_TESTS=$(echo "$TEST_RESULTS" | jq -r 'to_entries | map(select(.value == "failure")) | map(.key) | join(", ")' 2>/dev/null || echo "")
+            else
+              FAILED_TESTS=""
+            fi
           elif [ "${{ needs.handle_metadata_only.result }}" == "failure" ]; then
             FAILED_JOB="Handle Metadata-Only PR"
+            FAILED_TESTS=""
           elif [ "${{ needs.generate_and_commit_mutations.result }}" == "failure" ]; then
             FAILED_JOB="Generate Mutations and Commit"
+            FAILED_TESTS=""
           elif [ "${{ needs.automerge.result }}" == "failure" ]; then
             FAILED_JOB="Auto-merge"
+            FAILED_TESTS=""
           elif [ "${{ needs.post_merge_scoring.result }}" == "failure" ]; then
             FAILED_JOB="Post-Merge Kickoff"
+            FAILED_TESTS=""
           else
             FAILED_JOB="Unknown"
+            FAILED_TESTS=""
           fi
-          echo "failed_job=${FAILED_JOB}" >> $GITHUB_OUTPUT
-          echo "Failed job: ${FAILED_JOB}"
+          
+          # Build failure reason with test details
+          if [ -n "$FAILED_TESTS" ] && [ "$FAILED_TESTS" != "" ]; then
+            FAILURE_REASON="${FAILED_JOB} - Tests failed: ${FAILED_TESTS}"
+          else
+            FAILURE_REASON="${FAILED_JOB}"
+          fi
+          
+          echo "failed_job=${FAILURE_REASON}" >> $GITHUB_OUTPUT
+          echo "Failed job: ${FAILURE_REASON}"
 
       - name: Check if web submission
         id: check_web_submission
