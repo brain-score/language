@@ -29,7 +29,7 @@ class Fedorenko2016(BenchmarkBase):
     def __init__(self, metric: str, cross_validation_kwargs=None):
         self.data = load_dataset('Fedorenko2016.language')
         
-        identifier = f"Fedorenko2016-{metric}"
+        identifier = f"Fedorenko2016-{metric.split('_')[0]}"
         self.metric = load_metric(metric, crossvalidation_kwargs=cross_validation_kwargs)
 
         ceiler = ExtrapolationCeiling(subject_column="subject_UID")

@@ -40,7 +40,7 @@ class Blank2014(BenchmarkBase):
         ceiler = ExtrapolationCeiling()
         ceiling = ceiler(assembly=self.data, metric=self.metric)
         super(Blank2014, self).__init__(
-            identifier=f'Blank2014-{metric}',
+            identifier=f"Blank2014-{metric.split('_')[0]}",
             version=1,
             parent='neural_language',
             ceiling=ceiling,
