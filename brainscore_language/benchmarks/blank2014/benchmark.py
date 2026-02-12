@@ -64,6 +64,10 @@ class Blank2014(BenchmarkBase):
             story_stimuli = stimuli[story_indexer]
             story_predictions = candidate.digest_text(story_stimuli.values)['neural']
             story_predictions['stimulus_id'] = 'presentation', story_stimuli['stimulus_id'].values
+            try:
+                story_predictions['story']
+            except KeyError:
+                story_predictions['story'] = 'presentation', story_stimuli['story'].values
             predictions.append(story_predictions)
 
         predictions = xr.concat(predictions, dim='presentation')

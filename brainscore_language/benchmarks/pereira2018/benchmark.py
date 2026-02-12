@@ -138,9 +138,13 @@ class _Pereira2018Experiment(BenchmarkBase):
             passage_stimuli = stimuli[passage_indexer]
             passage_predictions = candidate.digest_text(passage_stimuli.values)['neural']
             passage_predictions['stimulus_id'] = 'presentation', passage_stimuli['stimulus_id'].values
-            if 'passage_index' not in passage_predictions.coords:
+            try:
+                passage_predictions['passage_index']
+            except KeyError:
                 passage_predictions['passage_index'] = 'presentation', passage_stimuli['passage_index'].values
-            if 'story' not in passage_predictions.coords:
+            try:
+                passage_predictions['story']
+            except KeyError:
                 passage_predictions['story'] = 'presentation', passage_stimuli['story'].values
             predictions.append(passage_predictions)
     

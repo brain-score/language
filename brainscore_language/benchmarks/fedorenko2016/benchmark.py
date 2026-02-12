@@ -61,6 +61,10 @@ class Fedorenko2016(BenchmarkBase):
             stimuli_values = sentence_stimuli.values
             sentence_predictions = candidate.digest_text(stimuli_values)["neural"]
             sentence_predictions['stimulus_id'] = 'presentation', sentence_stimuli['stimulus_id'].values
+            try:
+                sentence_predictions['sentence_id']
+            except KeyError:
+                sentence_predictions['sentence_id'] = 'presentation', sentence_stimuli['sentence_id'].values
             predictions.append(sentence_predictions)
             
         predictions = xr.concat(predictions, dim='presentation')

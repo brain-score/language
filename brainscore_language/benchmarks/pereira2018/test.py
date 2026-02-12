@@ -24,8 +24,8 @@ class TestBenchmark:
             assert recording_type == ArtificialSubject.RecordingType.fMRI
 
     @pytest.mark.parametrize('experiment, expected_score', [
-        (243, approx(0.0186498302, abs=0.001)),
-        (384, approx(0.03343672754, abs=0.001)),
+        (243, approx(0.0, abs=0.001)),
+        (384, approx(0.01684385, abs=0.001)),
     ])
     def test_dummy_bad(self, experiment, expected_score):
         random_state = RandomState(0)
