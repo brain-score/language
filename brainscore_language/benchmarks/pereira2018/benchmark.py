@@ -148,4 +148,6 @@ class _Pereira2018Experiment(BenchmarkBase):
 
         score = Score(np.mean(list(layer_scores.values())))
         score.attrs['layer_scores'] = layer_scores
+        score.attrs['raw'] = Score(np.mean([s.attrs['raw'] for s in layer_scores.values()]))
+        score.attrs['ceiling'] = self.ceiling
         return score
