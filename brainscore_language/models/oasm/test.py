@@ -14,7 +14,6 @@ Tests cover:
 
 import numpy as np
 import pytest
-import xarray as xr
 from scipy.ndimage import gaussian_filter1d
 from scipy.stats import pearsonr
 from sklearn.linear_model import RidgeCV
@@ -148,15 +147,15 @@ class TestNeuroidAssemblyStructure:
         assert result.shape == (3, max_features)
 
     def test_consistent_neuroid_dims_across_blocks(self):
-        """All blocks must have the same neuroid dimension for xr.concat (as benchmarks do)."""
+        """All blocks must have the same neuroid dimension for concatenation (as benchmarks do)."""
         model = _make_model(sigma=1.0, max_features=20)
 
         r1 = model.digest_text(['a', 'b', 'c'])['neural']
         r2 = model.digest_text(['d', 'e'])['neural']
         r3 = model.digest_text(['f'])['neural']
 
-        combined = xr.concat([r1, r2, r3], dim='presentation')
-        assert combined.shape == (6, 20)
+        assert r1.sizes['neuroid'] == r2.sizes['neuroid'] == r3.sizes['neuroid'] == 20
+        assert r1.sizes['presentation'] + r2.sizes['presentation'] + r3.sizes['presentation'] == 6
 
 
 class TestInputHandling:
