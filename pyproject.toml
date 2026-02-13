@@ -4,17 +4,17 @@
 
 [project]
 name = "brainscore_language"
-version = "0.1.0"
+version = "2.2.1"
 description = ""
 authors = []
 license = { 'file' = 'LICENSE' }
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.11"
 
 dependencies = [
     "tqdm",
     "numpy>=1.21",
-    "brainscore_core@git+https://github.com/brain-score/core.git@main",
+    "brainscore-core",
     "fire",
     "scikit-learn",
     # model_helpers dependencies
@@ -35,7 +35,7 @@ test = [
 
 [build-system]
 requires = [
-    "setuptools>=65.*",
+    "setuptools>=65",
     "wheel"
 ]
 

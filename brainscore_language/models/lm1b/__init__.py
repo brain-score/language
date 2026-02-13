@@ -17,7 +17,7 @@ from numpy.core import defchararray
 from tqdm import tqdm
 from google.protobuf import text_format
 
-from brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly
+from brainscore_core.supported_data_standards.brainio.assemblies import DataAssembly, NeuroidAssembly, BehavioralAssembly
 from brainscore_language import model_registry, ArtificialSubject
 from brainscore_language.utils import fullname
 

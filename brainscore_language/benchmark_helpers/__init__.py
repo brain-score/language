@@ -1,7 +1,7 @@
 import numpy as np
 from typing import List
 
-from brainio.assemblies import walk_coords, array_is_element, DataAssembly
+from brainscore_core.supported_data_standards.brainio.assemblies import walk_coords, array_is_element, DataAssembly
 
 
 def ci_error(samples, center, confidence=.95):

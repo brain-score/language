@@ -6,7 +6,7 @@ import xarray as xr
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit, KFold, StratifiedKFold
 from tqdm import tqdm
 
-from brainio.transform import subset
+from brainscore_core.supported_data_standards.brainio.transform import subset
 from brainscore_core.metrics import Score
 from . import fullname
 

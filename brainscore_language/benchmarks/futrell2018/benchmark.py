@@ -2,7 +2,7 @@ import logging
 import numpy as np
 from numpy.random import RandomState
 
-from brainio.assemblies import DataAssembly
+from brainscore_core.supported_data_standards.brainio.assemblies import DataAssembly
 from brainscore_core.benchmarks import BenchmarkBase
 from brainscore_core.metrics import Score, Metric
 from brainscore_language import load_dataset, load_metric

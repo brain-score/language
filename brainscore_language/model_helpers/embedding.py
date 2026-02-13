@@ -9,7 +9,7 @@ from pathlib import Path
 from tqdm import tqdm
 from typing import Union, List, Dict, Tuple
 
-from brainio.assemblies import NeuroidAssembly, merge_data_arrays
+from brainscore_core.supported_data_standards.brainio.assemblies import NeuroidAssembly, merge_data_arrays
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.model_helpers.preprocessing import prepare_context
 

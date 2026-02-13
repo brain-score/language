@@ -1,10 +1,10 @@
 import logging
 from pathlib import Path
 
-from brainio import fetch
-from brainio.assemblies import AssemblyLoader, NeuroidAssembly, DataAssembly
-from brainio.fetch import fetch_file
-from brainio.packaging import write_netcdf, upload_to_s3
+from brainscore_core.supported_data_standards.brainio import fetch
+from brainscore_core.supported_data_standards.brainio.assemblies import AssemblyLoader, NeuroidAssembly, DataAssembly
+from brainscore_core.supported_data_standards.brainio.fetch import fetch_file
+from brainscore_core.supported_data_standards.brainio.packaging import write_netcdf, upload_to_s3
 
 _logger = logging.getLogger(__name__)
 

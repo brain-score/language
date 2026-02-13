@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import pearsonr
 
-from brainio.assemblies import DataAssembly
+from brainscore_core.supported_data_standards.brainio.assemblies import DataAssembly
 from brainscore_core.metrics import Score, Metric
 
 

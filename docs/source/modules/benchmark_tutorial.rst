@@ -53,7 +53,7 @@ The following is an excerpt from the
 
 .. code-block:: python
 
-    from brainio.assemblies import BehavioralAssembly
+    from brainscore_core.supported_data_standards.brainio.assemblies import BehavioralAssembly
 
     reading_times = parse_experiment_data(...)  # load the experimental data, e.g. from .csv files
     # ... obtain as much metadata as we can ...
@@ -75,7 +75,7 @@ The following is an excerpt from the
 
 .. code-block:: python
 
-    from brainio.assemblies import NeuroidAssembly
+    from brainscore_core.supported_data_standards.brainio.assemblies import NeuroidAssembly
 
     neural_recordings = parse_experiment_data(...)  # load the experimental data, e.g. from .mat files
     # ... obtain as much metadata as we can ...
@@ -146,7 +146,7 @@ A simple metric could be the pearson correlation of two measurements:
 
     import numpy as np
     from scipy.stats import pearsonr
-    from brainio.assemblies import DataAssembly
+    from brainscore_core.supported_data_standards.brainio.assemblies import DataAssembly
     from brainscore_core.metrics import Metric, Score
 
     class PearsonCorrelation(Metric):

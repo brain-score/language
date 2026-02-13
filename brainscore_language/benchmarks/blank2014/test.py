@@ -4,7 +4,7 @@ from numpy.random import RandomState
 from pytest import approx
 from typing import Callable, Union, List
 
-from brainio.assemblies import NeuroidAssembly
+from brainscore_core.supported_data_standards.brainio.assemblies import NeuroidAssembly
 from brainscore_language import ArtificialSubject, load_benchmark
 
 

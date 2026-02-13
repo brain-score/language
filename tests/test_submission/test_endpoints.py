@@ -8,7 +8,7 @@ from .mock_config import test_database
 
 from brainscore_core.submission import database_models
 from brainscore_core.submission.database import connect_db
-from brainscore_core.submission.database_models import clear_schema
+from brainscore_core.submission.database_models import clear_schema, database_proxy, PeeweeBase, create_tables
 from brainscore_language.submission.endpoints import run_scoring
 
 
@@ -21,11 +21,20 @@ class TestRunScoring:
     def setup_class(cls):
         logger.info('Connect to database')
         connect_db(test_database)
-        clear_schema()
+        
+        # Drop old tables and recreate with current schema (only for test databases)
+        if 'test' in test_database.lower():
+            logger.info('Dropping and recreating tables with updated schema')
+            database_proxy.drop_tables(PeeweeBase.__subclasses__(), safe=True, cascade=True)
+            create_tables()
+        
+        clear_schema()  # Clear any data from previous runs
 
     def setup_method(self):
         logger.info('Initialize database entries')
         database_models.User.create(id=1, email='test@brainscore.com', password='abcde',
+                                    is_active=True, is_staff=False, is_superuser=False, last_login='2022-10-14 9:25:00')
+        database_models.User.create(id=2, email='benchmark-owner@brainscore.com', password='abcde',
                                     is_active=True, is_staff=False, is_superuser=False, last_login='2022-10-14 9:25:00')
 
     def teardown_method(self):

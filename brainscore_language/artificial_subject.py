@@ -1,6 +1,6 @@
 from typing import Dict, List, Union
 
-from brainio.assemblies import DataAssembly
+from brainscore_core.supported_data_standards.brainio.assemblies import DataAssembly
 
 
 class ArtificialSubject:
@@ -104,6 +104,8 @@ class ArtificialSubject:
 
         fMRI = "fMRI"
         """ functional magnetic resonance imaging """
+        ECoG = "ECoG"
+        """ Electrocorticography """
 
     def start_neural_recording(self, recording_target: RecordingTarget, recording_type: RecordingType):
         """
