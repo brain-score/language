@@ -24,7 +24,7 @@ from brainscore_language.utils import fullname
 
 class ContainerSubject(ArtificialSubject):
     """
-    Evaluation interface for arbitary containerized models.
+    Evaluation interface for arbitrary containerized models.
     User must install either 'Singularity' or 'Docker' to evaluate container models.
 
     To add new model, build a container with an entry point that supports the following interface:
@@ -73,7 +73,7 @@ class ContainerSubject(ArtificialSubject):
         """
         :param container: Container name, e.g., "USERNAME/CONTAINER:TAG"
         :param entrypoint: Entrypoint to run inside container, e.g., "python /path/to/entrypoint.py"
-        :param identifier: Model identifer passed to entrypoint, e.g., "model_name"
+        :param identifier: Model identifier passed to entrypoint, e.g., "model_name"
         :param region_layer_mapping: Mapping from brain region to requested measure, e.g., {"language_system": "model_layer_name"}
         :param task_heads: Mapping from task to callable that takes the output of the container and returns a score, e.g., {ArtificialSubject.Task.next_word: predict_next_word_function}
         """
