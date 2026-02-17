@@ -644,6 +644,21 @@ jobs:
             echo "pr_number=${PR_NUM}" >> $GITHUB_OUTPUT
           fi
 
+      - name: Check if web submission
+        id: check_web_submission
+        env:
+          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
+        run: |
+          PR_NUM="${{ steps.get_pr_info.outputs.pr_number }}"
+          PR_TITLE=$(gh pr view ${PR_NUM} --json title -q '.title')
+          if echo "$PR_TITLE" | grep -qE '\(user:[^)]+\)'; then
+            echo "is_web_submission=true" >> $GITHUB_OUTPUT
+            echo "Web submission detected - automerge enabled"
+          else
+            echo "is_web_submission=false" >> $GITHUB_OUTPUT
+            echo "Non-web submission - automerge disabled"
+          fi
+
       - name: Set up Python (for metadata-only test check)
         if: needs.detect_changes.outputs.metadata_only == 'true'
         uses: actions/setup-python@v4
@@ -696,10 +711,13 @@ jobs:
 
       - name: Auto Approve
         if: |
-          (needs.detect_changes.outputs.metadata_only == 'true' && steps.check_metadata_only_tests.outputs.all_tests_pass == 'true') ||
-          (needs.detect_changes.outputs.metadata_only != 'true' && 
-           steps.check_submission_prepared_automerge.outputs.has_submission_prepared == 'true' &&
-           needs.validate_pr.outputs.all_tests_pass == 'true')
+          steps.check_web_submission.outputs.is_web_submission == 'true' &&
+          (
+            (needs.detect_changes.outputs.metadata_only == 'true' && steps.check_metadata_only_tests.outputs.all_tests_pass == 'true') ||
+            (needs.detect_changes.outputs.metadata_only != 'true' && 
+             steps.check_submission_prepared_automerge.outputs.has_submission_prepared == 'true' &&
+             needs.validate_pr.outputs.all_tests_pass == 'true')
+          )
         uses: hmarr/auto-approve-action@v4
         with:
           pull-request-number: ${{ steps.get_pr_info.outputs.pr_number }}
@@ -707,6 +725,7 @@ jobs:
 
       - name: Auto Merge (metadata-only PRs)
         if: |
+          steps.check_web_submission.outputs.is_web_submission == 'true' &&
           needs.detect_changes.outputs.metadata_only == 'true' &&
           steps.check_metadata_only_tests.outputs.all_tests_pass == 'true'
         uses: plm9606/automerge_actions@1.2.2
@@ -718,6 +737,7 @@ jobs:
 
       - name: Auto Merge (plugin PRs)
         if: |
+          steps.check_web_submission.outputs.is_web_submission == 'true' &&
           needs.detect_changes.outputs.metadata_only != 'true' &&
           steps.check_submission_prepared_automerge.outputs.has_submission_prepared == 'true' &&
           needs.validate_pr.outputs.all_tests_pass == 'true'
