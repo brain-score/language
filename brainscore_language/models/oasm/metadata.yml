@@ -1,7 +1,7 @@
 models:
-  test_embedding_3:
+  oasm:
     architecture: DCNN
-    model_family: test_embedding_3
+    model_family: oasm
     total_parameter_count: 1234567
     trainable_parameter_count: 1234567
     total_layers: 55
@@ -9,7 +9,7 @@ models:
     model_size_mb: 1202
     training_dataset: null
     task_specialization: null
-    brainscore_link: https://github.com/brain-score/language/tree/master/brainscore_language/models/test_embedding_3
+    brainscore_link: https://github.com/brain-score/language/tree/master/brainscore_language/models/oasm
     huggingface_link: null
     extra_notes: Temporary hardcoded metadata - will be replaced with actual generation
     runnable: true
