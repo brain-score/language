@@ -110,9 +110,17 @@ def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str
     rtd_null_count = 0
     ignore_rtd = False
     
+    # Fetch PR to get merge_commit_sha (for fork PRs, check runs are attached to merge commit)
+    pr_url = f"{BASE_URL}/pulls/{pr_number}"
+    pr_data = get_data(pr_url, token)
+    merge_commit_sha = pr_data.get('merge_commit_sha')
+    
+    # Use merge_commit_sha if available, otherwise fall back to pr_head
+    commit_sha_for_checks = merge_commit_sha if merge_commit_sha else pr_head
+    
     while True:
         # Get check runs using Check Runs API (works for fork PRs)
-        check_runs_url = f"{BASE_URL}/commits/{pr_head}/check-runs"
+        check_runs_url = f"{BASE_URL}/commits/{commit_sha_for_checks}/check-runs"
         check_runs_json = get_data(check_runs_url, token, accept_header="application/vnd.github+json")
         
         # Check each required context
