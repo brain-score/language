@@ -4,7 +4,7 @@ import logging
 import numpy as np
 import pandas as pd
 
-from brainio.assemblies import NeuroidAssembly
+from brainscore_core.supported_data_standards.brainio.assemblies import NeuroidAssembly
 from pathlib import Path
 from brainscore_language.utils.s3 import upload_data_assembly
 
