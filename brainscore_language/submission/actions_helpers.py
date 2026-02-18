@@ -39,7 +39,7 @@ def get_check_run_result(context: str, check_runs_json: dict) -> Union[str, None
     # Check runs API returns a dict with 'check_runs' key
     check_runs = check_runs_json.get('check_runs', [])
     
-    # Find check runs matching the context (by name)
+    # Find check runs matching the context (by name) 
     matching_runs = [
         {
             'updated_at': run.get('updated_at', run.get('completed_at', '')),
