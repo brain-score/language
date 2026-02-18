@@ -21,29 +21,54 @@ from email.mime.text import MIMEText
 BASE_URL = "https://api.github.com/repos/brain-score/language"
 
 
-def get_data(url: str, token: str = None) -> dict:
+def get_data(url: str, token: str = None, accept_header: str = None) -> dict:
     """Fetch data from GitHub API"""
     headers = {}
     if token:
         headers["Authorization"] = f"token {token}"
+    if accept_header:
+        headers["Accept"] = accept_header
     
     r = requests.get(url, headers=headers)
     assert r.status_code == 200, f'{r.status_code}: {r.reason}'
     return r.json()
 
 
-def get_statuses_result(context: str, statuses_json: dict) -> Union[str, None]:
-    """Get the latest status result for a given context"""
-    statuses = [
-        {'end_time': status['updated_at'], 'result': status['state']}
-        for status in statuses_json if status['context'] == context
+def get_check_run_result(context: str, check_runs_json: dict) -> Union[str, None]:
+    """Get the latest check run result for a given context (check run name)"""
+    # Check runs API returns a dict with 'check_runs' key
+    check_runs = check_runs_json.get('check_runs', [])
+    
+    # Find check runs matching the context (by name)
+    matching_runs = [
+        {
+            'updated_at': run.get('updated_at', run.get('completed_at', '')),
+            'status': run.get('status'),
+            'conclusion': run.get('conclusion')
+        }
+        for run in check_runs if run.get('name') == context
     ]
     
-    if not statuses:
-        return None
+    if not matching_runs:
+        # If no check runs exist yet, treat as pending (not null)
+        return "pending"
     
-    last_status = max(statuses, key=lambda x: x['end_time'])
-    return last_status['result']
+    # Get the most recent run
+    last_run = max(matching_runs, key=lambda x: x['updated_at'])
+    
+    # Map status and conclusion to result
+    status = last_run['status']
+    conclusion = last_run['conclusion']
+    
+    if conclusion == "success":
+        return "success"
+    elif conclusion == "failure":
+        return "failure"
+    elif status == "in_progress" or conclusion is None:
+        return "pending"
+    else:
+        # Handle other states (queued, etc.) as pending
+        return "pending"
 
 
 def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str, 
@@ -86,9 +111,9 @@ def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str
     ignore_rtd = False
     
     while True:
-        # Get status checks
-        statuses_url = f"{BASE_URL}/commits/{pr_head}/statuses"
-        statuses_json = get_data(statuses_url, token)
+        # Get check runs using Check Runs API (works for fork PRs)
+        check_runs_url = f"{BASE_URL}/commits/{pr_head}/check-runs"
+        check_runs_json = get_data(check_runs_url, token, accept_header="application/vnd.github+json")
         
         # Check each required context
         test_results = {}
@@ -96,13 +121,18 @@ def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str
         
         elapsed = time.time() - start_time
         
+        # Check if RTD check run exists (for null detection)
+        check_runs = check_runs_json.get('check_runs', [])
+        rtd_check_run_exists = any(run.get('name') == RTD_CONTEXT for run in check_runs)
+        
         for context in required_contexts:
-            result = get_statuses_result(context, statuses_json)
+            result = get_check_run_result(context, check_runs_json)
             test_results[context] = result
             
             # Special handling for ReadTheDocs: track consecutive nulls within 2 minutes
             if context == RTD_CONTEXT:
-                if result is None:
+                # Check if RTD check run doesn't exist (treat as null)
+                if not rtd_check_run_exists:
                     # Only track nulls if we're still within the 2-minute window
                     if elapsed <= RTD_TIMEOUT_SECONDS:
                         rtd_null_count += 1
@@ -117,7 +147,7 @@ def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str
                         if not ignore_rtd:
                             print(f"ReadTheDocs check returned null but we're past {RTD_TIMEOUT_SECONDS}s timeout. Will not ignore RTD.", file=sys.stderr)
                 else:
-                    # RTD returned a non-null result, reset counter (only if we haven't already ignored it)
+                    # RTD check run exists, reset counter (only if we haven't already ignored it)
                     if rtd_null_count > 0 and not ignore_rtd:
                         print(f"ReadTheDocs check returned non-null result ({result}), resetting null counter", file=sys.stderr)
                     if not ignore_rtd:
