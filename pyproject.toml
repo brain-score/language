@@ -16,7 +16,7 @@ dependencies = [
     "numpy <2",
     "brainscore-core",
     "fire",
-    "scikit-learn >=1.6",
+    "scikit-learn >=1.6", # for metric_helpers/transformations.py cross-validation
     "pandas <3",
     # model_helpers dependencies
     "torch >=1.9.1",

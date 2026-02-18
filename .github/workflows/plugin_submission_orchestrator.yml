@@ -808,6 +808,7 @@ jobs:
           steps.check_web_submission.outputs.is_web_submission == 'false'
         uses: evvanErb/get-github-email-by-username-action@v2.0
         id: getemail
+        continue-on-error: true
         with:
           github-username: ${{ github.event.pull_request.user.login }}
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -819,6 +820,10 @@ jobs:
         id: extract_email_non_web
         run: |
           EMAIL="${{ steps.getemail.outputs.email }}"
+          if [ -z "$EMAIL" ] || [ "$EMAIL" = "null" ] || [ "$EMAIL" = "None" ]; then
+            EMAIL="mferg@mit.edu"
+            echo "Could not find email for user ${{ github.event.pull_request.user.login }}, using default email" >&2
+          fi
           echo "::add-mask::$EMAIL"
           ENCRYPTED_EMAIL=$(echo -n "$EMAIL" | openssl enc -aes-256-cbc -a -A -salt -pass pass:${{ secrets.EMAIL_ENCRYPTION_KEY }})
           echo "email=$ENCRYPTED_EMAIL" >> $GITHUB_OUTPUT
