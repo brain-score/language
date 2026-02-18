@@ -11,9 +11,7 @@ from brainscore_language.utils.s3 import upload_data_assembly
 def upload_tuckute2024():
     assembly = load_tuckute2024_5subj(source=os.path.join(Path(__file__).parent, 'brain-lang-data_participant_20230728.csv'), roi="lang_LH_netw")
     upload_data_assembly(assembly,
-        assembly_identifier=f"Tuckute2024.language",
-        bucket_name="brainscore-language"
-    )
+        assembly_identifier="Tuckute2024.language")
     
 def groupby_coord(df: pd.DataFrame,
                   coord_col: str = 'item_id',
