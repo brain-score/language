@@ -1,5 +1,5 @@
 import numpy as np
-import scipy.stats
+import scipy.linalg
 from sklearn.linear_model import LinearRegression, RidgeCV
 from sklearn.preprocessing import scale
 
@@ -7,6 +7,7 @@ from brainscore_core.supported_data_standards.brainio.assemblies import NeuroidA
 from brainscore_core.supported_data_standards.brainio.assemblies import walk_coords
 from brainscore_core.metrics import Score, Metric
 from brainscore_language.utils.transformations import CrossValidation
+from brainscore_language.metrics.linear_predictivity.ridgecv_gpu import RidgeGCVTorch
 
 
 class Defaults:
@@ -102,6 +103,44 @@ class XarrayCorrelation:
                        dims=neuroid_dims)
         return result
 
+def pearsonr(x, y):
+    xmean = x.mean(axis=0, keepdims=True)
+    ymean = y.mean(axis=0, keepdims=True)
+
+    xm = x - xmean
+    ym = y - ymean
+
+    normxm = scipy.linalg.norm(xm, axis=0, keepdims=True) + 1e-8
+    normym = scipy.linalg.norm(ym, axis=0, keepdims=True) + 1e-8
+
+    r = ((xm / normxm) * (ym / normym)).sum(axis=0)
+
+    return r
+
+class XarrayCorrelationBatched:
+    def __init__(self, correlation_coord=Defaults.stimulus_coord, neuroid_coord=Defaults.neuroid_coord):
+        self._correlation = pearsonr
+        self._correlation_coord = correlation_coord
+        self._neuroid_coord = neuroid_coord
+
+    def __call__(self, prediction, target):
+        # align
+        prediction = prediction.sortby([self._correlation_coord, self._neuroid_coord])
+        target = target.sortby([self._correlation_coord, self._neuroid_coord])
+        assert np.array(prediction[self._correlation_coord].values == target[self._correlation_coord].values).all()
+        assert np.array(prediction[self._neuroid_coord].values == target[self._neuroid_coord].values).all()
+        # compute correlation per neuroid
+        neuroid_dims = target[self._neuroid_coord].dims
+        assert len(neuroid_dims) == 1
+        prediction = prediction.transpose(..., *neuroid_dims)
+        target = target.transpose(..., *neuroid_dims)
+        correlations = self._correlation(prediction.values, target.values)
+        # package
+        result = Score(correlations,
+                       coords={coord: (dims, values)
+                               for coord, dims, values in walk_coords(target) if dims == neuroid_dims},
+                       dims=neuroid_dims)
+        return result
 
 class CrossRegressedCorrelation(Metric):
     def __init__(self, regression, correlation, crossvalidation_kwargs=None, store_regression_weights=False):
@@ -158,7 +197,7 @@ class ScaledCrossRegressedCorrelation(Metric):
         return self.cross_regressed_correlation(source, target)
 
 def ridge_regression(xarray_kwargs=None):
-    regression = RidgeCV(alphas=np.logspace(-3, 3, 7))
+    regression = RidgeGCVTorch(alphas=np.logspace(-3, 3, 7))
     xarray_kwargs = xarray_kwargs or {}
     regression = XarrayRegression(regression, **xarray_kwargs)
     return regression
@@ -170,8 +209,12 @@ def linear_regression(xarray_kwargs=None):
     return regression
 
 def pearsonr_correlation(xarray_kwargs=None):
+    # Uses XarrayCorrelationBatched which computes Pearson r via vectorized matrix operations
+    # with a +1e-8 epsilon for numerical stability (see `pearsonr` function above).
+    # This replaces the previous per-neuroid scipy.stats.pearsonr loop (XarrayCorrelation),
+    # producing slightly different values due to the epsilon normalization.
     xarray_kwargs = xarray_kwargs or {}
-    return XarrayCorrelation(scipy.stats.pearsonr, **xarray_kwargs)
+    return XarrayCorrelationBatched(**xarray_kwargs)
 
 def linear_pearsonr(*args, regression_kwargs=None, correlation_kwargs=None, **kwargs):
     regression = linear_regression(regression_kwargs or {})
