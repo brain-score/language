@@ -431,11 +431,14 @@ jobs:
     name: "4. Generate Mutations and Commit"
     needs: [detect_changes, validate_pr]
     if: |
+      always() &&
+      needs.detect_changes.result == 'success' &&
       github.event_name == 'pull_request' &&
       (
         (needs.detect_changes.outputs.is_fork_pr == 'true' && 
          (needs.detect_changes.outputs.needs_metadata_generation == 'true' || needs.detect_changes.outputs.needs_mapping == 'true')) ||
         (needs.detect_changes.outputs.is_fork_pr != 'true' &&
+         needs.validate_pr.result == 'success' &&
          (
            (needs.detect_changes.outputs.needs_metadata_generation == 'true' && needs.validate_pr.outputs.all_tests_pass == 'true') ||
            (needs.detect_changes.outputs.needs_mapping == 'true' && needs.validate_pr.outputs.all_tests_pass == 'true')
