@@ -43,7 +43,6 @@ jobs:
       needs_metadata_generation: ${{ steps.detect.outputs.needs_metadata_generation }}
       is_automergeable: ${{ steps.detect.outputs.is_automergeable }}
       plugin_info_json: ${{ steps.detect.outputs.plugin_info_json }}
-      is_fork_pr: ${{ steps.detect.outputs.is_fork_pr }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -98,21 +97,6 @@ jobs:
           echo "Changed files: ${CHANGED_FILES}"
         env:
           GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
-
-      - name: Check if PR is from fork
-        id: check_fork
-        if: github.event_name == 'pull_request'
-        run: |
-          # A PR is from a fork if head repo is different from base repo
-          HEAD_REPO="${{ github.event.pull_request.head.repo.full_name }}"
-          BASE_REPO="${{ github.repository }}"
-          if [ "$HEAD_REPO" != "$BASE_REPO" ]; then
-            echo "is_fork_pr=true" >> $GITHUB_OUTPUT
-            echo "PR is from fork: $HEAD_REPO -> $BASE_REPO"
-          else
-            echo "is_fork_pr=false" >> $GITHUB_OUTPUT
-            echo "PR is from same repository"
-          fi
 
       - name: Detect plugin changes
         id: detect
@@ -267,13 +251,6 @@ jobs:
           if [ -n "$PLUGIN_INFO" ]; then
             PLUGIN_INFO_B64=$(echo "$PLUGIN_INFO" | base64 | tr -d '\n')
             echo "plugin_info_json=${PLUGIN_INFO_B64}" >> $GITHUB_OUTPUT
-          
-          # Output is_fork_pr from check_fork step (defaults to false for pull_request_target events)
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            echo "is_fork_pr=${{ steps.check_fork.outputs.is_fork_pr }}" >> $GITHUB_OUTPUT
-          else
-            echo "is_fork_pr=false" >> $GITHUB_OUTPUT
-          fi
           else
             echo "plugin_info_json=" >> $GITHUB_OUTPUT
           fi
@@ -301,8 +278,7 @@ jobs:
     if: |
       github.event_name == 'pull_request' &&
       needs.detect_changes.outputs.has_plugins == 'true' &&
-      needs.detect_changes.outputs.metadata_only != 'true' &&
-      needs.detect_changes.outputs.is_fork_pr != 'true'
+      needs.detect_changes.outputs.metadata_only != 'true'
     runs-on: ubuntu-latest
     outputs:
       is_automergeable: ${{ steps.validate.outputs.is_automergeable }}
@@ -431,18 +407,10 @@ jobs:
     name: "4. Generate Mutations and Commit"
     needs: [detect_changes, validate_pr]
     if: |
-      always() &&
-      needs.detect_changes.result == 'success' &&
       github.event_name == 'pull_request' &&
       (
-        (needs.detect_changes.outputs.is_fork_pr == 'true' && 
-         (needs.detect_changes.outputs.needs_metadata_generation == 'true' || needs.detect_changes.outputs.needs_mapping == 'true')) ||
-        (needs.detect_changes.outputs.is_fork_pr != 'true' &&
-         needs.validate_pr.result == 'success' &&
-         (
-           (needs.detect_changes.outputs.needs_metadata_generation == 'true' && needs.validate_pr.outputs.all_tests_pass == 'true') ||
-           (needs.detect_changes.outputs.needs_mapping == 'true' && needs.validate_pr.outputs.all_tests_pass == 'true')
-         ))
+        (needs.detect_changes.outputs.needs_metadata_generation == 'true' && needs.validate_pr.outputs.all_tests_pass == 'true') ||
+        (needs.detect_changes.outputs.needs_mapping == 'true' && needs.validate_pr.outputs.all_tests_pass == 'true')
       )
     runs-on: ubuntu-latest
     steps:
