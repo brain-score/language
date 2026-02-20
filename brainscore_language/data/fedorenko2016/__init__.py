@@ -19,5 +19,4 @@ BIBTEX = """@article{fedorenko2016neural,
 
 data_registry['Fedorenko2016.language'] = lambda: load_from_s3(
     identifier="Fedorenko2016.language",
-    version_id="qvB7YZfEjbXEE64bODNLlQlZKWGpgPhy",
     sha1="2966b6d78e972a72068aa6907377483f427e8d9a")

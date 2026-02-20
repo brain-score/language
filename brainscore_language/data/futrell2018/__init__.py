@@ -18,7 +18,6 @@ BIBTEX = """@proceedings{futrell2018natural,
 def load_assembly():
     assembly = load_from_s3(
         identifier="Futrell2018",
-        version_id="MpR.gIXN8UrUnqwQyj.kCrh4VWrBvsGf",
         sha1="381ccc8038fbdb31235b5f3e1d350f359b5e287f")
     assembly.attrs['bibtex'] = BIBTEX
     return assembly
