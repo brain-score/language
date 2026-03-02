@@ -9,19 +9,32 @@ from brainscore_language.utils.ceiling import ceiling_normalize
 
 from tqdm import tqdm
 
-def Fedorenko2016_linear():
-    return Fedorenko2016(metric="linear_pearsonr")
 
 def Fedorenko2016_ridge():
-    return Fedorenko2016(metric="ridge_pearsonr")
+    return Fedorenko2016(metric="ridge_pearsonr", 
+    cross_validation_kwargs=dict(
+        split_coord="sentence_id",
+        kfold="group",
+        random_state=1234
+    )
+)
+
+def Fedorenko2016_linear():
+    return Fedorenko2016(metric="linear_pearsonr", 
+    cross_validation_kwargs=dict(
+        split_coord="sentence_id",
+        kfold="group",
+        random_state=1234
+    )
+)
 
 class Fedorenko2016(BenchmarkBase):
 
-    def __init__(self, metric: str):
+    def __init__(self, metric: str, cross_validation_kwargs=None):
         self.data = load_dataset('Fedorenko2016.language')
         
         identifier = f"Fedorenko2016-{metric}"
-        self.metric = load_metric(metric)
+        self.metric = load_metric(metric, crossvalidation_kwargs=cross_validation_kwargs)
 
         ceiler = ExtrapolationCeiling(subject_column="subject_UID")
         ceiling = ceiler(assembly=self.data, metric=self.metric)
@@ -48,9 +61,13 @@ class Fedorenko2016(BenchmarkBase):
             sentence_predictions['stimulus_id'] = 'presentation', sentence_stimuli['stimulus_id'].values
             predictions.append(sentence_predictions)
             
+        scores = {}
         predictions = xr.concat(predictions, dim='presentation')
-
-        raw_score = self.metric(predictions, self.data)
-        scores = ceiling_normalize(raw_score, self.ceiling)
+        layer_names = np.unique(predictions['layer'].data)
+        layer_names = [layer_names] if isinstance(layer_names, str) else layer_names  # if only one layer, make it a list for consistency
+        for layer_name in layer_names:
+            raw_score = self.metric(predictions.sel(layer=layer_name), self.data)
+            final_score = ceiling_normalize(raw_score, self.ceiling)
+            scores[layer_name] = final_score
 
         return scores

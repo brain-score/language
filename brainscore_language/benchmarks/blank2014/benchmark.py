@@ -9,7 +9,27 @@ from brainscore_language.data.blank2014 import BIBTEX
 from brainscore_language.utils.ceiling import ceiling_normalize
 
 
-class Blank2014Linear(BenchmarkBase):
+def Blank2014_ridge():
+    return Blank2014(metric="ridge_pearsonr", 
+    cross_validation_kwargs=dict(
+        splits=8,
+        split_coord="story",
+        kfold="group",
+        random_state=1234
+    )
+)
+
+def Blank2014_linear():
+    return Blank2014(metric="linear_pearsonr", 
+    cross_validation_kwargs=dict(
+        splits=8,
+        split_coord="story",
+        kfold="group",
+        random_state=1234
+    )
+)
+
+class Blank2014(BenchmarkBase):
     """
     Evaluate model ability to predict neural activity in human language system functional regions of interest (fROIs)
     in response to natural stories, recorded by Blank et al. 2014.
@@ -20,13 +40,13 @@ class Blank2014Linear(BenchmarkBase):
     (e.g. "layer 41 corresponds to the language system"), rather than testing every layer separately.
     """
 
-    def __init__(self):
+    def __init__(self, metric: str, cross_validation_kwargs=None):
         self.data = load_dataset('Blank2014.fROI')
-        self.metric = load_metric('linear_pearsonr')
+        self.metric = load_metric(metric, crossvalidation_kwargs=cross_validation_kwargs)
         ceiler = ExtrapolationCeiling()
         ceiling = ceiler(assembly=self.data, metric=self.metric)
-        super(Blank2014Linear, self).__init__(
-            identifier='Blank2014-linear',
+        super(Blank2014, self).__init__(
+            identifier=f'Blank2014-{metric}',
             version=1,
             parent='neural_language',
             ceiling=ceiling,
@@ -44,7 +64,14 @@ class Blank2014Linear(BenchmarkBase):
             story_predictions = candidate.digest_text(story_stimuli.values)['neural']
             story_predictions['stimulus_id'] = 'presentation', story_stimuli['stimulus_id'].values
             predictions.append(story_predictions)
+
+        scores = {}
         predictions = xr.concat(predictions, dim='presentation')
-        raw_score = self.metric(predictions, self.data)
-        score = ceiling_normalize(raw_score, self.ceiling)
-        return score
+        layer_names = np.unique(predictions['layer'].data)
+        layer_names = [layer_names] if isinstance(layer_names, str) else layer_names  # if only one layer, make it a list for consistency
+        for layer_name in layer_names:
+            raw_score = self.metric(predictions.sel(layer=layer_name), self.data)
+            final_score = ceiling_normalize(raw_score, self.ceiling)
+            scores[layer_name] = final_score
+
+        return scores
