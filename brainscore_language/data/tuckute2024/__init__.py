@@ -14,5 +14,4 @@ BIBTEX = """@article{article,
 
 data_registry["Tuckute2024.language"] = lambda: load_from_s3(
     identifier="Tuckute2024.language",
-    version_id="BB.DbwqLB4OhDR64duqojNdL0CRd4RmG",
     sha1="5c8fc7f3e24cc1af5f5296459377b638b6492641")
