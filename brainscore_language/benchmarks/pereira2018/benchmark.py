@@ -12,13 +12,10 @@ from brainscore_language.utils.s3 import load_from_s3
 
 def Pereira2018_243sentences():
     return _Pereira2018ExperimentLinear(experiment='243sentences', ceiling_s3_kwargs=dict(
-        version_id='CHl_9aFHIWVnPW_njePfy28yzggKuUPw',
         sha1='5e23de899883828f9c886aec304bc5aa0f58f66c',
         raw_kwargs=dict(
-            version_id='uZye03ENmn.vKB5mARUGhcIY_DjShtPD',
             sha1='525a6ac8c14ad826c63fdd71faeefb8ba542d5ac',
             raw_kwargs=dict(
-                version_id='XVTo58Po5YrNjTuDIWrmfHI0nbN2MVZa',
                 sha1='34ba453dc7e8a19aed18cc9bca160e97b4a80be5'
             )
         )
@@ -27,13 +24,10 @@ def Pereira2018_243sentences():
 
 def Pereira2018_384sentences():
     return _Pereira2018ExperimentLinear(experiment='384sentences', ceiling_s3_kwargs=dict(
-        version_id='sjlnXr5wXUoGv6exoWu06C4kYI0KpZLk',
         sha1='fc895adc52fd79cea3040961d65d8f736a9d3e29',
         raw_kwargs=dict(
-            version_id='Hi74r9UKfpK0h0Bjf5DL.JgflGoaknrA',
             sha1='ce2044a7713426870a44131a99bfc63d8843dae0',
             raw_kwargs=dict(
-                version_id='m4dq_ouKWZkYtdyNPMSP0p6rqb7wcYpi',
                 sha1='fe9fb24b34fd5602e18e34006ac5ccc7d4c825b8'
             )
         )
@@ -76,8 +70,8 @@ class _Pereira2018ExperimentLinear(BenchmarkBase):
         data.attrs['identifier'] = f"{data.identifier}.{experiment}"
         return data
 
-    def _load_ceiling(self, identifier: str, version_id: str, sha1: str, assembly_prefix="ceiling_", raw_kwargs=None):
-        ceiling = load_from_s3(identifier, cls=Score, assembly_prefix=assembly_prefix, version_id=version_id, sha1=sha1)
+    def _load_ceiling(self, identifier: str, sha1: str, version_id: str = None, assembly_prefix="ceiling_", raw_kwargs=None):
+        ceiling = load_from_s3(identifier, sha1=sha1, cls=Score, assembly_prefix=assembly_prefix, version_id=version_id)
         if raw_kwargs:  # recursively load raw attributes
             raw = self._load_ceiling(identifier=identifier, assembly_prefix=assembly_prefix + "raw_", **raw_kwargs)
             ceiling.attrs['raw'] = raw
