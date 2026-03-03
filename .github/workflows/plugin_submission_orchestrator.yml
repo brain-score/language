@@ -44,6 +44,7 @@ jobs:
       is_automergeable: ${{ steps.detect.outputs.is_automergeable }}
       plugin_info_json: ${{ steps.detect.outputs.plugin_info_json }}
       is_web_submission: ${{ steps.detect.outputs.is_web_submission }}
+      is_fork_pr: ${{ steps.detect.outputs.is_fork_pr }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -240,6 +241,12 @@ jobs:
             done
           fi
           
+          # Detect fork PRs
+          IS_FORK_PR="false"
+          if [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+            IS_FORK_PR="true"
+          fi
+          
           # Detect web submission from PR title (user:...) pattern
           PR_TITLE="${{ github.event.pull_request.title }}"
           IS_WEB_SUBMISSION="false"
@@ -257,6 +264,7 @@ jobs:
           echo "needs_metadata_generation=${NEEDS_METADATA_GENERATION:-false}" >> $GITHUB_OUTPUT
           echo "is_automergeable=${IS_AUTOMERGEABLE:-false}" >> $GITHUB_OUTPUT
           echo "is_web_submission=${IS_WEB_SUBMISSION:-false}" >> $GITHUB_OUTPUT
+          echo "is_fork_pr=${IS_FORK_PR:-false}" >> $GITHUB_OUTPUT
           if [ -n "$PLUGIN_INFO" ]; then
             PLUGIN_INFO_B64=$(echo "$PLUGIN_INFO" | base64 | tr -d '\n')
             echo "plugin_info_json=${PLUGIN_INFO_B64}" >> $GITHUB_OUTPUT
@@ -274,6 +282,7 @@ jobs:
           echo "  Needs mapping: ${NEEDS_MAPPING}"
           echo "  Needs metadata generation: ${NEEDS_METADATA_GENERATION}"
           echo "  Is web submission: ${IS_WEB_SUBMISSION}"
+          echo "  Is fork PR: ${IS_FORK_PR}"
           if [ "${#MISSING_METADATA_DIRS[@]}" -gt 0 ]; then
             echo "  Plugins missing metadata: ${MISSING_METADATA_DIRS[*]}"
           fi
@@ -384,6 +393,7 @@ jobs:
       always() &&
       needs.detect_changes.result == 'success' &&
       github.event_name == 'pull_request' &&
+      needs.detect_changes.outputs.is_fork_pr != 'true' &&
       needs.detect_changes.outputs.metadata_only == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -423,6 +433,7 @@ jobs:
       always() &&
       needs.detect_changes.result == 'success' &&
       github.event_name == 'pull_request' &&
+      needs.detect_changes.outputs.is_fork_pr != 'true' &&
       (
         needs.detect_changes.outputs.needs_metadata_generation == 'true' ||
         needs.detect_changes.outputs.needs_mapping == 'true'
@@ -628,6 +639,7 @@ jobs:
     if: |
       always() &&
       github.event_name == 'pull_request' &&
+      needs.detect_changes.outputs.is_fork_pr != 'true' &&
       needs.detect_changes.outputs.is_web_submission == 'true' &&
       needs.detect_changes.outputs.plugin_type != 'benchmarks' &&
       (
@@ -1030,6 +1042,7 @@ jobs:
     if: |
       always() &&
       github.event_name == 'pull_request' &&
+      needs.detect_changes.outputs.is_fork_pr != 'true' &&
       (
         needs.detect_changes.result == 'failure' ||
         needs.validate_pr.result == 'failure' ||
