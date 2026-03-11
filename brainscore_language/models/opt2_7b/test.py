@@ -8,20 +8,20 @@ from brainscore_language.artificial_subject import ArtificialSubject
 @pytest.mark.memory_intense
 def test_load_model():
     """Model can be loaded from the registry without errors."""
-    model = load_model('phi-2')
+    model = load_model('opt-2.7b')
     assert model is not None
 
 
 @pytest.mark.memory_intense
 def test_identifier():
-    model = load_model('phi-2')
-    assert model.identifier == 'phi-2'
+    model = load_model('opt-2.7b')
+    assert model.identifier == 'opt-2.7b'
 
 
 @pytest.mark.memory_intense
 def test_neural():
     """Model produces neural representations with the expected shape."""
-    model = load_model('phi-2')
+    model = load_model('opt-2.7b')
     text = ['the quick brown fox', 'jumps over', 'the lazy dog']
     model.start_neural_recording(
         recording_target=ArtificialSubject.RecordingTarget.language_system,
@@ -31,4 +31,6 @@ def test_neural():
     assert len(representations['presentation']) == 3
     np.testing.assert_array_equal(representations['stimulus'], text)
     assert len(representations['neuroid']) == 2560
+
+
 
