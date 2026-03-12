@@ -920,6 +920,7 @@ jobs:
             --arg plugin_dirs "${{ needs.detect_changes.outputs.plugin_dirs }}" \
             --arg plugin_type "${{ needs.detect_changes.outputs.plugin_type }}" \
             --arg user_id "$USER_ID" \
+            --arg bsc_db_secret "${{ secrets.BSC_DATABASESECRET }}" \
             '. + {
               domain: $domain,
               email: $email,
@@ -928,7 +929,8 @@ jobs:
               competition: "None",
               model_type: "artificialsubject",
               public: true,
-              user_id: (if $user_id != "" then $user_id else "2" end)
+              user_id: (if $user_id != "" then $user_id else "2" end),
+              BSC_DATABASESECRET: $bsc_db_secret
             }')
           # Store PLUGIN_INFO in GITHUB_ENV for next step (contains email - will be masked by GitHub Actions)
           echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_ENV
