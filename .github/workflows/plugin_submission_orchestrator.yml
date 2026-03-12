@@ -929,7 +929,7 @@ jobs:
               competition: "None",
               model_type: "artificialsubject",
               public: true,
-              user_id: (if $user_id != "" then $user_id else "121" end),
+              user_id: (if $user_id != "" then $user_id else "2" end),
               BSC_DATABASESECRET: $bsc_db_secret
             }')
           # Store PLUGIN_INFO in GITHUB_ENV for next step (contains email - will be masked by GitHub Actions)
