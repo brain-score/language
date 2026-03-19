@@ -61,7 +61,9 @@ class HuggingfaceSubject(ArtificialSubject):
                 self.model_id, low_cpu_mem_usage=True)
 
         if multi_gpu:
-            self.device = 'cuda'
+            # With device_map='auto', model is split across GPUs. Inputs must go to
+            # the embedding layer's device, not cuda:0.
+            self.device = self.basemodel.get_input_embeddings().weight.device
             self._logger.info(f"Using device_map='auto' across {torch.cuda.device_count()} GPUs")
             print(f"Using device_map='auto' across {torch.cuda.device_count()} GPUs")
         elif torch.backends.mps.is_available():
@@ -297,7 +299,8 @@ class HuggingfaceSubject(ArtificialSubject):
         actual_tokens = self.current_tokens['input_ids'].squeeze(dim=0).contiguous()
         if actual_tokens.shape[0] == predicted_logits.shape[0] + 1:  # multiple tokens for first model input
             actual_tokens = actual_tokens[1:]  # we have no prior context to predict the 0th token
-        actual_tokens = actual_tokens.to(self.device)
+        # With device_map='auto', logits can be on a different GPU than inputs; ensure same device for cross_entropy
+        actual_tokens = actual_tokens.to(predicted_logits.device)
 
         # assume that reading time is additive, i.e. reading time of multiple tokens is
         # the sum of the surprisals of each individual token.
