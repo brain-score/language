@@ -55,10 +55,10 @@ class HuggingfaceSubject(ArtificialSubject):
             self.basemodel = model
         elif multi_gpu:
             self.basemodel = AutoModelForCausalLM.from_pretrained(
-                self.model_id, low_cpu_mem_usage=True, device_map='auto')
+                self.model_id, low_cpu_mem_usage=True, device_map='auto', use_safetensors=True)
         else:
             self.basemodel = AutoModelForCausalLM.from_pretrained(
-                self.model_id, low_cpu_mem_usage=True)
+                self.model_id, low_cpu_mem_usage=True, use_safetensors=True)
 
         if multi_gpu:
             # With device_map='auto', model is split across GPUs. Inputs must go to
