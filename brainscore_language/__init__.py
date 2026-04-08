@@ -38,12 +38,17 @@ def load_benchmark(identifier: str) -> Benchmark:
     return benchmark_registry[identifier]()
 
 
-def load_model(identifier: str) -> ArtificialSubject:
+def load_model(identifier: str) -> 'UnifiedModel':
+    from brainscore_core.model_interface import UnifiedModel
+    from brainscore_language.compat.unified_adapter import LanguageModelAdapter
+
     import_plugin('brainscore_language', 'models', identifier)
 
     model = model_registry[identifier]()
-    model.identifier = identifier
 
+    if not isinstance(model, UnifiedModel):
+        model.identifier = identifier
+        model = LanguageModelAdapter(model)
     return model
 
 def _run_score(model_identifier: str, benchmark_identifier: str) -> Score:

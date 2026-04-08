@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 
-from brainscore_core.model_interface import TaskContext, UnifiedModel
+from brainscore_core.model_interface import TaskContext, UnifiedModel, BrainScoreModel
 from brainscore_language.compat.unified_adapter import LanguageModelAdapter
 
 
@@ -220,3 +220,46 @@ class TestLanguageAdapterReset:
         adapter.reset()
 
         assert legacy.current_tokens is None
+
+
+class TestLanguageAutoWrapping:
+
+    def test_load_model_wraps_legacy(self):
+        """load_model() should wrap a legacy ArtificialSubject in LanguageModelAdapter."""
+        import brainscore_language
+        legacy = _make_legacy_model(identifier='test-gpt2', identifier_is_method=False)
+
+        with patch.object(brainscore_language, 'model_registry',
+                          {'test-gpt2': lambda: legacy}):
+            with patch('brainscore_language.import_plugin'):
+                model = brainscore_language.load_model('test-gpt2')
+
+        assert isinstance(model, UnifiedModel)
+        assert isinstance(model, LanguageModelAdapter)
+        # After load_model, identifier was overwritten to string 'test-gpt2'
+        assert model.identifier == 'test-gpt2'
+
+    def test_load_model_does_not_double_wrap_unified(self):
+        """If the model is already a UnifiedModel, don't wrap it."""
+        import brainscore_language
+        from brainscore_core.model_interface import ModalityProcessor
+
+        class StubProc(ModalityProcessor):
+            @property
+            def modality(self): return 'text'
+            def __call__(self, *a, **kw): return None
+
+        native = BrainScoreModel(
+            identifier='native-lang',
+            model=None,
+            region_layer_map={},
+            processors=[StubProc()],
+        )
+
+        with patch.object(brainscore_language, 'model_registry',
+                          {'native-lang': lambda: native}):
+            with patch('brainscore_language.import_plugin'):
+                model = brainscore_language.load_model('native-lang')
+
+        assert model is native
+        assert not isinstance(model, LanguageModelAdapter)
