@@ -64,11 +64,24 @@ class LanguageModelAdapter(UnifiedModel):
             return next(iter(result.values()))
         return result
 
+    # Backwards-compatible: existing benchmarks call digest_text() directly
+    def digest_text(self, text):
+        return self._legacy.digest_text(text)
+
     def start_task(self, task_context: TaskContext) -> None:
         self._task_context = task_context
         self._task_active = True
         # Legacy ArtificialSubject.start_behavioral_task(task) takes ONE arg
         self._legacy.start_behavioral_task(task_context.task_type)
+
+    # Backwards-compatible: existing benchmarks call these directly
+    def start_behavioral_task(self, task):
+        self._task_active = True
+        self._legacy.start_behavioral_task(task)
+
+    def start_neural_recording(self, recording_target, recording_type='fMRI'):
+        self._recording_active = True
+        self._legacy.start_neural_recording(recording_target, recording_type)
 
     def start_recording(self, recording_target: str,
                         time_bins=None, recording_type=None, **kwargs) -> None:
@@ -85,3 +98,7 @@ class LanguageModelAdapter(UnifiedModel):
         self._task_active = False
         if hasattr(self._legacy, 'current_tokens'):
             self._legacy.current_tokens = None
+
+    def __getattr__(self, name):
+        # Delegate attribute access to the legacy model for backwards compatibility
+        return getattr(self._legacy, name)

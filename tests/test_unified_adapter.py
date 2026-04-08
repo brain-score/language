@@ -164,10 +164,45 @@ class TestLanguageAdapterProcess:
         assert result is sentinel
 
 
+class TestLanguageAdapterLegacyMethods:
+
+    def test_digest_text_delegates(self):
+        """Existing benchmarks call digest_text() directly on the adapter."""
+        legacy = _make_legacy_model()
+        result_dict = {'behavior': 'behavioral_assembly'}
+        legacy.digest_text.return_value = result_dict
+        adapter = LanguageModelAdapter(legacy)
+
+        result = adapter.digest_text(['the quick brown'])
+
+        assert result is result_dict
+        legacy.digest_text.assert_called_once_with(['the quick brown'])
+
+    def test_start_behavioral_task_delegates(self):
+        """Existing benchmarks call start_behavioral_task() directly."""
+        legacy = _make_legacy_model()
+        adapter = LanguageModelAdapter(legacy)
+
+        adapter.start_behavioral_task('next_word')
+
+        legacy.start_behavioral_task.assert_called_once_with('next_word')
+        assert adapter._task_active is True
+
+    def test_start_neural_recording_delegates(self):
+        """Existing benchmarks call start_neural_recording() directly."""
+        legacy = _make_legacy_model()
+        adapter = LanguageModelAdapter(legacy)
+
+        adapter.start_neural_recording('language_system', 'fMRI')
+
+        legacy.start_neural_recording.assert_called_once_with('language_system', 'fMRI')
+        assert adapter._recording_active is True
+
+
 class TestLanguageAdapterStartTask:
 
     def test_start_task_unwraps_to_single_arg(self):
-        """Legacy start_behavioral_task(task) takes ONE arg, unlike vision's two."""
+        """New API: start_task(TaskContext(...))."""
         legacy = _make_legacy_model()
         adapter = LanguageModelAdapter(legacy)
         ctx = TaskContext(task_type='next_word', label_set=['a', 'b'])
