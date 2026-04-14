@@ -277,18 +277,12 @@ class TestLanguageAutoWrapping:
     def test_load_model_does_not_double_wrap_unified(self):
         """If the model is already a UnifiedModel, don't wrap it."""
         import brainscore_language
-        from brainscore_core.model_interface import ModalityProcessor
-
-        class StubProc(ModalityProcessor):
-            @property
-            def modality(self): return 'text'
-            def __call__(self, *a, **kw): return None
 
         native = BrainScoreModel(
             identifier='native-lang',
             model=None,
             region_layer_map={},
-            processors=[StubProc()],
+            preprocessors={'text': lambda m, s, **kw: None},
         )
 
         with patch.object(brainscore_language, 'model_registry',
