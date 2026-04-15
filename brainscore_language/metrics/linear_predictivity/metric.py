@@ -86,15 +86,18 @@ class XarrayCorrelation:
         target = target.sortby([self._correlation_coord, self._neuroid_coord])
         assert np.array(prediction[self._correlation_coord].values == target[self._correlation_coord].values).all()
         assert np.array(prediction[self._neuroid_coord].values == target[self._neuroid_coord].values).all()
-        # compute correlation per neuroid
+        # compute correlation per neuroid (vectorized)
         neuroid_dims = target[self._neuroid_coord].dims
         assert len(neuroid_dims) == 1
-        correlations = []
-        for i, coord_value in enumerate(target[self._neuroid_coord].values):
-            target_neuroids = target.isel(**{neuroid_dims[0]: i})  # `isel` is about 10x faster than `sel`
-            prediction_neuroids = prediction.isel(**{neuroid_dims[0]: i})
-            r, p = self._correlation(target_neuroids, prediction_neuroids)
-            correlations.append(r)
+        x = np.asarray(prediction.values, dtype=np.float64)
+        y = np.asarray(target.values, dtype=np.float64)
+        xm = x - x.mean(axis=0, keepdims=True)
+        ym = y - y.mean(axis=0, keepdims=True)
+        norm_xm = np.linalg.norm(xm, axis=0, keepdims=True)
+        norm_ym = np.linalg.norm(ym, axis=0, keepdims=True)
+        # Zero-variance neuroids get NaN (matching scipy.stats.pearsonr)
+        with np.errstate(invalid='ignore'):
+            correlations = ((xm / norm_xm) * (ym / norm_ym)).sum(axis=0)
         # package
         result = Score(correlations,
                        coords={coord: (dims, values)
