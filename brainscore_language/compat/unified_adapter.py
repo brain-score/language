@@ -39,6 +39,13 @@ class LanguageModelAdapter(UnifiedModel):
     def supported_modalities(self) -> Set[str]:
         return {'text'}
 
+    @property
+    def required_modalities(self) -> Set[str]:
+        # Legacy language models are unimodal — pure text backbones. Hard-
+        # require text so pre-flight rejects pairings against a benchmark
+        # that does not provide text stimuli.
+        return {'text'}
+
     def process(self, stimuli) -> Any:
         # Extract text from StimulusSet
         if hasattr(stimuli, 'columns'):
