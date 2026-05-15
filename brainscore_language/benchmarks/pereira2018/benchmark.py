@@ -14,21 +14,45 @@ from brainscore_language.benchmarks.blank2014.ceiling import ExtrapolationCeilin
 
 def Pereira2018_243sentences_ridge():
     return _Pereira2018Experiment(experiment='243sentences', metric="ridge_pearsonr",
-    crossvalidation_kwargs=dict(
-        split_coord="story",
-        kfold="group",
-        random_state=1234
+        crossvalidation_kwargs=dict(
+            split_coord="story",
+            kfold="group",
+            random_state=1234,
+        ),
+        ceiling_s3_kwargs=dict(
+            version_id='r3xGy2REPZfE7h1oFSnsNg5Rml9R5Ulz',
+            sha1='ba4c077bf0a9e1c46a9582790221c48113e0c5cf',
+            raw_kwargs=dict(
+                version_id='d4ip8z9Hrh94GOLhF69bua8dgfky9m0H',
+                sha1='aad71036f0aa2eac14d1e665fc9e9a955c5d4259',
+                raw_kwargs=dict(
+                    version_id='CcENzwx7_dX1N_OucOhKznpjkcmvYM8C',
+                    sha1='b18cd06fd8b8d077bb884ebf0f3624e5283d49f3',
+                ),
+            ),
+        ),
     )
-)
 
 def Pereira2018_384sentences_ridge():
     return _Pereira2018Experiment(experiment='384sentences', metric="ridge_pearsonr",
-    crossvalidation_kwargs=dict(
-        split_coord="story",
-        kfold="group",
-        random_state=1234
+        crossvalidation_kwargs=dict(
+            split_coord="story",
+            kfold="group",
+            random_state=1234,
+        ),
+        ceiling_s3_kwargs=dict(
+            version_id='u1_f1sJvv9J8eVjWFfA4siHsFHH6rMc1',
+            sha1='167005f57c3f2826a9e6a24ba36d96640fcbf3df',
+            raw_kwargs=dict(
+                version_id='i1p2WSiKGxiRpclDEhl0rPlAoN5IhYYp',
+                sha1='d7cae647a0c26c73c4f7f000eaebba65b3805dfb',
+                raw_kwargs=dict(
+                    version_id='_enewpFHrEO3ZCVexDljLMatTNMIoTCU',
+                    sha1='8b8017a2d685b88546f089bfd23686a5181d6af7',
+                ),
+            ),
+        ),
     )
-)
 
 
 def Pereira2018_243sentences_linear_shuffle():
