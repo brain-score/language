@@ -43,6 +43,8 @@ jobs:
       needs_metadata_generation: ${{ steps.detect.outputs.needs_metadata_generation }}
       is_automergeable: ${{ steps.detect.outputs.is_automergeable }}
       plugin_info_json: ${{ steps.detect.outputs.plugin_info_json }}
+      is_web_submission: ${{ steps.detect.outputs.is_web_submission }}
+      is_fork_pr: ${{ steps.detect.outputs.is_fork_pr }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -239,6 +241,19 @@ jobs:
             done
           fi
           
+          # Detect fork PRs
+          IS_FORK_PR="false"
+          if [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+            IS_FORK_PR="true"
+          fi
+          
+          # Detect web submission from PR title (user:...) pattern
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          IS_WEB_SUBMISSION="false"
+          if echo "$PR_TITLE" | grep -qE '\(user:[^)]+\)'; then
+            IS_WEB_SUBMISSION="true"
+          fi
+          
           echo "has_plugins=${HAS_PLUGINS:-false}" >> $GITHUB_OUTPUT
           echo "plugin_type=${PLUGIN_TYPE:-}" >> $GITHUB_OUTPUT
           echo "plugin_dirs=${PLUGIN_DIRS:-}" >> $GITHUB_OUTPUT
@@ -248,6 +263,8 @@ jobs:
           echo "needs_mapping=${NEEDS_MAPPING:-false}" >> $GITHUB_OUTPUT
           echo "needs_metadata_generation=${NEEDS_METADATA_GENERATION:-false}" >> $GITHUB_OUTPUT
           echo "is_automergeable=${IS_AUTOMERGEABLE:-false}" >> $GITHUB_OUTPUT
+          echo "is_web_submission=${IS_WEB_SUBMISSION:-false}" >> $GITHUB_OUTPUT
+          echo "is_fork_pr=${IS_FORK_PR:-false}" >> $GITHUB_OUTPUT
           if [ -n "$PLUGIN_INFO" ]; then
             PLUGIN_INFO_B64=$(echo "$PLUGIN_INFO" | base64 | tr -d '\n')
             echo "plugin_info_json=${PLUGIN_INFO_B64}" >> $GITHUB_OUTPUT
@@ -264,6 +281,8 @@ jobs:
           echo "  Needs scoring: ${NEEDS_SCORING}"
           echo "  Needs mapping: ${NEEDS_MAPPING}"
           echo "  Needs metadata generation: ${NEEDS_METADATA_GENERATION}"
+          echo "  Is web submission: ${IS_WEB_SUBMISSION}"
+          echo "  Is fork PR: ${IS_FORK_PR}"
           if [ "${#MISSING_METADATA_DIRS[@]}" -gt 0 ]; then
             echo "  Plugins missing metadata: ${MISSING_METADATA_DIRS[*]}"
           fi
@@ -278,7 +297,8 @@ jobs:
     if: |
       github.event_name == 'pull_request' &&
       needs.detect_changes.outputs.has_plugins == 'true' &&
-      needs.detect_changes.outputs.metadata_only != 'true'
+      needs.detect_changes.outputs.metadata_only != 'true' &&
+      needs.detect_changes.outputs.is_web_submission == 'true'
     runs-on: ubuntu-latest
     outputs:
       is_automergeable: ${{ steps.validate.outputs.is_automergeable }}
@@ -370,7 +390,10 @@ jobs:
     name: "3. Handle Metadata-Only PR"
     needs: [detect_changes, validate_pr]
     if: |
+      always() &&
+      needs.detect_changes.result == 'success' &&
       github.event_name == 'pull_request' &&
+      needs.detect_changes.outputs.is_fork_pr != 'true' &&
       needs.detect_changes.outputs.metadata_only == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -407,10 +430,17 @@ jobs:
     name: "4. Generate Mutations and Commit"
     needs: [detect_changes, validate_pr]
     if: |
+      always() &&
+      needs.detect_changes.result == 'success' &&
       github.event_name == 'pull_request' &&
+      needs.detect_changes.outputs.is_fork_pr != 'true' &&
       (
-        (needs.detect_changes.outputs.needs_metadata_generation == 'true' && needs.validate_pr.outputs.all_tests_pass == 'true') ||
-        (needs.detect_changes.outputs.needs_mapping == 'true' && needs.validate_pr.outputs.all_tests_pass == 'true')
+        needs.detect_changes.outputs.needs_metadata_generation == 'true' ||
+        needs.detect_changes.outputs.needs_mapping == 'true'
+      ) &&
+      (
+        needs.validate_pr.outputs.all_tests_pass == 'true' ||
+        needs.validate_pr.result == 'skipped'
       )
     runs-on: ubuntu-latest
     steps:
@@ -609,11 +639,12 @@ jobs:
     if: |
       always() &&
       github.event_name == 'pull_request' &&
+      needs.detect_changes.outputs.is_fork_pr != 'true' &&
+      needs.detect_changes.outputs.is_web_submission == 'true' &&
       needs.detect_changes.outputs.plugin_type != 'benchmarks' &&
       (
         needs.detect_changes.outputs.metadata_only == 'true' ||
         (needs.detect_changes.outputs.metadata_only != 'true' &&
-         needs.validate_pr.result != 'skipped' &&
          needs.validate_pr.outputs.is_automergeable == 'true' &&
          needs.validate_pr.outputs.all_tests_pass == 'true')
       ) &&
@@ -799,7 +830,7 @@ jobs:
             echo "Extracted user_id from PR title (masked)"
           else
             echo "is_web_submission=false" >> $GITHUB_OUTPUT
-            echo "user_id=" >> $GITHUB_OUTPUT
+            echo "user_id=2" >> $GITHUB_OUTPUT
           fi
 
       - name: Find PR author email for non-web submissions
@@ -889,6 +920,7 @@ jobs:
             --arg plugin_dirs "${{ needs.detect_changes.outputs.plugin_dirs }}" \
             --arg plugin_type "${{ needs.detect_changes.outputs.plugin_type }}" \
             --arg user_id "$USER_ID" \
+            --arg bsc_db_secret "${{ secrets.BSC_DATABASESECRET }}" \
             '. + {
               domain: $domain,
               email: $email,
@@ -897,7 +929,8 @@ jobs:
               competition: "None",
               model_type: "artificialsubject",
               public: true,
-              user_id: (if $user_id != "" then $user_id else null end)
+              user_id: (if $user_id != "" then $user_id else "2" end),
+              BSC_DATABASESECRET: $bsc_db_secret
             }')
           # Store PLUGIN_INFO in GITHUB_ENV for next step (contains email - will be masked by GitHub Actions)
           echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_ENV
@@ -1011,6 +1044,7 @@ jobs:
     if: |
       always() &&
       github.event_name == 'pull_request' &&
+      needs.detect_changes.outputs.is_fork_pr != 'true' &&
       (
         needs.detect_changes.result == 'failure' ||
         needs.validate_pr.result == 'failure' ||

@@ -28,8 +28,7 @@ The code in this package was run only once to initially upload the data, and is 
 def upload_blank2014():
     assembly = load_blank2014()
     upload_data_assembly(assembly,
-                         assembly_identifier="Blank2014.fROI",
-                         bucket_name="brainscore-language")
+                         assembly_identifier="Blank2014.fROI")
 
 
 # This file requires nltk_contrib to be installed to run. nltk_contrib is not part of requirements.txt because this

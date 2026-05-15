@@ -130,8 +130,8 @@ class _Pereira2018Experiment(BenchmarkBase):
         data.attrs['identifier'] = f"{data.identifier}.{experiment}"
         return data
 
-    def _load_ceiling(self, identifier: str, version_id: str, sha1: str, assembly_prefix="ceiling_", raw_kwargs=None):
-        ceiling = load_from_s3(identifier, cls=Score, assembly_prefix=assembly_prefix, version_id=version_id, sha1=sha1)
+    def _load_ceiling(self, identifier: str, sha1: str, version_id: str = None, assembly_prefix="ceiling_", raw_kwargs=None):
+        ceiling = load_from_s3(identifier, sha1=sha1, cls=Score, assembly_prefix=assembly_prefix, version_id=version_id)
         if raw_kwargs:  # recursively load raw attributes
             raw = self._load_ceiling(identifier=identifier, assembly_prefix=assembly_prefix + "raw_", **raw_kwargs)
             ceiling.attrs['raw'] = raw

@@ -21,8 +21,7 @@ The code in this package was run only once to initially upload the data, and is 
 def upload_fedorenko2016():
     assembly = load_fedorenko2016()
     upload_data_assembly(assembly,
-                         assembly_identifier="Fedorenko2016.language",
-                         bucket_name="brainscore-language")
+                         assembly_identifier="Fedorenko2016.language")
 
 
 # adapted from
