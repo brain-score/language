@@ -1,0 +1,7 @@
+benchmarks:
+  blank2014:
+    stimulus_set: null
+    data_metadata: null
+    metric_information: null
+    brainscore_link: https://github.com/brain-score/language/tree/master/brainscore_language/benchmarks/blank2014
+    extra_notes: Temporary hardcoded metadata - will be replaced with actual generation
