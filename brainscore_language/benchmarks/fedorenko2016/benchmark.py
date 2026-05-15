@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 
 def Fedorenko2016_ridge():
-    return Fedorenko2016(metric="ridge_pearsonr", 
+    return Fedorenko2016(metric="ridge_pearsonr",
     cross_validation_kwargs=dict(
         split_coord="sentence_id",
         kfold="group",
@@ -21,15 +21,23 @@ def Fedorenko2016_ridge():
     )
 )
 
-def Fedorenko2016_linear():
-    return Fedorenko2016(metric="linear_pearsonr")
+def Fedorenko2016_linear_shuffle():
+    return Fedorenko2016(metric="linear_pearsonr",
+    identifier_suffix="-shuffle",
+    cross_validation_kwargs=dict(
+        splits=10,
+        train_size=0.9,
+        kfold=False,
+        random_state=1,
+    )
+)
 
 class Fedorenko2016(BenchmarkBase):
 
-    def __init__(self, metric: str, cross_validation_kwargs=None):
+    def __init__(self, metric: str, cross_validation_kwargs=None, identifier_suffix: str = ""):
         self.data = load_dataset('Fedorenko2016.language')
-        
-        identifier = f"Fedorenko2016-{metric.split('_')[0]}"
+
+        identifier = f"Fedorenko2016-{metric.split('_')[0]}{identifier_suffix}"
         self.metric = load_metric(metric, crossvalidation_kwargs=cross_validation_kwargs)
 
         ceiler = ExtrapolationCeiling(subject_column="subject_UID")

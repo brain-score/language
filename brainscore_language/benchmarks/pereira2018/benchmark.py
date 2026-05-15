@@ -31,35 +31,51 @@ def Pereira2018_384sentences_ridge():
 )
 
 
-def Pereira2018_243sentences_linear():
-    return _Pereira2018Experiment(experiment='243sentences', metric="linear_pearsonr", ceiling_s3_kwargs=dict(
-        version_id='CHl_9aFHIWVnPW_njePfy28yzggKuUPw',
-        sha1='5e23de899883828f9c886aec304bc5aa0f58f66c',
-        raw_kwargs=dict(
-            version_id='uZye03ENmn.vKB5mARUGhcIY_DjShtPD',
-            sha1='525a6ac8c14ad826c63fdd71faeefb8ba542d5ac',
+def Pereira2018_243sentences_linear_shuffle():
+    return _Pereira2018Experiment(experiment='243sentences', metric="linear_pearsonr",
+        identifier_suffix="-shuffle",
+        crossvalidation_kwargs=dict(
+            splits=10,
+            train_size=0.9,
+            kfold=False,
+            random_state=1,
+        ),
+        ceiling_s3_kwargs=dict(
+            version_id='CHl_9aFHIWVnPW_njePfy28yzggKuUPw',
+            sha1='5e23de899883828f9c886aec304bc5aa0f58f66c',
             raw_kwargs=dict(
-                version_id='XVTo58Po5YrNjTuDIWrmfHI0nbN2MVZa',
-                sha1='34ba453dc7e8a19aed18cc9bca160e97b4a80be5'
-            )
+                version_id='uZye03ENmn.vKB5mARUGhcIY_DjShtPD',
+                sha1='525a6ac8c14ad826c63fdd71faeefb8ba542d5ac',
+                raw_kwargs=dict(
+                    version_id='XVTo58Po5YrNjTuDIWrmfHI0nbN2MVZa',
+                    sha1='34ba453dc7e8a19aed18cc9bca160e97b4a80be5'
+                )
+            ),
         ),
     )
-)
 
-def Pereira2018_384sentences_linear():
-    return _Pereira2018Experiment(experiment='384sentences', metric="linear_pearsonr", ceiling_s3_kwargs=dict(
-        version_id='sjlnXr5wXUoGv6exoWu06C4kYI0KpZLk',
-        sha1='fc895adc52fd79cea3040961d65d8f736a9d3e29',
-        raw_kwargs=dict(
-            version_id='Hi74r9UKfpK0h0Bjf5DL.JgflGoaknrA',
-            sha1='ce2044a7713426870a44131a99bfc63d8843dae0',
+def Pereira2018_384sentences_linear_shuffle():
+    return _Pereira2018Experiment(experiment='384sentences', metric="linear_pearsonr",
+        identifier_suffix="-shuffle",
+        crossvalidation_kwargs=dict(
+            splits=10,
+            train_size=0.9,
+            kfold=False,
+            random_state=1,
+        ),
+        ceiling_s3_kwargs=dict(
+            version_id='sjlnXr5wXUoGv6exoWu06C4kYI0KpZLk',
+            sha1='fc895adc52fd79cea3040961d65d8f736a9d3e29',
             raw_kwargs=dict(
-                version_id='m4dq_ouKWZkYtdyNPMSP0p6rqb7wcYpi',
-                sha1='fe9fb24b34fd5602e18e34006ac5ccc7d4c825b8'
-            )
+                version_id='Hi74r9UKfpK0h0Bjf5DL.JgflGoaknrA',
+                sha1='ce2044a7713426870a44131a99bfc63d8843dae0',
+                raw_kwargs=dict(
+                    version_id='m4dq_ouKWZkYtdyNPMSP0p6rqb7wcYpi',
+                    sha1='fe9fb24b34fd5602e18e34006ac5ccc7d4c825b8'
+                )
+            ),
         ),
     )
-)
 
 
 class _Pereira2018Experiment(BenchmarkBase):
@@ -80,16 +96,20 @@ class _Pereira2018Experiment(BenchmarkBase):
     """
 
     def __init__(self, experiment: str,
-            metric: str, 
-            ceiling_s3_kwargs: dict = {}, 
-            crossvalidation_kwargs: dict = {}, 
+            metric: str,
+            ceiling_s3_kwargs: dict = {},
+            crossvalidation_kwargs: dict = {},
             atlas: str = 'language',
+            identifier_suffix: str = "",
         ):
         self.data = self._load_data(experiment, atlas=atlas)
         self.metric = load_metric(metric, crossvalidation_kwargs=crossvalidation_kwargs)
-        identifier = f"Pereira2018.{experiment}-{metric.split('_')[0]}"
+        base_identifier = f"Pereira2018.{experiment}-{metric.split('_')[0]}"
+        identifier = f"{base_identifier}{identifier_suffix}"
         if ceiling_s3_kwargs:
-            ceiling = self._load_ceiling(identifier=identifier, **ceiling_s3_kwargs)
+            # S3-cached ceilings are stored under the legacy (suffix-less) identifier;
+            # keep loading from there so renamed variants reuse the existing artifacts.
+            ceiling = self._load_ceiling(identifier=base_identifier, **ceiling_s3_kwargs)
         else:
             ceiler = ExtrapolationCeiling(subject_column='subject')
             ceiling = ceiler(assembly=self.data, metric=self.metric)

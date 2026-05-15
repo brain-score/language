@@ -39,13 +39,13 @@ class TestBenchmark:
             neural_activity['stimulus'] = 'presentation', stimuli  # copy over
             return neural_activity
 
-        benchmark = load_benchmark('Blank2014-linear')
+        benchmark = load_benchmark('Blank2014-linear-shuffle')
         dummy_model = TestBenchmark.DummyModel(activity_for_text=activity_for_text)
         score = benchmark(dummy_model)
         assert score == 0
 
     def test_exact(self):
-        benchmark = load_benchmark('Blank2014-linear')
+        benchmark = load_benchmark('Blank2014-linear-shuffle')
         exact_data = copy.deepcopy(benchmark.data)
 
         def activity_for_text(stimuli: Union[str, List[str]]) -> NeuroidAssembly:
@@ -63,12 +63,12 @@ class TestBenchmark:
         assert score == approx(1)
 
     def test_ceiling(self):
-        benchmark = load_benchmark(f'Blank2014-linear')
+        benchmark = load_benchmark(f'Blank2014-linear-shuffle')
         ceiling = benchmark.ceiling
         assert ceiling == approx(.21026591, abs=.0005)
 
     def test_ceiling_raw(self):
-        benchmark = load_benchmark(f'Blank2014-linear')
+        benchmark = load_benchmark(f'Blank2014-linear-shuffle')
         ceiling = benchmark.ceiling
         assert hasattr(ceiling, 'raw')
         assert set(ceiling.raw.dims) == {'neuroid'}

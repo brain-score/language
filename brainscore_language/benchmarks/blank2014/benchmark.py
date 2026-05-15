@@ -11,7 +11,7 @@ from brainscore_language.utils.ceiling import ceiling_normalize
 
 
 def Blank2014_ridge():
-    return Blank2014(metric="ridge_pearsonr", 
+    return Blank2014(metric="ridge_pearsonr",
     cross_validation_kwargs=dict(
         splits=8,
         split_coord="story",
@@ -20,8 +20,16 @@ def Blank2014_ridge():
     )
 )
 
-def Blank2014_linear():
-    return Blank2014(metric="linear_pearsonr")
+def Blank2014_linear_shuffle():
+    return Blank2014(metric="linear_pearsonr",
+    identifier_suffix="-shuffle",
+    cross_validation_kwargs=dict(
+        splits=10,
+        train_size=0.9,
+        kfold=False,
+        random_state=1,
+    )
+)
 
 class Blank2014(BenchmarkBase):
     """
@@ -34,13 +42,13 @@ class Blank2014(BenchmarkBase):
     (e.g. "layer 41 corresponds to the language system"), rather than testing every layer separately.
     """
 
-    def __init__(self, metric: str, cross_validation_kwargs=None):
+    def __init__(self, metric: str, cross_validation_kwargs=None, identifier_suffix: str = ""):
         self.data = load_dataset('Blank2014.fROI')
         self.metric = load_metric(metric, crossvalidation_kwargs=cross_validation_kwargs)
         ceiler = ExtrapolationCeiling()
         ceiling = ceiler(assembly=self.data, metric=self.metric)
         super(Blank2014, self).__init__(
-            identifier=f"Blank2014-{metric.split('_')[0]}",
+            identifier=f"Blank2014-{metric.split('_')[0]}{identifier_suffix}",
             version=1,
             parent='neural_language',
             ceiling=ceiling,

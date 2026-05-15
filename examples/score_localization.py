@@ -3,7 +3,7 @@ from brainscore_language import load_benchmark
 from brainscore_language.model_helpers.huggingface import HuggingfaceSubject
 from brainscore_language import ArtificialSubject
 
-benchmark = load_benchmark('Pereira2018.243sentences-linear')
+benchmark = load_benchmark('Pereira2018.243sentences-linear-shuffle')
 
 num_blocks = 12
 layer_names = [f'transformer.h.{block}.{layer_type}' 

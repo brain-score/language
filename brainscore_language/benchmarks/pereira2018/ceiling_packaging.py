@@ -28,7 +28,7 @@ The code in this file was run only once, and is kept here for reference.
 
 
 def upload_ceiling(experiment):
-    benchmark = load_benchmark(f'Pereira2018.{experiment}-linear')
+    benchmark = load_benchmark(f'Pereira2018.{experiment}-linear-shuffle')
     ceiler = ExtrapolationCeiling()
     ceiling = ceiler(benchmark.data, metric=benchmark.metric)
     _logger.info(f"Uploading ceiling {ceiling}")
