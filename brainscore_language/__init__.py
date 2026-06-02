@@ -39,15 +39,15 @@ def load_benchmark(identifier: str) -> Benchmark:
     return benchmark_registry[identifier]()
 
 
-def load_model(identifier: str) -> 'UnifiedModel':
-    from brainscore_core.model_interface import UnifiedModel
+def load_model(identifier: str) -> 'Subject':
+    from brainscore_core.model_interface import Subject
     from brainscore_language.compat.unified_adapter import LanguageModelAdapter
 
     import_plugin('brainscore_language', 'models', identifier)
 
     model = model_registry[identifier]()
 
-    if not isinstance(model, UnifiedModel):
+    if not isinstance(model, Subject):
         model.identifier = identifier
         model = LanguageModelAdapter(model)
     return model

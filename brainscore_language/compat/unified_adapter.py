@@ -1,5 +1,6 @@
 """
-Adapter wrapping legacy language ArtificialSubject to conform to UnifiedModel.
+Adapter wrapping legacy language ArtificialSubject to conform to the unified
+Subject interface (formerly UnifiedModel).
 
 process() delegates to the legacy model's digest_text(). Text is extracted
 from the StimulusSet's text column. The Dict[str, Assembly] return from
@@ -9,10 +10,10 @@ measurement configuration.
 
 from typing import Any, Dict, Optional, Set
 
-from brainscore_core.model_interface import UnifiedModel, TaskContext
+from brainscore_core.model_interface import Subject, TaskContext
 
 
-class LanguageModelAdapter(UnifiedModel):
+class LanguageModelAdapter(Subject):
 
     def __init__(self, legacy_model):
         self._legacy = legacy_model
