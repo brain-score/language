@@ -350,7 +350,7 @@ def main():
                 email = email_from_uid(int(bs_uid))
                 if not email:
                     # Fallback to default email if database lookup returns no email
-                    email = "mferg@mit.edu"
+                    email = "kpradeep@mit.edu"
                     print(f"Could not find email in database for user {bs_uid}, using default: {email}", file=sys.stderr)
             else:
                 print("Could not extract user ID from PR title", file=sys.stderr)
@@ -376,7 +376,7 @@ def main():
                         break
             if not email:
                 # Fallback to default email if real email not found
-                email = "mferg@mit.edu"
+                email = "kpradeep@mit.edu"
                 print(f"Could not find email for user, using default Brain-Score submission (mferg): {email}", file=sys.stderr)
         
         print(email)
