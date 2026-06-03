@@ -106,7 +106,8 @@ def extract_representations(
     logger.debug(f"> Using Device: {device}")
 
     model.eval()
-    model.to(device)
+    if not getattr(model, "hf_device_map", None):  # skip when already sharded via device_map
+        model.to(device)
 
     final_layer_representations = {
         "sentences": {layer_name: np.zeros((len(langloc_dataset.sentences), hidden_dim)) for layer_name in layer_names},
