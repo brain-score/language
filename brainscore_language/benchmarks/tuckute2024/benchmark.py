@@ -30,7 +30,7 @@ class _Tuckute2024(BenchmarkBase):
      
         super(_Tuckute2024, self).__init__(
             identifier=identifier,
-            version=1,
+            version=2,
             parent='neural_language',
             ceiling=None,
             bibtex=BIBTEX)

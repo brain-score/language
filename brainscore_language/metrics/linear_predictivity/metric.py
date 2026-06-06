@@ -63,6 +63,10 @@ class XarrayRegression:
         for target_coord, target_value in self._target_neuroid_values.items():
             # this might overwrite values which is okay
             coords[target_coord] = (neuroid_level_dim or self._neuroid_dim), target_value
+
+        if len(predicted_values.shape) == 1:
+            predicted_values = predicted_values[:, np.newaxis]
+
         prediction = NeuroidAssembly(predicted_values, coords=coords, dims=dims)
         if neuroid_level_dim:
             prediction = prediction.stack(**{self._neuroid_dim: [neuroid_level_dim]})
