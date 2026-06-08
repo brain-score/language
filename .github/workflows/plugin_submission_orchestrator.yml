@@ -827,10 +827,17 @@ jobs:
             echo "is_web_submission=true" >> $GITHUB_OUTPUT
             USER_ID=$(echo "$PR_TITLE" | sed -E 's/.*\(user:([^)]+)\).*/\1/')
             echo "user_id=${USER_ID}" >> $GITHUB_OUTPUT
-            echo "Extracted user_id from PR title (masked)"
+            # Extract size from PR title (default: small)
+            SIZE="small"
+            if echo "$PR_TITLE" | grep -qE '\(size:[^)]+\)'; then
+              SIZE=$(echo "$PR_TITLE" | sed -E 's/.*\(size:([^)]+)\).*/\1/')
+            fi
+            echo "size=${SIZE}" >> $GITHUB_OUTPUT
+            echo "Extracted user_id and size from PR title (masked)"
           else
             echo "is_web_submission=false" >> $GITHUB_OUTPUT
-            echo "user_id=2" >> $GITHUB_OUTPUT
+            echo "user_id=121" >> $GITHUB_OUTPUT
+            echo "size=small" >> $GITHUB_OUTPUT
           fi
 
       - name: Find PR author email for non-web submissions
@@ -852,7 +859,7 @@ jobs:
         run: |
           EMAIL="${{ steps.getemail.outputs.email }}"
           if [ -z "$EMAIL" ] || [ "$EMAIL" = "null" ] || [ "$EMAIL" = "None" ]; then
-            EMAIL="mferg@mit.edu"
+            EMAIL="kpradeep@mit.edu"
             echo "Could not find email for user ${{ github.event.pull_request.user.login }}, using default email" >&2
           fi
           echo "::add-mask::$EMAIL"
@@ -885,7 +892,7 @@ jobs:
           BS_UID=$(echo "$PR_TITLE" | sed -E 's/.*\(user:([^)]+)\).*/\1/')
           EMAIL=$(python -c "from brainscore_core.submission.database import email_from_uid; from brainscore_core.submission.endpoints import UserManager; import os; user_manager=UserManager(db_secret=os.environ['BSC_DATABASESECRET']); print(email_from_uid(int('$BS_UID')))" 2>/dev/null)
           if [ -z "$EMAIL" ] || [ "$EMAIL" = "None" ]; then
-            EMAIL="mferg@mit.edu"
+            EMAIL="kpradeep@mit.edu"
             echo "Could not find email in database for user $BS_UID, using default email" >&2
             echo "::add-mask::$EMAIL"
           fi
@@ -914,12 +921,14 @@ jobs:
           PLUGIN_INFO_DECODED=$(echo "$PLUGIN_INFO_B64" | base64 -d)
           
           USER_ID="${{ steps.check_web_submission.outputs.user_id }}"
+          SIZE="${{ steps.check_web_submission.outputs.size }}"
           PLUGIN_INFO=$(echo "$PLUGIN_INFO_DECODED" | jq -c \
             --arg domain "language" \
             --arg email "${{ steps.extract_email.outputs.email }}" \
             --arg plugin_dirs "${{ needs.detect_changes.outputs.plugin_dirs }}" \
             --arg plugin_type "${{ needs.detect_changes.outputs.plugin_type }}" \
             --arg user_id "$USER_ID" \
+            --arg size "$SIZE" \
             --arg bsc_db_secret "${{ secrets.BSC_DATABASESECRET }}" \
             '. + {
               domain: $domain,
@@ -929,7 +938,8 @@ jobs:
               competition: "None",
               model_type: "artificialsubject",
               public: true,
-              user_id: (if $user_id != "" then $user_id else "2" end),
+              user_id: (if $user_id != "" then $user_id else "121" end),
+              size: (if $size != "" then $size else "small" end),
               BSC_DATABASESECRET: $bsc_db_secret
             }')
           # Store PLUGIN_INFO in GITHUB_ENV for next step (contains email - will be masked by GitHub Actions)
@@ -1144,7 +1154,7 @@ jobs:
         run: |
           EMAIL="${{ steps.getemail.outputs.email }}"
           if [ -z "$EMAIL" ]; then
-            EMAIL="mferg@mit.edu"
+            EMAIL="kpradeep@mit.edu"
             echo "Could not find email for user ${{ github.event.pull_request.user.login }}, using default email" >&2
             echo "::add-mask::$EMAIL"
           fi
@@ -1175,7 +1185,7 @@ jobs:
           BS_UID=$(echo "$PR_TITLE" | sed -E 's/.*\(user:([^)]+)\).*/\1/')
           EMAIL=$(python -c "from brainscore_core.submission.database import email_from_uid; from brainscore_core.submission.endpoints import UserManager; import os; user_manager=UserManager(db_secret=os.environ['BSC_DATABASESECRET']); print(email_from_uid(int('$BS_UID')))" 2>/dev/null)
           if [ -z "$EMAIL" ] || [ "$EMAIL" = "None" ]; then
-            EMAIL="mferg@mit.edu"
+            EMAIL="kpradeep@mit.edu"
             echo "Could not find email in database for user $BS_UID, using default email" >&2
             echo "::add-mask::$EMAIL"
           fi

@@ -94,7 +94,7 @@ python actions_helpers.py trigger_update_existing_metadata \
 Triggers Jenkins layer mapping job. Only used for non-language domains (language always has `needs_mapping=false`).
 
 #### `extract_email`
-Resolves submitter email. For web submissions, looks up email from Brain-Score user ID via database. For non-web submissions, tries GitHub API, then public events. Falls back to `mferg@mit.edu`.
+Resolves submitter email. For web submissions, looks up email from Brain-Score user ID via database. For non-web submissions, tries GitHub API, then public events. Falls back to `kpradeep@mit.edu`.
 
 #### `send_failure_email`
 Sends a failure notification email via Gmail SMTP.

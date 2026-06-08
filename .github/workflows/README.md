@@ -72,7 +72,7 @@ If metadata already exists and tests pass, adds the `submission_prepared` label.
 
 **6. Post-Merge Kickoff** — Triggered by `pull_request_target` (merged). For plugin PRs: extracts submitter email (encrypted/decrypted with `EMAIL_ENCRYPTION_KEY`), builds plugin info JSON, and calls `call_jenkins_language()` to trigger the `core/job/score_plugins` Jenkins job. For metadata-only PRs: triggers `update_existing_metadata` Jenkins job.
 
-**7. Notify on Failure** — Sends an email to the submitter when any job fails or tests don't pass. Extracts email using the same web/non-web logic as post-merge. Falls back to `mferg@mit.edu` if email lookup fails.
+**7. Notify on Failure** — Sends an email to the submitter when any job fails or tests don't pass. Extracts email using the same web/non-web logic as post-merge. Falls back to `kpradeep@mit.edu` if email lookup fails.
 
 ## Workflow Flows
 
