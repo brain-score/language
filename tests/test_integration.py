@@ -58,6 +58,7 @@ def test_score(model_identifier, benchmark_identifier, expected_score):
     assert actual_score == expected_score
 
 
+@pytest.mark.travis_slow
 @pytest.mark.parametrize(
     "model_identifier, benchmark_identifier, expected_score, install_dependencies",
     [
@@ -82,6 +83,7 @@ def test_score_with_install_dependencies(
     assert actual_score == expected_score
 
 
+@pytest.mark.travis_slow
 def test_commandline_score():
     process = subprocess.run(
         [

@@ -41,6 +41,7 @@ class TestRunScoring:
         logger.info('Clean database')
         clear_schema()
         
+    @pytest.mark.travis_slow
     def test_successful_run(self):
         args_dict = {'jenkins_id': 62, 'user_id': 1, 'model_type': 'artificialsubject', 
                     'public': True, 'competition': 'None', 'new_models': ['randomembedding-100'], 
