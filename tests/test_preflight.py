@@ -4,6 +4,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 
 from brainscore_core.compatibility import CompatibilityError
+from brainscore_core.io_catalog import modalities_to_input_channels
 from brainscore_core.memory import MemoryError
 
 
@@ -21,6 +22,9 @@ class TestPreflightInRunScore:
         model.available_modalities = model_modalities
         model.required_modalities = set()
         model.region_layer_map = {}
+        model.in_channels = modalities_to_input_channels(model_modalities)
+        model.out_channels = set()
+        model.required_channels = set()
 
         benchmark = MagicMock(spec=['identifier', 'required_modalities', '__call__'])
         benchmark.identifier = 'test-bench'
@@ -63,6 +67,49 @@ class TestPreflightInRunScore:
 
         result = _run_score('test-model', 'test-bench', check_mem=False)
         benchmark.assert_called_once_with(model)
+
+    @patch('brainscore_core.compatibility.check_channel_compatibility')
+    @patch('brainscore_language.load_benchmark')
+    @patch('brainscore_language.load_model')
+    def test_channel_check_runs_for_compatible_pair(
+        self, mock_load_model, mock_load_benchmark, mock_check_channel
+    ):
+        from brainscore_language import _run_score
+
+        model, benchmark = self._make_model_and_benchmark(
+            model_modalities={'text'},
+            bench_required={'text'},
+        )
+        score = MagicMock()
+        score.attrs = {}
+        benchmark.return_value = score
+        mock_load_model.return_value = model
+        mock_load_benchmark.return_value = benchmark
+
+        _run_score('test-model', 'test-bench', check_mem=False)
+
+        mock_check_channel.assert_called_once_with(model, benchmark)
+        benchmark.assert_called_once_with(model)
+
+    @patch('brainscore_language.load_benchmark')
+    @patch('brainscore_language.load_model')
+    def test_channel_mismatch_raises_channel_named_error(
+        self, mock_load_model, mock_load_benchmark
+    ):
+        from brainscore_language import _run_score
+
+        model, benchmark = self._make_model_and_benchmark(
+            model_modalities={'text'},
+            bench_required={'text'},
+        )
+        benchmark.required_input_channels = {'vision'}
+        mock_load_model.return_value = model
+        mock_load_benchmark.return_value = benchmark
+
+        with pytest.raises(CompatibilityError, match="vision"):
+            _run_score('test-model', 'test-bench', check_mem=False)
+
+        benchmark.assert_not_called()
 
     @patch('brainscore_core.memory.check_memory')
     @patch('brainscore_language.load_benchmark')
