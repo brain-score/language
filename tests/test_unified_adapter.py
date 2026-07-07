@@ -1,7 +1,13 @@
 import pytest
+import numpy as np
+import pandas as pd
+import xarray as xr
 from unittest.mock import MagicMock, patch
 
 from brainscore_core.model_interface import TaskContext, UnifiedModel, BrainScoreModel
+from brainscore_core.streaming_helpers import score_stimuli
+from brainscore_core.supported_data_standards.brainio.assemblies import NeuroidAssembly
+from brainscore_core.supported_data_standards.brainio.stimuli import StimulusSet
 from brainscore_language.compat.unified_adapter import LanguageModelAdapter
 
 
@@ -44,6 +50,29 @@ class _FakeStimulusSet:
         if key == self._column_name:
             return MagicMock(values=self._data)
         raise KeyError(key)
+
+
+def _language_stimulus_set():
+    stimuli = StimulusSet(pd.DataFrame({
+        'stimulus_id': ['s0', 's1'],
+        'sentence': ['the quick brown', 'fox jumps'],
+        'object_name': ['sentence0', 'sentence1'],
+    }))
+    stimuli.identifier = 'synthetic-language'
+    return stimuli
+
+
+def _language_neural_assembly():
+    return NeuroidAssembly(
+        np.array([[1.0, 2.0], [3.0, 4.0]]),
+        coords={
+            'stimulus_id': ('presentation', ['s0', 's1']),
+            'object_name': ('presentation', ['sentence0', 'sentence1']),
+            'neuroid_id': ('neuroid', ['language.0', 'language.1']),
+            'layer': ('neuroid', ['language', 'language']),
+        },
+        dims=['presentation', 'neuroid'],
+    )
 
 
 class TestLanguageAdapterIsUnifiedModel:
@@ -163,6 +192,32 @@ class TestLanguageAdapterProcess:
         result = adapter.process(['text'])
         assert result is sentinel
 
+    def test_score_stimuli_interact_matches_legacy_process_exactly(self):
+        stimuli = _language_stimulus_set()
+        expected = _language_neural_assembly()
+
+        legacy_expected = _make_legacy_model(
+            region_layer_mapping={'language_system': 'language'}
+        )
+        legacy_expected.digest_text.return_value = {'neural': expected}
+        expected_adapter = LanguageModelAdapter(legacy_expected)
+        expected_adapter.start_recording('language_system')
+        legacy_output = expected_adapter.process(stimuli)
+
+        legacy_stream = _make_legacy_model(
+            region_layer_mapping={'language_system': 'language'}
+        )
+        legacy_stream.digest_text.return_value = {'neural': expected}
+        stream_adapter = LanguageModelAdapter(legacy_stream)
+        scored = score_stimuli(
+            stream_adapter, stimuli, record='language_system'
+        )
+
+        xr.testing.assert_identical(scored, legacy_output)
+        legacy_stream.start_neural_recording.assert_called_once_with(
+            'language_system', 'fMRI'
+        )
+
 
 class TestLanguageAdapterLegacyMethods:
 
@@ -273,6 +328,28 @@ class TestLanguageAutoWrapping:
         assert isinstance(model, LanguageModelAdapter)
         # After load_model, identifier was overwritten to string 'test-gpt2'
         assert model.identifier == 'test-gpt2'
+
+    def test_load_model_wrapped_legacy_interact_scores(self):
+        import brainscore_language
+        expected = _language_neural_assembly()
+        legacy = _make_legacy_model(
+            identifier='test-gpt2',
+            identifier_is_method=False,
+            region_layer_mapping={'language_system': 'language'},
+        )
+        legacy.digest_text.return_value = {'neural': expected}
+
+        with patch.object(brainscore_language, 'model_registry',
+                          {'test-gpt2': lambda: legacy}):
+            with patch('brainscore_language.import_plugin'):
+                model = brainscore_language.load_model('test-gpt2')
+
+        scored = score_stimuli(
+            model, _language_stimulus_set(), record='language_system'
+        )
+
+        assert isinstance(model, LanguageModelAdapter)
+        xr.testing.assert_identical(scored, expected)
 
     def test_load_model_does_not_double_wrap_unified(self):
         """If the model is already a UnifiedModel, don't wrap it."""

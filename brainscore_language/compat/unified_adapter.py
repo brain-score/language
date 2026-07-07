@@ -11,6 +11,7 @@ measurement configuration.
 from typing import Any, Dict, Optional, Set
 
 from brainscore_core.model_interface import Subject, TaskContext
+from brainscore_core.streaming_helpers import _drive_neural_session_via_process
 
 
 class LanguageModelAdapter(Subject):
@@ -71,6 +72,9 @@ class LanguageModelAdapter(Subject):
         if len(result) == 1:
             return next(iter(result.values()))
         return result
+
+    def interact(self, session) -> None:
+        _drive_neural_session_via_process(self, session)
 
     # Backwards-compatible: existing benchmarks call digest_text() directly
     def digest_text(self, text):
