@@ -9,18 +9,20 @@ description = ""
 authors = []
 license = { 'file' = 'LICENSE' }
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.12"
 
 dependencies = [
     "tqdm",
     "numpy <2",
     "brainscore-core",
     "fire",
-    "scikit-learn >=1.6", # for metric_helpers/transformations.py cross-validation
+    # Unified installs use sklearn 1.5.x. Language features that require
+    # sklearn >=1.6 are unsupported in the shared unified environment.
+    "scikit-learn>=1.5,<1.6",
     "pandas <3",
     # model_helpers dependencies
     "torch >=1.9.1",
-    "transformers >=4.11.3",
+    "transformers>=4.57,<4.58",
     "gensim",
     "joblib",
     # submission dependencies
