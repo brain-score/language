@@ -9,6 +9,11 @@ experimental benchmarks in the field for the purpose of model testing, falsifica
 Brain-Score operationalizes experimental data into quantitative benchmarks that any model candidate following
 the `BrainModel` interface can be scored on.
 
+> **UMI migration:** ArtificialSubject, BrainModel, and digest_text are the
+> pre-UMI language interface. Existing plugins remain supported, but new
+> cross-domain integrations should use Subject or BrainScoreModel with
+> process(). See [docs/UMI_MIGRATION.md](docs/UMI_MIGRATION.md).
+
 See the [Documentation](https://brain-score-language.readthedocs.io) for more details.
 
 Brain-Score is made by and for the community. To contribute,
