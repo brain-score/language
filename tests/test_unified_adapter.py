@@ -5,7 +5,7 @@ import xarray as xr
 from unittest.mock import MagicMock, patch
 
 from brainscore_core.model_interface import TaskContext, UnifiedModel, BrainScoreModel
-from brainscore_core.streaming_helpers import score_stimuli
+from brainscore_core.streaming_helpers import neural_response
 from brainscore_core.supported_data_standards.brainio.assemblies import NeuroidAssembly
 from brainscore_core.supported_data_standards.brainio.stimuli import StimulusSet
 from brainscore_language.compat.unified_adapter import LanguageModelAdapter
@@ -192,7 +192,7 @@ class TestLanguageAdapterProcess:
         result = adapter.process(['text'])
         assert result is sentinel
 
-    def test_score_stimuli_interact_matches_legacy_process_exactly(self):
+    def test_neural_response_interact_matches_legacy_process_exactly(self):
         stimuli = _language_stimulus_set()
         expected = _language_neural_assembly()
 
@@ -209,7 +209,7 @@ class TestLanguageAdapterProcess:
         )
         legacy_stream.digest_text.return_value = {'neural': expected}
         stream_adapter = LanguageModelAdapter(legacy_stream)
-        scored = score_stimuli(
+        scored = neural_response(
             stream_adapter, stimuli, record='language_system'
         )
 
@@ -344,7 +344,7 @@ class TestLanguageAutoWrapping:
             with patch('brainscore_language.import_plugin'):
                 model = brainscore_language.load_model('test-gpt2')
 
-        scored = score_stimuli(
+        scored = neural_response(
             model, _language_stimulus_set(), record='language_system'
         )
 
