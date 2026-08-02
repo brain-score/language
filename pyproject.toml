@@ -20,7 +20,7 @@ dependencies = [
     "pandas <3",
     # model_helpers dependencies
     "torch >=1.9.1",
-    "transformers >=4.11.3",
+    "transformers >=4.51,<5",
     "gensim",
     "joblib",
     # submission dependencies
