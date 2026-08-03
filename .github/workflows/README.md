@@ -21,7 +21,6 @@ A single workflow handles all phases of the submission lifecycle:
 
 - **`brainscore_language/submission/actions_helpers.py`** — Python CLI used by the orchestrator for:
   - `validate_pr` — Polls GitHub commit statuses API to check if tests pass
-  - `trigger_update_existing_metadata` — Triggers the Jenkins `update_existing_metadata` job
   - `trigger_layer_mapping` — Triggers the Jenkins layer mapping job (non-language domains only)
   - `extract_email` — Resolves submitter email from GitHub username or Brain-Score user ID
   - `send_failure_email` — Sends failure notification emails via Gmail SMTP
@@ -40,7 +39,7 @@ The orchestrator has 7 numbered jobs:
 | 3 | **Handle Metadata-Only PR** | Only when PR contains only `metadata.yml` changes |
 | 4 | **Generate Mutations and Commit** | When metadata generation or layer mapping is needed and tests pass |
 | 5 | **Auto-merge** | Web submissions only, when tests pass and `submission_prepared` label exists |
-| 6 | **Post-Merge Kickoff** | After PR is merged (`pull_request_target` with `merged == true`) |
+| 6 | **Post-Merge Kickoff** | After a scoring-eligible plugin PR is merged |
 | 7 | **Notify on Failure** | When any upstream job fails or tests don't pass |
 
 ### Job Details
@@ -70,7 +69,7 @@ If metadata already exists and tests pass, adds the `submission_prepared` label.
 
 **5. Auto-merge** — Only merges **web submissions** (PR title contains `(user:<id>)`). Non-web submissions are never auto-merged. For plugin PRs, requires `submission_prepared` label + tests passing. For metadata-only PRs, checks tests directly. Uses `hmarr/auto-approve-action` for approval and `plm9606/automerge_actions` for squash merge.
 
-**6. Post-Merge Kickoff** — Triggered by `pull_request_target` (merged). For plugin PRs: extracts submitter email (encrypted/decrypted with `EMAIL_ENCRYPTION_KEY`), builds plugin info JSON, and calls `call_jenkins_language()` to trigger the `core/job/score_plugins` Jenkins job. For metadata-only PRs: triggers `update_existing_metadata` Jenkins job.
+**6. Post-Merge Kickoff** — Triggered by `pull_request_target` (merged) for plugin PRs that need scoring. Extracts submitter email (encrypted/decrypted with `EMAIL_ENCRYPTION_KEY`), builds plugin info JSON, and calls `call_jenkins_language()` to trigger the `core/job/score_plugins` Jenkins job. Metadata-only merges do not run this job or mutate Jenkins/database state.
 
 **7. Notify on Failure** — Sends an email to the submitter when any job fails or tests don't pass. Extracts email using the same web/non-web logic as post-merge. Falls back to `mferg@mit.edu` if email lookup fails.
 
@@ -177,8 +176,7 @@ Plugin Submission Orchestrator
 ├─ 3. Handle Metadata-Only PR ✓ (label already exists, exits)
 ├─ 5. Auto-merge ✓ (web submission, checks tests directly for metadata-only)
 │   └─ Squash merges
-├─ 6. Post-Merge Kickoff ✓
-│   └─ Triggers update_existing_metadata Jenkins job
+├─ 6. Post-Merge Kickoff (skipped — no scoring or metadata mutation)
 └─ 7. Notify on Failure (skipped)
 ```
 
@@ -270,9 +268,9 @@ Triggered by `call_jenkins_language()` in `endpoints.py`. Sends parameters:
 
 The function uses CSRF crumb handling (fetches crumb from `/crumbIssuer/api/json`, includes in POST headers) and basic auth.
 
-### Metadata Update (`update_existing_metadata`)
+### Metadata-only merges
 
-Triggered by `actions_helpers.py trigger_update_existing_metadata` for metadata-only PRs. Sends `domain`, `plugin_dirs`, `plugin_type`, and serialized metadata JSON.
+Metadata files are versioned in Git. A metadata-only merge does not trigger a Jenkins job or perform a separate database mutation.
 
 ### Layer Mapping (non-language domains only)
 
