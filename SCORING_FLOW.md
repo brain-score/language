@@ -206,9 +206,9 @@ PR Created/Updated
 **When:** Only runs if:
 - PR was merged to `main` (`pull_request_target` event, `merged == true`)
 - For plugin PRs: `needs_scoring == true` and `metadata_only == false`
-- For metadata-only PRs: `metadata_only == true`
+- Metadata-only PRs skip this job
 
-**Purpose:** Trigger Jenkins scoring (plugin PRs) or update metadata (metadata-only PRs)
+**Purpose:** Trigger Jenkins scoring for plugin PRs that need it
 
 **Process:**
 
@@ -248,10 +248,9 @@ PR Created/Updated
    - Jenkins job URL: `http://www.brain-score-jenkins.com:8080/job/dev_score_plugins/buildWithParameters`
 
 **For Metadata-Only PRs:**
-1. **Trigger Jenkins Update Metadata:**
-   - Calls `actions_helpers.py trigger_update_existing_metadata`
-   - Sends plugin directories, plugin type, and domain to Jenkins
-   - Jenkins job updates existing metadata in database
+1. **Preserve Repository Metadata:**
+   - Metadata changes remain versioned in Git
+   - No Jenkins job or separate database mutation is requested
 
 **Jenkins Scoring Job:**
 
@@ -329,7 +328,6 @@ brainscore_language/submission/
 
 **Functions:**
 - `validate_pr()` - Validates PR for automerge eligibility
-- `trigger_update_existing_metadata()` - Triggers Jenkins update_existing_metadata job
 - `trigger_layer_mapping()` - Triggers Jenkins layer mapping job
 - `extract_email()` - Extracts user email from PR or database
 - `send_failure_email()` - Sends failure notification emails
@@ -463,10 +461,8 @@ brainscore_language/submission/
 3. **Auto-merge job** runs:
    - Checks test status directly
    - If tests pass → auto-approves → auto-merges
-4. **Post-Merge Kickoff job** runs:
-   - Triggers Jenkins job "update_existing_metadata"
-   - Jenkins updates database with new metadata
-5. Post-merge scoring skipped (`metadata_only == true`)
+4. **Post-Merge Kickoff job** is skipped
+5. No Jenkins job or separate database mutation is requested
 
 ### Scenario 4: Web Submission
 
@@ -606,8 +602,7 @@ Plugin Submission Orchestrator
 ├─ 3. Handle Metadata-Only PR (success, label exists, exits)
 ├─ 5. Auto-merge (success)
 │   └─→ Checks tests directly, merges if pass
-├─ 6. Post-Merge Kickoff (success)
-│   └─→ Triggers update_existing_metadata Jenkins job
+├─ 6. Post-Merge Kickoff (skipped - no scoring or metadata mutation)
 └─ 7. Notify on Failure (skipped - no failures)
 ```
 

@@ -186,41 +186,6 @@ def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str
     }
 
 
-def trigger_update_existing_metadata(plugin_dirs: str, plugin_type: str, domain: str,
-                                     jenkins_user: str, jenkins_token: str, jenkins_trigger: str,
-                                     metadata_and_layer_map: dict = None):
-    """Trigger Jenkins update_existing_metadata job"""
-    import json
-    
-    # Build Jenkins trigger URL
-    jenkins_base = "http://www.brain-score-jenkins.com:8080"
-    url = f"{jenkins_base}/job/update_existing_metadata/buildWithParameters?token={jenkins_trigger}"
-    
-    # Prepare payload
-    payload = {
-        "domain": domain,
-        "plugin_dirs": plugin_dirs,
-        "plugin_type": plugin_type,
-        "update_metadata_only": "true"
-    }
-    
-    # Add metadata_and_layer_map if provided (JSON-serialize nested dict)
-    if metadata_and_layer_map:
-        payload["metadata_and_layer_map"] = json.dumps(metadata_and_layer_map)
-    
-    # Trigger Jenkins
-    from requests.auth import HTTPBasicAuth
-    auth = HTTPBasicAuth(username=jenkins_user, password=jenkins_token)
-    
-    try:
-        response = requests.get(url, params=payload, auth=auth)
-        response.raise_for_status()
-        print(f"Successfully triggered update_existing_metadata for {plugin_type}: {plugin_dirs}")
-    except Exception as e:
-        print(f"Failed to trigger Jenkins update_existing_metadata: {e}")
-        raise
-
-
 def trigger_layer_mapping(new_models: str, pr_number: int, source_repo: str, 
                          source_branch: str, jenkins_user: str, jenkins_user_api: str,
                          jenkins_token: str, jenkins_trigger: str):
@@ -303,13 +268,6 @@ def main():
     validate_parser.add_argument('--is-automerge-web', type=str, default='false')
     validate_parser.add_argument('--token', type=str, default=os.getenv('GITHUB_TOKEN'))
     
-    # Trigger update existing metadata command
-    update_metadata_parser = subparsers.add_parser('trigger_update_existing_metadata', help='Trigger update existing metadata')
-    update_metadata_parser.add_argument('--plugin-dirs', type=str, required=True)
-    update_metadata_parser.add_argument('--plugin-type', type=str, required=True)
-    update_metadata_parser.add_argument('--domain', type=str, default='language')
-    update_metadata_parser.add_argument('--metadata-and-layer-map-b64', type=str, default='')
-    
     # Trigger layer mapping command
     mapping_parser = subparsers.add_parser('trigger_layer_mapping', help='Trigger layer mapping')
     mapping_parser.add_argument('--new-models', type=str, required=True)
@@ -385,27 +343,6 @@ def main():
         is_automerge_web = args.is_automerge_web.lower() == 'true'
         result = validate_pr(args.pr_number, args.pr_head, is_automerge_web, args.token)
         print(json.dumps(result))
-        
-    elif args.command == 'trigger_update_existing_metadata':
-        # Decode metadata_and_layer_map if provided
-        metadata_and_layer_map = None
-        if args.metadata_and_layer_map_b64:
-            import base64
-            try:
-                metadata_json = base64.b64decode(args.metadata_and_layer_map_b64).decode('utf-8')
-                metadata_and_layer_map = json.loads(metadata_json)
-            except Exception as e:
-                print(f"Warning: Failed to decode metadata_and_layer_map: {e}", file=sys.stderr)
-        
-        trigger_update_existing_metadata(
-            plugin_dirs=args.plugin_dirs,
-            plugin_type=args.plugin_type,
-            domain=args.domain,
-            metadata_and_layer_map=metadata_and_layer_map,
-            jenkins_user=os.getenv('JENKINS_USER'),
-            jenkins_token=os.getenv('JENKINS_TOKEN'),
-            jenkins_trigger=os.getenv('JENKINS_TRIGGER')
-        )
         
     elif args.command == 'trigger_layer_mapping':
         trigger_layer_mapping(
