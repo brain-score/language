@@ -16,6 +16,10 @@ dependencies = [
     "numpy <2",
     "brainscore-core",
     "fire",
+    # brainscore_language/data/wikitext imports this at load time; without it the
+    # language data path raises ModuleNotFoundError. Declared here rather than only in
+    # the conda environment file, so a plain `pip install -e ./language` is sufficient.
+    "datasets",
     # Unified installs use sklearn 1.5.x. Language features that require
     # sklearn >=1.6 are unsupported in the shared unified environment.
     "scikit-learn>=1.5,<1.6",
