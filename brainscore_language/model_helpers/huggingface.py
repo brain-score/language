@@ -20,6 +20,50 @@ from brainscore_language.utils import fullname
 from brainscore_language.model_helpers.localize import localize_fed10
 
 
+
+def slice_kv_cache(past_kv, keep):
+    """Keep only the most recent ``keep`` positions of a key/value cache.
+
+    transformers has moved this API twice, which is the only reason the package
+    was pinned below 5.0:
+
+    - ``< 4.36``  the cache is a plain tuple of ``(key, value)`` pairs
+    - ``4.x``     ``DynamicCache`` with ``to_legacy_cache`` / ``from_legacy_cache``
+    - ``>= 5``    per-layer objects exposing ``.keys`` / ``.values``; the legacy
+                  round-trip was removed
+
+    All three are handled by shape, so the sliding-window path no longer pins a
+    transformers major version. Note this drops the *oldest* positions, which is
+    not what ``Cache.crop`` does — that keeps the oldest — so the built-in is not
+    a substitute.
+    """
+    def trim(tensor):
+        return tensor[:, :, -keep:, :]
+
+    if isinstance(past_kv, tuple):                       # pre-4.36 tuple format
+        return tuple((trim(k), trim(v)) for k, v in past_kv)
+
+    layers = getattr(past_kv, 'layers', None)
+    if layers is not None:                               # transformers >= 5
+        for layer in layers:
+            layer.keys = trim(layer.keys)
+            layer.values = trim(layer.values)
+        return past_kv
+
+    if hasattr(past_kv, 'to_legacy_cache'):              # transformers 4.x
+        sliced = tuple((trim(k), trim(v)) for k, v in past_kv.to_legacy_cache())
+        return type(past_kv).from_legacy_cache(sliced)
+
+    if hasattr(past_kv, 'key_cache'):                    # 4.x internals fallback
+        past_kv.key_cache = [trim(k) for k in past_kv.key_cache]
+        past_kv.value_cache = [trim(v) for v in past_kv.value_cache]
+        return past_kv
+
+    raise TypeError(
+        f"cannot slide a KV cache of type {type(past_kv).__name__}; "
+        f"no known transformers cache API is present")
+
+
 class HuggingfaceSubject(ArtificialSubject):
     def __init__(
             self,
@@ -155,23 +199,7 @@ class HuggingfaceSubject(ArtificialSubject):
                         else _past_kv[0][0].shape[2]
                     _new_len = self.current_tokens['input_ids'].shape[1]
                     if _max_len is not None and _past_len + _new_len > _max_len:
-                        _keep = _max_len - _new_len
-                        if hasattr(_past_kv, 'get_seq_length'):
-                            # DynamicCache: use public to_legacy_cache/from_legacy_cache API
-                            # to avoid depending on internal attributes (key_cache/value_cache)
-                            # which have changed across transformers versions
-                            _legacy = _past_kv.to_legacy_cache()
-                            _sliced = tuple(
-                                (k[:, :, -_keep:, :], v[:, :, -_keep:, :])
-                                for k, v in _legacy
-                            )
-                            _past_kv = DynamicCache.from_legacy_cache(_sliced)
-                        else:
-                            # legacy tuple-of-tuples format (transformers < 4.36)
-                            _past_kv = tuple(
-                                (k[:, :, -_keep:, :], v[:, :, -_keep:, :])
-                                for k, v in _past_kv
-                            )
+                        _past_kv = slice_kv_cache(_past_kv, _max_len - _new_len)
 
                 if _use_kv and _past_kv is not None:
                     # Feed only new tokens; the KV cache covers the prefix
