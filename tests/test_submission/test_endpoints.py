@@ -44,7 +44,7 @@ class TestRunScoring:
     def test_successful_run(self):
         args_dict = {'jenkins_id': 62, 'user_id': 1, 'model_type': 'artificialsubject', 
                     'public': True, 'competition': 'None', 'new_models': ['randomembedding-100'], 
-                    'new_benchmarks': ['Pereira2018.243sentences-linear'], 'specified_only': True}
+                    'new_benchmarks': ['Pereira2018.243sentences-linear-shuffle'], 'specified_only': True}
         run_scoring(args_dict)
         score_entries = database_models.Score.select()
         score_entries = list(score_entries)
@@ -56,7 +56,7 @@ class TestRunScoring:
     def test_multiple_models(self):
         args_dict = {'jenkins_id': 62, 'user_id': 1, 'model_type': 'artificialsubject', 
                     'public': True, 'competition': 'None', 'new_models': ['randomembedding-100', 'randomembedding-1600'], 
-                    'new_benchmarks': ['Pereira2018.243sentences-linear'], 'specified_only': True}
+                    'new_benchmarks': ['Pereira2018.243sentences-linear-shuffle'], 'specified_only': True}
         run_scoring(args_dict)
         score_entries = database_models.Score.select()
         assert len(score_entries) == 2

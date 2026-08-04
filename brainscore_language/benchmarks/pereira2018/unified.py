@@ -12,10 +12,10 @@ import xarray as xr
 from brainscore_core.metrics import Score
 from brainscore_core.supported_data_standards.brainio.stimuli import StimulusSet
 from brainscore_language.utils.ceiling import ceiling_normalize
-from .benchmark import _Pereira2018ExperimentLinear
+from .benchmark import _Pereira2018Experiment
 
 
-class _Pereira2018ExperimentLinearUnified(_Pereira2018ExperimentLinear):
+class _Pereira2018ExperimentLinearUnified(_Pereira2018Experiment):
     """Pereira2018 benchmark that calls process() directly.
 
     Differences from the parent:
@@ -77,6 +77,7 @@ class _Pereira2018ExperimentLinearUnified(_Pereira2018ExperimentLinear):
 def Pereira2018_243sentences_unified():
     return _Pereira2018ExperimentLinearUnified(
         experiment='243sentences',
+        metric='linear_pearsonr',
         ceiling_s3_kwargs=dict(
             sha1='5e23de899883828f9c886aec304bc5aa0f58f66c',
             raw_kwargs=dict(
@@ -92,6 +93,7 @@ def Pereira2018_243sentences_unified():
 def Pereira2018_384sentences_unified():
     return _Pereira2018ExperimentLinearUnified(
         experiment='384sentences',
+        metric='linear_pearsonr',
         ceiling_s3_kwargs=dict(
             sha1='fc895adc52fd79cea3040961d65d8f736a9d3e29',
             raw_kwargs=dict(

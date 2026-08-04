@@ -48,5 +48,5 @@ def test_neural():
 
 
 def test_score():
-    result = score(model_identifier='randomembedding-100', benchmark_identifier='Pereira2018.243sentences-linear')
+    result = score(model_identifier='randomembedding-100', benchmark_identifier='Pereira2018.243sentences-linear-shuffle')
     assert result == pytest.approx(.0285022, abs=.005)

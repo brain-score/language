@@ -28,7 +28,7 @@ The code in this file was run only once, and is kept here for reference.
 
 
 def upload_ceiling(experiment):
-    benchmark = load_benchmark(f'Pereira2018.{experiment}-linear')
+    benchmark = load_benchmark(f'Pereira2018.{experiment}-linear-shuffle')
     ceiler = ExtrapolationCeiling()
     ceiling = ceiler(benchmark.data, metric=benchmark.metric)
     _logger.info(f"Uploading ceiling {ceiling}")
@@ -219,7 +219,7 @@ class ExtrapolationCeiling:
 
             try:
                 params = self.fit(subject_subsamples, bootstrapped_scores)
-            except RuntimeError:  # optimal parameters not found
+            except (RuntimeError, ValueError):  # optimal parameters not found or NaN inputs
                 params = [np.nan, np.nan]
             params = DataAssembly([params], coords={'bootstrap': [bootstrap], 'param': ['v0', 'tau0']},
                                   dims=['bootstrap', 'param'])
@@ -245,10 +245,12 @@ class ExtrapolationCeiling:
         return score
 
     def fit(self, subject_subsamples, bootstrapped_scores):
-        valid = ~np.isnan(bootstrapped_scores)
+        subject_subsamples = np.array(subject_subsamples)
+        bootstrapped_scores = np.array(bootstrapped_scores)
+        valid = ~np.isnan(bootstrapped_scores) & np.isfinite(bootstrapped_scores)
         if sum(valid) < 1:
             raise RuntimeError("No valid scores in sample")
-        params, pcov = curve_fit(v, subject_subsamples, bootstrapped_scores,
+        params, pcov = curve_fit(v, subject_subsamples[valid], bootstrapped_scores[valid],
                                  # v (i.e. max ceiling) is between 0 and 1, tau0 unconstrained
                                  bounds=([0, -np.inf], [1, np.inf]))
         return params

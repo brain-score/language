@@ -1,3 +1,4 @@
+import numpy as np
 import xarray as xr
 
 from brainscore_core.supported_data_standards.brainio.assemblies import NeuroidAssembly
@@ -8,33 +9,94 @@ from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.data.pereira2018 import BIBTEX
 from brainscore_language.utils.ceiling import ceiling_normalize
 from brainscore_language.utils.s3 import load_from_s3
+from brainscore_language.benchmarks.blank2014.ceiling import ExtrapolationCeiling
 
 
-def Pereira2018_243sentences():
-    return _Pereira2018ExperimentLinear(experiment='243sentences', ceiling_s3_kwargs=dict(
-        sha1='5e23de899883828f9c886aec304bc5aa0f58f66c',
-        raw_kwargs=dict(
-            sha1='525a6ac8c14ad826c63fdd71faeefb8ba542d5ac',
+def Pereira2018_243sentences_ridge():
+    return _Pereira2018Experiment(experiment='243sentences', metric="ridge_pearsonr",
+        crossvalidation_kwargs=dict(
+            split_coord="story",
+            kfold="group",
+            random_state=1234,
+        ),
+        ceiling_s3_kwargs=dict(
+            version_id='r3xGy2REPZfE7h1oFSnsNg5Rml9R5Ulz',
+            sha1='ba4c077bf0a9e1c46a9582790221c48113e0c5cf',
             raw_kwargs=dict(
-                sha1='34ba453dc7e8a19aed18cc9bca160e97b4a80be5'
-            )
-        )
-    ))
+                version_id='d4ip8z9Hrh94GOLhF69bua8dgfky9m0H',
+                sha1='aad71036f0aa2eac14d1e665fc9e9a955c5d4259',
+                raw_kwargs=dict(
+                    version_id='CcENzwx7_dX1N_OucOhKznpjkcmvYM8C',
+                    sha1='b18cd06fd8b8d077bb884ebf0f3624e5283d49f3',
+                ),
+            ),
+        ),
+    )
 
-
-def Pereira2018_384sentences():
-    return _Pereira2018ExperimentLinear(experiment='384sentences', ceiling_s3_kwargs=dict(
-        sha1='fc895adc52fd79cea3040961d65d8f736a9d3e29',
-        raw_kwargs=dict(
-            sha1='ce2044a7713426870a44131a99bfc63d8843dae0',
+def Pereira2018_384sentences_ridge():
+    return _Pereira2018Experiment(experiment='384sentences', metric="ridge_pearsonr",
+        crossvalidation_kwargs=dict(
+            split_coord="story",
+            kfold="group",
+            random_state=1234,
+        ),
+        ceiling_s3_kwargs=dict(
+            version_id='u1_f1sJvv9J8eVjWFfA4siHsFHH6rMc1',
+            sha1='167005f57c3f2826a9e6a24ba36d96640fcbf3df',
             raw_kwargs=dict(
-                sha1='fe9fb24b34fd5602e18e34006ac5ccc7d4c825b8'
-            )
-        )
-    ))
+                version_id='i1p2WSiKGxiRpclDEhl0rPlAoN5IhYYp',
+                sha1='d7cae647a0c26c73c4f7f000eaebba65b3805dfb',
+                raw_kwargs=dict(
+                    version_id='_enewpFHrEO3ZCVexDljLMatTNMIoTCU',
+                    sha1='8b8017a2d685b88546f089bfd23686a5181d6af7',
+                ),
+            ),
+        ),
+    )
 
 
-class _Pereira2018ExperimentLinear(BenchmarkBase):
+def Pereira2018_243sentences_linear_shuffle():
+    return _Pereira2018Experiment(experiment='243sentences', metric="linear_pearsonr",
+        identifier_suffix="-shuffle",
+        crossvalidation_kwargs=dict(
+            splits=10,
+            train_size=0.9,
+            kfold=False,
+            random_state=1,
+        ),
+        ceiling_s3_kwargs=dict(
+            sha1='5e23de899883828f9c886aec304bc5aa0f58f66c',
+            raw_kwargs=dict(
+                sha1='525a6ac8c14ad826c63fdd71faeefb8ba542d5ac',
+                raw_kwargs=dict(
+                    sha1='34ba453dc7e8a19aed18cc9bca160e97b4a80be5',
+                ),
+            ),
+        ),
+    )
+
+def Pereira2018_384sentences_linear_shuffle():
+    return _Pereira2018Experiment(experiment='384sentences', metric="linear_pearsonr",
+        identifier_suffix="-shuffle",
+        crossvalidation_kwargs=dict(
+            splits=10,
+            train_size=0.9,
+            kfold=False,
+            random_state=1,
+        ),
+        ceiling_s3_kwargs=dict(
+            sha1='fc895adc52fd79cea3040961d65d8f736a9d3e29',
+            raw_kwargs=dict(
+                sha1='ce2044a7713426870a44131a99bfc63d8843dae0',
+                raw_kwargs=dict(
+                    sha1='fe9fb24b34fd5602e18e34006ac5ccc7d4c825b8',
+                ),
+            ),
+        ),
+    )
+
+
+class _Pereira2018Experiment(BenchmarkBase):
     """
     Evaluate model ability to predict neural activity in the human language system in response to natural sentences,
     recorded by Pereira et al. 2018.
@@ -51,20 +113,36 @@ class _Pereira2018ExperimentLinear(BenchmarkBase):
     the two ceiling-normalized scores.
     """
 
-    def __init__(self, experiment: str, ceiling_s3_kwargs: dict):
-        self.data = self._load_data(experiment)
-        self.metric = load_metric('linear_pearsonr')
-        identifier = f'Pereira2018.{experiment}-linear'
-        ceiling = self._load_ceiling(identifier=identifier, **ceiling_s3_kwargs)
-        super(_Pereira2018ExperimentLinear, self).__init__(
+    def __init__(self, experiment: str,
+            metric: str,
+            ceiling_s3_kwargs: dict = {},
+            crossvalidation_kwargs: dict = {},
+            atlas: str = 'language',
+            identifier_suffix: str = "",
+        ):
+        self.data = self._load_data(experiment, atlas=atlas)
+        self.metric = load_metric(metric, crossvalidation_kwargs=crossvalidation_kwargs)
+        base_identifier = f"Pereira2018.{experiment}-{metric.split('_')[0]}"
+        identifier = f"{base_identifier}{identifier_suffix}"
+        if ceiling_s3_kwargs:
+            # S3-cached ceilings are stored under the legacy (suffix-less) identifier;
+            # keep loading from there so renamed variants reuse the existing artifacts.
+            ceiling = self._load_ceiling(identifier=base_identifier, **ceiling_s3_kwargs)
+        else:
+            ceiler = ExtrapolationCeiling(subject_column='subject')
+            ceiling = ceiler(assembly=self.data, metric=self.metric)
+
+        super(_Pereira2018Experiment, self).__init__(
             identifier=identifier,
             version=1,
             parent='Pereira2018-linear',
             ceiling=ceiling,
             bibtex=BIBTEX)
 
-    def _load_data(self, experiment: str) -> NeuroidAssembly:
-        data = load_dataset('Pereira2018.language')
+    def _load_data(self, experiment: str, atlas: str) -> NeuroidAssembly:
+        lang_data = load_dataset('Pereira2018.language')
+        data = load_dataset(f'Pereira2018.{atlas}')
+        data.coords["presentation"] = lang_data.coords["presentation"]
         data = data.sel(experiment=experiment)  # filter experiment
         data = data.dropna('neuroid')  # not all subjects have done both experiments, drop those that haven't
         data.attrs['identifier'] = f"{data.identifier}.{experiment}"
@@ -88,8 +166,63 @@ class _Pereira2018ExperimentLinear(BenchmarkBase):
             passage_stimuli = stimuli[passage_indexer]
             passage_predictions = candidate.digest_text(passage_stimuli.values)['neural']
             passage_predictions['stimulus_id'] = 'presentation', passage_stimuli['stimulus_id'].values
+            try:
+                passage_predictions['passage_index']
+            except KeyError:
+                passage_predictions['passage_index'] = 'presentation', passage_stimuli['passage_index'].values
+            try:
+                passage_predictions['story']
+            except KeyError:
+                passage_predictions['story'] = 'presentation', passage_stimuli['story'].values
             predictions.append(passage_predictions)
+    
         predictions = xr.concat(predictions, dim='presentation')
-        raw_score = self.metric(predictions, self.data)
-        score = ceiling_normalize(raw_score, self.ceiling)
+        layer_names = np.unique(predictions['layer'].data)
+        layer_names = [layer_names] if isinstance(layer_names, str) else layer_names
+        layer_scores = {}
+        for layer_name in layer_names:
+            raw_score = self.metric(predictions.sel(layer=layer_name), self.data)
+            layer_scores[layer_name] = ceiling_normalize(raw_score, self.ceiling)
+
+        score = Score(np.mean(list(layer_scores.values())))
+        score.attrs['layer_scores'] = layer_scores
+        score.attrs['raw'] = Score(np.mean([s.attrs['raw'] for s in layer_scores.values()]))
+        score.attrs['ceiling'] = self.ceiling
         return score
+
+
+def Pereira2018_243sentences():
+    """Linear-predictivity variant.
+
+    Upstream parameterised the experiment class by metric and stopped registering
+    the linear variants. They are restored here because
+    ``Pereira2018.{experiment}-linear`` is the identifier the unified-interface
+    results are scored against. ``metric='linear_pearsonr'`` with default
+    cross-validation reproduces the pre-merge ``_Pereira2018ExperimentLinear``:
+    same metric, same CV defaults, same identifier, and with ``atlas='language'``
+    the data loader reduces to the old one.
+    """
+    return _Pereira2018Experiment(experiment='243sentences', metric='linear_pearsonr',
+        ceiling_s3_kwargs=dict(
+        sha1='5e23de899883828f9c886aec304bc5aa0f58f66c',
+        raw_kwargs=dict(
+            sha1='525a6ac8c14ad826c63fdd71faeefb8ba542d5ac',
+            raw_kwargs=dict(
+                sha1='34ba453dc7e8a19aed18cc9bca160e97b4a80be5'
+            )
+        )
+    ))
+
+
+def Pereira2018_384sentences():
+    """Linear-predictivity variant — see :func:`Pereira2018_243sentences`."""
+    return _Pereira2018Experiment(experiment='384sentences', metric='linear_pearsonr',
+        ceiling_s3_kwargs=dict(
+        sha1='fc895adc52fd79cea3040961d65d8f736a9d3e29',
+        raw_kwargs=dict(
+            sha1='ce2044a7713426870a44131a99bfc63d8843dae0',
+            raw_kwargs=dict(
+                sha1='fe9fb24b34fd5602e18e34006ac5ccc7d4c825b8'
+            )
+        )
+    ))

@@ -1,0 +1,7 @@
+benchmarks:
+  pereira2018:
+    stimulus_set: null
+    data_metadata: null
+    metric_information: null
+    brainscore_link: https://github.com/brain-score/language/tree/master/brainscore_language/benchmarks/pereira2018
+    extra_notes: Temporary hardcoded metadata - will be replaced with actual generation

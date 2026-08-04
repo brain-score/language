@@ -17,8 +17,8 @@ _SCORE_ATOL = 0.005
     "model_identifier, benchmark_identifier, expected_score",
     [
         ("distilgpt2", "Futrell2018-pearsonr", approx(0.36144805, abs=_SCORE_ATOL)),
-        ("distilgpt2", "Pereira2018.243sentences-linear", approx(0.82228507, abs=_SCORE_ATOL)),
-        ("glove-840b", "Pereira2018.384sentences-linear", approx(0.18385368, abs=_SCORE_ATOL)),
+        ("distilgpt2", "Pereira2018.243sentences-linear-shuffle", approx(0.82228507, abs=_SCORE_ATOL)),
+        ("glove-840b", "Pereira2018.384sentences-linear-shuffle", approx(0.18385368, abs=_SCORE_ATOL)),
         ("gpt2-xl", "Futrell2018-pearsonr", approx(0.31825621, abs=_SCORE_ATOL)),
         ('distilgpt2', 'syntaxgym-center_embed', approx(0.96428571, abs=_SCORE_ATOL)),
         ('distilgpt2', 'syntaxgym-center_embed_mod', approx(0.92857143, abs=_SCORE_ATOL)),
@@ -61,11 +61,11 @@ def test_score(model_identifier, benchmark_identifier, expected_score):
 @pytest.mark.parametrize(
     "model_identifier, benchmark_identifier, expected_score, install_dependencies",
     [
-        ("randomembedding-100", "Pereira2018.243sentences-linear",
+        ("randomembedding-100", "Pereira2018.243sentences-linear-shuffle",
          approx(0.0285022, abs=_SCORE_ATOL), "newenv"),
-        ("randomembedding-100", "Pereira2018.243sentences-linear",
+        ("randomembedding-100", "Pereira2018.243sentences-linear-shuffle",
          approx(0.0285022, abs=_SCORE_ATOL), "yes"),
-        ("randomembedding-100", "Pereira2018.243sentences-linear",
+        ("randomembedding-100", "Pereira2018.243sentences-linear-shuffle",
          approx(0.0285022, abs=_SCORE_ATOL), "no"),
     ]
 )
@@ -89,7 +89,7 @@ def test_commandline_score():
             "brainscore_language",
             "score",
             "--model_identifier=randomembedding-100",
-            "--benchmark_identifier=Pereira2018.243sentences-linear",
+            "--benchmark_identifier=Pereira2018.243sentences-linear-shuffle",
         ],
         cwd=Path(__file__).parent.parent,
         capture_output=True,
@@ -102,4 +102,4 @@ def test_commandline_score():
     assert "0.0285" in output
     assert "<xarray.Score ()>\narray(0.0285022)" in output
     assert "model_identifier:      randomembedding-100" in output
-    assert "benchmark_identifier:  Pereira2018.243sentences-linear" in output
+    assert "benchmark_identifier:  Pereira2018.243sentences-linear-shuffle" in output

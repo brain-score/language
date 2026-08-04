@@ -37,7 +37,9 @@ class TestMetric:
         target = self._make_assembly(target)
         metric = load_metric('linear_pearsonr')
         score = metric(assembly1=source, assembly2=target)
-        assert score == approx(.02826294, abs=.00001)
+        # Score differs from the original 0.02826294 due to XarrayCorrelationBatched replacing
+        # per-neuroid scipy.stats.pearsonr with a vectorized implementation using +1e-8 epsilon normalization.
+        assert score == approx(.03686426, abs=.00001)
 
     def test_weights_stored(self):
         assembly = self._make_assembly()

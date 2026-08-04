@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 from collections import OrderedDict
 
 import os
@@ -106,7 +106,8 @@ def extract_representations(
     logger.debug(f"> Using Device: {device}")
 
     model.eval()
-    model.to(device)
+    if not getattr(model, "hf_device_map", None):  # skip when already sharded via device_map
+        model.to(device)
 
     final_layer_representations = {
         "sentences": {layer_name: np.zeros((len(langloc_dataset.sentences), hidden_dim)) for layer_name in layer_names},
@@ -124,14 +125,14 @@ def extract_representations(
         batch_rand_actv = extract_batch(model, non_words_tokens["input_ids"], non_words_tokens["attention_mask"], layer_names)
 
         for layer_name in layer_names:
-            final_layer_representations["sentences"][layer_name][batch_idx*batch_size:(batch_idx+1)*batch_size] = torch.stack(batch_real_actv[layer_name]).numpy()
-            final_layer_representations["non-words"][layer_name][batch_idx*batch_size:(batch_idx+1)*batch_size] = torch.stack(batch_rand_actv[layer_name]).numpy()
+            final_layer_representations["sentences"][layer_name][batch_idx*batch_size:(batch_idx+1)*batch_size] = torch.stack(batch_real_actv[layer_name]).float().numpy()
+            final_layer_representations["non-words"][layer_name][batch_idx*batch_size:(batch_idx+1)*batch_size] = torch.stack(batch_rand_actv[layer_name]).float().numpy()
 
     return final_layer_representations
 
-def localize_fed10(model_id: str,
+def localize_fedorenko2010(model_id: str,
     model: torch.nn.Module, 
-    top_k: int, 
+    top_k: int|float, 
     tokenizer: transformers.PreTrainedTokenizer, 
     hidden_dim: int, 
     layer_names: List[str], 
@@ -142,7 +143,11 @@ def localize_fed10(model_id: str,
     Localize the model by selecting the top `top_k` units.
     """
 
-    save_path = f"{BRAINIO_CACHE}/{model_id}_language_mask.npy"
+    model_id_path = model_id.replace("/", "_")
+    if not os.path.exists(BRAINIO_CACHE):
+        os.makedirs(BRAINIO_CACHE, exist_ok=True)
+
+    save_path = f"{BRAINIO_CACHE}/{model_id_path}_language_mask.npy"
 
     if os.path.exists(save_path):
         logger.debug(f"Loading language mask from {save_path}")
@@ -163,6 +168,11 @@ def localize_fed10(model_id: str,
     def is_topk(a, k=1):
         _, rix = np.unique(-a, return_inverse=True)
         return np.where(rix < k, 1, 0).reshape(a.shape)
+    
+    if isinstance(top_k, float) and 0 < top_k < 1:
+        top_k = int(top_k * np.prod(t_values_matrix.shape))
+    else:
+        top_k = int(top_k)
 
     language_mask = is_topk(t_values_matrix, k=top_k)
 

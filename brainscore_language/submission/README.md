@@ -79,17 +79,6 @@ python actions_helpers.py validate_pr \
 }
 ```
 
-#### `trigger_update_existing_metadata`
-Triggers the Jenkins `update_existing_metadata` job for metadata-only PRs.
-
-```bash
-python actions_helpers.py trigger_update_existing_metadata \
-  --plugin-dirs "brainscore_language/models/mymodel" \
-  --plugin-type "models" \
-  --domain "language" \
-  --metadata-and-layer-map-b64 "<base64-encoded-json>"
-```
-
 #### `trigger_layer_mapping`
 Triggers Jenkins layer mapping job. Only used for non-language domains (language always has `needs_mapping=false`).
 
@@ -127,7 +116,7 @@ The submission module is used at various stages of the orchestrator pipeline:
 1. **Step 2 (Validate PR)** → `actions_helpers.py validate_pr` polls test statuses
 2. **Step 4 (Generate Mutations)** → `hardcoded_metadata.py` generates missing metadata
 3. **Step 5 (Auto-merge)** → `actions_helpers.py validate_pr` re-checks tests for metadata-only PRs
-4. **Step 6 (Post-Merge)** → `endpoints.py call_jenkins_language` triggers scoring; `actions_helpers.py trigger_update_existing_metadata` for metadata-only PRs
+4. **Step 6 (Post-Merge)** → `endpoints.py call_jenkins_language` triggers scoring for plugin PRs that need it; metadata-only merges perform no Jenkins or database mutation
 5. **Step 7 (Notify)** → `actions_helpers.py send_failure_email` sends failure notifications
 
 ## Environment Variables

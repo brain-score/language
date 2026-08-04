@@ -5,6 +5,8 @@ import pytest
 import torch
 from pytest import approx
 
+from transformers import AutoModelForCausalLM
+
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.model_helpers.huggingface import HuggingfaceSubject
 
@@ -156,6 +158,17 @@ class TestNeural:
         representations = model.digest_text(text)['neural']
         assert len(representations['presentation']) == 3
         np.testing.assert_array_equal(representations['stimulus'], text)
+        assert len(representations['neuroid']) == 768
+
+    def test_bf16_model(self):
+        # bf16 activations must be cast to float32 before numpy conversion
+        basemodel = AutoModelForCausalLM.from_pretrained('distilgpt2', torch_dtype=torch.bfloat16)
+        model = HuggingfaceSubject(model_id='distilgpt2', model=basemodel, region_layer_mapping={
+            ArtificialSubject.RecordingTarget.language_system: 'transformer.h.0.ln_1'})
+        model.start_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
+                                     recording_type=ArtificialSubject.RecordingType.fMRI)
+        representations = model.digest_text('the quick brown fox')['neural']
+        assert representations.values.dtype == np.float32
         assert len(representations['neuroid']) == 768
 
     @pytest.mark.memory_intense

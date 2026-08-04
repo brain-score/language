@@ -37,12 +37,13 @@ class TestBenchmark:
                                               coords={'stimulus_seq': ('presentation', np.arange(num_stimuli)),
                                                       'stimulus_num': ('presentation', np.arange(num_stimuli)),
                                                       'neuroid_id': ('neuroid', np.arange(25)),
-                                                      'region': ('neuroid', ['some_region'] * 25)},
+                                                      'region': ('neuroid', ['some_region'] * 25),
+                                                      'layer': ('neuroid', ['test_layer'] * 25)},
                                               dims=['presentation', 'neuroid'])
             neural_activity['stimulus'] = 'presentation', stimuli  # copy over
             return neural_activity
 
-        benchmark = load_benchmark(f'Pereira2018.{experiment}sentences-linear')
+        benchmark = load_benchmark(f'Pereira2018.{experiment}sentences-linear-shuffle')
         dummy_model = TestBenchmark.DummyModel(activity_for_text=activity_for_text)
         score = benchmark(dummy_model)
         assert score == expected_score
@@ -52,7 +53,7 @@ class TestBenchmark:
         384,
     ])
     def test_exact(self, experiment):
-        benchmark = load_benchmark(f'Pereira2018.{experiment}sentences-linear')
+        benchmark = load_benchmark(f'Pereira2018.{experiment}sentences-linear-shuffle')
         exact_data = copy.deepcopy(benchmark.data)
 
         def activity_for_text(stimuli: Union[str, List[str]]) -> NeuroidAssembly:
@@ -61,6 +62,7 @@ class TestBenchmark:
             # remove stimulus_id and stimulus coordinates to not trip up benchmark
             passage_activity = passage_activity.reset_index('presentation')
             del passage_activity['stimulus_id']
+            passage_activity['layer'] = 'neuroid', ['test_layer'] * passage_activity.sizes['neuroid']
             passage_activity = NeuroidAssembly(passage_activity)  # index
             return passage_activity
 
@@ -73,13 +75,13 @@ class TestBenchmark:
         (384, .36343748),
     ])
     def test_ceiling(self, experiment, expected_ceiling):
-        benchmark = load_benchmark(f'Pereira2018.{experiment}sentences-linear')
+        benchmark = load_benchmark(f'Pereira2018.{experiment}sentences-linear-shuffle')
         ceiling = benchmark.ceiling
         assert ceiling == approx(expected_ceiling, abs=.0005)
 
     @pytest.mark.parametrize('experiment', [243, 384])
     def test_ceiling_raw(self, experiment):
-        benchmark = load_benchmark(f'Pereira2018.{experiment}sentences-linear')
+        benchmark = load_benchmark(f'Pereira2018.{experiment}sentences-linear-shuffle')
         ceiling = benchmark.ceiling
         assert hasattr(ceiling, 'raw')
         assert set(ceiling.raw.dims) == {'neuroid'}

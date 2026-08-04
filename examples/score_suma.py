@@ -9,5 +9,5 @@ Attributes:
     raw:                   <xarray.Score ()>\narray(0.34876988)
     ceiling:               <xarray.Score 'data' ()>\narray(0.35378928)
     model_identifier:      suma
-    benchmark_identifier:  Pereira2018.243sentences-linear
+    benchmark_identifier:  Pereira2018.243sentences-linear-shuffle
 '''
