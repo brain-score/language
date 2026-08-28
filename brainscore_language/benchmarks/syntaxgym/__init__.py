@@ -40,7 +40,7 @@ benchmark_registry['syntaxgym-npz_ambig'] = lambda: SyntaxGymSingleTSE(
 benchmark_registry['syntaxgym-npz_ambig_mod'] = lambda: SyntaxGymSingleTSE(
     identifier='npz_ambig_mod', suite_ref=test_suite_dict['npz_ambig_mod'])
 benchmark_registry['syntaxgym-npz_obj'] = lambda: SyntaxGymSingleTSE(
-    identifier='npz_ambig_mod', suite_ref=test_suite_dict['npz_obj'])
+    identifier='npz_obj', suite_ref=test_suite_dict['npz_obj'])
 benchmark_registry['syntaxgym-npz_obj_mod'] = lambda: SyntaxGymSingleTSE(
     identifier='npz_obj_mod', suite_ref=test_suite_dict['npz_obj_mod'])
 benchmark_registry['syntaxgym-number_orc'] = lambda: SyntaxGymSingleTSE(
