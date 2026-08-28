@@ -1,6 +1,6 @@
 """
 Modified rule definitions for the NLTK abstract chart rules to work with a probabilistic context-free grammar.
-Added a probabilstic Earley chart parser by applying incremental chart parsing with the probabilistic rules.
+Added a probabilistic Earley chart parser by applying incremental chart parsing with the probabilistic rules.
 Adapted from: https://www.nltk.org/api/nltk.parse.chart.html
 """
 

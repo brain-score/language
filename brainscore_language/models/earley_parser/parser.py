@@ -221,7 +221,7 @@ class EarleyParserSubject(ArtificialSubject):
         :param treebank_path: a path to a treebank corpus
         :param grammar_string: one or more file names to be parsed in the grammar. If None, all files will be parsed
         :param unk_low_frequency: if True, replaces all words that appear less than k times by <unk>
-        :param k: the <unk> replacement threshold (min number of occurances for a word to NOT be replaced by <unk>)
+        :param k: the <unk> replacement threshold (min number of occurrences for a word to NOT be replaced by <unk>)
         """
 
         # Load PTB annotations
@@ -230,7 +230,7 @@ class EarleyParserSubject(ArtificialSubject):
             r".*",
         )
 
-        # First, get all productions and count the occurances of each lexical in all productions
+        # First, get all productions and count the occurrences of each lexical in all productions
         productions = []
         lexical_counts = {}
         for tree in treebank.parsed_sents(fileids):
