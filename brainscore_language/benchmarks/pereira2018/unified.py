@@ -2,8 +2,9 @@
 
 Calls `model.process(stimulus_set)` directly instead of legacy
 `model.digest_text(text_array)`. Uses unified `start_recording('language_system')`
-instead of `start_neural_recording(...)`. Scores must match the legacy
-variant.
+instead of `start_neural_recording(...)`. Adapter-route parity does not establish
+native-route parity: extraction context and sliding-window behavior also need
+independent comparison (brainscore.validation.benchmark_parity).
 """
 
 import pandas as pd
@@ -60,7 +61,7 @@ class _Pereira2018ExperimentLinearUnified(_Pereira2018Experiment):
                 'context_id': [str(passage)] * len(sentences),
             }))
             passage_stimulus_set.identifier = (
-                f'pereira_passage_{passage}-context-v1'
+                f'pereira_passage_{passage}'
             )
 
             # Unified: process() instead of digest_text(...)['neural']
