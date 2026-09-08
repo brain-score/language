@@ -30,6 +30,7 @@ class _Pereira2018ExperimentLinearUnified(_Pereira2018Experiment):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._identifier = self.identifier + '-unified'
+        self._version = 2  # Explicit passage context for native and legacy models.
 
     @property
     def identifier(self):
@@ -56,16 +57,14 @@ class _Pereira2018ExperimentLinearUnified(_Pereira2018Experiment):
             passage_stimulus_set = StimulusSet(pd.DataFrame({
                 'sentence': sentences,
                 'stimulus_id': stimulus_ids,
+                'context_id': [str(passage)] * len(sentences),
             }))
             passage_stimulus_set.identifier = (
-                f'pereira_passage_{passage}'
+                f'pereira_passage_{passage}-context-v1'
             )
 
             # Unified: process() instead of digest_text(...)['neural']
             passage_predictions = candidate.process(passage_stimulus_set)
-            passage_predictions['stimulus_id'] = (
-                'presentation', stimulus_ids,
-            )
             predictions.append(passage_predictions)
 
         predictions = xr.concat(predictions, dim='presentation')

@@ -57,6 +57,7 @@ def _language_stimulus_set():
         'stimulus_id': ['s0', 's1'],
         'sentence': ['the quick brown', 'fox jumps'],
         'object_name': ['sentence0', 'sentence1'],
+        'context_id': ['passage', 'passage'],
     }))
     stimuli.identifier = 'synthetic-language'
     return stimuli
@@ -68,11 +69,13 @@ def _language_neural_assembly():
         coords={
             'stimulus_id': ('presentation', ['s0', 's1']),
             'object_name': ('presentation', ['sentence0', 'sentence1']),
+            'sentence': ('presentation', ['the quick brown', 'fox jumps']),
+            'context_id': ('presentation', ['passage', 'passage']),
             'neuroid_id': ('neuroid', ['language.0', 'language.1']),
             'layer': ('neuroid', ['language', 'language']),
         },
         dims=['presentation', 'neuroid'],
-    )
+    ).reset_index('presentation')
 
 
 class TestLanguageAdapterIsUnifiedModel:
@@ -310,6 +313,39 @@ class TestLanguageAdapterReset:
         adapter.reset()
 
         assert legacy.current_tokens is None
+
+
+@pytest.mark.parametrize('defect', ['short', 'duplicate_part_number', 'wrong_stimulus'])
+def test_table_rejects_invalid_row_correspondence(defect):
+    stimuli = _language_stimulus_set()
+    output = _language_neural_assembly()
+    if defect == 'short':
+        output = output.isel(presentation=[0])
+    elif defect == 'duplicate_part_number':
+        output = output.assign_coords(part_number=('presentation', [0, 0]))
+    else:
+        output = output.assign_coords(stimulus=('presentation', ['wrong', 'text']))
+    legacy = _make_legacy_model()
+    legacy.digest_text.return_value = {'neural': output}
+    adapter = LanguageModelAdapter(legacy)
+    adapter.start_recording('language_system')
+    with pytest.raises(ValueError, match='presentation|part_number|stimulus coordinates'):
+        adapter.process(stimuli)
+
+
+def test_table_reorders_by_legacy_part_number_before_attaching_ids():
+    stimuli = _language_stimulus_set()
+    expected = _language_neural_assembly()
+    expected.attrs['provenance'] = 'legacy-extractor'
+    output = expected.assign_coords(part_number=('presentation', [0, 1])).isel(presentation=[1, 0])
+    legacy = _make_legacy_model()
+    legacy.digest_text.return_value = {'neural': output}
+    adapter = LanguageModelAdapter(legacy)
+    adapter.start_recording('language_system')
+    actual = adapter.process(stimuli)
+    np.testing.assert_array_equal(actual.values, expected.values)
+    assert list(actual.stimulus_id.values) == ['s0', 's1']
+    assert actual.attrs == expected.attrs
 
 
 class TestLanguageAutoWrapping:
