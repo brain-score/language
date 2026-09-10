@@ -22,7 +22,7 @@ dependencies = [
     "datasets",
     # Unified installs use sklearn 1.5.x. Language features that require
     # sklearn >=1.6 are unsupported in the shared unified environment.
-    "scikit-learn>=1.5,<1.6",
+    "scikit-learn>=1.7,<1.8",
     "pandas <3",
     # model_helpers dependencies
     "torch >=1.9.1",
