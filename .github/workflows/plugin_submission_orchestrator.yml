@@ -947,7 +947,7 @@ jobs:
         run: |
           # PLUGIN_INFO contains email - GitHub Actions automatically masks secrets in logs
           # Suppress stdout/stderr to prevent any potential exposure of PLUGIN_INFO content
-          python -c 'from brainscore_language.submission.endpoints import call_jenkins_language; import os; call_jenkins_language(os.environ["PLUGIN_INFO"])' >/dev/null 2>&1 || {
+          python -c 'from brainscore_language.submission.jenkins import call_jenkins_language; import os; call_jenkins_language(os.environ["PLUGIN_INFO"])' >/dev/null 2>&1 || {
             echo "Jenkins scoring trigger failed (check Jenkins logs for details)"
             exit 1
           }
