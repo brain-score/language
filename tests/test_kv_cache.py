@@ -1,109 +1,75 @@
-"""
-Test that KV-cached neural extraction produces identical activations
-to a full-recompute forward pass. This validates the optimization in
-huggingface.py that enables use_cache=True for all modes (including
-neural recording), not just behavioral tasks.
-"""
-
+"""Neural extraction preserves upstream full-context FP32 execution."""
 import numpy as np
 import pytest
 import torch
-
+from tokenizers import Tokenizer
+from tokenizers.models import WordLevel
+from tokenizers.pre_tokenizers import Whitespace
+from transformers import GPT2Config, GPT2LMHeadModel, PreTrainedTokenizerFast
 from brainscore_language.artificial_subject import ArtificialSubject
 from brainscore_language.model_helpers.huggingface import HuggingfaceSubject
 from brainscore_language.model_helpers.preprocessing import prepare_context
 
 
-@pytest.fixture(scope='module')
-def subject():
-    """Create a distilgpt2 subject for testing. Module-scoped to avoid repeated loading."""
-    layer_name = 'transformer.h.0'
-    s = HuggingfaceSubject(
-        model_id='distilgpt2',
-        region_layer_mapping={'language': layer_name},
-    )
-    return s, layer_name
+@pytest.fixture
+def subject(monkeypatch):
+    monkeypatch.setattr(torch.cuda, 'is_available', lambda: False)
+    monkeypatch.setattr(torch.backends.mps, 'is_available', lambda: False)
+    vocab = {word: i for i, word in enumerate(
+        ['[UNK]', '[EOS]', 'The', 'quick', 'brown', 'fox', 'jumps', 'over', 'the', 'dog'])}
+    backend = Tokenizer(WordLevel(vocab, unk_token='[UNK]'))
+    backend.pre_tokenizer = Whitespace()
+    tokenizer = PreTrainedTokenizerFast(tokenizer_object=backend, unk_token='[UNK]',
+        eos_token='[EOS]', pad_token='[EOS]', model_max_length=64)
+    with torch.random.fork_rng():
+        torch.manual_seed(17)
+        model = GPT2LMHeadModel(GPT2Config(vocab_size=len(vocab), n_positions=64,
+            n_embd=32, n_layer=2, n_head=2, resid_pdrop=0, embd_pdrop=0,
+            attn_pdrop=0)).eval()
+    return HuggingfaceSubject('local-regression', {'language_system': 'transformer.h.1'},
+                              model=model, tokenizer=tokenizer)
 
 
-class TestKVCacheNeuralActivations:
-
-    def test_kv_cached_activations_match_full_recompute(self, subject):
-        """
-        Run digest_text with KV cache (the default) and compare the final
-        word's neural activation against a single full-context forward pass.
-        They must match because KV-cached attention at position i depends on
-        the same positions 1..i as a full recompute.
-        """
-        s, layer_name = subject
-
-        # Run digest_text with neural recording (uses KV cache internally)
-        s.neural_recordings = []
-        s.behavioral_task = None
-        s.start_neural_recording('language', ArtificialSubject.RecordingType.fMRI)
-
-        text = ["The", "quick", "brown", "fox"]
-        result = s.digest_text(text)
-        neural = result['neural']
-
-        # Get the last presentation's activation (for "fox" with full context "The quick brown fox")
-        kv_activation = neural.values[-1]  # shape: (n_neuroids,)
-
-        # Full-recompute comparison: single forward pass on full context
-        full_context = prepare_context(text)
-        tokens = s.tokenizer(full_context, return_tensors='pt').to(s.device)
-
-        layer_activations = {}
-        layer = s._get_layer(layer_name)
-
-        def hook_fn(module, input, output):
-            out = output[0] if isinstance(output, (tuple, list)) else output
-            layer_activations['full'] = out
-
-        hook = layer.register_forward_hook(hook_fn)
+@pytest.mark.parametrize('behavior', [False, True])
+def test_neural_matches_independent_full_context_exactly(subject, behavior):
+    if behavior:
+        subject.start_behavioral_task(ArtificialSubject.Task.next_word)
+    subject.start_neural_recording('language_system', ArtificialSubject.RecordingType.fMRI)
+    parts = ['The quick', 'brown fox', 'jumps over the dog']
+    calls = []
+    handle = subject.basemodel.register_forward_pre_hook(
+        lambda module, args, kwargs: calls.append((kwargs['input_ids'].shape[1],
+            kwargs.get('use_cache'), kwargs.get('past_key_values'))), with_kwargs=True)
+    try:
+        actual = subject.digest_text(parts)
+    finally:
+        handle.remove()
+    expected = []
+    layer = subject._get_layer('transformer.h.1')
+    handle = layer.register_forward_hook(lambda module, args, out:
+        expected.append((out[0] if isinstance(out, tuple) else out)[:, -1].detach().numpy()))
+    try:
         with torch.no_grad():
-            s.basemodel(**tokens)
-        hook.remove()
+            for end in range(1, len(parts) + 1):
+                tokens = subject.tokenizer(prepare_context(parts[:end]), return_tensors='pt')
+                subject.basemodel(**tokens, use_cache=False)
+    finally:
+        handle.remove()
+    np.testing.assert_array_equal(actual['neural'].values, np.concatenate(expected))
+    assert calls == [(2, False, None), (4, False, None), (8, False, None)]
+    assert (actual['behavior'] is not None) is behavior
 
-        full_activation = layer_activations['full'][:, -1, :].squeeze(0).cpu().numpy()
 
-        np.testing.assert_allclose(
-            kv_activation, full_activation,
-            rtol=1e-4, atol=1e-5,
-            err_msg="KV-cached activation diverges from full-recompute activation"
-        )
-
-    def test_kv_cache_produces_valid_neural_output(self, subject):
-        """Basic sanity: neural output has correct shape and non-zero values."""
-        s, layer_name = subject
-
-        s.neural_recordings = []
-        s.behavioral_task = None
-        s.start_neural_recording('language', ArtificialSubject.RecordingType.fMRI)
-
-        text = ["Hello", "world"]
-        result = s.digest_text(text)
-        neural = result['neural']
-
-        assert neural.dims == ('presentation', 'neuroid')
-        assert neural.shape[0] == 2  # two presentations
-        assert neural.shape[1] > 0  # has neurons
-        assert not np.all(neural.values == 0)  # non-trivial activations
-
-    def test_kv_cache_behavioral_still_works(self, subject):
-        """Behavioral output (next word prediction) still works with KV cache."""
-        s, _ = subject
-
-        s.neural_recordings = []
-        s.behavioral_task = None
-        s.start_behavioral_task(ArtificialSubject.Task.next_word)
-
-        text = ["The", "quick", "brown"]
-        result = s.digest_text(text)
-        behavior = result['behavior']
-
-        assert behavior.dims == ('presentation',)
-        assert behavior.shape[0] == 3
-        # Each prediction should be a non-empty string
-        for val in behavior.values:
-            assert isinstance(val, str)
-            assert len(val) > 0
+def test_behavior_only_retains_incremental_cache(subject):
+    subject.start_behavioral_task(ArtificialSubject.Task.next_word)
+    calls = []
+    handle = subject.basemodel.register_forward_pre_hook(
+        lambda module, args, kwargs: calls.append((kwargs['input_ids'].shape[1],
+            kwargs.get('use_cache'), kwargs.get('past_key_values') is not None)), with_kwargs=True)
+    try:
+        result = subject.digest_text(['The quick', 'brown fox', 'jumps over the dog'])
+    finally:
+        handle.remove()
+    assert calls == [(2, True, False), (2, True, True), (4, True, True)]
+    assert result['neural'] is None
+    assert result['behavior'].shape == (3,)

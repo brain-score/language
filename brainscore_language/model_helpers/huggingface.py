@@ -170,12 +170,9 @@ class HuggingfaceSubject(ArtificialSubject):
         output = {'behavior': [], 'neural': []}
         number_of_tokens = 0
 
-        # KV cache: always enabled. For causal models, KV-cached activations at
-        # position i are mathematically identical to full-recompute activations
-        # because attention at position i depends only on positions 1..i, which
-        # are fully captured by the cached KV pairs. ~5x speedup for typical
-        # sentence lengths.
-        _use_kv = True
+        # Preserve upstream neural extraction: cached and full-context FP32
+        # execution can differ even when mathematically equivalent.
+        _use_kv = self.behavioral_task is not None and not self.neural_recordings
         _past_kv = None
         _last_logit = None  # last-position logit from previous step, shape [1, 1, vocab]
 
