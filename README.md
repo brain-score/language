@@ -1,3 +1,7 @@
+> **UMI v2 candidate:** install this checkout with its pinned core using
+> `python -m pip install -r requirements-v2.txt -e .`, or install all four UMI
+> checkouts together. Candidate peer versions are not published on PyPI.
+
 [![Build Status](https://app.travis-ci.com/brain-score/language.svg?token=vqt7d2yhhpLGwHsiTZvT&branch=main)](https://app.travis-ci.com/brain-score/language)
 [![Documentation Status](https://readthedocs.org/projects/brain-score-language/badge/?version=latest)](https://brain-score-language.readthedocs.io/en/latest/?badge=latest)
 [![Website Status](https://img.shields.io/website.svg?down_color=red&down_message=offline&up_message=online&url=http%3A%2F%2Fwww.brain-score.org/language)](http://www.brain-score.org/language/)

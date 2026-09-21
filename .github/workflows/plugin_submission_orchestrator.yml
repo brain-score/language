@@ -61,7 +61,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools
-          python -m pip install ".[test]"
+          python -m pip install -r requirements-v2.txt ".[test]"
 
       - name: Get changed files
         id: changed_files
@@ -321,7 +321,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools
-          python -m pip install ".[test]"
+          python -m pip install -r requirements-v2.txt ".[test]"
 
       - name: Get PR number and latest head SHA
         id: get_pr_info
@@ -459,7 +459,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools
-          python -m pip install ".[test]"
+          python -m pip install -r requirements-v2.txt ".[test]"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
@@ -701,7 +701,7 @@ jobs:
         if: needs.detect_changes.outputs.metadata_only == 'true'
         run: |
           python -m pip install --upgrade pip setuptools
-          python -m pip install ".[test]"
+          python -m pip install -r requirements-v2.txt ".[test]"
 
       - name: Check test status for metadata-only PRs
         if: needs.detect_changes.outputs.metadata_only == 'true'
@@ -814,7 +814,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools
-          python -m pip install "." PyYAML
+          python -m pip install -r requirements-v2.txt "." PyYAML
 
       - name: Check if web submission and extract user_id
         if: needs.detect_changes.outputs.metadata_only != 'true'
@@ -993,7 +993,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools
-          python -m pip install "."
+          python -m pip install -r requirements-v2.txt "."
 
       - name: Determine which job failed and extract failed tests
         id: failed_job

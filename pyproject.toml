@@ -4,7 +4,7 @@
 
 [project]
 name = "brainscore_language"
-version = "2.2.1"
+version = "2.3.0rc1"
 description = ""
 authors = []
 license = { 'file' = 'LICENSE' }
@@ -14,7 +14,7 @@ requires-python = ">=3.11,<3.12"
 dependencies = [
     "tqdm",
     "numpy <2",
-    "brainscore-core",
+    "brainscore-core==2.4.0rc1",
     "fire",
     # brainscore_language/data/wikitext imports this at load time; without it the
     # language data path raises ModuleNotFoundError. Declared here rather than only in
