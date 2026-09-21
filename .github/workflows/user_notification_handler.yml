@@ -63,7 +63,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools
-          python -m pip install "."
+          python -m pip install -r requirements-v2.txt "."
 
       - name: Find PR author email for non-web submissions
         if: ${{ !inputs.is_automerge_web }}
