@@ -80,9 +80,17 @@ class DreamV0BaseSubject(ArtificialSubject):
             for index, target_id in enumerate(current_ids):
                 observed = (prefix_ids + current_ids[:index])[-BEHAVIOR_CONTEXT_TOKENS:]
                 query = torch.tensor([observed + [mask_id]], device=self.input_device)
-                logits = self.model(
-                    input_ids=query, use_cache=False, num_logits_to_keep=1
-                ).logits[0, -1].float()
+                # Dream's native sampler shifts raw logits one position right:
+                # h_i predicts the token at i+1. The appended mask therefore
+                # receives the preceding position's raw logits. Keeping two
+                # positions is necessary because Dream slices hidden states
+                # before applying its output head. For a mask-only query the
+                # native shift retains the first raw position; add no BOS.
+                raw_logits = self.model(
+                    input_ids=query, use_cache=False, num_logits_to_keep=2
+                ).logits
+                readout_position = -2 if observed else -1
+                logits = raw_logits[0, readout_position].float()
                 nats -= float(torch.log_softmax(logits, dim=-1)[int(target_id)].item())
         return nats / np.log(2), context
 
