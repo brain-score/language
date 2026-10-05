@@ -9,7 +9,7 @@ import xarray as xr
 from numpy.core import defchararray
 from torch.utils.hooks import RemovableHandle
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer, BatchEncoding, DynamicCache
+from transformers import AutoModelForCausalLM, AutoTokenizer, BatchEncoding
 from transformers.modeling_outputs import CausalLMOutput
 from typing import Union, List, Tuple, Dict, Callable
 
@@ -143,31 +143,13 @@ class HuggingfaceSubject(ArtificialSubject):
             # run and remove hooks
             with torch.no_grad():
                 if _use_kv and _past_kv is not None:
-                    # Slide the KV cache if adding new tokens would exceed the model's context window.
-                    # Drop the oldest entries so the cache stays at max_position_embeddings - new_len,
-                    # keeping attention map size constant at O(max_len) forever.
-                    _max_len = getattr(self.basemodel.config, 'max_position_embeddings', None)
+                    # Once the tokenizer truncates the context, a sliced cache is not equivalent to
+                    # re-encoding the window (see #415), so drop the cache and recompute.
                     _past_len = _past_kv.get_seq_length() if hasattr(_past_kv, 'get_seq_length') \
                         else _past_kv[0][0].shape[2]
                     _new_len = self.current_tokens['input_ids'].shape[1]
-                    if _max_len is not None and _past_len + _new_len > _max_len:
-                        _keep = _max_len - _new_len
-                        if hasattr(_past_kv, 'get_seq_length'):
-                            # DynamicCache: use public to_legacy_cache/from_legacy_cache API
-                            # to avoid depending on internal attributes (key_cache/value_cache)
-                            # which have changed across transformers versions
-                            _legacy = _past_kv.to_legacy_cache()
-                            _sliced = tuple(
-                                (k[:, :, -_keep:, :], v[:, :, -_keep:, :])
-                                for k, v in _legacy
-                            )
-                            _past_kv = DynamicCache.from_legacy_cache(_sliced)
-                        else:
-                            # legacy tuple-of-tuples format (transformers < 4.36)
-                            _past_kv = tuple(
-                                (k[:, :, -_keep:, :], v[:, :, -_keep:, :])
-                                for k, v in _past_kv
-                            )
+                    if _past_len + _new_len != context_tokens['input_ids'].shape[1]:
+                        _past_kv = None
 
                 if _use_kv and _past_kv is not None:
                     # Feed only new tokens; the KV cache covers the prefix
