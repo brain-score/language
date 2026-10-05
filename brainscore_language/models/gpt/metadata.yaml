@@ -1,0 +1,224 @@
+schema_version: '2.0'
+domain: language
+models:
+  gpt2:
+    sources:
+      hub_card:
+        kind: huggingface
+        url: https://huggingface.co/openai-community/gpt2/blob/607a30d783dfa663caf39e06633721c8d4cfcd7e/README.md
+        citation: 'GPT-2 model card: description, uses, training data and preprocessing;
+          adapted by Hugging Face'
+      hub_config:
+        kind: huggingface
+        url: https://huggingface.co/openai-community/gpt2/blob/607a30d783dfa663caf39e06633721c8d4cfcd7e/config.json
+        citation: 'GPT2LMHeadModel config: 12 blocks, width 768, 12 heads, context
+          1024'
+      paper:
+        kind: paper
+        url: https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf
+        citation: Radford et al. (2019), Sections 2-3, Table 2, Sections 4 and 6
+      original_card:
+        kind: other
+        url: https://github.com/openai/gpt-2/blob/9b63575ef42771a015060c964af2c3da4cf7c8ab/model_card.md
+        citation: 'OpenAI model card, November 2019: model sizes and intended/out-of-scope
+          uses'
+      registration:
+        kind: other
+        url: https://github.com/brain-score/language/blob/f1128a65e8aeb302e388b7f9195deac9a10fd391/brainscore_language/models/gpt/__init__.py
+        citation: Exact gpt2 registration; language_system uses transformer.h.11
+      wrapper:
+        kind: other
+        url: https://github.com/brain-score/language/blob/f1128a65e8aeb302e388b7f9195deac9a10fd391/brainscore_language/model_helpers/huggingface.py
+        citation: HuggingfaceSubject loader and behavioral/activation outputs; no
+          revision pin
+    assertions:
+    - path: /model/display_name
+      status: probable
+      sources:
+      - hub_card
+    - path: /model/version
+      status: probable
+      sources:
+      - hub_card
+      - wrapper
+    - path: /model/architecture/family
+      status: probable
+      sources:
+      - paper
+      - hub_config
+    - path: /model/architecture/description
+      status: probable
+      sources:
+      - hub_config
+    - path: /model/parameter_count
+      status: probable
+      sources:
+      - hub_card
+      - original_card
+    - path: /model/parameter_count_exact
+      status: probable
+      sources:
+      - hub_card
+    - path: /model/recurrent
+      status: probable
+      sources:
+      - paper
+    - path: /model/supervision/type
+      status: probable
+      sources:
+      - hub_card
+    - path: /model/supervision/description
+      status: probable
+      sources:
+      - hub_card
+    - path: /training/process
+      status: probable
+      sources:
+      - hub_card
+      - registration
+      - wrapper
+    - path: /training/objective
+      status: probable
+      sources:
+      - hub_card
+    - path: /training/batch_size
+      status: probable
+      sources:
+      - paper
+    - path: /training/preprocessing
+      status: probable
+      sources:
+      - hub_card
+      - paper
+    - path: /data/summary
+      status: probable
+      sources:
+      - paper
+    - path: /data/training_datasets
+      status: probable
+      sources:
+      - paper
+    - path: /io/modality
+      status: probable
+      sources:
+      - hub_card
+      - wrapper
+    - path: /io/interface
+      status: probable
+      sources:
+      - registration
+      - wrapper
+    - path: /io/input_format
+      status: probable
+      sources:
+      - hub_card
+      - hub_config
+    - path: /io/output_format
+      status: probable
+      sources:
+      - wrapper
+    - path: /io/tokenizer
+      status: probable
+      sources:
+      - hub_card
+      - hub_config
+    - path: /people/creators
+      status: probable
+      sources:
+      - paper
+    - path: /people/organizations
+      status: probable
+      sources:
+      - paper
+      - original_card
+    - path: /use/applications
+      status: probable
+      sources:
+      - original_card
+      - hub_card
+    - path: /use/users
+      status: probable
+      sources:
+      - original_card
+    - path: /use/limitations
+      status: probable
+      sources:
+      - original_card
+    - path: /use/biases
+      status: probable
+      sources:
+      - original_card
+    - path: /provenance/weights_provider
+      status: probable
+      sources:
+      - original_card
+    - path: /provenance/checkpoint
+      status: probable
+      sources:
+      - registration
+      - wrapper
+    - path: /provenance/source_url
+      status: probable
+      sources:
+      - hub_card
+    - path: /legal/license
+      status: probable
+      sources:
+      - hub_card
+    model:
+      display_name: GPT-2 Small
+      version: GPT-2 small; evaluated Hub revision unpinned
+      architecture:
+        family: Decoder-only Transformer
+        description: 12 decoder blocks; width 768; 12 attention heads
+      parameter_count: 124000000
+      parameter_count_exact: false
+      recurrent: false
+      supervision:
+        type: self_supervised
+        description: Causal language modeling on English text
+    training:
+      process: WebText pretraining; no task fine-tuning in the registered loader
+      objective: Next-token prediction
+      batch_size: 512 sequences (paper-wide setting)
+      preprocessing: Byte-level BPE; 1,024-token sequences
+    data:
+      summary: 'WebText: about 8 million documents, 40 GB'
+      training_datasets:
+      - name: WebText
+        role: pretraining
+        description: About 8 million documents, 40 GB; Wikipedia excluded; links through
+          December 2017
+    io:
+      modality: text
+      interface: Brain-Score HuggingfaceSubject; language_system records transformer.h.11
+      input_format: English text; 1,024-token model context
+      output_format: Behavioral predictions or requested layer activations
+      tokenizer: Byte-level BPE; 50,257-token vocabulary
+    people:
+      creators:
+      - Alec Radford
+      - Jeff Wu
+      - Rewon Child
+      - David Luan
+      - Dario Amodei
+      - Ilya Sutskever
+      organizations:
+      - OpenAI
+    use:
+      applications:
+      - Language-model research
+      - Text generation
+      users:
+      - AI researchers and practitioners
+      limitations:
+      - Generated text can be factually incorrect
+      - Assess bias before human-facing deployment
+      biases:
+      - Reflects biases in internet training text
+    provenance:
+      weights_provider: OpenAI
+      checkpoint: gpt2
+      source_url: https://huggingface.co/openai-community/gpt2
+    legal:
+      license: MIT
