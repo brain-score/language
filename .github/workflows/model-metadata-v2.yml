@@ -1,0 +1,66 @@
+name: Model metadata v2
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: PR number to validate
+        required: true
+        type: string
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        id: check
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr }}
+        with:
+          script: |
+            const pull_number = Number(process.env.PR_NUMBER);
+            const {data: pr} = await github.rest.pulls.get({...context.repo, pull_number});
+            const {data: check} = await github.rest.checks.create({...context.repo,
+              name: 'Metadata v2 source policy', head_sha: pr.head.sha, status: 'in_progress'});
+            core.setOutput('id', check.id);
+            core.setOutput('head', pr.head.sha);
+      # No PR checkout or plugin imports. Only the pinned core validator runs.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install the approved core metadata contract
+        env:
+          METADATA_CORE_REF: ${{ vars.METADATA_CORE_REF }}
+        run: |
+          [[ "$METADATA_CORE_REF" =~ ^[0-9a-f]{40}$ ]] || { echo 'Set METADATA_CORE_REF to a full approved core commit SHA'; exit 1; }
+          pip install "brainscore_core @ git+https://github.com/brain-score/core.git@${METADATA_CORE_REF}"
+          python -c "import brainscore_core.metadata"
+          pip check
+      - name: Validate schema and source policy
+        id: validate
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          METADATA_PR: ${{ github.event.pull_request.number || inputs.pr }}
+          METADATA_REPOSITORY: ${{ github.repository }}
+          METADATA_HEAD: ${{ steps.check.outputs.head }}
+        run: python -m brainscore_core.metadata.review --repository "$METADATA_REPOSITORY" --pr "$METADATA_PR" --head-sha "$METADATA_HEAD" --domain language --model-root brainscore_language/models
+      - uses: actions/github-script@v7
+        if: always() && steps.check.outputs.id
+        env:
+          CHECK_ID: ${{ steps.check.outputs.id }}
+          CHECK_RESULT: ${{ steps.validate.outcome }}
+        with:
+          script: |
+            const success = process.env.CHECK_RESULT === 'success';
+            await github.rest.checks.update({...context.repo, check_run_id: Number(process.env.CHECK_ID),
+              status: 'completed', conclusion: success ? 'success' : 'failure',
+              output: {title: 'Metadata v2 validation', summary: success ?
+                'Schema and source policy passed. Live metadata is unchanged until merge and publication.' :
+                'Metadata validation failed. See the workflow log for schema or migration errors.'}});
+            if (!success) core.setFailed('Metadata validation failed');
