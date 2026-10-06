@@ -36,7 +36,9 @@ def load_metric(identifier: str, *args, **kwargs) -> Metric:
 def load_benchmark(identifier: str) -> Benchmark:
     import_plugin('brainscore_language', 'benchmarks', identifier)
 
-    return benchmark_registry[identifier]()
+    from brainscore_core.compatibility import ensure_legacy_benchmark_modalities
+    benchmark = benchmark_registry[identifier]()
+    return ensure_legacy_benchmark_modalities(benchmark, {'text'})
 
 
 def load_model(identifier: str) -> 'Subject':
@@ -61,6 +63,7 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
         check_channel_compatibility,
         check_compatibility,
     )
+    from brainscore_core.extraction_cache import weight_fingerprint_scope
     from brainscore_core.memory import check_memory
     from brainscore_core.score_metadata import (
         infer_score_protocol,
@@ -68,8 +71,10 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
         stamp_score_metadata,
     )
 
-    model: ArtificialSubject = load_model(model_identifier)
+    from brainscore_core.preflight import check_cache_directory
+    check_cache_directory()
     benchmark: Benchmark = load_benchmark(benchmark_identifier)
+    model: ArtificialSubject = load_model(model_identifier)
     requested_channels = requested_output_channels_for_score(benchmark)
 
     # Pre-flight checks
@@ -80,7 +85,8 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
 
     import time as _time
     _t0 = _time.time()
-    score: Score = benchmark(model)
+    with weight_fingerprint_scope():
+        score: Score = benchmark(model)
     score.attrs['runtime_sec'] = round(_time.time() - _t0, 2)
     score.attrs['model_identifier'] = model_identifier
     score.attrs['benchmark_identifier'] = benchmark_identifier
