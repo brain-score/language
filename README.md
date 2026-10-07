@@ -1,4 +1,4 @@
-> **UMI v2 candidate:** install this checkout with its pinned core using
+> **UMI v2 source candidate:** install this checkout with its pinned core using
 > `python -m pip install -r requirements-v2.txt -e .`, or install all four UMI
 > checkouts together. Candidate peer versions are not published on PyPI.
 
@@ -11,12 +11,13 @@ Brain-Score Language is a platform to evaluate computational models of language 
 measurements in the domain of language processing. The intent of Brain-Score is to adopt many (ideally all) the
 experimental benchmarks in the field for the purpose of model testing, falsification, and comparison. To that end,
 Brain-Score operationalizes experimental data into quantitative benchmarks that any model candidate following
-the `BrainModel` interface can be scored on.
+the `ArtificialSubject` interface can be scored on.
 
-> **UMI migration:** ArtificialSubject, BrainModel, and digest_text are the
-> pre-UMI language interface. Existing plugins remain supported, but new
-> cross-domain integrations should use Subject or BrainScoreModel with
-> process(). See [docs/UMI_MIGRATION.md](docs/UMI_MIGRATION.md).
+> **UMI integration:** Existing domain plugins remain supported. Use
+> `BrainScoreModel` for extraction and task helpers, or implement
+> `Subject.interact(session)` for a custom session integration. A native
+> `Subject` does not require `process()`. See
+> [docs/UMI_MIGRATION.md](docs/UMI_MIGRATION.md).
 
 See the [Documentation](https://brain-score-language.readthedocs.io) for more details.
 

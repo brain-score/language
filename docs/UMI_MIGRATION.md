@@ -1,18 +1,14 @@
-# Language interface migration to UMI
+# Use language models with UMI
 
-ArtificialSubject and digest_text are the legacy language API. They remain
-available for existing plugins and are adapted when loaded through the unified
-registry.
+`ArtificialSubject` and `digest_text` remain supported for existing language plugins. Loading these plugins through `brainscore.load_model` supplies the appropriate UMI adapter.
 
-For new cross-domain work:
-
-| Legacy language API | Unified Model Interface |
+| Goal | Interface |
 | --- | --- |
-| ArtificialSubject or BrainModel | Subject or BrainScoreModel |
-| digest_text(text) | process(stimuli) |
-| start_behavioral_task(...) | start_task(TaskContext(...)) |
-| language-only score command | brainscore.score(model_id, benchmark_id) |
+| Score an existing model | `brainscore.score(model_identifier, benchmark_identifier)` |
+| Reuse extraction and task helpers | `BrainScoreModel`, with `process`, task setup and recording methods |
+| Define custom session behavior | `Subject.interact(session)`, with declared input/output channels |
+| Combine recording and interventions | `Experiment` with a compatible protocol and tools |
 
-Continue in the distribution's unified/docs/getting_started.md and
-unified/docs/umi_api_reference.md. The legacy language docs remain useful for
-domain-specific benchmark and submission details.
+`BrainScoreModel` is a `Subject` implementation. A native `Subject` does not need `process()` or a region mapping; a benchmark using those methods requires an implementation that provides them.
+
+See the [UMI getting-started guide](https://github.com/KartikP/brainscore-unified/blob/unified-model-interface-v2/docs/getting_started.md). The domain documentation remains useful for existing benchmark and submission workflows.
