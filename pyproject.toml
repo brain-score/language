@@ -4,7 +4,7 @@
 
 [project]
 name = "brainscore_language"
-version = "2.2.1"
+version = "2.3.0"
 description = ""
 authors = []
 license = { 'file' = 'LICENSE' }
@@ -39,6 +39,19 @@ requires = [
     "wheel"
 ]
 
+
+################################################################
+#### version management config ####
+################################################################
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+tag_format = "v{version}"
+commit_message = "chore(release): {version} [skip ci]"
+build_command = "python -m pip install build && python -m build"
+
+[tool.semantic_release.branches.main]
+match = "main"
 
 ################################################################
 #### mypy type-checking config ####
