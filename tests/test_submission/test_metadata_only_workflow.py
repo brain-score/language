@@ -35,3 +35,23 @@ def test_post_merge_job_has_no_metadata_only_steps():
     )[0]
 
     assert "metadata_only == 'true'" not in post_merge_job
+
+
+def test_v2_prs_cannot_trigger_submission_mutations():
+    import yaml
+
+    workflow = yaml.load(WORKFLOW_PATH.read_text(), Loader=yaml.BaseLoader)
+    triggers = workflow['on']
+    assert triggers['pull_request']['branches-ignore'] == [
+        'unified-model-interface-v2',
+    ]
+    assert 'branches' not in triggers['pull_request']
+    assert triggers['pull_request_target']['branches'] == ['main']
+
+    # Ordinary v2 test runs remain automatic.
+    checks = yaml.load(
+        (WORKFLOW_PATH.parent / 'umi-v2.yml').read_text(),
+        Loader=yaml.BaseLoader,
+    )
+    for event in ['pull_request', 'push']:
+        assert checks['on'][event]['branches'] == ['unified-model-interface-v2']
