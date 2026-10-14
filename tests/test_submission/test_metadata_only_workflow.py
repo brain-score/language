@@ -1,8 +1,11 @@
 from pathlib import Path
 
+import brainscore_language
+
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW_PATH = REPOSITORY_ROOT / ".github/workflows/plugin_submission_orchestrator.yml"
-HELPER_PATH = REPOSITORY_ROOT / "brainscore_language/submission/actions_helpers.py"
+# Inspect the installed helper; workflow configuration remains a repository file.
+HELPER_PATH = Path(brainscore_language.__file__).parent / "submission/actions_helpers.py"
 
 
 def test_metadata_update_jenkins_trigger_is_not_exposed():
