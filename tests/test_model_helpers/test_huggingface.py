@@ -140,6 +140,25 @@ class TestReadingTimes:
         np.testing.assert_allclose(
             reading_times, [139.66634, 111.14671, 136.64108], atol=_ATOL)
 
+    def test_kv_cache_matches_recompute_past_context_window(self):
+        """
+        The behavioral-only KV-cache path must match full recomputation after the context
+        window overflows (#415). Recording neural activity disables the cache.
+        """
+        text = ('the quick brown fox jumps over the lazy dog and runs away ' * 120).split()
+        cached = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={})
+        cached.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
+        assert len(cached.tokenizer(' '.join(text))['input_ids']) > 1024
+        cached_times = cached.digest_text(text)['behavior']
+
+        recomputed = HuggingfaceSubject(model_id='distilgpt2', region_layer_mapping={
+            ArtificialSubject.RecordingTarget.language_system: 'transformer.h.0'})
+        recomputed.start_behavioral_task(task=ArtificialSubject.Task.reading_times)
+        recomputed.start_neural_recording(recording_target=ArtificialSubject.RecordingTarget.language_system,
+                                          recording_type=ArtificialSubject.RecordingType.fMRI)
+        recomputed_times = recomputed.digest_text(text)['behavior']
+        np.testing.assert_allclose(cached_times, recomputed_times, atol=_ATOL)
+
 
 class TestNeural:
     def test_list_input(self):
