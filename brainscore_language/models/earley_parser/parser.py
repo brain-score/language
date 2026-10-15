@@ -224,6 +224,9 @@ class EarleyParserSubject(ArtificialSubject):
         :param k: the <unk> replacement threshold (min number of occurances for a word to NOT be replaced by <unk>)
         """
 
+        # NLTK >= 3.10 only reads corpora under nltk.data.path
+        if treebank_path not in nltk.data.path:
+            nltk.data.path.append(treebank_path)
         # Load PTB annotations
         treebank = BracketParseCorpusReader(
             treebank_path,
