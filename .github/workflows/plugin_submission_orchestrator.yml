@@ -5,6 +5,8 @@ name: Plugin Submission Orchestrator
 
 on:
   pull_request:
+    # UMI preparation and merges require a separate maintainer request.
+    branches-ignore: [unified-model-interface-v2]
     types: [opened, synchronize, labeled, reopened]
   pull_request_target:
     types: [closed]
