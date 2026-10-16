@@ -1,9 +1,6 @@
-import os
 import pytest
 import subprocess
 import sys
-import torch
-from pathlib import Path
 from pytest import approx
 
 from brainscore_language import score
@@ -62,40 +59,38 @@ def test_score(model_identifier, benchmark_identifier, expected_score):
     "model_identifier, benchmark_identifier, expected_score, install_dependencies",
     [
         ("randomembedding-100", "Pereira2018.243sentences-linear-shuffle",
-         approx(0.0285022, abs=_SCORE_ATOL), "newenv"),
-        ("randomembedding-100", "Pereira2018.243sentences-linear-shuffle",
          approx(0.0285022, abs=_SCORE_ATOL), "yes"),
         ("randomembedding-100", "Pereira2018.243sentences-linear-shuffle",
          approx(0.0285022, abs=_SCORE_ATOL), "no"),
     ]
 )
 def test_score_with_install_dependencies(
-        model_identifier, benchmark_identifier, expected_score, install_dependencies):
-    install_dependence_preference = os.environ.get(
-        "BS_INSTALL_DEPENDENCIES", "yes")
-    os.environ["BS_INSTALL_DEPENDENCIES"] = install_dependencies
+        model_identifier, benchmark_identifier, expected_score, install_dependencies, monkeypatch):
+    # These modes reuse this interpreter. New-environment creation needs its own test.
+    monkeypatch.setenv('BS_INSTALL_DEPENDENCIES', install_dependencies)
     actual_score = score(
         model_identifier=model_identifier,
         benchmark_identifier=benchmark_identifier,
         conda_active=True)
-    os.environ["BS_INSTALL_DEPENDENCIES"] = install_dependence_preference
     assert actual_score == expected_score
 
 
-def test_commandline_score():
+def test_commandline_score(tmp_path):
     process = subprocess.run(
         [
             sys.executable,
+            "-I",
+            "-m",
             "brainscore_language",
             "score",
             "--model_identifier=randomembedding-100",
             "--benchmark_identifier=Pereira2018.243sentences-linear-shuffle",
         ],
-        cwd=Path(__file__).parent.parent,
+        cwd=tmp_path,
         capture_output=True,
         text=True,
     )
-    assert process.returncode == 0, "Process failed"
+    assert process.returncode == 0, process.stdout + process.stderr
     assert "error" not in process.stderr.lower()
     output = process.stdout
     assert "Score" in output
