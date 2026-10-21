@@ -83,3 +83,6 @@ markers = [
 "brainscore_language.data" = ["**"]
 "brainscore_language.metrics" = ["**"]
 "brainscore_language.models" = ["**"]
+
+[tool.setuptools.exclude-package-data]
+"*" = ["*.pyc", "**/__pycache__/*"]
