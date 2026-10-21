@@ -35,6 +35,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = [
+    "dask[array]",
     "pytest",
     "PyYAML>=6,<7",
     "pytest-check <=1.3.0",
@@ -83,3 +84,6 @@ markers = [
 "brainscore_language.data" = ["**"]
 "brainscore_language.metrics" = ["**"]
 "brainscore_language.models" = ["**"]
+
+[tool.setuptools.exclude-package-data]
+"*" = ["*.pyc", "**/__pycache__/*"]
