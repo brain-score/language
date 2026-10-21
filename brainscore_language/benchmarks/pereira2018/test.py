@@ -85,6 +85,7 @@ class TestBenchmark:
         ceiling = benchmark.ceiling
         assert hasattr(ceiling, 'raw')
         assert set(ceiling.raw.dims) == {'neuroid'}
-        assert ceiling.raw.median() == ceiling
+        # S3 ceilings may be lazy Dask arrays; materialize this small vector.
+        assert ceiling.raw.load().median() == ceiling
         assert hasattr(ceiling.raw, 'raw')
         assert set(ceiling.raw.raw.dims) == {'sub_subject', 'num_subjects', 'split', 'neuroid'}
