@@ -463,3 +463,32 @@ def test_scoring_wraps_the_adapter_for_a_legacy_language_benchmark(monkeypatch):
     assert legacy.digest_text.call_args.args[0] == ['one sentence', 'another']
     legacy.start_neural_recording.assert_called_once_with('language_system', 'fMRI')
     assert score.attrs['compatibility']['match'] == 'full'
+
+
+def test_recording_registration_is_applied_once_per_configuration():
+    """Legacy subjects append registrations; a benchmark registers once, so does the adapter."""
+    from brainscore_core.legacy_facade import LegacyBenchmarkFacade
+    legacy = _make_legacy_model(region_layer_mapping={'language_system': 'language'})
+    legacy.digest_text.return_value = {'neural': _language_neural_assembly()}
+    adapter = LanguageModelAdapter(legacy)
+    facade = LegacyBenchmarkFacade(adapter)
+    facade.start_neural_recording('language_system', recording_type='fMRI')
+    facade.digest_text(['passage one'])
+    facade.digest_text(['passage two'])
+    legacy.start_neural_recording.assert_called_once_with('language_system', 'fMRI')
+    assert legacy.digest_text.call_count == 2
+    adapter.start_neural_recording('language_system', 'spikes')  # a new registration
+    assert legacy.start_neural_recording.call_count == 2
+    adapter.reset()
+    adapter.start_neural_recording('language_system', 'fMRI')
+    assert legacy.start_neural_recording.call_count == 3
+
+
+def test_behavioral_task_is_applied_once_per_configuration():
+    legacy = _make_legacy_model(region_layer_mapping={'language_system': 'language'})
+    adapter = LanguageModelAdapter(legacy)
+    adapter.start_behavioral_task('reading_times')
+    adapter.start_behavioral_task('reading_times')
+    legacy.start_behavioral_task.assert_called_once_with('reading_times')
+    adapter.start_behavioral_task('next_word')
+    assert legacy.start_behavioral_task.call_count == 2
