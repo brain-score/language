@@ -178,6 +178,11 @@ class LanguageModelAdapter(UnifiedModel):
         if hasattr(self._legacy, 'current_tokens'):
             self._legacy.current_tokens = None
 
-    def __getattr__(self, name):
-        # Delegate attribute access to the legacy model for backwards compatibility
-        return getattr(self._legacy, name)
+    @property
+    def legacy_model(self):
+        """The wrapped legacy model, for tools that need its own attributes.
+
+        Unknown attributes are no longer forwarded implicitly: a benchmark
+        sees only what the adapter declares (Contract Rules v3, rule 2.1).
+        """
+        return self._legacy
