@@ -11,7 +11,12 @@ measurement configuration.
 from typing import Any, Dict, Optional, Set
 
 from brainscore_core.model_interface import UnifiedModel, TaskContext
-from brainscore_core.streaming_helpers import _drive_neural_session_via_process
+from brainscore_core.streaming import StreamEvent
+from brainscore_core.streaming_helpers import (
+    _drain_stream_events,
+    _drive_behavior_session_via_process,
+    _drive_neural_session_via_process,
+)
 
 
 class LanguageModelAdapter(UnifiedModel):
@@ -125,8 +130,43 @@ class LanguageModelAdapter(UnifiedModel):
         return xr.concat(outputs, dim='presentation').isel(
             presentation=np.argsort(positions_out))
 
+    @property
+    def out_channels(self) -> Set[str]:
+        # A legacy ArtificialSubject answers behavioral tasks as well as recording.
+        return super().out_channels | {'behavior'}
+
     def interact(self, session) -> None:
-        _drive_neural_session_via_process(self, session)
+        """Run a session; a legacy-benchmark session replays the exact ``digest_text``.
+
+        A session carrying ``legacy_text`` (from the legacy-benchmark facade)
+        configures the legacy model as the benchmark did and makes one
+        ``digest_text`` call that can return neural and behavioral outputs
+        together. Other sessions use the typed drivers over ``process``.
+        """
+        channels = tuple(session.requested_output_channels or ())
+        missing = set(channels) - self.out_channels
+        if not channels or missing:
+            raise ValueError(f'Undeclared output channels {sorted(missing)}; declared: '
+                             f'{sorted(self.out_channels)}')
+        context = session.task_context
+        settings = dict(getattr(context, 'metadata', None) or {})
+        if 'legacy_text' not in settings:
+            if channels == ('behavior',):
+                _drive_behavior_session_via_process(self, session)
+            else:
+                _drive_neural_session_via_process(self, session)
+            return
+        if context.task_type != 'passive':
+            self.start_task(context)
+        for channel in channels:
+            if channel.startswith('neural:'):
+                self.start_neural_recording(channel.split(':', 1)[1],
+                                            settings.get('recording_type', 'fMRI'))
+        _drain_stream_events(session)
+        result = self._legacy.digest_text(settings['legacy_text'])
+        for channel in channels:
+            key = 'neural' if channel.startswith('neural:') else 'behavior'
+            session.respond(StreamEvent(channel, result[key], 0.0, meta={'driver': 'legacy'}))
 
     # Backwards-compatible: existing benchmarks call digest_text() directly
     def digest_text(self, text):

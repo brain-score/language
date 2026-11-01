@@ -405,3 +405,61 @@ class TestLanguageAutoWrapping:
 
         assert model is native
         assert not isinstance(model, LanguageModelAdapter)
+
+
+# --- legacy benchmarks through the permanent facade -----------------------
+
+@pytest.mark.parametrize('neural,behavior', [(True, False), (False, True), (True, True)])
+def test_legacy_facade_preserves_language_outputs_in_one_call(neural, behavior):
+    from brainscore_core.legacy_facade import LegacyBenchmarkFacade
+    from brainscore_core.supported_data_standards.brainio.assemblies import BehavioralAssembly
+    legacy = _make_legacy_model(region_layer_mapping={'language_system': 'language'})
+    expected = {}
+    if neural:
+        expected['neural'] = _language_neural_assembly()
+    if behavior:
+        expected['behavior'] = BehavioralAssembly(np.array([1., 2.]), dims=['presentation'])
+    legacy.digest_text.return_value = expected
+    facade = LegacyBenchmarkFacade(LanguageModelAdapter(legacy))
+    if neural:
+        facade.start_neural_recording('language_system', recording_type='spikes')
+    if behavior:
+        facade.start_behavioral_task('reading_times')
+    text = np.array(['the quick brown', 'fox jumps'])
+    actual = facade.digest_text(text)
+    assert actual.keys() == expected.keys()
+    for key in expected:
+        assert actual[key] is expected[key]
+    assert legacy.digest_text.call_count == 1
+    assert legacy.digest_text.call_args.args[0] is text
+    if neural:
+        legacy.start_neural_recording.assert_called_once_with('language_system', 'spikes')
+    if behavior:
+        legacy.start_behavioral_task.assert_called_once_with('reading_times')
+
+
+def test_scoring_wraps_the_adapter_for_a_legacy_language_benchmark(monkeypatch):
+    import brainscore_language
+    from brainscore_core.metrics import Score
+
+    class LegacyBenchmark:
+        identifier = 'legacy-language'
+
+        def __call__(self, candidate):
+            candidate.start_neural_recording('language_system', 'fMRI')
+            output = candidate.digest_text(['one sentence', 'another'])
+            score = Score([1.0], coords={'aggregation': ['center']}, dims=['aggregation'])
+            score.attrs.update(candidate=type(candidate).__name__, output=output)
+            return score
+
+    legacy = _make_legacy_model(region_layer_mapping={'language_system': 'language'})
+    legacy.digest_text.return_value = {'neural': _language_neural_assembly()}
+    monkeypatch.setattr(brainscore_language, 'import_plugin', lambda *a, **k: None)
+    monkeypatch.setitem(brainscore_language.benchmark_registry, 'legacy-language', LegacyBenchmark)
+    monkeypatch.setattr(brainscore_language, 'load_model', lambda _: LanguageModelAdapter(legacy))
+    score = brainscore_language._run_score('m', 'legacy-language', check_mem=False)
+    assert score.attrs['candidate'] == 'LegacyBenchmarkFacade'
+    assert score.attrs['output']['neural'] is legacy.digest_text.return_value['neural']
+    assert legacy.digest_text.call_args.args[0] == ['one sentence', 'another']
+    legacy.start_neural_recording.assert_called_once_with('language_system', 'fMRI')
+    assert score.attrs['compatibility']['match'] == 'full'

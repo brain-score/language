@@ -37,8 +37,9 @@ def load_benchmark(identifier: str) -> Benchmark:
     import_plugin('brainscore_language', 'benchmarks', identifier)
 
     from brainscore_core.compatibility import ensure_legacy_benchmark_modalities
+    from brainscore_core.legacy_facade import mark_legacy_benchmark
     benchmark = benchmark_registry[identifier]()
-    return ensure_legacy_benchmark_modalities(benchmark, {'text'})
+    return mark_legacy_benchmark(ensure_legacy_benchmark_modalities(benchmark, {'text'}))
 
 
 def load_model(identifier: str) -> 'Subject':
@@ -81,10 +82,15 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
     if check_mem:
         check_memory(model, benchmark)
 
+    # A legacy benchmark calls digest_text and friends; it receives the permanent
+    # facade, which runs those calls as sessions through the subject's interact.
+    from brainscore_core.legacy_facade import subject_for_benchmark
+    candidate = subject_for_benchmark(model, benchmark)
+
     import time as _time
     _t0 = _time.time()
     with weight_fingerprint_scope():
-        score: Score = benchmark(model)
+        score: Score = benchmark(candidate)
     score.attrs['runtime_sec'] = round(_time.time() - _t0, 2)
     score.attrs['model_identifier'] = model_identifier
     score.attrs['benchmark_identifier'] = benchmark_identifier
