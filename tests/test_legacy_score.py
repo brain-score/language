@@ -13,7 +13,7 @@ class LegacyBenchmark:
     parent = 'behavior'
 
     def __call__(self, model):
-        assert model.required_modalities == {'text'}
+        assert model.subject.required_channels == {'text'}
         return Score(0.5)
 
 
@@ -22,11 +22,14 @@ def test_public_score_backfills_legacy_modality(monkeypatch):
     monkeypatch.setenv('RESULTCACHING_DISABLE', '1')
     monkeypatch.setattr(language, 'import_plugin', lambda *a, **kw: None)
     monkeypatch.setitem(language.benchmark_registry, 'offline-legacy', LegacyBenchmark)
-    model = SimpleNamespace(
-        identifier='offline-model', available_modalities={'text'},
-        required_modalities={'text'}, in_channels={'text'},
-        required_channels={'text'}, out_channels={'behavior'}, region_layer_map={},
-    )
+    from brainscore_core.contract import Subject
+    class OfflineSubject(Subject):
+        identifier = 'offline-model'
+        in_channels = required_channels = {'text'}
+        out_channels = {'behavior'}
+        def interact(self, session):
+            raise AssertionError('This metadata-only benchmark requests no measurement')
+    model = OfflineSubject()
     monkeypatch.setattr(language, 'load_model', lambda _: model)
     # Conda serialization is tested separately; do not write into the checkout.
     monkeypatch.setattr(CondaScore, 'save_score', lambda *a, **kw: None)

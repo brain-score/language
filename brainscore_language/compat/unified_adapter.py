@@ -125,8 +125,38 @@ class LanguageModelAdapter(UnifiedModel):
         return xr.concat(outputs, dim='presentation').isel(
             presentation=np.argsort(positions_out))
 
+    @property
+    def out_channels(self) -> Set[str]:
+        return super().out_channels | {'behavior'}
+
     def interact(self, session) -> None:
-        _drive_neural_session_via_process(self, session)
+        from brainscore_core.streaming import StreamEvent
+        from brainscore_core.streaming_helpers import _drain_stream_events
+        channels = tuple(session.requested_output_channels or ())
+        missing = set(channels) - self.out_channels
+        if missing or not channels:
+            raise ValueError(f'Undeclared output channels: {sorted(missing)}')
+        context = session.task_context
+        settings = context.metadata if context else {}
+        if 'legacy_text' not in settings:
+            if channels == ('behavior',):
+                from brainscore_core.streaming_helpers import _drive_behavior_session_via_process
+                _drive_behavior_session_via_process(self, session)
+            else:
+                _drive_neural_session_via_process(self, session)
+            return
+        if context.task_type != 'passive':
+            self.start_task(context)
+        for channel in channels:
+            if channel.startswith('neural:'):
+                self.start_neural_recording(
+                    channel.split(':', 1)[1], settings.get('recording_type', 'fMRI'))
+        _drain_stream_events(session)
+        # Preserve the legacy call exactly, including one joint neural/behavior call.
+        result = self._legacy.digest_text(settings['legacy_text'])
+        for channel in channels:
+            key = 'neural' if channel.startswith('neural:') else 'behavior'
+            session.respond(StreamEvent(channel, result[key], None))
 
     # Backwards-compatible: existing benchmarks call digest_text() directly
     def digest_text(self, text):

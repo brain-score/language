@@ -31,6 +31,8 @@ class _Pereira2018ExperimentUnified(_Pereira2018Experiment):
       NeuroidAssembly directly.
     """
 
+    subject_api = 'typed'
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._identifier = self.identifier + '-unified'
