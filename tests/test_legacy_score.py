@@ -13,7 +13,8 @@ class LegacyBenchmark:
     parent = 'behavior'
 
     def __call__(self, model):
-        assert model.required_modalities == {'text'}
+        # The benchmark receives the legacy facade; the subject is behind it.
+        assert model.subject.required_channels == {"text"}
         return Score(0.5)
 
 

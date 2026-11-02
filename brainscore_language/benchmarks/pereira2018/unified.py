@@ -31,6 +31,10 @@ class _Pereira2018ExperimentUnified(_Pereira2018Experiment):
       NeuroidAssembly directly.
     """
 
+    # Calls the typed convention on the candidate itself; scoring must not
+    # wrap the candidate in the legacy-benchmark facade.
+    subject_api = 'typed'
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._identifier = self.identifier + '-unified'
