@@ -14,9 +14,9 @@ from brainscore_core.model_interface import UnifiedModel, TaskContext
 from brainscore_core.session_view import DeclaredInputSession
 from brainscore_core.streaming import StreamEvent
 from brainscore_core.streaming_helpers import (
-    _drain_stream_events,
-    _drive_behavior_session_via_process,
-    _drive_neural_session_via_process,
+    drain_session_inputs,
+    drive_behavior_session,
+    drive_neural_session,
     measurement_settings,
 )
 
@@ -169,7 +169,7 @@ class LanguageModelAdapter(UnifiedModel):
             return set(self._declared_out_channels)
         return super().out_channels | {'behavior'}
 
-    def interact(self, session) -> None:
+    def participate(self, session) -> None:
         """Run a session; a legacy-benchmark session replays the exact ``digest_text``.
 
         A session carrying ``legacy_text`` (from the legacy-benchmark facade)
@@ -187,9 +187,9 @@ class LanguageModelAdapter(UnifiedModel):
         settings = measurement_settings(session)
         if 'legacy_text' not in settings:
             if channels == ('behavior',):
-                _drive_behavior_session_via_process(self, session)
+                drive_behavior_session(self, session)
             else:
-                _drive_neural_session_via_process(self, session)
+                drive_neural_session(self, session)
             return
         if context is not None and context.task_type != 'passive':
             self.start_task(context)
@@ -197,7 +197,7 @@ class LanguageModelAdapter(UnifiedModel):
             if channel.startswith('neural:'):
                 self.start_neural_recording(channel.split(':', 1)[1],
                                             settings.get('recording_type', 'fMRI'))
-        _drain_stream_events(session)
+        drain_session_inputs(session)
         result = self._legacy.digest_text(settings['legacy_text'])
         for channel in channels:
             key = 'neural' if channel.startswith('neural:') else 'behavior'
