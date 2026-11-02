@@ -21,10 +21,36 @@ from brainscore_core.streaming_helpers import (
 )
 
 
-class LanguageModelAdapter(UnifiedModel):
+# These legacy registrations expose the same embedding at each recording target,
+# without a region-to-layer map. Declare their outputs here, leaving the plugins
+# unchanged. They cannot answer behavioral tasks.
+_EMBEDDING_OUTPUT_CHANNELS = frozenset({
+    'neural:language_system',
+    'neural:language_system_left_hemisphere',
+    'neural:language_system_right_hemisphere',
+})
+_LEGACY_OUTPUT_CHANNELS = {
+    'randomembedding-100': _EMBEDDING_OUTPUT_CHANNELS,
+    'randomembedding-1600': _EMBEDDING_OUTPUT_CHANNELS,
+    'glove-840b': _EMBEDDING_OUTPUT_CHANNELS,
+}
 
-    def __init__(self, legacy_model):
+
+class LanguageModelAdapter(UnifiedModel):
+    """Adapt a legacy subject, with explicit outputs when no layer map exists.
+
+    Known embedding registrations have declarations above. Custom legacy subjects
+    can supply ``out_channels``; otherwise the public layer map and behavioral
+    compatibility path supply the existing defaults.
+    """
+
+    def __init__(self, legacy_model: Any, *,
+                 out_channels: Optional[Set[str]] = None) -> None:
         self._legacy = legacy_model
+        self._declared_out_channels = (
+            frozenset(out_channels) if out_channels is not None
+            else _LEGACY_OUTPUT_CHANNELS.get(self.identifier)
+        )
         self._task_context: Optional[TaskContext] = None
         self._recording_active: bool = False
         self._task_active: bool = False
@@ -139,7 +165,8 @@ class LanguageModelAdapter(UnifiedModel):
 
     @property
     def out_channels(self) -> Set[str]:
-        # A legacy ArtificialSubject answers behavioral tasks as well as recording.
+        if self._declared_out_channels is not None:
+            return set(self._declared_out_channels)
         return super().out_channels | {'behavior'}
 
     def interact(self, session) -> None:

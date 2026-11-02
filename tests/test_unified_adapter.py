@@ -115,6 +115,90 @@ class TestLanguageAdapterIdentity:
         adapter = LanguageModelAdapter(legacy)
         assert adapter.region_layer_map == {}
 
+    @pytest.mark.parametrize('identifier', [
+        'randomembedding-100', 'randomembedding-1600', 'glove-840b',
+    ])
+    def test_embedding_declarations_without_a_layer_map(self, identifier):
+        adapter = LanguageModelAdapter(_make_legacy_model(identifier=identifier))
+        assert adapter.out_channels == {
+            'neural:language_system',
+            'neural:language_system_left_hemisphere',
+            'neural:language_system_right_hemisphere',
+        }
+        assert adapter.region_layer_map == {}
+
+    def test_explicit_output_declaration_is_copied(self):
+        channels = {'neural:custom_region'}
+        adapter = LanguageModelAdapter(_make_legacy_model(), out_channels=channels)
+        channels.add('behavior')
+        assert adapter.out_channels == {'neural:custom_region'}
+        returned = adapter.out_channels
+        returned.add('behavior')
+        assert adapter.out_channels == {'neural:custom_region'}
+
+    def test_empty_output_declaration_is_respected(self):
+        adapter = LanguageModelAdapter(_make_legacy_model(), out_channels=set())
+        assert adapter.out_channels == set()
+
+    def test_unmapped_behavior_model_does_not_gain_neural_outputs(self):
+        adapter = LanguageModelAdapter(_make_legacy_model(identifier='earley-parser'))
+        assert adapter.out_channels == {'behavior'}
+
+
+class TestEmbeddingSessions:
+
+    @pytest.mark.parametrize('identifier', [
+        'randomembedding-100', 'randomembedding-1600',
+    ])
+    @pytest.mark.parametrize('target', [
+        'language_system',
+        'language_system_left_hemisphere',
+        'language_system_right_hemisphere',
+    ])
+    def test_loaded_embedding_facade_matches_legacy_exactly(
+            self, identifier, target, monkeypatch):
+        from brainscore_language import load_model
+        from brainscore_core.legacy_facade import LegacyBenchmarkFacade
+
+        monkeypatch.setenv('BS_INSTALL_DEPENDENCIES', 'no')
+        adapter = load_model(identifier)
+        legacy = load_model(identifier)._legacy
+        text = ['the quick brown', 'fox jumps']
+        legacy.start_neural_recording(target, 'fMRI')
+        expected = legacy.digest_text(text)['neural']
+
+        facade = LegacyBenchmarkFacade(adapter)
+        facade.start_neural_recording(target, 'fMRI')
+        for _ in range(2):
+            actual = facade.digest_text(text)['neural']
+            xr.testing.assert_identical(actual, expected)
+        assert adapter._legacy.neural_recordings == [(target, 'fMRI')]
+
+    def test_loaded_embedding_typed_session_matches_legacy(self, monkeypatch):
+        from brainscore_language import load_model
+
+        monkeypatch.setenv('BS_INSTALL_DEPENDENCIES', 'no')
+        adapter = load_model('randomembedding-100')
+        stimuli = _language_stimulus_set()
+        legacy = load_model('randomembedding-100')._legacy
+        legacy.start_neural_recording('language_system', 'fMRI')
+        expected = legacy.digest_text(list(stimuli['sentence']))['neural']
+
+        actual = neural_response(adapter, stimuli, record='language_system')
+        np.testing.assert_array_equal(actual.values, expected.values)
+        assert list(actual['stimulus_id'].values) == list(stimuli['stimulus_id'])
+        assert list(actual['object_name'].values) == list(stimuli['object_name'])
+
+    def test_embedding_rejects_behavior_before_compute(self):
+        from brainscore_core.legacy_facade import LegacyBenchmarkFacade
+
+        legacy = _make_legacy_model(identifier='randomembedding-100')
+        facade = LegacyBenchmarkFacade(LanguageModelAdapter(legacy))
+        with pytest.raises(NotImplementedError, match="no 'behavior' output"):
+            facade.start_behavioral_task('next_word')
+        legacy.start_behavioral_task.assert_not_called()
+        legacy.digest_text.assert_not_called()
+
 
 class TestLanguageAdapterProcess:
 
