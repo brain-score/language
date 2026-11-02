@@ -85,4 +85,6 @@ class TestRunScoring:
         assert score_entry.score_raw is None
         assert score_entry.error is None
         assert 'NotImplementedError' in score_entry.comment
-        assert 'embedding.py' in score_entry.comment  # test for some stacktrace
+        assert "declares no 'behavior' output" in score_entry.comment
+        assert 'Traceback (most recent call last)' in score_entry.comment
+        assert 'legacy_facade.py' in score_entry.comment
