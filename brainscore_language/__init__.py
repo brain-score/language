@@ -83,7 +83,7 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
         check_memory(model, benchmark)
 
     # A legacy benchmark calls digest_text and friends; it receives the permanent
-    # facade, which runs those calls as sessions through the subject's interact.
+    # facade, which runs those calls as sessions through the subject's participate.
     from brainscore_core.legacy_facade import subject_for_benchmark
     candidate = subject_for_benchmark(model, benchmark)
 

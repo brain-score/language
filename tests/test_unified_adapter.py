@@ -279,7 +279,7 @@ class TestLanguageAdapterProcess:
         result = adapter.process(['text'])
         assert result is sentinel
 
-    def test_neural_response_interact_matches_legacy_process_exactly(self):
+    def test_neural_response_participate_matches_legacy_process_exactly(self):
         stimuli = _language_stimulus_set()
         expected = _language_neural_assembly()
 
@@ -304,6 +304,23 @@ class TestLanguageAdapterProcess:
         legacy_stream.start_neural_recording.assert_called_once_with(
             'language_system', 'fMRI'
         )
+
+    @pytest.mark.parametrize('channel', ['behavior', 'neural:language_system'])
+    def test_typed_session_refuses_variance_before_any_legacy_call(self, channel):
+        from brainscore_core.streaming import BufferedSession
+        legacy = _make_legacy_model(
+            region_layer_mapping={'language_system': 'language'})
+        session = BufferedSession(
+            stimulus_set=_language_stimulus_set(),
+            task_context=TaskContext(task_type='next_word'),
+            requested_output_channels=(channel,))
+        session.settings = {'require_variance': True}
+        with pytest.raises(NotImplementedError, match='trial-to-trial variance'):
+            LanguageModelAdapter(legacy).participate(session)
+        legacy.start_behavioral_task.assert_not_called()
+        legacy.start_neural_recording.assert_not_called()
+        legacy.digest_text.assert_not_called()
+        assert session.emitted == []
 
 
 class TestLanguageAdapterLegacyMethods:
@@ -449,7 +466,7 @@ class TestLanguageAutoWrapping:
         # After load_model, identifier was overwritten to string 'test-gpt2'
         assert model.identifier == 'test-gpt2'
 
-    def test_load_model_wrapped_legacy_interact_scores(self):
+    def test_load_model_wrapped_legacy_participate_scores(self):
         import brainscore_language
         expected = _language_neural_assembly()
         legacy = _make_legacy_model(
