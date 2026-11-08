@@ -46,143 +46,57 @@ def get_statuses_result(context: str, statuses_json: dict) -> Union[str, None]:
     return last_status['result']
 
 
-def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str, 
+def validate_pr(pr_number: int, pr_head: str, is_automerge_web: bool, token: str,
                 poll_interval: int = 30, max_wait_time: int = 7200) -> dict:
+    """Require every test status on the submitted head, including after timeout.
+
+    This checks results reported by the test runners; it does not execute tests.
+    Missing statuses and pending results never count as a successful validation.
     """
-    Validate PR for automerge eligibility
-    
-    Polls test status every poll_interval seconds until all tests are complete
-    (success or failure), or max_wait_time is reached.
-    
-    Args:
-        pr_number: PR number
-        pr_head: PR head commit SHA
-        is_automerge_web: Whether this is an automerge-web PR
-        token: GitHub token
-        poll_interval: Seconds to wait between polls (default: 30)
-        max_wait_time: Maximum seconds to wait for tests (default: 7200 = 2 hours)
-    
-    Returns:
-        dict with keys:
-        - is_automergeable: bool
-        - all_tests_pass: bool
-        - test_results: dict mapping test context to result
-    """
-    # Check required test contexts (adjust these for language domain)
     required_contexts = [
         "Language Unittests, Plugins",
         "Language Unittests, Non-Plugins",
         "Language Integration Tests",
-        "docs/readthedocs.org:brain-score-language"
+        "docs/readthedocs.org:brain-score-language",
     ]
-    
-    RTD_CONTEXT = "docs/readthedocs.org:brain-score-language"
-    RTD_NULL_THRESHOLD = 4  # Number of consecutive nulls before ignoring
-    RTD_TIMEOUT_SECONDS = 120  # 2 minutes
-    
-    start_time = time.time()
-    test_results = {}
-    rtd_null_count = 0
-    ignore_rtd = False
-    
+    start_time = time.monotonic()
     while True:
-        # Get status checks
-        statuses_url = f"{BASE_URL}/commits/{pr_head}/statuses"
-        statuses_json = get_data(statuses_url, token)
-        
-        # Check each required context
-        test_results = {}
-        has_pending = False
-        
-        elapsed = time.time() - start_time
-        
-        for context in required_contexts:
-            result = get_statuses_result(context, statuses_json)
-            test_results[context] = result
-            
-            # Special handling for ReadTheDocs: track consecutive nulls within 2 minutes
-            if context == RTD_CONTEXT:
-                if result is None:
-                    # Only track nulls if we're still within the 2-minute window
-                    if elapsed <= RTD_TIMEOUT_SECONDS:
-                        rtd_null_count += 1
-                        print(f"ReadTheDocs check returned null (consecutive null count: {rtd_null_count}, elapsed: {elapsed:.1f}s)", file=sys.stderr)
-                        
-                        # If we hit the threshold, ignore RTD
-                        if rtd_null_count >= RTD_NULL_THRESHOLD and not ignore_rtd:
-                            ignore_rtd = True
-                            print(f"ReadTheDocs has returned null {RTD_NULL_THRESHOLD} consecutive times within {elapsed:.1f}s. Ignoring RTD check.", file=sys.stderr)
-                    else:
-                        # We're past the 2-minute window, don't track nulls anymore
-                        if not ignore_rtd:
-                            print(f"ReadTheDocs check returned null but we're past {RTD_TIMEOUT_SECONDS}s timeout. Will not ignore RTD.", file=sys.stderr)
-                else:
-                    # RTD returned a non-null result, reset counter (only if we haven't already ignored it)
-                    if rtd_null_count > 0 and not ignore_rtd:
-                        print(f"ReadTheDocs check returned non-null result ({result}), resetting null counter", file=sys.stderr)
-                    if not ignore_rtd:
-                        rtd_null_count = 0
-            
-            # Check if any test is still pending (skip RTD if we're ignoring it)
-            if context == RTD_CONTEXT and ignore_rtd:
-                # Skip RTD from pending check if we're ignoring it
-                continue
-            elif result is None or result == "pending":
-                has_pending = True
-        
-        # If no pending tests, we're done
-        if not has_pending:
+        # Combined status returns the current status per context, rather than
+        # a page of historical updates that may omit a required context.
+        status_url = f"{BASE_URL}/commits/{pr_head}/status?per_page=100"
+        statuses = get_data(status_url, token)["statuses"]
+        test_results = {
+            context: get_statuses_result(context, statuses)
+            for context in required_contexts
+        }
+        print(f"Current test statuses: {json.dumps(test_results)}", file=sys.stderr)
+        if all(result == "success" for result in test_results.values()):
             break
-        
-        # Check if we've exceeded max wait time
-        elapsed = time.time() - start_time
+        if any(result not in (None, "pending", "success") for result in test_results.values()):
+            break
+        elapsed = time.monotonic() - start_time
         if elapsed >= max_wait_time:
-            print(f"Warning: Max wait time ({max_wait_time}s) reached. Some tests still pending.", file=sys.stderr)
+            print("Validation timed out with missing or pending required statuses", file=sys.stderr)
             break
-        
-        # Wait before next poll
-        print(f"Tests still pending. Waiting {poll_interval}s before next check...", file=sys.stderr)
-        print(f"Current status: {json.dumps(test_results)}", file=sys.stderr)
-        time.sleep(poll_interval)
-    
-    # Determine if all tests pass (exclude RTD if we're ignoring it)
-    tests_to_check = test_results.copy()
-    if ignore_rtd:
-        print(f"Excluding ReadTheDocs from validation check (was null {RTD_NULL_THRESHOLD} consecutive times)", file=sys.stderr)
-        tests_to_check.pop(RTD_CONTEXT, None)
-    
-    all_tests_pass = all(
-        result == "success" for result in tests_to_check.values() if result is not None
+        time.sleep(min(poll_interval, max_wait_time - elapsed))
+
+    # A new push can arrive while we wait. Never prepare or approve the new
+    # revision using results from the previous submitted head.
+    pr = get_data(f"{BASE_URL}/pulls/{pr_number}", token)
+    head_matches = pr["head"]["sha"] == pr_head
+    all_tests_pass = head_matches and all(
+        test_results[context] == "success" for context in required_contexts
     )
-    
-    # Debug: Print final test statuses before validation results
-    print("Final test statuses before validation:", file=sys.stderr)
-    print(json.dumps(test_results, indent=2), file=sys.stderr)
-    print(f"All tests pass: {all_tests_pass}", file=sys.stderr)
-    
-    # Check if PR is automergeable
-    # (PR must have submission_prepared label and all tests must pass)
-    labels_url = f"{BASE_URL}/issues/{pr_number}/labels"
-    labels_json = get_data(labels_url, token)
-    label_names = [label['name'] for label in labels_json]
+    if not head_matches:
+        print("PR head changed during validation; results belong to an older revision", file=sys.stderr)
     has_submission_prepared_label = any(
-        label['name'] == 'submission_prepared'
-        for label in labels_json
+        label["name"] == "submission_prepared" for label in pr["labels"]
     )
-    
-    # Debug: Print label information
-    print(f"PR labels: {label_names}", file=sys.stderr)
-    print(f"Has submission_prepared label: {has_submission_prepared_label}", file=sys.stderr)
-    
-    is_automergeable = has_submission_prepared_label and all_tests_pass
-    
-    # Debug: Print final determination
-    print(f"Is automergeable: {is_automergeable} (has_submission_prepared_label={has_submission_prepared_label}, all_tests_pass={all_tests_pass})", file=sys.stderr)
-    
     return {
-        "is_automergeable": is_automergeable,
+        "is_automergeable": has_submission_prepared_label and all_tests_pass,
         "all_tests_pass": all_tests_pass,
-        "test_results": test_results
+        "head_matches": head_matches,
+        "test_results": test_results,
     }
 
 
@@ -267,6 +181,8 @@ def main():
     validate_parser.add_argument('--pr-head', type=str, required=True)
     validate_parser.add_argument('--is-automerge-web', type=str, default='false')
     validate_parser.add_argument('--token', type=str, default=os.getenv('GITHUB_TOKEN'))
+    validate_parser.add_argument('--poll-interval', type=int, default=30)
+    validate_parser.add_argument('--max-wait-time', type=int, default=7200)
     
     # Trigger layer mapping command
     mapping_parser = subparsers.add_parser('trigger_layer_mapping', help='Trigger layer mapping')
@@ -341,7 +257,8 @@ def main():
         
     elif args.command == 'validate_pr':
         is_automerge_web = args.is_automerge_web.lower() == 'true'
-        result = validate_pr(args.pr_number, args.pr_head, is_automerge_web, args.token)
+        result = validate_pr(args.pr_number, args.pr_head, is_automerge_web, args.token,
+                             poll_interval=args.poll_interval, max_wait_time=args.max_wait_time)
         print(json.dumps(result))
         
     elif args.command == 'trigger_layer_mapping':

@@ -35,7 +35,7 @@ The orchestrator has 7 numbered jobs:
 | # | Job | When it runs |
 |---|-----|-------------|
 | 1 | **Detect Changes** | Every `pull_request` and `pull_request_target` (merged) event |
-| 2 | **Validate PR** | Plugin PRs only (skipped for metadata-only PRs) |
+| 2 | **Validate PR** | All plugin PRs, including fork submissions (skipped for metadata-only PRs) |
 | 3 | **Handle Metadata-Only PR** | Only when PR contains only `metadata.yml` changes |
 | 4 | **Generate Mutations and Commit** | When metadata generation or layer mapping is needed and tests pass |
 | 5 | **Auto-merge** | Web submissions only, when tests pass and `submission_prepared` label exists |
@@ -59,9 +59,23 @@ The orchestrator has 7 numbered jobs:
 - `Language Unittests, Plugins`
 - `Language Unittests, Non-Plugins`
 - `Language Integration Tests`
-- `docs/readthedocs.org:brain-score-language` (with special RTD null-handling: if RTD returns null 4+ consecutive times within 2 minutes, it's excluded from validation)
+- `docs/readthedocs.org:brain-score-language`
 
-If metadata already exists and tests pass, adds the `submission_prepared` label.
+The validator checks the exact submitted head SHA using the combined status API.
+All four contexts must report success. Missing and pending statuses fail after
+timeout; a known failure stops validation immediately. If a new push changes
+the PR head during the wait, the old results cannot prepare the new revision.
+The Actions validation job fails when validation does not pass.
+
+This job runs trusted code from the PR's base SHA and uses a read-only GitHub
+token. It polls the results from Jenkins and Read the Docs; it does not execute
+model tests or grant secrets to fork code. Jenkins logs identify the tested
+revision and the tests that actually ran. A plugin unit-test pass does not
+establish that checkpoint-dependent tests or full benchmarks ran.
+
+For non-fork web submissions only, if metadata already exists and tests pass,
+the job adds the `submission_prepared` label. Fork submissions receive the
+validation result without label changes, generated commits, or automatic merge.
 
 **3. Handle Metadata-Only PR** — Adds the `only_update_metadata` label, which triggers a new orchestrator run.
 
