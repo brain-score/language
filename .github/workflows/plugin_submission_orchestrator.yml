@@ -296,20 +296,24 @@ jobs:
     if: |
       github.event_name == 'pull_request' &&
       needs.detect_changes.outputs.has_plugins == 'true' &&
-      needs.detect_changes.outputs.metadata_only != 'true' &&
-      needs.detect_changes.outputs.is_web_submission == 'true'
+      needs.detect_changes.outputs.metadata_only != 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      statuses: read
+      pull-requests: read
+    timeout-minutes: 125
     outputs:
       is_automergeable: ${{ steps.validate.outputs.is_automergeable }}
       all_tests_pass: ${{ steps.validate.outputs.all_tests_pass }}
       pr_number: ${{ steps.get_pr_info.outputs.pr_number }}
       test_results_json: ${{ steps.validate.outputs.test_results_json }}
     steps:
-      - name: Check out repository code
+      - name: Check out trusted validation code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -320,19 +324,20 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools
-          python -m pip install ".[test]"
+          python -m pip install requests
 
-      - name: Get PR number and latest head SHA
+      - name: Get PR number and submitted head SHA
         id: get_pr_info
         run: |
           echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
-          # Get the latest commit SHA from the checked-out branch (after any mutations)
-          PR_HEAD_SHA=$(git rev-parse HEAD)
+          PR_HEAD_SHA="${{ github.event.pull_request.head.sha }}"
           echo "pr_head_sha=${PR_HEAD_SHA}" >> $GITHUB_OUTPUT
           echo "PR head SHA: ${PR_HEAD_SHA}"
 
       - name: Validate PR
         id: validate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           RESULT=$(python brainscore_language/submission/actions_helpers.py validate_pr \
             --pr-number ${{ steps.get_pr_info.outputs.pr_number }} \
@@ -353,6 +358,8 @@ jobs:
 
       - name: Add submission_prepared label if metadata already exists
         if: |
+          needs.detect_changes.outputs.is_web_submission == 'true' &&
+          needs.detect_changes.outputs.is_fork_pr != 'true' &&
           needs.detect_changes.outputs.needs_metadata_generation == 'false' &&
           steps.validate.outputs.all_tests_pass == 'true'
         env:
@@ -373,7 +380,7 @@ jobs:
       - name: Check for submission_prepared label
         id: check_submission_prepared
         env:
-          GH_TOKEN: ${{ secrets.GH_MFERG_PAT }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           LABELS_JSON=$(gh pr view ${{ steps.get_pr_info.outputs.pr_number }} --json labels)
           if echo "$LABELS_JSON" | jq -e '.labels[] | select(.name == "submission_prepared")' >/dev/null; then
@@ -381,6 +388,12 @@ jobs:
           else
             echo "has_submission_prepared=false" >> $GITHUB_OUTPUT
           fi
+
+      - name: Fail when required validation does not pass
+        if: steps.validate.outputs.all_tests_pass != 'true'
+        run: |
+          echo "Required test statuses are missing, pending, failed, or belong to an older PR head"
+          exit 1
 
   # ============================================================================
   # JOB 3: Handle Metadata-Only PRs (Add label and terminate)
