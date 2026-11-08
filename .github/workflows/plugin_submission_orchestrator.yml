@@ -312,7 +312,10 @@ jobs:
       - name: Check out trusted validation code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          repository: ${{ github.repository }}
+          # An old PR can retain its original base SHA after main advances.
+          # Read current upstream validation code, never code from the fork.
+          ref: ${{ github.event.pull_request.base.ref }}
           persist-credentials: false
 
       - name: Set up Python
@@ -332,6 +335,7 @@ jobs:
           echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
           PR_HEAD_SHA="${{ github.event.pull_request.head.sha }}"
           echo "pr_head_sha=${PR_HEAD_SHA}" >> $GITHUB_OUTPUT
+          echo "Validation code SHA: $(git rev-parse HEAD)"
           echo "PR head SHA: ${PR_HEAD_SHA}"
 
       - name: Validate PR

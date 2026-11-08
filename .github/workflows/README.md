@@ -67,11 +67,15 @@ timeout; a known failure stops validation immediately. If a new push changes
 the PR head during the wait, the old results cannot prepare the new revision.
 The Actions validation job fails when validation does not pass.
 
-This job runs trusted code from the PR's base SHA and uses a read-only GitHub
+This job runs trusted code from the current upstream base branch and uses a read-only GitHub
 token. It polls the results from Jenkins and Read the Docs; it does not execute
 model tests or grant secrets to fork code. Jenkins logs identify the tested
 revision and the tests that actually ran. A plugin unit-test pass does not
 establish that checkpoint-dependent tests or full benchmarks ran.
+
+An old PR can retain an original `base.sha` that predates a validator repair.
+The checkout therefore uses `base.ref` in the upstream repository and logs the
+resolved validation-code SHA separately from the submitted PR head SHA.
 
 For non-fork web submissions only, if metadata already exists and tests pass,
 the job adds the `submission_prepared` label. Fork submissions receive the
