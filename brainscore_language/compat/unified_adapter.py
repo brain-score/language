@@ -54,6 +54,9 @@ class LanguageModelAdapter(UnifiedModel):
         self._task_context: Optional[TaskContext] = None
         self._recording_active: bool = False
         self._task_active: bool = False
+        # The output a running typed session asked for ('neural' or
+        # 'behavior'); None outside a session.
+        self._requested_output: Optional[str] = None
         # Setup the legacy model currently has. Legacy subjects append every
         # recording registration, so a configuration is applied once until
         # it changes or the adapter is reset.
@@ -105,8 +108,14 @@ class LanguageModelAdapter(UnifiedModel):
         return self._select_output(result)
 
     def _select_output(self, result):
-        # digest_text returns Dict[str, Assembly]. Extract the right key
-        # based on which measurement was configured.
+        # digest_text returns Dict[str, Assembly]. Inside a session the
+        # requested channel decides; flags left by an earlier session do not.
+        if self._requested_output is not None:
+            if self._requested_output not in result:
+                raise ValueError(f'The session requested {self._requested_output!r} output; '
+                                 f'the legacy model returned {sorted(result)}')
+            return result[self._requested_output]
+        # Direct process() calls: pick by which measurement was configured.
         if self._recording_active and 'neural' in result:
             return result['neural']
         if self._task_active and 'behavior' in result:
@@ -186,10 +195,14 @@ class LanguageModelAdapter(UnifiedModel):
         context = session.task_context
         settings = measurement_settings(session)
         if 'legacy_text' not in settings:
-            if channels == ('behavior',):
-                drive_behavior_session(self, session)
-            else:
-                drive_neural_session(self, session)
+            self._requested_output = 'behavior' if channels == ('behavior',) else 'neural'
+            try:
+                if channels == ('behavior',):
+                    drive_behavior_session(self, session)
+                else:
+                    drive_neural_session(self, session)
+            finally:
+                self._requested_output = None
             return
         if context is not None and context.task_type != 'passive':
             self.start_task(context)
