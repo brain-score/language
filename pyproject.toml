@@ -23,6 +23,7 @@ dependencies = [
     "transformers >=4.51,<5",
     "gensim",
     "joblib",
+    "accelerate",
     # submission dependencies
     "requests"
 ]
