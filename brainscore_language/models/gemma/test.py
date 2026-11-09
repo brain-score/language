@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
 
+pytestmark = pytest.mark.usefixtures("set_hf_token")
+
 from brainscore_language import load_model
 from brainscore_language.artificial_subject import ArtificialSubject
 
