@@ -67,6 +67,7 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
     from brainscore_core.memory import check_memory
     from brainscore_core.score_metadata import (
         infer_score_protocol,
+        record_measures,
         requested_output_channels_for_score,
         stamp_score_metadata,
     )
@@ -89,7 +90,7 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
 
     import time as _time
     _t0 = _time.time()
-    with weight_fingerprint_scope():
+    with weight_fingerprint_scope(), record_measures() as measures:
         score: Score = benchmark(candidate)
     score.attrs['runtime_sec'] = round(_time.time() - _t0, 2)
     score.attrs['model_identifier'] = model_identifier
@@ -98,8 +99,10 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
         score,
         model,
         requested_channels=requested_channels,
-        protocol=infer_score_protocol(model, benchmark, requested_channels),
+        protocol=infer_score_protocol(model, benchmark, requested_channels,
+                                      measures=measures),
         harness_id='brainscore_language',
+        measures=measures,
     )
     score.attrs['compatibility'] = compatibility.as_attrs()
     return score
