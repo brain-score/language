@@ -593,3 +593,106 @@ def test_behavioral_task_is_applied_once_per_configuration():
     legacy.start_behavioral_task.assert_called_once_with('reading_times')
     adapter.start_behavioral_task('next_word')
     assert legacy.start_behavioral_task.call_count == 2
+
+
+# --- the session's requested channel selects the output ---------------------
+
+class _AppendingSubject:
+    """HuggingfaceSubject-like: registrations persist; digest_text returns every configured output."""
+
+    def __init__(self):
+        self.region_layer_mapping = {'language_system': 'transformer.h.5'}
+        self.neural_recordings, self.behavioral_task = [], None
+        self.digests = 0
+
+    def identifier(self):
+        return 'appending-lm'
+
+    def start_neural_recording(self, target, recording_type):
+        self.neural_recordings.append((target, recording_type))
+
+    def start_behavioral_task(self, task):
+        self.behavioral_task = task
+
+    def digest_text(self, text):
+        from brainscore_core.supported_data_standards.brainio.assemblies import BehavioralAssembly
+        self.digests += 1
+        text = [text] if isinstance(text, str) else list(text)
+        coords = {'stimulus': ('presentation', text),
+                  'part_number': ('presentation', list(range(len(text))))}
+        out = {}
+        if self.behavioral_task is not None:
+            out['behavior'] = BehavioralAssembly(np.array(['w'] * len(text)), coords=coords,
+                                                 dims=['presentation'])
+        if self.neural_recordings:
+            out['neural'] = NeuroidAssembly(np.zeros((len(text), 2)), dims=['presentation', 'neuroid'],
+                                            coords={**coords, 'neuroid_id': ('neuroid', ['a', 'b'])})
+        return out
+
+    def reset(self):
+        self.neural_recordings, self.behavioral_task = [], None
+
+
+def _next_word_task():
+    from brainscore_core.legacy_facade import text_stimulus_set
+    stimuli = text_stimulus_set(['the cat', 'sat on'])
+    return stimuli, TaskContext(task_type='next_word', metadata={'stimulus_set': stimuli})
+
+
+def test_neural_then_behavior_session_returns_behavior():
+    from brainscore_core.streaming_helpers import behavioral_response
+    from brainscore_core.supported_data_standards.brainio.assemblies import BehavioralAssembly
+    stimuli, task = _next_word_task()
+    adapter = LanguageModelAdapter(_AppendingSubject())
+    assert isinstance(neural_response(adapter, stimuli, record='language_system'), NeuroidAssembly)
+    assert isinstance(behavioral_response(adapter, task), BehavioralAssembly)
+
+
+def test_behavior_then_neural_session_returns_neural():
+    from brainscore_core.streaming_helpers import behavioral_response
+    from brainscore_core.supported_data_standards.brainio.assemblies import BehavioralAssembly
+    stimuli, task = _next_word_task()
+    adapter = LanguageModelAdapter(_AppendingSubject())
+    assert isinstance(behavioral_response(adapter, task), BehavioralAssembly)
+    assert isinstance(neural_response(adapter, stimuli, record='language_system'), NeuroidAssembly)
+
+
+def test_direct_process_still_prefers_the_configured_recording():
+    stimuli, _ = _next_word_task()
+    legacy = _AppendingSubject()
+    adapter = LanguageModelAdapter(legacy)
+    adapter.start_behavioral_task('next_word')
+    adapter.start_neural_recording('language_system', 'fMRI')
+    assert isinstance(adapter.process(stimuli), NeuroidAssembly)
+
+
+def test_typed_joint_neural_and_behavior_request_is_unchanged():
+    from brainscore_core.streaming import BufferedSession
+    stimuli, task = _next_word_task()
+    legacy = _AppendingSubject()
+    session = BufferedSession(stimulus_set=stimuli, task_context=task,
+                              requested_output_channels=['behavior', 'neural:language_system'])
+    with pytest.raises(NotImplementedError):
+        LanguageModelAdapter(legacy).participate(session)
+    assert legacy.digests == 0
+
+
+@pytest.mark.parametrize('neural,behavior', [(True, False), (False, True), (True, True)])
+def test_facade_after_typed_sessions_returns_one_legacy_call(neural, behavior):
+    from brainscore_core.legacy_facade import LegacyBenchmarkFacade
+    from brainscore_core.streaming_helpers import behavioral_response
+    stimuli, task = _next_word_task()
+    legacy = _AppendingSubject()
+    adapter = LanguageModelAdapter(legacy)
+    neural_response(adapter, stimuli, record='language_system')
+    behavioral_response(adapter, task)
+    facade = LegacyBenchmarkFacade(adapter)
+    facade.reset()
+    if neural:
+        facade.start_neural_recording('language_system', recording_type='fMRI')
+    if behavior:
+        facade.start_behavioral_task('next_word')
+    before = legacy.digests
+    actual = facade.digest_text(['the cat', 'sat on'])
+    assert legacy.digests == before + 1
+    assert set(actual) == {k for k, on in (('neural', neural), ('behavior', behavior)) if on}
