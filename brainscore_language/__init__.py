@@ -70,6 +70,13 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
         requested_output_channels_for_score,
         stamp_score_metadata,
     )
+    try:
+        from brainscore_core.score_metadata import record_measures
+    except ImportError as error:
+        raise ImportError(
+            'brainscore_language needs a brainscore_core with score_metadata.record_measures '
+            '(core ad7288a or later); update the core pin in requirements-v2.txt'
+        ) from error
 
     from brainscore_core.preflight import check_cache_directory
     check_cache_directory()
@@ -89,7 +96,7 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
 
     import time as _time
     _t0 = _time.time()
-    with weight_fingerprint_scope():
+    with weight_fingerprint_scope(), record_measures() as measures:
         score: Score = benchmark(candidate)
     score.attrs['runtime_sec'] = round(_time.time() - _t0, 2)
     score.attrs['model_identifier'] = model_identifier
@@ -98,8 +105,10 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
         score,
         model,
         requested_channels=requested_channels,
-        protocol=infer_score_protocol(model, benchmark, requested_channels),
+        protocol=infer_score_protocol(model, benchmark, requested_channels,
+                                      measures=measures),
         harness_id='brainscore_language',
+        measures=measures,
     )
     score.attrs['compatibility'] = compatibility.as_attrs()
     return score
