@@ -24,7 +24,7 @@ class _Pereira2018ExperimentUnified(_Pereira2018Experiment):
 
     Differences from the parent:
     - Uses `start_recording('language_system', recording_type='fMRI')` instead
-      of `start_neural_recording(...)`. BrainScoreModel's compat method
+      of `start_neural_recording(...)`. brainscore.BrainScoreModel's compat method
       delegates to start_recording, but new models can implement it natively.
     - Constructs a StimulusSet per passage and calls `process(stimulus_set)`
       instead of `digest_text(text_array)['neural']`. The model returns a
