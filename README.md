@@ -14,7 +14,7 @@ Brain-Score operationalizes experimental data into quantitative benchmarks that 
 the `ArtificialSubject` interface can be scored on.
 
 > **UMI integration:** Existing domain plugins remain supported. Use
-> `BrainScoreModel` for extraction and task helpers, or implement
+> `brainscore.BrainScoreModel` for extraction and task helpers, or implement
 > `Subject.participate(session)` for a custom session integration. A native
 > `Subject` does not require `process()`. See
 > [docs/UMI_MIGRATION.md](docs/UMI_MIGRATION.md).

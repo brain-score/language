@@ -4,7 +4,7 @@ import pandas as pd
 import xarray as xr
 from unittest.mock import MagicMock, patch
 
-from brainscore_core.model_interface import TaskContext, UnifiedModel, BrainScoreModel
+from brainscore_core.model_interface import TaskContext, UnifiedModel, Subject
 from brainscore_core.streaming_helpers import neural_response
 from brainscore_core.supported_data_standards.brainio.assemblies import NeuroidAssembly
 from brainscore_core.supported_data_standards.brainio.stimuli import StimulusSet
@@ -489,15 +489,21 @@ class TestLanguageAutoWrapping:
         xr.testing.assert_identical(scored, expected)
 
     def test_load_model_does_not_double_wrap_unified(self):
-        """If the model is already a UnifiedModel, don't wrap it."""
+        """If the model is already a Subject, do not wrap it."""
         import brainscore_language
 
-        native = BrainScoreModel(
-            identifier='native-lang',
-            model=None,
-            region_layer_map={},
-            preprocessors={'text': lambda m, s, **kw: None},
-        )
+        class NativeSubject(Subject):
+            identifier = 'native-subject'
+            in_channels = set()
+            out_channels = set()
+
+            def participate(self, session):
+                pass
+
+            def reset(self):
+                pass
+
+        native = NativeSubject()
 
         with patch.object(brainscore_language, 'model_registry',
                           {'native-lang': lambda: native}):
