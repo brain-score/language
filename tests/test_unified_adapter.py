@@ -307,10 +307,10 @@ class TestLanguageAdapterProcess:
 
     @pytest.mark.parametrize('channel', ['behavior', 'neural:language_system'])
     def test_typed_session_refuses_variance_before_any_legacy_call(self, channel):
-        from brainscore_core.streaming_helpers import table_session
+        from brainscore_core.streaming_helpers import stimulus_session
         legacy = _make_legacy_model(
             region_layer_mapping={'language_system': 'language'})
-        session = table_session(_language_stimulus_set(), (channel,), task_context=TaskContext(task_type='next_word'))
+        session = stimulus_session(_language_stimulus_set(), (channel,), task_context=TaskContext(task_type='next_word'))
         session.settings = {'require_variance': True}
         with pytest.raises(NotImplementedError, match='trial-to-trial variance'):
             LanguageModelAdapter(legacy).participate(session)
@@ -670,10 +670,10 @@ def test_direct_process_still_prefers_the_configured_recording():
 
 
 def test_typed_joint_neural_and_behavior_request_is_unchanged():
-    from brainscore_core.streaming_helpers import table_session
+    from brainscore_core.streaming_helpers import stimulus_session
     stimuli, task = _next_word_task()
     legacy = _AppendingSubject()
-    session = table_session(stimuli, ['behavior', 'neural:language_system'], task_context=task)
+    session = stimulus_session(stimuli, ['behavior', 'neural:language_system'], task_context=task)
     with pytest.raises(NotImplementedError):
         LanguageModelAdapter(legacy).participate(session)
     assert legacy.digests == 0
