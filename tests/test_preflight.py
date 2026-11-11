@@ -181,7 +181,7 @@ class TestPreflightInRunScore:
             model_modalities={'text'},
             bench_required={'text'},
         )
-        benchmark.required_input_channels = {'vision'}
+        benchmark.required_input_channels = {'vision:image'}
         mock_load_model.return_value = model
         mock_load_benchmark.return_value = benchmark
 
