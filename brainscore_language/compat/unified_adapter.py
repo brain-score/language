@@ -11,7 +11,6 @@ measurement configuration.
 from typing import Any, Dict, Optional, Set
 
 from brainscore_core.model_interface import UnifiedModel, TaskContext
-from brainscore_core.session_view import DeclaredInputSession
 from brainscore_core.streaming import StreamEvent
 from brainscore_core.streaming_helpers import (
     drain_session_inputs,
@@ -186,7 +185,7 @@ class LanguageModelAdapter(UnifiedModel):
         ``digest_text`` call that can return neural and behavioral outputs
         together. Other sessions use the typed drivers over ``process``.
         """
-        session = DeclaredInputSession(session, self.in_channels)
+        session = session.declare_inputs(self.in_channels)
         channels = tuple(session.requested_output_channels or ())
         missing = set(channels) - self.out_channels
         if not channels or missing:
