@@ -186,12 +186,12 @@ class LanguageModelAdapter(UnifiedModel):
         together. Other sessions use the typed drivers over ``process``.
         """
         session = session.declare_inputs(self.in_channels)
-        channels = tuple(session.requested_output_channels or ())
+        channels = tuple(session.outputs or ())
         missing = set(channels) - self.out_channels
         if not channels or missing:
             raise ValueError(f'Undeclared output channels {sorted(missing)}; declared: '
                              f'{sorted(self.out_channels)}')
-        context = session.task_context
+        context = session.task
         settings = measurement_settings(session)
         if 'legacy_text' not in settings:
             self._requested_output = 'behavior' if channels == ('behavior',) else 'neural'
