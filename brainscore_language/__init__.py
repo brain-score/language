@@ -43,7 +43,7 @@ def load_benchmark(identifier: str) -> Benchmark:
 
 
 def load_model(identifier: str) -> 'Subject':
-    from brainscore_core.model_interface import Subject
+    from brainscore_core.contract import Subject
     from brainscore_language.compat.unified_adapter import LanguageModelAdapter
 
     import_plugin('brainscore_language', 'models', identifier)
