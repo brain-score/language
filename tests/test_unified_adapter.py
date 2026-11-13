@@ -102,9 +102,10 @@ class TestLanguageAdapterIdentity:
         adapter = LanguageModelAdapter(legacy)
         assert adapter.identifier == 'gpt2-xl'
 
-    def test_supported_modalities(self):
+    def test_declares_text_channel_only(self):
         adapter = LanguageModelAdapter(_make_legacy_model())
-        assert adapter.supported_modalities == {'text'}
+        assert adapter.in_channels == {'text'}
+        assert adapter.required_channels == {'text'}
 
     def test_region_layer_map_from_attribute(self):
         legacy = _make_legacy_model(

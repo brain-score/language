@@ -76,14 +76,13 @@ class LanguageModelAdapter(UnifiedModel):
         return {}
 
     @property
-    def supported_modalities(self) -> Set[str]:
+    def in_channels(self) -> Set[str]:
         return {'text'}
 
     @property
-    def required_modalities(self) -> Set[str]:
-        # Legacy language models are unimodal — pure text backbones. Hard-
-        # require text so pre-flight rejects pairings against a benchmark
-        # that does not provide text stimuli.
+    def required_channels(self) -> Set[str]:
+        # Legacy language models are unimodal: pure text backbones. Requiring
+        # text makes pre-flight reject a benchmark that does not provide it.
         return {'text'}
 
     def process(self, stimuli) -> Any:
