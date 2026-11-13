@@ -81,7 +81,10 @@ def _language_neural_assembly():
 class TestLanguageAdapterIsUnifiedModel:
 
     def test_isinstance(self):
+        # score() wraps a model that is not a Subject; the adapter must not be wrapped again.
+        from brainscore_core.model_interface import Subject
         adapter = LanguageModelAdapter(_make_legacy_model())
+        assert isinstance(adapter, Subject)
         assert isinstance(adapter, UnifiedModel)
 
 
@@ -647,8 +650,11 @@ def test_neural_then_behavior_session_returns_behavior():
     from brainscore_core.supported_data_standards.brainio.assemblies import BehavioralAssembly
     stimuli, task = _next_word_task()
     adapter = LanguageModelAdapter(_AppendingSubject())
-    assert isinstance(neural_response(adapter, stimuli, ['neural:language_system']), NeuroidAssembly)
-    assert isinstance(behavioral_response(adapter, stimuli, task), BehavioralAssembly)
+    neural = neural_response(adapter, stimuli, ['neural:language_system'])
+    assert isinstance(neural, NeuroidAssembly) and neural.shape == (2, 2)
+    behavior = behavioral_response(adapter, stimuli, task)
+    assert isinstance(behavior, BehavioralAssembly)
+    assert list(behavior.values) == ['w', 'w']           # the legacy behavioral output
 
 
 def test_behavior_then_neural_session_returns_neural():
@@ -656,8 +662,11 @@ def test_behavior_then_neural_session_returns_neural():
     from brainscore_core.supported_data_standards.brainio.assemblies import BehavioralAssembly
     stimuli, task = _next_word_task()
     adapter = LanguageModelAdapter(_AppendingSubject())
-    assert isinstance(behavioral_response(adapter, stimuli, task), BehavioralAssembly)
-    assert isinstance(neural_response(adapter, stimuli, ['neural:language_system']), NeuroidAssembly)
+    behavior = behavioral_response(adapter, stimuli, task)
+    assert isinstance(behavior, BehavioralAssembly) and list(behavior.values) == ['w', 'w']
+    neural = neural_response(adapter, stimuli, ['neural:language_system'])
+    assert isinstance(neural, NeuroidAssembly)
+    assert neural.shape == (2, 2) and not neural.values.any()   # the legacy zeros
 
 
 def test_direct_process_still_prefers_the_configured_recording():
@@ -666,7 +675,9 @@ def test_direct_process_still_prefers_the_configured_recording():
     adapter = LanguageModelAdapter(legacy)
     adapter.start_behavioral_task('next_word')
     adapter.start_neural_recording('language_system', 'fMRI')
-    assert isinstance(adapter.process(stimuli), NeuroidAssembly)
+    activity = adapter.process(stimuli)
+    assert isinstance(activity, NeuroidAssembly)
+    assert activity.shape == (2, 2) and not activity.values.any()   # the legacy zeros
 
 
 def test_typed_joint_neural_and_behavior_request_is_unchanged():
