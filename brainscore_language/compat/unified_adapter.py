@@ -1,16 +1,15 @@
-"""
-Adapter wrapping legacy language ArtificialSubject to conform to the unified
-Subject interface (formerly UnifiedModel).
+"""The adapter that makes a legacy language ``ArtificialSubject`` a subject.
 
-process() delegates to the legacy model's digest_text(). Text is extracted
-from the StimulusSet's text column. The Dict[str, Assembly] return from
-digest_text() is translated to a single DataAssembly based on the current
-measurement configuration.
+A session from a legacy benchmark replays its exact ``digest_text`` call; other
+sessions reach the legacy model through ``process``, which reads the text column
+of the stimuli and returns the output the session requested from the
+``Dict[str, Assembly]`` that ``digest_text`` returns. A legacy benchmark that is
+given the adapter directly calls ``digest_text`` on it and gets the same call.
 """
 
 from typing import Any, Dict, Optional, Set
 
-from brainscore_core.model_interface import UnifiedModel, TaskContext
+from brainscore_core.contract import UnifiedModel, TaskContext
 from brainscore_core.streaming import StreamEvent
 from brainscore_core.streaming_helpers import (
     drain_session_inputs,
@@ -50,7 +49,6 @@ class LanguageModelAdapter(UnifiedModel):
             frozenset(out_channels) if out_channels is not None
             else _LEGACY_OUTPUT_CHANNELS.get(self.identifier)
         )
-        self._task_context: Optional[TaskContext] = None
         self._recording_active: bool = False
         self._task_active: bool = False
         # The output a running typed session asked for ('neural' or
@@ -78,14 +76,13 @@ class LanguageModelAdapter(UnifiedModel):
         return {}
 
     @property
-    def supported_modalities(self) -> Set[str]:
+    def in_channels(self) -> Set[str]:
         return {'text'}
 
     @property
-    def required_modalities(self) -> Set[str]:
-        # Legacy language models are unimodal — pure text backbones. Hard-
-        # require text so pre-flight rejects pairings against a benchmark
-        # that does not provide text stimuli.
+    def required_channels(self) -> Set[str]:
+        # Legacy language models are unimodal: pure text backbones. Requiring
+        # text makes pre-flight reject a benchmark that does not provide it.
         return {'text'}
 
     def process(self, stimuli) -> Any:
@@ -186,12 +183,12 @@ class LanguageModelAdapter(UnifiedModel):
         together. Other sessions use the typed drivers over ``process``.
         """
         session = session.declare_inputs(self.in_channels)
-        channels = tuple(session.requested_output_channels or ())
+        channels = tuple(session.outputs or ())
         missing = set(channels) - self.out_channels
         if not channels or missing:
             raise ValueError(f'Undeclared output channels {sorted(missing)}; declared: '
                              f'{sorted(self.out_channels)}')
-        context = session.task_context
+        task = session.task
         settings = measurement_settings(session)
         if 'legacy_text' not in settings:
             self._requested_output = 'behavior' if channels == ('behavior',) else 'neural'
@@ -203,8 +200,8 @@ class LanguageModelAdapter(UnifiedModel):
             finally:
                 self._requested_output = None
             return
-        if context is not None and context.task_type != 'passive':
-            self.start_task(context)
+        if task is not None and task.task_type != 'passive':
+            self.start_task(task)
         for channel in channels:
             if channel.startswith('neural:'):
                 self.start_neural_recording(channel.split(':', 1)[1],
@@ -219,10 +216,9 @@ class LanguageModelAdapter(UnifiedModel):
     def digest_text(self, text):
         return self._legacy.digest_text(text)
 
-    def start_task(self, task_context: TaskContext) -> None:
-        self._task_context = task_context
+    def start_task(self, task: TaskContext) -> None:
         # Legacy ArtificialSubject.start_behavioral_task(task) takes ONE arg
-        self.start_behavioral_task(task_context.task_type)
+        self.start_behavioral_task(task.task_type)
 
     # Backwards-compatible: existing benchmarks call these directly
     def start_behavioral_task(self, task):
@@ -262,7 +258,6 @@ class LanguageModelAdapter(UnifiedModel):
                 setattr(self._legacy, name, None)
         if '_token_count' in state:
             self._legacy._token_count = 0
-        self._task_context = None
         self._recording_active = False
         self._task_active = False
         self._registered_recordings = set()

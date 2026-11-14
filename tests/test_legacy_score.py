@@ -24,9 +24,9 @@ def test_public_score_backfills_legacy_modality(monkeypatch):
     monkeypatch.setattr(language, 'import_plugin', lambda *a, **kw: None)
     monkeypatch.setitem(language.benchmark_registry, 'offline-legacy', LegacyBenchmark)
     model = SimpleNamespace(
-        identifier='offline-model', available_modalities={'text'},
-        required_modalities={'text'}, in_channels={'text'},
+        identifier='offline-model', in_channels={'text'},
         required_channels={'text'}, out_channels={'behavior'}, region_layer_map={},
+        output_inputs={},
     )
     monkeypatch.setattr(language, 'load_model', lambda _: model)
     # Conda serialization is tested separately; do not write into the checkout.

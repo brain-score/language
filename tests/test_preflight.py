@@ -4,27 +4,35 @@ import pytest
 from unittest.mock import patch, MagicMock
 
 from brainscore_core.compatibility import CompatibilityError
-from brainscore_core.io_catalog import modalities_to_input_channels
 from brainscore_core.memory import MemoryError
+from brainscore_core.contract import Subject
+
+
+class _Subject(Subject):
+    """A small real subject: it has what it declares and nothing else.
+
+    A MagicMock answers every attribute, so a pre-flight that starts to read a
+    new declaration would pass on mock values; this subject does not.
+    """
+    identifier = 'test-model'
+    in_channels = frozenset()
+    out_channels = frozenset()
+    required_channels = frozenset()
+    region_layer_map = {}
+
+    def __init__(self, in_channels):
+        self.in_channels = frozenset(in_channels)
+
+    def participate(self, session):
+        raise AssertionError('the stand-in benchmark never runs a session')
 
 
 class TestPreflightInRunScore:
     """Verify that _run_score calls check_compatibility and check_memory."""
 
-    def _make_model_and_benchmark(self, model_modalities, bench_required):
-        """Create mock model and benchmark for pre-flight testing."""
-        model = MagicMock()
-        model.identifier = 'test-model'
-        # Two-tier model-side modality declaration — mirror supported into
-        # available and leave required empty so the checker reads a coherent
-        # pair rather than MagicMock auto-attrs.
-        model.supported_modalities = model_modalities
-        model.available_modalities = model_modalities
-        model.required_modalities = set()
-        model.region_layer_map = {}
-        model.in_channels = modalities_to_input_channels(model_modalities)
-        model.out_channels = set()
-        model.required_channels = set()
+    def _make_model_and_benchmark(self, model_in_channels, bench_required):
+        """A real subject and a stand-in benchmark for pre-flight testing."""
+        model = _Subject(model_in_channels)
 
         benchmark = MagicMock(spec=['identifier', 'required_modalities', '__call__'])
         benchmark.identifier = 'test-bench'
@@ -39,7 +47,7 @@ class TestPreflightInRunScore:
         from brainscore_language import _run_score
 
         model, benchmark = self._make_model_and_benchmark(
-            model_modalities={'vision'},
+            model_in_channels={'vision:image'},
             bench_required={'text'},
         )
         mock_load_model.return_value = model
@@ -50,33 +58,13 @@ class TestPreflightInRunScore:
 
     @patch('brainscore_language.load_benchmark')
     @patch('brainscore_language.load_model')
-    def test_compatible_model_proceeds_to_scoring(
-        self, mock_load_model, mock_load_benchmark
-    ):
-        from brainscore_language import _run_score
-
-        model, benchmark = self._make_model_and_benchmark(
-            model_modalities={'text'},
-            bench_required={'text'},
-        )
-        score = MagicMock()
-        score.attrs = {}
-        benchmark.return_value = score
-        mock_load_model.return_value = model
-        mock_load_benchmark.return_value = benchmark
-
-        result = _run_score('test-model', 'test-bench', check_mem=False)
-        benchmark.assert_called_once_with(model)
-
-    @patch('brainscore_language.load_benchmark')
-    @patch('brainscore_language.load_model')
     def test_score_metadata_attrs_are_stamped(
         self, mock_load_model, mock_load_benchmark
     ):
         from brainscore_language import _run_score
 
         model, benchmark = self._make_model_and_benchmark(
-            model_modalities={'text'},
+            model_in_channels={'text'},
             bench_required={'text'},
         )
         model.out_channels = {'behavior'}
@@ -89,6 +77,7 @@ class TestPreflightInRunScore:
 
         result = _run_score('test-model', 'test-bench', check_mem=False)
 
+        benchmark.assert_called_once_with(model)   # a compatible pair runs once
         assert result is score
         assert score.attrs['existing'] == 'preserved'
         assert score.attrs['in_channels'] == ('text',)
@@ -109,7 +98,7 @@ class TestPreflightInRunScore:
         )
 
         model, benchmark = self._make_model_and_benchmark(
-            model_modalities={'text'},
+            model_in_channels={'text'},
             bench_required={'text'},
         )
         model.out_channels = {'behavior'}
@@ -147,29 +136,6 @@ class TestPreflightInRunScore:
         finally:
             score_metadata.record_measures = saved
 
-    @patch('brainscore_core.compatibility.check_channel_compatibility')
-    @patch('brainscore_language.load_benchmark')
-    @patch('brainscore_language.load_model')
-    def test_channel_check_runs_for_compatible_pair(
-        self, mock_load_model, mock_load_benchmark, mock_check_channel
-    ):
-        from brainscore_language import _run_score
-
-        model, benchmark = self._make_model_and_benchmark(
-            model_modalities={'text'},
-            bench_required={'text'},
-        )
-        score = MagicMock()
-        score.attrs = {}
-        benchmark.return_value = score
-        mock_load_model.return_value = model
-        mock_load_benchmark.return_value = benchmark
-
-        _run_score('test-model', 'test-bench', check_mem=False)
-
-        mock_check_channel.assert_called_once_with(model, benchmark)
-        benchmark.assert_called_once_with(model)
-
     @patch('brainscore_language.load_benchmark')
     @patch('brainscore_language.load_model')
     def test_channel_mismatch_raises_channel_named_error(
@@ -178,7 +144,7 @@ class TestPreflightInRunScore:
         from brainscore_language import _run_score
 
         model, benchmark = self._make_model_and_benchmark(
-            model_modalities={'text'},
+            model_in_channels={'text'},
             bench_required={'text'},
         )
         benchmark.required_input_channels = {'vision:image'}
@@ -199,7 +165,7 @@ class TestPreflightInRunScore:
         from brainscore_language import _run_score
 
         model, benchmark = self._make_model_and_benchmark(
-            model_modalities={'text'},
+            model_in_channels={'text'},
             bench_required={'text'},
         )
         score = MagicMock()
@@ -214,34 +180,13 @@ class TestPreflightInRunScore:
     @patch('brainscore_core.memory.check_memory')
     @patch('brainscore_language.load_benchmark')
     @patch('brainscore_language.load_model')
-    def test_check_mem_true_calls_memory_check(
-        self, mock_load_model, mock_load_benchmark, mock_check_memory
-    ):
-        from brainscore_language import _run_score
-
-        model, benchmark = self._make_model_and_benchmark(
-            model_modalities={'text'},
-            bench_required={'text'},
-        )
-        score = MagicMock()
-        score.attrs = {}
-        benchmark.return_value = score
-        mock_load_model.return_value = model
-        mock_load_benchmark.return_value = benchmark
-
-        _run_score('test-model', 'test-bench', check_mem=True)
-        mock_check_memory.assert_called_once_with(model, benchmark)
-
-    @patch('brainscore_core.memory.check_memory')
-    @patch('brainscore_language.load_benchmark')
-    @patch('brainscore_language.load_model')
     def test_memory_error_propagates(
         self, mock_load_model, mock_load_benchmark, mock_check_memory
     ):
         from brainscore_language import _run_score
 
         model, benchmark = self._make_model_and_benchmark(
-            model_modalities={'text'},
+            model_in_channels={'text'},
             bench_required={'text'},
         )
         mock_load_model.return_value = model
