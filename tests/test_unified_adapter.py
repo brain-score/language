@@ -4,6 +4,7 @@ import pandas as pd
 import xarray as xr
 from unittest.mock import MagicMock, patch
 
+from brainscore_core.compatibility import ExecutionNotFeasibleError
 from brainscore_core.contract import TaskContext, UnifiedModel, Subject
 from brainscore_core.streaming_helpers import neural_response
 from brainscore_core.supported_data_standards.brainio.assemblies import NeuroidAssembly
@@ -317,7 +318,7 @@ class TestLanguageAdapterProcess:
             region_layer_mapping={'language_system': 'language'})
         session = stimulus_session(_language_stimulus_set(), (channel,), task=TaskContext(task_type='next_word'))
         session.settings = {'require_variance': True}
-        with pytest.raises(NotImplementedError, match='trial-to-trial variance'):
+        with pytest.raises(ExecutionNotFeasibleError, match='trial-to-trial variance'):
             LanguageModelAdapter(legacy).participate(session)
         legacy.start_behavioral_task.assert_not_called()
         legacy.start_neural_recording.assert_not_called()
