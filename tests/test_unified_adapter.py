@@ -198,8 +198,8 @@ class TestEmbeddingSessions:
 
         legacy = _make_legacy_model(identifier='randomembedding-100')
         facade = LegacyBenchmarkFacade(LanguageModelAdapter(legacy))
-        from brainscore_core.compatibility import CompatibilityError
-        with pytest.raises(CompatibilityError, match="no 'behavior' output"):
+        from brainscore_core.compatibility import ExecutionNotFeasibleError
+        with pytest.raises(ExecutionNotFeasibleError, match="no 'behavior' output"):
             facade.start_behavioral_task('next_word')
         legacy.start_behavioral_task.assert_not_called()
         legacy.digest_text.assert_not_called()

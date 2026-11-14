@@ -84,7 +84,7 @@ class TestRunScoring:
         assert score_entry.score_ceiled is None
         assert score_entry.score_raw is None
         assert score_entry.error is None
-        assert 'CompatibilityError' in score_entry.comment
+        assert 'ExecutionNotFeasibleError' in score_entry.comment
         assert "declares no 'behavior' output" in score_entry.comment
         # The comment is shortened in the middle to the column length, and the long
         # refusal message fills its end, so the stack trace is not checked here.
