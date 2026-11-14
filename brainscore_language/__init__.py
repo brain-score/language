@@ -83,8 +83,10 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
     model: ArtificialSubject = load_model(model_identifier)
     requested_channels = requested_output_channels_for_score(benchmark)
 
-    # Pre-flight and the run in one try: a pair that pre-flight refuses, or that
-    # the subject refuses at the start of a session, is N/A (rules 5.6, 5.7).
+    # One conversion: a pair that pre-flight refuses, or that the subject refuses
+    # before the run computed, is N/A (rules 5.6, 5.7); na_score raises for a
+    # refusal after compute. ``measures`` stays None until the benchmark starts.
+    measures = None
     try:
         compatibility = check_compatibility(model, benchmark)
         if check_mem:
@@ -100,7 +102,7 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
         with weight_fingerprint_scope(), record_measures() as measures:
             score: Score = benchmark(candidate)
     except CompatibilityError as error:
-        score = na_score(error)
+        score = na_score(error, measures)
         score.attrs['model_identifier'] = model_identifier
         score.attrs['benchmark_identifier'] = benchmark_identifier
         return score

@@ -234,3 +234,98 @@ class TestPreflightInRunScore:
 
         with pytest.raises(MemoryError, match="not enough memory"):
             _run_score('test-model', 'test-bench', check_mem=True)
+
+
+class _NeuralOnly(Subject):
+    """A neural-only subject that records each input it is given."""
+    identifier = 'neural-only'
+    in_channels = frozenset({'text'})
+    out_channels = frozenset({'neural:language_network'})
+    required_channels = frozenset()
+
+    def __init__(self):
+        self.inputs = []
+
+    def participate(self, session):
+        while (event := session.next_input()) is not None:
+            self.inputs.append(event)
+
+
+class TestNotApplicableOnlyBeforeCompute:
+    """N/A means the pair cannot take part and this is known before any compute."""
+
+    @staticmethod
+    def _legacy_benchmark(run):
+        from brainscore_core.legacy_facade import mark_legacy_benchmark
+        benchmark = MagicMock(spec=['identifier', 'required_modalities', '__call__'])
+        benchmark.identifier = 'legacy-reading-times'
+        benchmark.required_modalities = {'text'}
+        benchmark.side_effect = run
+        return mark_legacy_benchmark(benchmark)
+
+    @patch('brainscore_language.load_benchmark')
+    @patch('brainscore_language.load_model')
+    def test_a_legacy_behavioral_task_for_a_neural_only_subject_is_na(
+            self, mock_load_model, mock_load_benchmark):
+        from brainscore_language import _run_score
+        subject = _NeuralOnly()
+
+        def run(candidate):       # as Futrell2018: the task first, then the text
+            candidate.start_behavioral_task('reading_times')
+            candidate.digest_text(['the', 'cat'])
+        mock_load_model.return_value = subject
+        mock_load_benchmark.return_value = self._legacy_benchmark(run)
+
+        result = _run_score('neural-only', 'legacy-reading-times', check_mem=False)
+
+        assert math.isnan(float(result)) and result.attrs['status'] == 'N/A'
+        assert result.attrs['missing_channels'] == ['behavior']
+        assert subject.inputs == []
+
+    @patch('brainscore_language.load_benchmark')
+    @patch('brainscore_language.load_model')
+    def test_a_refusal_after_an_earlier_session_computed_is_an_error(
+            self, mock_load_model, mock_load_benchmark):
+        from brainscore_language import _run_score
+        subject = _NeuralOnly()
+
+        def run(candidate):       # a neural measurement, then a behavioral task
+            candidate.start_neural_recording('language_network', 'fMRI')
+            try:
+                candidate.digest_text(['the', 'cat'])
+            except Exception:
+                pass                # this fake subject gives no assembly back
+            candidate.start_behavioral_task('reading_times')
+        mock_load_model.return_value = subject
+        mock_load_benchmark.return_value = self._legacy_benchmark(run)
+
+        with pytest.raises(RuntimeError, match='after the run computed'):
+            _run_score('neural-only', 'legacy-reading-times', check_mem=False)
+        assert subject.inputs
+
+    @patch('brainscore_language.load_benchmark')
+    @patch('brainscore_language.load_model')
+    def test_a_runtime_error_passes_through(self, mock_load_model, mock_load_benchmark):
+        from brainscore_language import _run_score
+
+        def crash(candidate):
+            raise RuntimeError('model crashed')
+        mock_load_model.return_value = _NeuralOnly()
+        mock_load_benchmark.return_value = self._legacy_benchmark(crash)
+
+        with pytest.raises(RuntimeError, match='model crashed'):
+            _run_score('neural-only', 'legacy-reading-times', check_mem=False)
+
+    @patch('brainscore_language.load_benchmark')
+    @patch('brainscore_language.load_model')
+    def test_a_malformed_benchmark_declaration_is_an_error(self, mock_load_model, mock_load_benchmark):
+        from brainscore_language import _run_score
+        benchmark = self._legacy_benchmark(lambda candidate: None)
+        benchmark.in_channels = {'text'}          # a field benchmarks do not read
+        del benchmark.required_modalities
+        mock_load_model.return_value = _NeuralOnly()
+        mock_load_benchmark.return_value = benchmark
+
+        with pytest.raises(ValueError, match='Use required_input_channels'):
+            _run_score('neural-only', 'legacy-reading-times', check_mem=False)
+        benchmark.assert_not_called()
