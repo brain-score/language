@@ -94,6 +94,11 @@ class TestPreflightInRunScore:
         assert score.attrs['subject_id'] == 'test-model'
         assert score.attrs['compatibility']['match'] == 'full'
         assert score.attrs['harness_id'] == 'brainscore_language'
+        # No session answered in this fake run; the plan and versions are still recorded.
+        assert score.attrs['delivery'] is None
+        assert score.attrs['regions_per_pass'] in ('all', 'one')
+        assert score.attrs['software']['python']
+        assert 'brainscore_core' in score.attrs['code_commits']
 
     @patch('brainscore_language.load_benchmark')
     @patch('brainscore_language.load_model')
