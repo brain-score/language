@@ -169,7 +169,7 @@ class TestPreflightInRunScore:
 
     @patch('brainscore_language.load_benchmark')
     @patch('brainscore_language.load_model')
-    def test_a_refusal_at_session_start_returns_na(
+    def test_a_refusal_at_session_start_is_an_error(
         self, mock_load_model, mock_load_benchmark
     ):
         from brainscore_language import _run_score
@@ -189,11 +189,10 @@ class TestPreflightInRunScore:
         mock_load_model.return_value = model
         mock_load_benchmark.return_value = benchmark
 
-        result = _run_score('test-model', 'test-bench', check_mem=False)
+        with pytest.raises(CompatibilityError, match='no one part answers') as caught:
+            _run_score('test-model', 'test-bench', check_mem=False)
 
-        assert math.isnan(float(result)) and result.attrs['status'] == 'N/A'
-        assert result.attrs['reason'] == 'no one part answers'
-        assert result.attrs['missing_channels'] == ['behavior']
+        assert caught.value.channels == set(['behavior'])
 
     @patch('brainscore_core.memory.check_memory')
     @patch('brainscore_language.load_benchmark')
@@ -251,8 +250,8 @@ class _NeuralOnly(Subject):
             self.inputs.append(event)
 
 
-class TestNotApplicableOnlyBeforeCompute:
-    """N/A means the pair cannot take part and this is known before any compute."""
+class TestRefusalDuringTheRunIsAnError:
+    """N/A comes only from the declarations; a refusal during the run raises."""
 
     @staticmethod
     def _legacy_benchmark(run):
@@ -265,7 +264,7 @@ class TestNotApplicableOnlyBeforeCompute:
 
     @patch('brainscore_language.load_benchmark')
     @patch('brainscore_language.load_model')
-    def test_a_legacy_behavioral_task_for_a_neural_only_subject_is_na(
+    def test_a_legacy_behavioral_task_for_a_neural_only_subject_is_an_error(
             self, mock_load_model, mock_load_benchmark):
         from brainscore_language import _run_score
         subject = _NeuralOnly()
@@ -276,10 +275,10 @@ class TestNotApplicableOnlyBeforeCompute:
         mock_load_model.return_value = subject
         mock_load_benchmark.return_value = self._legacy_benchmark(run)
 
-        result = _run_score('neural-only', 'legacy-reading-times', check_mem=False)
+        with pytest.raises(CompatibilityError, match="declares no 'behavior' output") as caught:
+            _run_score('neural-only', 'legacy-reading-times', check_mem=False)
 
-        assert math.isnan(float(result)) and result.attrs['status'] == 'N/A'
-        assert result.attrs['missing_channels'] == ['behavior']
+        assert caught.value.channels == {'behavior'}
         assert subject.inputs == []
 
     @patch('brainscore_language.load_benchmark')
@@ -299,7 +298,7 @@ class TestNotApplicableOnlyBeforeCompute:
         mock_load_model.return_value = subject
         mock_load_benchmark.return_value = self._legacy_benchmark(run)
 
-        with pytest.raises(RuntimeError, match='after the run computed'):
+        with pytest.raises(CompatibilityError, match="declares no 'behavior' output"):
             _run_score('neural-only', 'legacy-reading-times', check_mem=False)
         assert subject.inputs
 

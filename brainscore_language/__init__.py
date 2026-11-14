@@ -83,29 +83,27 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
     model: ArtificialSubject = load_model(model_identifier)
     requested_channels = requested_output_channels_for_score(benchmark)
 
-    # One conversion: a pair that pre-flight refuses, or that the subject refuses
-    # before the run computed, is N/A (rules 5.6, 5.7); na_score raises for a
-    # refusal after compute. ``measures`` stays None until the benchmark starts.
-    measures = None
+    # The one place N/A is made: the declaration check, before any compute
+    # (rules 5.6, 5.7). A refusal during the run below is an error.
     try:
         compatibility = check_compatibility(model, benchmark)
-        if check_mem:
-            check_memory(model, benchmark)
-
-        # A legacy benchmark calls digest_text and friends; it receives the permanent
-        # facade, which runs those calls as sessions through the subject's participate.
-        from brainscore_core.legacy_facade import subject_for_benchmark
-        candidate = subject_for_benchmark(model, benchmark)
-
-        import time as _time
-        _t0 = _time.time()
-        with weight_fingerprint_scope(), record_measures() as measures:
-            score: Score = benchmark(candidate)
     except CompatibilityError as error:
-        score = na_score(error, measures)
+        score = na_score(error)
         score.attrs['model_identifier'] = model_identifier
         score.attrs['benchmark_identifier'] = benchmark_identifier
         return score
+    if check_mem:
+        check_memory(model, benchmark)
+
+    # A legacy benchmark calls digest_text and friends; it receives the permanent
+    # facade, which runs those calls as sessions through the subject's participate.
+    from brainscore_core.legacy_facade import subject_for_benchmark
+    candidate = subject_for_benchmark(model, benchmark)
+
+    import time as _time
+    _t0 = _time.time()
+    with weight_fingerprint_scope(), record_measures() as measures:
+        score: Score = benchmark(candidate)
     score.attrs['runtime_sec'] = round(_time.time() - _t0, 2)
     score.attrs['model_identifier'] = model_identifier
     score.attrs['benchmark_identifier'] = benchmark_identifier
@@ -139,8 +137,9 @@ def score(model_identifier: str, benchmark_identifier: str,
     :param benchmark_identifier: the identifier for the benchmark to test the model against
     :return: a Score of how brain-like the candidate model is under this benchmark. The score is normalized by
         this benchmark's ceiling such that 1 means the model matches the data to ceiling level.
-        For a pair that is not applicable, the N/A result: NaN, ``attrs['status'] == 'N/A'``,
-        ``attrs['reason']`` and ``attrs['missing_channels']``; nothing runs.
+        For an incompatible pair, known from the declarations, the N/A result before any
+        compute: NaN, ``attrs['status'] == 'N/A'``, ``attrs['reason']`` and
+        ``attrs['missing_channels']``. A refusal during the run raises.
     """
     score_fn = partial(_run_score, check_mem=check_mem)
     return wrap_score(__file__,
