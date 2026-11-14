@@ -60,11 +60,10 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
     """
     Score the model referenced by the `model_identifier` on the benchmark referenced by the `benchmark_identifier`.
     """
-    from brainscore_core.compatibility import (
-        check_compatibility,
-    )
+    from brainscore_core.compatibility import CompatibilityError, check_compatibility
     from brainscore_core.extraction_cache import weight_fingerprint_scope
     from brainscore_core.memory import check_memory
+    from brainscore_core.score_status import na_score
     from brainscore_core.score_metadata import (
         infer_score_protocol,
         requested_output_channels_for_score,
@@ -84,20 +83,27 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
     model: ArtificialSubject = load_model(model_identifier)
     requested_channels = requested_output_channels_for_score(benchmark)
 
-    # Pre-flight checks
-    compatibility = check_compatibility(model, benchmark)
-    if check_mem:
-        check_memory(model, benchmark)
+    # Pre-flight and the run in one try: a pair that pre-flight refuses, or that
+    # the subject refuses at the start of a session, is N/A (rules 5.6, 5.7).
+    try:
+        compatibility = check_compatibility(model, benchmark)
+        if check_mem:
+            check_memory(model, benchmark)
 
-    # A legacy benchmark calls digest_text and friends; it receives the permanent
-    # facade, which runs those calls as sessions through the subject's participate.
-    from brainscore_core.legacy_facade import subject_for_benchmark
-    candidate = subject_for_benchmark(model, benchmark)
+        # A legacy benchmark calls digest_text and friends; it receives the permanent
+        # facade, which runs those calls as sessions through the subject's participate.
+        from brainscore_core.legacy_facade import subject_for_benchmark
+        candidate = subject_for_benchmark(model, benchmark)
 
-    import time as _time
-    _t0 = _time.time()
-    with weight_fingerprint_scope(), record_measures() as measures:
-        score: Score = benchmark(candidate)
+        import time as _time
+        _t0 = _time.time()
+        with weight_fingerprint_scope(), record_measures() as measures:
+            score: Score = benchmark(candidate)
+    except CompatibilityError as error:
+        score = na_score(error)
+        score.attrs['model_identifier'] = model_identifier
+        score.attrs['benchmark_identifier'] = benchmark_identifier
+        return score
     score.attrs['runtime_sec'] = round(_time.time() - _t0, 2)
     score.attrs['model_identifier'] = model_identifier
     score.attrs['benchmark_identifier'] = benchmark_identifier
@@ -131,6 +137,8 @@ def score(model_identifier: str, benchmark_identifier: str,
     :param benchmark_identifier: the identifier for the benchmark to test the model against
     :return: a Score of how brain-like the candidate model is under this benchmark. The score is normalized by
         this benchmark's ceiling such that 1 means the model matches the data to ceiling level.
+        For a pair that is not applicable, the N/A result: NaN, ``attrs['status'] == 'N/A'``,
+        ``attrs['reason']`` and ``attrs['missing_channels']``; nothing runs.
     """
     score_fn = partial(_run_score, check_mem=check_mem)
     return wrap_score(__file__,
