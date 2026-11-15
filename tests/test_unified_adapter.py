@@ -711,3 +711,40 @@ def test_facade_after_typed_sessions_returns_one_legacy_call(neural, behavior):
     actual = facade.digest_text(['the cat', 'sat on'])
     assert legacy.digests == before + 1
     assert set(actual) == {k for k, on in (('neural', neural), ('behavior', behavior)) if on}
+
+
+class _RealInterfaceLegacySubject:
+    """An old language subject with the real behavioral tasks: next_word and reading_times."""
+
+    def __init__(self):
+        self.calls = []
+
+    def identifier(self):
+        return 'legacy-real-interface'
+
+    def start_behavioral_task(self, task):
+        self.calls.append(task)
+        if task not in ('next_word', 'reading_times'):
+            raise NotImplementedError(f'task {task!r} is not supported')
+
+    def digest_text(self, text):
+        self.calls.append('digest_text')
+        raise AssertionError('never called')
+
+
+class TestLanguageAdapterHasNoChoice:
+    """An old language model has no forced-choice task, so the adapter declares no choice
+    and a benchmark that requests behavior:choice is N/A before any call."""
+
+    def test_a_choice_benchmark_is_not_applicable_before_any_call(self):
+        from types import SimpleNamespace
+        from brainscore_core.compatibility import CompatibilityError, check_channel_compatibility
+        legacy = _RealInterfaceLegacySubject()
+        adapter = LanguageModelAdapter(legacy)
+        assert 'behavior:choice' not in adapter.out_channels and 'behavior' in adapter.out_channels
+        roar_text = SimpleNamespace(identifier='Yeatman2021-lexical_decision-text', trial_memory='none',
+                                    required_input_channels={'text', 'instruction'},
+                                    requested_output_channels={'behavior:choice'})
+        with pytest.raises(CompatibilityError, match='behavior:choice'):
+            check_channel_compatibility(adapter, roar_text)
+        assert legacy.calls == []
