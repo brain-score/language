@@ -33,7 +33,7 @@ def test_public_score_backfills_legacy_modality(monkeypatch):
     monkeypatch.setattr(CondaScore, 'save_score', lambda *a, **kw: None)
     result = language.score('offline-model', 'offline-legacy', check_mem=False)
     assert float(result) == 0.5
-    assert result.attrs['harness_id'] == 'brainscore_language'
+    assert result.attrs['entry_point'] == 'brainscore_language'
 
 
 @pytest.mark.parametrize('error', [KeyError, FileNotFoundError])
