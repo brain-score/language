@@ -5,7 +5,7 @@ import xarray as xr
 from unittest.mock import MagicMock, patch
 
 from brainscore_core.compatibility import ExecutionNotFeasibleError
-from brainscore_core.contract import TaskContext, UnifiedModel, Subject
+from brainscore_core.contract import TaskContext, Subject
 from brainscore_core.streaming_helpers import neural_response
 from brainscore_core.supported_data_standards.brainio.assemblies import NeuroidAssembly
 from brainscore_core.supported_data_standards.brainio.stimuli import StimulusSet
@@ -79,14 +79,14 @@ def _language_neural_assembly():
     ).reset_index('presentation')
 
 
-class TestLanguageAdapterIsUnifiedModel:
+class TestLanguageAdapterIsASubject:
 
     def test_isinstance(self):
         # score() wraps a model that is not a Subject; the adapter must not be wrapped again.
         from brainscore_core.contract import Subject
         adapter = LanguageModelAdapter(_make_legacy_model())
         assert isinstance(adapter, Subject)
-        assert isinstance(adapter, UnifiedModel)
+        assert type(adapter).__bases__ == (Subject,)    # no other base class
 
 
 class TestLanguageAdapterIdentity:
@@ -463,7 +463,7 @@ class TestLanguageAutoWrapping:
             with patch('brainscore_language.import_plugin'):
                 model = brainscore_language.load_model('test-gpt2')
 
-        assert isinstance(model, UnifiedModel)
+        assert isinstance(model, Subject)
         assert isinstance(model, LanguageModelAdapter)
         # After load_model, identifier was overwritten to string 'test-gpt2'
         assert model.identifier == 'test-gpt2'
