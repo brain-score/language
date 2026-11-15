@@ -147,7 +147,7 @@ class TestLanguageAdapterIdentity:
 
     def test_unmapped_behavior_model_does_not_gain_neural_outputs(self):
         adapter = LanguageModelAdapter(_make_legacy_model(identifier='earley-parser'))
-        assert adapter.out_channels == {'behavior', 'behavior:choice'}   # no neural output
+        assert adapter.out_channels == {'behavior'}
 
 
 class TestEmbeddingSessions:
@@ -713,64 +713,38 @@ def test_facade_after_typed_sessions_returns_one_legacy_call(neural, behavior):
     assert set(actual) == {k for k, on in (('neural', neural), ('behavior', behavior)) if on}
 
 
-class _LegacyForcedChoice:
-    """A legacy subject whose probabilities task gives rows over its own column order."""
+class _RealInterfaceLegacySubject:
+    """An old language subject with the real behavioral tasks: next_word and reading_times."""
 
     def __init__(self):
-        self.tasks = []
+        self.calls = []
 
     def identifier(self):
-        return 'legacy-forced-choice'
+        return 'legacy-real-interface'
 
     def start_behavioral_task(self, task):
-        self.tasks.append(task)
+        self.calls.append(task)
+        if task not in ('next_word', 'reading_times'):
+            raise NotImplementedError(f'task {task!r} is not supported')
 
     def digest_text(self, text):
-        from brainscore_core.supported_data_standards.brainio.assemblies import BehavioralAssembly
-        rows = {'cat': [0.2, 0.8], 'blick': [0.7, 0.3], 'tie': [0.5, 0.5]}
-        words = list(text)
-        return {'behavior': BehavioralAssembly(
-            np.array([rows[word] for word in words]), dims=['presentation', 'choice'],
-            coords={'stimulus': ('presentation', words), 'part_number': ('presentation', list(range(len(words)))),
-                    'choice': ['pseudo', 'real']})}
+        self.calls.append('digest_text')
+        raise AssertionError('never called')
 
 
-def _choice_words():
-    stimuli = StimulusSet(pd.DataFrame({'stimulus_id': ['a', 'b', 'c'], 'sentence': ['cat', 'blick', 'tie']}))
-    stimuli.identifier = 'adapter-choice-words'
-    return stimuli
+class TestLanguageAdapterHasNoChoice:
+    """An old language model has no forced-choice task, so the adapter declares no choice
+    and a benchmark that requests behavior:choice is N/A before any call."""
 
-
-class TestLanguageAdapterChoice:
-    """A Choice task on behavior:choice: the legacy probabilities task, argmax in its own order."""
-
-    def test_declares_the_choice_and_keeps_bare_behavior(self):
-        adapter = LanguageModelAdapter(_LegacyForcedChoice())
-        assert {'behavior', 'behavior:choice'} <= adapter.out_channels
-        embedding = LanguageModelAdapter(_LegacyForcedChoice(), out_channels={'neural:language_system'})
-        assert 'behavior:choice' not in embedding.out_channels
-
-    def test_a_choice_task_is_answered_from_the_legacy_probabilities_task(self):
-        from brainscore_core.responses import Choice
-        from brainscore_core.streaming_helpers import stimulus_session
-        legacy = _LegacyForcedChoice()
-        session = stimulus_session(_choice_words(), ['behavior:choice'],
-                                   TaskContext(response=Choice(['real', 'pseudo'])))
-        LanguageModelAdapter(legacy).participate(session)
-        choice = session.collect('behavior:choice')
-        assert legacy.tasks == ['probabilities']
-        np.testing.assert_array_equal(choice.values, [[1, 0], [0, 1], [0, 1]])   # tie: first column
-        record = choice.attrs['response']
-        assert (record['origin'], record['method'], record['conversion'], record['source_format']) == (
-            'derived', 'legacy', 'argmax', 'behavior:probabilities')
-
-    def test_options_per_row_are_refused_before_any_call(self):
-        from brainscore_core.responses import Choice
-        from brainscore_core.streaming_helpers import stimulus_session
-        legacy = _LegacyForcedChoice()
-        words = _choice_words()
-        words['options'] = [('a', 'b')] * 3
-        session = stimulus_session(words, ['behavior:choice'], TaskContext(response=Choice('options')))
-        with pytest.raises(ExecutionNotFeasibleError, match='shared options'):
-            LanguageModelAdapter(legacy).participate(session)
-        assert legacy.tasks == []
+    def test_a_choice_benchmark_is_not_applicable_before_any_call(self):
+        from types import SimpleNamespace
+        from brainscore_core.compatibility import CompatibilityError, check_channel_compatibility
+        legacy = _RealInterfaceLegacySubject()
+        adapter = LanguageModelAdapter(legacy)
+        assert 'behavior:choice' not in adapter.out_channels and 'behavior' in adapter.out_channels
+        roar_text = SimpleNamespace(identifier='Yeatman2021-lexical_decision-text', trial_memory='none',
+                                    required_input_channels={'text', 'instruction'},
+                                    requested_output_channels={'behavior:choice'})
+        with pytest.raises(CompatibilityError, match='behavior:choice'):
+            check_channel_compatibility(adapter, roar_text)
+        assert legacy.calls == []
