@@ -172,7 +172,8 @@ class LanguageModelAdapter(UnifiedModel):
     def out_channels(self) -> Set[str]:
         if self._declared_out_channels is not None:
             return set(self._declared_out_channels)
-        return super().out_channels | {'behavior'}
+        # A Choice task is answered on behavior:choice from the same legacy task.
+        return super().out_channels | {'behavior', 'behavior:choice'}
 
     def participate(self, session) -> None:
         """Run a session; a legacy-benchmark session replays the exact ``digest_text``.
@@ -190,6 +191,9 @@ class LanguageModelAdapter(UnifiedModel):
                              f'{sorted(self.out_channels)}')
         task = session.task
         settings = measurement_settings(session)
+        if 'legacy_text' not in settings and channels == ('behavior:choice',):
+            self._answer_choice(session, task)
+            return
         if 'legacy_text' not in settings:
             self._requested_output = 'behavior' if channels == ('behavior',) else 'neural'
             try:
@@ -211,6 +215,28 @@ class LanguageModelAdapter(UnifiedModel):
         for channel in channels:
             key = 'neural' if channel.startswith('neural:') else 'behavior'
             session.respond(StreamEvent(channel, result[key], None, meta={'driver': 'legacy'}))
+
+    def _answer_choice(self, session, task) -> None:
+        """Answer a Choice task on ``behavior:choice`` from the legacy model's own task.
+
+        The legacy model runs the task a legacy forced choice sends,
+        ``start_behavioral_task('probabilities')``, through the same path as bare
+        ``behavior``; its probability rows are turned into the choice by core's
+        ``argmax`` in the legacy model's column order.
+        """
+        from brainscore_core.streaming_helpers import behavior_stimuli_from_session
+        legacy_task = _legacy_choice_task(task, self.identifier)
+        self._requested_output = 'behavior'
+        try:
+            self.start_task(legacy_task)
+            stimuli = behavior_stimuli_from_session(session, legacy_task)
+            if stimuli is None:
+                raise ValueError('A behavior session requires stimuli to elicit a response.')
+            rows = self.process(stimuli)
+        finally:
+            self._requested_output = None
+        session.respond(StreamEvent('behavior:choice', _choice_from_rows(rows, task.response.labels),
+                                    0.0, meta={'driver': 'legacy'}))
 
     # Backwards-compatible: existing benchmarks call digest_text() directly
     def digest_text(self, text):
@@ -273,3 +299,44 @@ class LanguageModelAdapter(UnifiedModel):
         sees only what the adapter declares (Contract Rules v3, rule 2.1).
         """
         return self._legacy
+
+
+def _legacy_choice_task(task, identifier):
+    """The legacy task for a Choice task: ``'probabilities'``, as a legacy forced choice."""
+    from brainscore_core.compatibility import ExecutionNotFeasibleError
+    from brainscore_core.responses import Choice
+    response = getattr(task, 'response', None)
+    if not isinstance(response, Choice) or isinstance(response.labels, str):
+        raise ExecutionNotFeasibleError(
+            f"Legacy model '{identifier}' answers behavior:choice only for a Choice task with "
+            f"shared options; got {response!r}.", channels={'behavior:choice'},
+            task_type=getattr(task, 'task_type', None))
+    return TaskContext(task_type='probabilities', fitting_stimuli=task.fitting_stimuli,
+                       label_set=list(response.labels), instruction=task.instruction)
+
+
+def _choice_from_rows(rows, labels):
+    """The legacy model's probability rows as a stored choice: one-hot rows over ``labels``.
+
+    The choice is core's ``argmax`` of each row in the legacy model's own column order
+    (ties to the first column, as the old benchmark's argmax); the record says the
+    legacy model's task gave the rows and the argmax derived the choice.
+    """
+    import numpy as np
+    from brainscore_core.response_formats import argmax, response_record
+    from brainscore_core.supported_data_standards.brainio.assemblies import BehavioralAssembly
+    values = np.asarray(rows.transpose('presentation', 'choice').values, dtype=float)
+    columns = [str(c) for c in rows['choice'].values]
+    labels = list(labels)
+    indices, valid = argmax(values)
+    one_hot = np.full((len(values), len(labels)), np.nan, dtype=np.float32)
+    for row, (index, ok) in enumerate(zip(indices, valid)):
+        if ok and columns[index] in labels:
+            one_hot[row] = 0.0
+            one_hot[row, labels.index(columns[index])] = 1.0
+    return BehavioralAssembly(one_hot, dims=['presentation', 'choice'], coords={
+        'stimulus_id': ('presentation', list(rows['stimulus_id'].values)), 'choice': labels,
+        'raw_answer': ('presentation', [str([float(v) for v in row]) for row in values])},
+        attrs={'response': response_record(
+            'behavior:choice', 'legacy', conversion='argmax', source_format='behavior:probabilities',
+            parameters={'tie': 'first', 'option_order': 'legacy'})})
