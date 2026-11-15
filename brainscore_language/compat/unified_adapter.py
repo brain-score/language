@@ -9,7 +9,7 @@ given the adapter directly calls ``digest_text`` on it and gets the same call.
 
 from typing import Any, Dict, Optional, Set
 
-from brainscore_core.contract import UnifiedModel, TaskContext
+from brainscore_core.contract import Subject, TaskContext
 from brainscore_core.streaming import StreamEvent
 from brainscore_core.streaming_helpers import (
     drain_session_inputs,
@@ -34,7 +34,7 @@ _LEGACY_OUTPUT_CHANNELS = {
 }
 
 
-class LanguageModelAdapter(UnifiedModel):
+class LanguageModelAdapter(Subject):
     """Adapt a legacy subject, with explicit outputs when no layer map exists.
 
     Known embedding registrations have declarations above. Custom legacy subjects
@@ -172,7 +172,7 @@ class LanguageModelAdapter(UnifiedModel):
     def out_channels(self) -> Set[str]:
         if self._declared_out_channels is not None:
             return set(self._declared_out_channels)
-        return super().out_channels | {'behavior'}
+        return {f'neural:{region}' for region in self.region_layer_map} | {'behavior'}
 
     def participate(self, session) -> None:
         """Run a session; a legacy-benchmark session replays the exact ``digest_text``.
