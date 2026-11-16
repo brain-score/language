@@ -121,7 +121,7 @@ class TestLanguageAdapterIdentity:
         assert adapter.region_layer_map == {}
 
     @pytest.mark.parametrize('identifier', [
-        'randomembedding-100', 'randomembedding-1600', 'glove-840b',
+        'randomembedding-100', 'randomembedding-1600', 'glove-840b', 'oasm-sigma0', 'oasm-sigma1.0', 'oasm-sigma4.8',
     ])
     def test_embedding_declarations_without_a_layer_map(self, identifier):
         adapter = LanguageModelAdapter(_make_legacy_model(identifier=identifier))
@@ -131,6 +131,20 @@ class TestLanguageAdapterIdentity:
             'neural:language_system_right_hemisphere',
         }
         assert adapter.region_layer_map == {}
+
+    def test_every_registered_oasm_model_declares_its_neural_outputs(self):
+        # The OASM control models record at every target and have no layer map; an old neural
+        # benchmark must find its region among their declared outputs (production scores them).
+        import brainscore_language.models.oasm  # noqa: F401  registers the 49 identifiers; needs numpy and scipy only
+        from brainscore_language import model_registry
+        from brainscore_language.compat.unified_adapter import _LEGACY_OUTPUT_CHANNELS
+        registered = [identifier for identifier in model_registry if identifier.startswith('oasm-')]
+        assert len(registered) == 49
+        assert all('neural:language_system' in _LEGACY_OUTPUT_CHANNELS.get(identifier, ()) for identifier in registered)
+
+    def test_a_model_that_records_one_target_declares_only_that_target(self):
+        adapter = LanguageModelAdapter(_make_legacy_model(identifier='llada-8b-base'))
+        assert adapter.out_channels == {'neural:language_system'}
 
     def test_explicit_output_declaration_is_copied(self):
         channels = {'neural:custom_region'}

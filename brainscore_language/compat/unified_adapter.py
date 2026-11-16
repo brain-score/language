@@ -19,18 +19,22 @@ from brainscore_core.streaming_helpers import (
 )
 
 
-# These legacy registrations expose the same embedding at each recording target,
-# without a region-to-layer map. Declare their outputs here, leaving the plugins
-# unchanged. They cannot answer behavioral tasks.
+# These legacy registrations record at each recording target without a region-to-layer
+# map (the same features for every target). Declare their outputs here, leaving the
+# plugins unchanged. They cannot answer behavioral tasks.
 _EMBEDDING_OUTPUT_CHANNELS = frozenset({
     'neural:language_system',
     'neural:language_system_left_hemisphere',
     'neural:language_system_right_hemisphere',
 })
+# The 49 OASM control models: sigma 0, then 0.1 to 4.8 (the identifiers of models/oasm).
+_OASM_IDENTIFIERS = ['oasm-sigma0'] + [f'oasm-sigma{tenths / 10:.1f}' for tenths in range(1, 49)]
 _LEGACY_OUTPUT_CHANNELS = {
     'randomembedding-100': _EMBEDDING_OUTPUT_CHANNELS,
     'randomembedding-1600': _EMBEDDING_OUTPUT_CHANNELS,
     'glove-840b': _EMBEDDING_OUTPUT_CHANNELS,
+    'llada-8b-base': frozenset({'neural:language_system'}),      # its subject refuses the two hemisphere targets
+    **{identifier: _EMBEDDING_OUTPUT_CHANNELS for identifier in _OASM_IDENTIFIERS},
 }
 
 
