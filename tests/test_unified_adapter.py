@@ -762,3 +762,82 @@ class TestLanguageAdapterHasNoChoice:
         with pytest.raises(CompatibilityError, match='behavior:choice'):
             check_channel_compatibility(adapter, roar_text)
         assert legacy.calls == []
+
+
+class TestOneSessionAtATime:
+    """One adapter holds the task and recording state of one session (unified issue 81)."""
+
+    @staticmethod
+    def _run(adapter):
+        stimuli, _ = _next_word_task()
+        return neural_response(adapter, stimuli, ['neural:language_system'])
+
+    @staticmethod
+    def _adapter(during_digest=None):
+        class Legacy(_AppendingSubject):
+            def digest_text(self, text):
+                if during_digest is not None:
+                    during_digest()
+                return super().digest_text(text)
+        legacy = Legacy()
+        return LanguageModelAdapter(legacy), legacy
+
+    def test_a_second_session_during_the_first_is_refused(self):
+        refusals = []
+
+        def nested():
+            if not refusals:
+                with pytest.raises(RuntimeError, match='one session at a time') as refusal:
+                    self._run(adapter)
+                refusals.append(str(refusal.value))
+        adapter, _ = self._adapter(nested)
+        assert isinstance(self._run(adapter), NeuroidAssembly)   # the refused call did not end it
+        assert 'appending-lm' in refusals[0]
+
+    def test_a_session_from_another_thread_is_refused(self):
+        import threading
+        started, release, outcome, errors = threading.Event(), threading.Event(), {}, []
+
+        def slow():
+            if threading.current_thread().name == 'first-session':
+                started.set()
+                assert release.wait(5)
+        adapter, _ = self._adapter(slow)
+
+        def run_first():
+            outcome['first'] = self._run(adapter)
+        first = threading.Thread(target=run_first, name='first-session')
+        first.start()
+        assert started.wait(5)
+        try:
+            self._run(adapter)
+        except RuntimeError as error:
+            errors.append(error)
+        finally:
+            release.set()
+            first.join(5)
+        assert errors and 'one session at a time' in str(errors[0])
+        assert not first.is_alive()
+        assert isinstance(outcome.get('first'), NeuroidAssembly)   # the first finished successfully
+
+    def test_a_new_session_runs_after_a_session_that_failed(self):
+        controls = {'fail': True}
+
+        def failing():
+            if controls['fail']:
+                raise ValueError('legacy failure')
+        adapter, _ = self._adapter(failing)
+        with pytest.raises(ValueError, match='legacy failure'):
+            self._run(adapter)
+        controls['fail'] = False
+        assert isinstance(self._run(adapter), NeuroidAssembly)
+
+    def test_two_sessions_in_sequence_run_as_before(self):
+        adapter, legacy = self._adapter()
+        for _ in range(2):
+            assert isinstance(self._run(adapter), NeuroidAssembly)
+        assert legacy.digests == 2
+        assert len(legacy.neural_recordings) == 1          # the same setup is not sent again
+        region, recording_type = legacy.neural_recordings[0]
+        assert region == 'language_system'
+        assert recording_type == 'fMRI'
