@@ -16,6 +16,7 @@ from brainscore_core.streaming_helpers import (
     drive_behavior_session,
     drive_neural_session,
     measurement_settings,
+    one_session_at_a_time,
 )
 
 
@@ -185,36 +186,40 @@ class LanguageModelAdapter(Subject):
         configures the legacy model as the benchmark did and makes one
         ``digest_text`` call that can return neural and behavioral outputs
         together. Other sessions use the typed drivers over ``process``.
+        One adapter runs one session at a time: a second session that starts before
+        the first ends is refused. The guard is per adapter object; two adapters
+        around one legacy model object are not guarded against each other.
         """
-        session = session.declare_inputs(self.in_channels)
-        channels = tuple(session.outputs or ())
-        missing = set(channels) - self.out_channels
-        if not channels or missing:
-            raise ValueError(f'Undeclared output channels {sorted(missing)}; declared: '
-                             f'{sorted(self.out_channels)}')
-        task = session.task
-        settings = measurement_settings(session)
-        if 'legacy_text' not in settings:
-            self._requested_output = 'behavior' if channels == ('behavior',) else 'neural'
-            try:
-                if channels == ('behavior',):
-                    drive_behavior_session(self, session)
-                else:
-                    drive_neural_session(self, session)
-            finally:
-                self._requested_output = None
-            return
-        if task is not None and task.task_type != 'passive':
-            self.start_task(task)
-        for channel in channels:
-            if channel.startswith('neural:'):
-                self.start_neural_recording(channel.split(':', 1)[1],
-                                            settings.get('recording_type', 'fMRI'))
-        drain_session_inputs(session)
-        result = self._legacy.digest_text(settings['legacy_text'])
-        for channel in channels:
-            key = 'neural' if channel.startswith('neural:') else 'behavior'
-            session.respond(StreamEvent(channel, result[key], None, meta={'driver': 'legacy'}))
+        with one_session_at_a_time(self):
+            session = session.declare_inputs(self.in_channels)
+            channels = tuple(session.outputs or ())
+            missing = set(channels) - self.out_channels
+            if not channels or missing:
+                raise ValueError(f'Undeclared output channels {sorted(missing)}; declared: '
+                                 f'{sorted(self.out_channels)}')
+            task = session.task
+            settings = measurement_settings(session)
+            if 'legacy_text' not in settings:
+                self._requested_output = 'behavior' if channels == ('behavior',) else 'neural'
+                try:
+                    if channels == ('behavior',):
+                        drive_behavior_session(self, session)
+                    else:
+                        drive_neural_session(self, session)
+                finally:
+                    self._requested_output = None
+                return
+            if task is not None and task.task_type != 'passive':
+                self.start_task(task)
+            for channel in channels:
+                if channel.startswith('neural:'):
+                    self.start_neural_recording(channel.split(':', 1)[1],
+                                                settings.get('recording_type', 'fMRI'))
+            drain_session_inputs(session)
+            result = self._legacy.digest_text(settings['legacy_text'])
+            for channel in channels:
+                key = 'neural' if channel.startswith('neural:') else 'behavior'
+                session.respond(StreamEvent(channel, result[key], None, meta={'driver': 'legacy'}))
 
     # Backwards-compatible: existing benchmarks call digest_text() directly
     def digest_text(self, text):
