@@ -768,9 +768,9 @@ class TestOneSessionAtATime:
     """One adapter holds the task and recording state of one session (unified issue 81)."""
 
     @staticmethod
-    def _run(adapter):
+    def _run(subject):
         stimuli, _ = _next_word_task()
-        return neural_response(adapter, stimuli, ['neural:language_system'])
+        return neural_response(subject, stimuli, ['neural:language_system'])
 
     @staticmethod
     def _adapter(during_digest=None):
