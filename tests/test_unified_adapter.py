@@ -842,3 +842,5 @@ class TestOneSessionAtATime:
         region, recording_type = legacy.neural_recordings[0]
         assert region == 'language_system'
         assert recording_type == 'fMRI'
+
+# A comment for a check of the test job. This line is not merged.
