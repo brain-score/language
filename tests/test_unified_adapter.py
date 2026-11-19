@@ -701,7 +701,8 @@ def test_typed_joint_neural_and_behavior_request_is_unchanged():
     stimuli, task = _next_word_task()
     legacy = _AppendingSubject()
     session = stimulus_session(stimuli, ['behavior', 'neural:language_system'], task=task)
-    with pytest.raises(NotImplementedError):
+    from brainscore_core.compatibility import ExecutionNotFeasibleError
+    with pytest.raises(ExecutionNotFeasibleError):
         LanguageModelAdapter(legacy).participate(session)
     assert legacy.digests == 0
 
