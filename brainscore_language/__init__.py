@@ -103,7 +103,7 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
 
     import time as _time
     _t0 = _time.time()
-    with weight_fingerprint_scope(), record_measures() as measures:
+    with weight_fingerprint_scope(), record_measures(subject=model_identifier) as measures:
         score: Score = benchmark(candidate)
     # The run must leave the subject as it found it (same check as brainscore.score).
     measures.check_released(benchmark_identifier, model_identifier)
