@@ -842,3 +842,10 @@ class TestOneSessionAtATime:
         region, recording_type = legacy.neural_recordings[0]
         assert region == 'language_system'
         assert recording_type == 'fMRI'
+
+
+def test_a_session_with_no_requested_output_is_told_to_request_one():
+    from brainscore_core.streaming import Session
+    with pytest.raises(ValueError, match='at least one'):
+        LanguageModelAdapter(_AppendingSubject()).participate(Session([], []))
+

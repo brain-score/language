@@ -190,8 +190,11 @@ class LanguageModelAdapter(Subject):
         around one legacy model object are not guarded against each other.
         """
         channels = tuple(session.outputs or ())
+        if not channels:
+            raise ValueError(f'The session requests no output; request at least one of '
+                             f'{sorted(self.out_channels)}.')
         missing = set(channels) - self.out_channels
-        if not channels or missing:
+        if missing:
             raise ValueError(f'Undeclared output channels {sorted(missing)}; declared: '
                              f'{sorted(self.out_channels)}')
         task = session.task
