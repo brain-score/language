@@ -1,19 +1,18 @@
-"""
-Adapter wrapping legacy language ArtificialSubject to conform to the unified
-Subject interface (formerly UnifiedModel).
+"""The adapter that makes a legacy language ``ArtificialSubject`` a subject.
 
-process() delegates to the legacy model's digest_text(). Text is extracted
-from the StimulusSet's text column. The Dict[str, Assembly] return from
-digest_text() is translated to a single DataAssembly based on the current
-measurement configuration.
+A session from a legacy benchmark replays its exact ``digest_text`` call; other
+sessions reach the legacy model through ``process``, which reads the text column
+of the stimuli and returns the output the session requested from the
+``Dict[str, Assembly]`` that ``digest_text`` returns. A legacy benchmark that is
+given the adapter directly calls ``digest_text`` on it and gets the same call.
 """
 
 from typing import Any, Dict, Optional, Set
 
-from brainscore_core.model_interface import UnifiedModel, TaskContext
-from brainscore_core.session_view import DeclaredInputSession
+from brainscore_core.contract import Subject, TaskContext
 from brainscore_core.streaming import StreamEvent
 from brainscore_core.streaming_helpers import (
+    demultiplex_neural_output,
     drain_session_inputs,
     drive_behavior_session,
     drive_neural_session,
@@ -21,22 +20,26 @@ from brainscore_core.streaming_helpers import (
 )
 
 
-# These legacy registrations expose the same embedding at each recording target,
-# without a region-to-layer map. Declare their outputs here, leaving the plugins
-# unchanged. They cannot answer behavioral tasks.
+# These legacy registrations record at each recording target without a region-to-layer
+# map (the same features for every target). Declare their outputs here, leaving the
+# plugins unchanged. They cannot answer behavioral tasks.
 _EMBEDDING_OUTPUT_CHANNELS = frozenset({
     'neural:language_system',
     'neural:language_system_left_hemisphere',
     'neural:language_system_right_hemisphere',
 })
+# The 49 OASM control models: sigma 0, then 0.1 to 4.8 (the identifiers of models/oasm).
+_OASM_IDENTIFIERS = ['oasm-sigma0'] + [f'oasm-sigma{tenths / 10:.1f}' for tenths in range(1, 49)]
 _LEGACY_OUTPUT_CHANNELS = {
     'randomembedding-100': _EMBEDDING_OUTPUT_CHANNELS,
     'randomembedding-1600': _EMBEDDING_OUTPUT_CHANNELS,
     'glove-840b': _EMBEDDING_OUTPUT_CHANNELS,
+    'llada-8b-base': frozenset({'neural:language_system'}),      # its subject refuses the two hemisphere targets
+    **{identifier: _EMBEDDING_OUTPUT_CHANNELS for identifier in _OASM_IDENTIFIERS},
 }
 
 
-class LanguageModelAdapter(UnifiedModel):
+class LanguageModelAdapter(Subject):
     """Adapt a legacy subject, with explicit outputs when no layer map exists.
 
     Known embedding registrations have declarations above. Custom legacy subjects
@@ -51,7 +54,6 @@ class LanguageModelAdapter(UnifiedModel):
             frozenset(out_channels) if out_channels is not None
             else _LEGACY_OUTPUT_CHANNELS.get(self.identifier)
         )
-        self._task_context: Optional[TaskContext] = None
         self._recording_active: bool = False
         self._task_active: bool = False
         # The output a running typed session asked for ('neural' or
@@ -79,14 +81,13 @@ class LanguageModelAdapter(UnifiedModel):
         return {}
 
     @property
-    def supported_modalities(self) -> Set[str]:
+    def in_channels(self) -> Set[str]:
         return {'text'}
 
     @property
-    def required_modalities(self) -> Set[str]:
-        # Legacy language models are unimodal — pure text backbones. Hard-
-        # require text so pre-flight rejects pairings against a benchmark
-        # that does not provide text stimuli.
+    def required_channels(self) -> Set[str]:
+        # Legacy language models are unimodal: pure text backbones. Requiring
+        # text makes pre-flight reject a benchmark that does not provide it.
         return {'text'}
 
     def process(self, stimuli) -> Any:
@@ -176,7 +177,7 @@ class LanguageModelAdapter(UnifiedModel):
     def out_channels(self) -> Set[str]:
         if self._declared_out_channels is not None:
             return set(self._declared_out_channels)
-        return super().out_channels | {'behavior'}
+        return {f'neural:{region}' for region in self.region_layer_map} | {'behavior'}
 
     def participate(self, session) -> None:
         """Run a session; a legacy-benchmark session replays the exact ``digest_text``.
@@ -185,15 +186,23 @@ class LanguageModelAdapter(UnifiedModel):
         configures the legacy model as the benchmark did and makes one
         ``digest_text`` call that can return neural and behavioral outputs
         together. Other sessions use the typed drivers over ``process``.
+        One adapter runs one session at a time: the ``Subject`` base refuses a second
+        session that starts before the first ends. The guard is per adapter object; two adapters
+        around one legacy model object are not guarded against each other.
         """
-        session = DeclaredInputSession(session, self.in_channels)
-        channels = tuple(session.requested_output_channels or ())
+        channels = tuple(session.outputs or ())
+        if not channels:
+            raise ValueError(f'The session requests no output; request at least one of '
+                             f'{sorted(self.out_channels)}.')
         missing = set(channels) - self.out_channels
-        if not channels or missing:
+        if missing:
             raise ValueError(f'Undeclared output channels {sorted(missing)}; declared: '
                              f'{sorted(self.out_channels)}')
-        context = session.task_context
+        task = session.task
         settings = measurement_settings(session)
+        if (task is None or task.task_type == 'passive') and self._configured_task is not None:
+            # A session with no task starts as on a fresh adapter: an earlier task is undone.
+            self.reset()
         if 'legacy_text' not in settings:
             self._requested_output = 'behavior' if channels == ('behavior',) else 'neural'
             try:
@@ -204,26 +213,29 @@ class LanguageModelAdapter(UnifiedModel):
             finally:
                 self._requested_output = None
             return
-        if context is not None and context.task_type != 'passive':
-            self.start_task(context)
+        if task is not None and task.task_type != 'passive':
+            self.start_task(task)
         for channel in channels:
             if channel.startswith('neural:'):
                 self.start_neural_recording(channel.split(':', 1)[1],
                                             settings.get('recording_type', 'fMRI'))
         drain_session_inputs(session)
         result = self._legacy.digest_text(settings['legacy_text'])
+        regions = [(channel, channel.split(':', 1)[1]) for channel in channels
+                   if channel.startswith('neural:')]
+        payloads = {channel: payload for channel, _, payload
+                    in demultiplex_neural_output(result['neural'], regions)} if regions else {}
         for channel in channels:
-            key = 'neural' if channel.startswith('neural:') else 'behavior'
-            session.respond(StreamEvent(channel, result[key], None, meta={'driver': 'legacy'}))
+            payload = payloads[channel] if channel in payloads else result['behavior']
+            session.respond(StreamEvent(channel, payload, None, meta={'driver': 'legacy'}))
 
     # Backwards-compatible: existing benchmarks call digest_text() directly
     def digest_text(self, text):
         return self._legacy.digest_text(text)
 
-    def start_task(self, task_context: TaskContext) -> None:
-        self._task_context = task_context
+    def start_task(self, task: TaskContext) -> None:
         # Legacy ArtificialSubject.start_behavioral_task(task) takes ONE arg
-        self.start_behavioral_task(task_context.task_type)
+        self.start_behavioral_task(task.task_type)
 
     # Backwards-compatible: existing benchmarks call these directly
     def start_behavioral_task(self, task):
@@ -263,7 +275,6 @@ class LanguageModelAdapter(UnifiedModel):
                 setattr(self._legacy, name, None)
         if '_token_count' in state:
             self._legacy._token_count = 0
-        self._task_context = None
         self._recording_active = False
         self._task_active = False
         self._registered_recordings = set()

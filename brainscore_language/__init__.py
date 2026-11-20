@@ -43,7 +43,7 @@ def load_benchmark(identifier: str) -> Benchmark:
 
 
 def load_model(identifier: str) -> 'Subject':
-    from brainscore_core.model_interface import Subject
+    from brainscore_core.contract import Subject
     from brainscore_language.compat.unified_adapter import LanguageModelAdapter
 
     import_plugin('brainscore_language', 'models', identifier)
@@ -60,16 +60,21 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
     """
     Score the model referenced by the `model_identifier` on the benchmark referenced by the `benchmark_identifier`.
     """
-    from brainscore_core.compatibility import (
-        check_compatibility,
-    )
+    from brainscore_core.compatibility import CompatibilityError, check_compatibility
     from brainscore_core.extraction_cache import weight_fingerprint_scope
     from brainscore_core.memory import check_memory
+    from brainscore_core.score_status import na_score
     from brainscore_core.score_metadata import (
-        infer_score_protocol,
         requested_output_channels_for_score,
         stamp_score_metadata,
     )
+    try:
+        from brainscore_core.score_metadata import record_measures
+    except ImportError as error:
+        raise ImportError(
+            'brainscore_language needs a brainscore_core with score_metadata.record_measures '
+            '(core ad7288a or later); update the core pin in requirements-v2.txt'
+        ) from error
 
     from brainscore_core.preflight import check_cache_directory
     check_cache_directory()
@@ -77,31 +82,46 @@ def _run_score(model_identifier: str, benchmark_identifier: str,
     model: ArtificialSubject = load_model(model_identifier)
     requested_channels = requested_output_channels_for_score(benchmark)
 
-    # Pre-flight checks
-    compatibility = check_compatibility(model, benchmark)
+    # The one place N/A is made: the declaration check, before any compute
+    # (rules 5.6, 5.7). A refusal during the run below is an error.
+    try:
+        compatibility = check_compatibility(model, benchmark)
+    except CompatibilityError as error:
+        score = na_score(error)
+        score.attrs['model_identifier'] = model_identifier
+        score.attrs['benchmark_identifier'] = benchmark_identifier
+        return score
     if check_mem:
         check_memory(model, benchmark)
 
     # A legacy benchmark calls digest_text and friends; it receives the permanent
     # facade, which runs those calls as sessions through the subject's participate.
-    from brainscore_core.legacy_facade import subject_for_benchmark
-    candidate = subject_for_benchmark(model, benchmark)
+    from brainscore_core.legacy_facade import (
+        declared_visual_degrees, record_replaced_answers, subject_for_benchmark)
+    candidate = subject_for_benchmark(model, benchmark,
+                                      visual_degrees=declared_visual_degrees(model))
 
     import time as _time
     _t0 = _time.time()
-    with weight_fingerprint_scope():
+    # A session no subject names belongs to the loaded subject (not the lookup key),
+    # also when this score runs inside another.
+    with weight_fingerprint_scope(), record_measures(subject=model.identifier) as measures:
         score: Score = benchmark(candidate)
+    # The run must leave the subject as it found it (same check as brainscore.score).
+    measures.check_released(benchmark_identifier, model_identifier)
     score.attrs['runtime_sec'] = round(_time.time() - _t0, 2)
     score.attrs['model_identifier'] = model_identifier
-    score.attrs['benchmark_identifier'] = benchmark_identifier
     stamp_score_metadata(
         score,
         model,
         requested_channels=requested_channels,
-        protocol=infer_score_protocol(model, benchmark, requested_channels),
-        harness_id='brainscore_language',
+        entry_point='brainscore_language',
+        measures=measures,
+        benchmark=benchmark,
+        benchmark_identifier=benchmark_identifier,
     )
     score.attrs['compatibility'] = compatibility.as_attrs()
+    record_replaced_answers(score, candidate)
     return score
 
 
@@ -116,12 +136,16 @@ def score(model_identifier: str, benchmark_identifier: str,
     experimental paradigm, primate measurements, comparison metric, and ceiling.
     This results in a quantitative
     `Score <https://brain-score-core.readthedocs.io/en/latest/modules/metrics.html#brainscore_core.metrics.Score>`_
-    ranging from 0 (least brain-like) to 1 (most brain-like under this benchmark).
+    where higher is more brain-like under this benchmark. A ceiling-normalized score is 1 at the
+    ceiling and can exceed 1 when the model exceeds the ceiling estimate.
     
     :param model_identifier: the identifier for the model
     :param benchmark_identifier: the identifier for the benchmark to test the model against
     :return: a Score of how brain-like the candidate model is under this benchmark. The score is normalized by
         this benchmark's ceiling such that 1 means the model matches the data to ceiling level.
+        For an incompatible pair, known from the declarations, the N/A result before any
+        compute: NaN, ``attrs['status'] == 'N/A'``, ``attrs['reason']`` and
+        ``attrs['missing_channels']``. A refusal during the run raises.
     """
     score_fn = partial(_run_score, check_mem=check_mem)
     return wrap_score(__file__,

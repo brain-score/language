@@ -4,7 +4,8 @@ import pandas as pd
 import xarray as xr
 from unittest.mock import MagicMock, patch
 
-from brainscore_core.model_interface import TaskContext, UnifiedModel, BrainScoreModel
+from brainscore_core.compatibility import ExecutionNotFeasibleError
+from brainscore_core.contract import TaskContext, Subject
 from brainscore_core.streaming_helpers import neural_response
 from brainscore_core.supported_data_standards.brainio.assemblies import NeuroidAssembly
 from brainscore_core.supported_data_standards.brainio.stimuli import StimulusSet
@@ -78,11 +79,14 @@ def _language_neural_assembly():
     ).reset_index('presentation')
 
 
-class TestLanguageAdapterIsUnifiedModel:
+class TestLanguageAdapterIsASubject:
 
     def test_isinstance(self):
+        # score() wraps a model that is not a Subject; the adapter must not be wrapped again.
+        from brainscore_core.contract import Subject
         adapter = LanguageModelAdapter(_make_legacy_model())
-        assert isinstance(adapter, UnifiedModel)
+        assert isinstance(adapter, Subject)
+        assert type(adapter).__bases__ == (Subject,)    # no other base class
 
 
 class TestLanguageAdapterIdentity:
@@ -99,9 +103,10 @@ class TestLanguageAdapterIdentity:
         adapter = LanguageModelAdapter(legacy)
         assert adapter.identifier == 'gpt2-xl'
 
-    def test_supported_modalities(self):
+    def test_declares_text_channel_only(self):
         adapter = LanguageModelAdapter(_make_legacy_model())
-        assert adapter.supported_modalities == {'text'}
+        assert adapter.in_channels == {'text'}
+        assert adapter.required_channels == {'text'}
 
     def test_region_layer_map_from_attribute(self):
         legacy = _make_legacy_model(
@@ -116,7 +121,7 @@ class TestLanguageAdapterIdentity:
         assert adapter.region_layer_map == {}
 
     @pytest.mark.parametrize('identifier', [
-        'randomembedding-100', 'randomembedding-1600', 'glove-840b',
+        'randomembedding-100', 'randomembedding-1600', 'glove-840b', 'oasm-sigma0', 'oasm-sigma1.0', 'oasm-sigma4.8',
     ])
     def test_embedding_declarations_without_a_layer_map(self, identifier):
         adapter = LanguageModelAdapter(_make_legacy_model(identifier=identifier))
@@ -126,6 +131,20 @@ class TestLanguageAdapterIdentity:
             'neural:language_system_right_hemisphere',
         }
         assert adapter.region_layer_map == {}
+
+    def test_every_registered_oasm_model_declares_its_neural_outputs(self):
+        # The OASM control models record at every target and have no layer map; an old neural
+        # benchmark must find its region among their declared outputs (production scores them).
+        import brainscore_language.models.oasm  # noqa: F401  registers the OASM identifiers; needs numpy and scipy only
+        from brainscore_language import model_registry
+        from brainscore_language.compat.unified_adapter import _LEGACY_OUTPUT_CHANNELS
+        registered = [identifier for identifier in model_registry if identifier.startswith('oasm-')]
+        assert registered, 'no OASM model is registered'
+        assert all('neural:language_system' in _LEGACY_OUTPUT_CHANNELS.get(identifier, ()) for identifier in registered)
+
+    def test_a_model_that_records_one_target_declares_only_that_target(self):
+        adapter = LanguageModelAdapter(_make_legacy_model(identifier='llada-8b-base'))
+        assert adapter.out_channels == {'neural:language_system'}
 
     def test_explicit_output_declaration_is_copied(self):
         channels = {'neural:custom_region'}
@@ -184,7 +203,7 @@ class TestEmbeddingSessions:
         legacy.start_neural_recording('language_system', 'fMRI')
         expected = legacy.digest_text(list(stimuli['sentence']))['neural']
 
-        actual = neural_response(adapter, stimuli, record='language_system')
+        actual = neural_response(adapter, stimuli, ['neural:language_system'])
         np.testing.assert_array_equal(actual.values, expected.values)
         assert list(actual['stimulus_id'].values) == list(stimuli['stimulus_id'])
         assert list(actual['object_name'].values) == list(stimuli['object_name'])
@@ -194,7 +213,8 @@ class TestEmbeddingSessions:
 
         legacy = _make_legacy_model(identifier='randomembedding-100')
         facade = LegacyBenchmarkFacade(LanguageModelAdapter(legacy))
-        with pytest.raises(NotImplementedError, match="no 'behavior' output"):
+        from brainscore_core.compatibility import ExecutionNotFeasibleError
+        with pytest.raises(ExecutionNotFeasibleError, match="no 'behavior' output"):
             facade.start_behavioral_task('next_word')
         legacy.start_behavioral_task.assert_not_called()
         legacy.digest_text.assert_not_called()
@@ -297,7 +317,7 @@ class TestLanguageAdapterProcess:
         legacy_stream.digest_text.return_value = {'neural': expected}
         stream_adapter = LanguageModelAdapter(legacy_stream)
         scored = neural_response(
-            stream_adapter, stimuli, record='language_system'
+            stream_adapter, stimuli, ['neural:language_system']
         )
 
         xr.testing.assert_identical(scored, legacy_output)
@@ -307,15 +327,12 @@ class TestLanguageAdapterProcess:
 
     @pytest.mark.parametrize('channel', ['behavior', 'neural:language_system'])
     def test_typed_session_refuses_variance_before_any_legacy_call(self, channel):
-        from brainscore_core.streaming import BufferedSession
+        from brainscore_core.streaming_helpers import stimulus_session
         legacy = _make_legacy_model(
             region_layer_mapping={'language_system': 'language'})
-        session = BufferedSession(
-            stimulus_set=_language_stimulus_set(),
-            task_context=TaskContext(task_type='next_word'),
-            requested_output_channels=(channel,))
+        session = stimulus_session(_language_stimulus_set(), (channel,), task=TaskContext(task_type='next_word'))
         session.settings = {'require_variance': True}
-        with pytest.raises(NotImplementedError, match='trial-to-trial variance'):
+        with pytest.raises(ExecutionNotFeasibleError, match='trial-to-trial variance'):
             LanguageModelAdapter(legacy).participate(session)
         legacy.start_behavioral_task.assert_not_called()
         legacy.start_neural_recording.assert_not_called()
@@ -401,7 +418,6 @@ class TestLanguageAdapterReset:
 
         adapter.reset()
 
-        assert adapter._task_context is None
         assert adapter._recording_active is False
         assert adapter._task_active is False
 
@@ -461,7 +477,7 @@ class TestLanguageAutoWrapping:
             with patch('brainscore_language.import_plugin'):
                 model = brainscore_language.load_model('test-gpt2')
 
-        assert isinstance(model, UnifiedModel)
+        assert isinstance(model, Subject)
         assert isinstance(model, LanguageModelAdapter)
         # After load_model, identifier was overwritten to string 'test-gpt2'
         assert model.identifier == 'test-gpt2'
@@ -482,22 +498,28 @@ class TestLanguageAutoWrapping:
                 model = brainscore_language.load_model('test-gpt2')
 
         scored = neural_response(
-            model, _language_stimulus_set(), record='language_system'
+            model, _language_stimulus_set(), ['neural:language_system']
         )
 
         assert isinstance(model, LanguageModelAdapter)
         xr.testing.assert_identical(scored, expected)
 
     def test_load_model_does_not_double_wrap_unified(self):
-        """If the model is already a UnifiedModel, don't wrap it."""
+        """If the model is already a Subject, do not wrap it."""
         import brainscore_language
 
-        native = BrainScoreModel(
-            identifier='native-lang',
-            model=None,
-            region_layer_map={},
-            preprocessors={'text': lambda m, s, **kw: None},
-        )
+        class NativeSubject(Subject):
+            identifier = 'native-subject'
+            in_channels = set()
+            out_channels = set()
+
+            def participate(self, session):
+                pass
+
+            def reset(self):
+                pass
+
+        native = NativeSubject()
 
         with patch.object(brainscore_language, 'model_registry',
                           {'native-lang': lambda: native}):
@@ -636,7 +658,7 @@ class _AppendingSubject:
 def _next_word_task():
     from brainscore_core.legacy_facade import text_stimulus_set
     stimuli = text_stimulus_set(['the cat', 'sat on'])
-    return stimuli, TaskContext(task_type='next_word', metadata={'stimulus_set': stimuli})
+    return stimuli, TaskContext(task_type='next_word')
 
 
 def test_neural_then_behavior_session_returns_behavior():
@@ -644,8 +666,11 @@ def test_neural_then_behavior_session_returns_behavior():
     from brainscore_core.supported_data_standards.brainio.assemblies import BehavioralAssembly
     stimuli, task = _next_word_task()
     adapter = LanguageModelAdapter(_AppendingSubject())
-    assert isinstance(neural_response(adapter, stimuli, record='language_system'), NeuroidAssembly)
-    assert isinstance(behavioral_response(adapter, task), BehavioralAssembly)
+    neural = neural_response(adapter, stimuli, ['neural:language_system'])
+    assert isinstance(neural, NeuroidAssembly) and neural.shape == (2, 2)
+    behavior = behavioral_response(adapter, stimuli, task)
+    assert isinstance(behavior, BehavioralAssembly)
+    assert list(behavior.values) == ['w', 'w']           # the legacy behavioral output
 
 
 def test_behavior_then_neural_session_returns_neural():
@@ -653,8 +678,11 @@ def test_behavior_then_neural_session_returns_neural():
     from brainscore_core.supported_data_standards.brainio.assemblies import BehavioralAssembly
     stimuli, task = _next_word_task()
     adapter = LanguageModelAdapter(_AppendingSubject())
-    assert isinstance(behavioral_response(adapter, task), BehavioralAssembly)
-    assert isinstance(neural_response(adapter, stimuli, record='language_system'), NeuroidAssembly)
+    behavior = behavioral_response(adapter, stimuli, task)
+    assert isinstance(behavior, BehavioralAssembly) and list(behavior.values) == ['w', 'w']
+    neural = neural_response(adapter, stimuli, ['neural:language_system'])
+    assert isinstance(neural, NeuroidAssembly)
+    assert neural.shape == (2, 2) and not neural.values.any()   # the legacy zeros
 
 
 def test_direct_process_still_prefers_the_configured_recording():
@@ -663,16 +691,18 @@ def test_direct_process_still_prefers_the_configured_recording():
     adapter = LanguageModelAdapter(legacy)
     adapter.start_behavioral_task('next_word')
     adapter.start_neural_recording('language_system', 'fMRI')
-    assert isinstance(adapter.process(stimuli), NeuroidAssembly)
+    activity = adapter.process(stimuli)
+    assert isinstance(activity, NeuroidAssembly)
+    assert activity.shape == (2, 2) and not activity.values.any()   # the legacy zeros
 
 
 def test_typed_joint_neural_and_behavior_request_is_unchanged():
-    from brainscore_core.streaming import BufferedSession
+    from brainscore_core.streaming_helpers import stimulus_session
     stimuli, task = _next_word_task()
     legacy = _AppendingSubject()
-    session = BufferedSession(stimulus_set=stimuli, task_context=task,
-                              requested_output_channels=['behavior', 'neural:language_system'])
-    with pytest.raises(NotImplementedError):
+    session = stimulus_session(stimuli, ['behavior', 'neural:language_system'], task=task)
+    from brainscore_core.compatibility import ExecutionNotFeasibleError
+    with pytest.raises(ExecutionNotFeasibleError):
         LanguageModelAdapter(legacy).participate(session)
     assert legacy.digests == 0
 
@@ -684,8 +714,8 @@ def test_facade_after_typed_sessions_returns_one_legacy_call(neural, behavior):
     stimuli, task = _next_word_task()
     legacy = _AppendingSubject()
     adapter = LanguageModelAdapter(legacy)
-    neural_response(adapter, stimuli, record='language_system')
-    behavioral_response(adapter, task)
+    neural_response(adapter, stimuli, ['neural:language_system'])
+    behavioral_response(adapter, stimuli, task)
     facade = LegacyBenchmarkFacade(adapter)
     facade.reset()
     if neural:
@@ -696,3 +726,149 @@ def test_facade_after_typed_sessions_returns_one_legacy_call(neural, behavior):
     actual = facade.digest_text(['the cat', 'sat on'])
     assert legacy.digests == before + 1
     assert set(actual) == {k for k, on in (('neural', neural), ('behavior', behavior)) if on}
+
+
+class _RealInterfaceLegacySubject:
+    """An old language subject with the real behavioral tasks: next_word and reading_times."""
+
+    def __init__(self):
+        self.calls = []
+
+    def identifier(self):
+        return 'legacy-real-interface'
+
+    def start_behavioral_task(self, task):
+        self.calls.append(task)
+        if task not in ('next_word', 'reading_times'):
+            raise NotImplementedError(f'task {task!r} is not supported')
+
+    def digest_text(self, text):
+        self.calls.append('digest_text')
+        raise AssertionError('never called')
+
+
+class TestLanguageAdapterHasNoChoice:
+    """An old language model has no forced-choice task, so the adapter declares no choice
+    and a benchmark that requests behavior:choice is N/A before any call."""
+
+    def test_a_choice_benchmark_is_not_applicable_before_any_call(self):
+        from types import SimpleNamespace
+        from brainscore_core.compatibility import CompatibilityError, check_channel_compatibility
+        legacy = _RealInterfaceLegacySubject()
+        adapter = LanguageModelAdapter(legacy)
+        assert 'behavior:choice' not in adapter.out_channels and 'behavior' in adapter.out_channels
+        roar_text = SimpleNamespace(identifier='Yeatman2021-lexical_decision-text', trial_memory='none',
+                                    required_input_channels={'text', 'instruction'},
+                                    requested_output_channels={'behavior:choice'})
+        with pytest.raises(CompatibilityError, match='behavior:choice'):
+            check_channel_compatibility(adapter, roar_text)
+        assert legacy.calls == []
+
+
+class TestOneSessionAtATime:
+    """One adapter holds the task and recording state of one session (unified issue 81)."""
+
+    @staticmethod
+    def _run(subject):
+        stimuli, _ = _next_word_task()
+        return neural_response(subject, stimuli, ['neural:language_system'])
+
+    @staticmethod
+    def _adapter(during_digest=None):
+        class Legacy(_AppendingSubject):
+            def digest_text(self, text):
+                if during_digest is not None:
+                    during_digest()
+                return super().digest_text(text)
+        legacy = Legacy()
+        return LanguageModelAdapter(legacy), legacy
+
+    def test_a_second_session_during_the_first_is_refused(self):
+        refusals = []
+
+        def nested():
+            if not refusals:
+                with pytest.raises(RuntimeError, match='one session at a time') as refusal:
+                    self._run(adapter)
+                refusals.append(str(refusal.value))
+        adapter, _ = self._adapter(nested)
+        assert isinstance(self._run(adapter), NeuroidAssembly)   # the refused call did not end it
+        assert 'appending-lm' in refusals[0]
+
+    def test_a_session_from_another_thread_is_refused(self):
+        import threading
+        started, release, outcome, errors = threading.Event(), threading.Event(), {}, []
+
+        def slow():
+            if threading.current_thread().name == 'first-session':
+                started.set()
+                assert release.wait(5)
+        adapter, _ = self._adapter(slow)
+
+        def run_first():
+            outcome['first'] = self._run(adapter)
+        first = threading.Thread(target=run_first, name='first-session')
+        first.start()
+        assert started.wait(5)
+        try:
+            self._run(adapter)
+        except RuntimeError as error:
+            errors.append(error)
+        finally:
+            release.set()
+            first.join(5)
+        assert errors and 'one session at a time' in str(errors[0])
+        assert not first.is_alive()
+        assert isinstance(outcome.get('first'), NeuroidAssembly)   # the first finished successfully
+
+    def test_a_new_session_runs_after_a_session_that_failed(self):
+        controls = {'fail': True}
+
+        def failing():
+            if controls['fail']:
+                raise ValueError('legacy failure')
+        adapter, _ = self._adapter(failing)
+        with pytest.raises(ValueError, match='legacy failure'):
+            self._run(adapter)
+        controls['fail'] = False
+        assert isinstance(self._run(adapter), NeuroidAssembly)
+
+    def test_two_sessions_in_sequence_run_as_before(self):
+        adapter, legacy = self._adapter()
+        for _ in range(2):
+            assert isinstance(self._run(adapter), NeuroidAssembly)
+        assert legacy.digests == 2
+        assert len(legacy.neural_recordings) == 1          # the same setup is not sent again
+        region, recording_type = legacy.neural_recordings[0]
+        assert region == 'language_system'
+        assert recording_type == 'fMRI'
+
+
+def test_a_session_with_no_requested_output_is_told_to_request_one():
+    from brainscore_core.streaming import Session
+    with pytest.raises(ValueError, match='at least one'):
+        LanguageModelAdapter(_AppendingSubject()).participate(Session([], []))
+
+
+def test_a_legacy_text_session_gives_each_region_only_its_neuroids():
+    """One digest_text for two regions: each channel gets its region's part, as the core driver."""
+    from brainscore_core.streaming import Session
+
+    class TwoRegions(_AppendingSubject):
+        def __init__(self):
+            super().__init__()
+            self.region_layer_mapping = {'early': 'transformer.h.1', 'late': 'transformer.h.5'}
+
+        def digest_text(self, text):
+            regions = [target for target, _ in self.neural_recordings]
+            return {'neural': NeuroidAssembly(
+                np.zeros((len(text), len(regions))), dims=['presentation', 'neuroid'],
+                coords={'stimulus': ('presentation', list(text)),
+                        'neuroid_id': ('neuroid', regions), 'region': ('neuroid', regions),
+                        'layer': ('neuroid', [self.region_layer_mapping[r] for r in regions])})}
+
+    session = Session([], ['neural:early', 'neural:late'], settings={'legacy_text': ['a', 'b']})
+    LanguageModelAdapter(TwoRegions()).participate(session)
+    assert sorted(event.channel for event in session.emitted) == ['neural:early', 'neural:late']
+    for event in session.emitted:
+        assert event.payload['region'].values.tolist() == [event.channel.split(':')[1]]

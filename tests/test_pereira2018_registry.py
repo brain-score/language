@@ -4,18 +4,15 @@ from unittest.mock import Mock
 import pytest
 
 from brainscore_language import benchmark_registry
-from brainscore_language.benchmarks.pereira2018 import benchmark, unified
+from brainscore_language.benchmarks.pereira2018 import benchmark
 
 VARIANTS = {
-    'linear': ('linear_pearsonr', False),
-    'linear-unified': ('linear_pearsonr', True),
-    'ridge': ('ridge_pearsonr', False),
-    'ridge-unified': ('ridge_pearsonr', True),
-    'linear-shuffle': ('linear_pearsonr', False),
+    'ridge': 'ridge_pearsonr',
+    'linear-shuffle': 'linear_pearsonr',
 }
 
 
-def test_registry_contains_all_ten_variants():
+def test_registry_contains_the_four_variants():
     expected = {
         f'Pereira2018.{experiment}-{variant}'
         for experiment in ('243sentences', '384sentences')
@@ -29,32 +26,26 @@ def test_registry_contains_all_ten_variants():
 @pytest.mark.parametrize('variant', VARIANTS)
 def test_registered_factory_selects_metric_and_route(monkeypatch, experiment, variant):
     # Replace construction to inspect configuration without downloading brain data.
-    legacy_constructor, unified_constructor = Mock(), Mock()
-    monkeypatch.setattr(benchmark, '_Pereira2018Experiment', legacy_constructor)
-    monkeypatch.setattr(unified, '_Pereira2018ExperimentUnified', unified_constructor)
-    metric, is_unified = VARIANTS[variant]
-    selected, unused = ((unified_constructor, legacy_constructor) if is_unified
-                        else (legacy_constructor, unified_constructor))
+    constructor = Mock()
+    monkeypatch.setattr(benchmark, '_Pereira2018Experiment', constructor)
+    metric = VARIANTS[variant]
 
     result = benchmark_registry[f'Pereira2018.{experiment}-{variant}']()
 
-    selected.assert_called_once()
-    unused.assert_not_called()
-    assert result is selected.return_value
-    kwargs = selected.call_args.kwargs
+    constructor.assert_called_once()
+    assert result is constructor.return_value
+    kwargs = constructor.call_args.kwargs
     assert kwargs['experiment'] == experiment
     assert kwargs['metric'] == metric
-    if variant.startswith('ridge'):
+    if variant == 'ridge':
         assert kwargs['crossvalidation_kwargs'] == {
             'split_coord': 'story', 'kfold': 'group', 'random_state': 1234,
         }
-    elif variant == 'linear-shuffle':
+    else:
         assert kwargs['identifier_suffix'] == '-shuffle'
         assert kwargs['crossvalidation_kwargs'] == {
             'splits': 10, 'train_size': 0.9, 'kfold': False, 'random_state': 1,
         }
-    else:
-        assert 'crossvalidation_kwargs' not in kwargs
 
 
 @pytest.mark.parametrize('lazy', [False, True])
