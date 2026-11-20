@@ -15,7 +15,8 @@ def _prepare_weights(name):
     if not weights_file.is_file():
         # download zip
         zip_filename = f"{name}.zip"
-        url = f'https://nlp.stanford.edu/data/{zip_filename}'
+        # Stanford's official mirror hosts the original pretrained vectors.
+        url = f'https://huggingface.co/stanfordnlp/glove/resolve/main/{zip_filename}'
         _logger.info(f"Downloading weights zip from {url} to {zip_filename}")
         urlretrieve(url, zip_filename)
         # unzip
