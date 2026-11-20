@@ -199,6 +199,9 @@ class LanguageModelAdapter(Subject):
                              f'{sorted(self.out_channels)}')
         task = session.task
         settings = measurement_settings(session)
+        if (task is None or task.task_type == 'passive') and self._configured_task is not None:
+            # A session with no task starts as on a fresh adapter: an earlier task is undone.
+            self.reset()
         if 'legacy_text' not in settings:
             self._requested_output = 'behavior' if channels == ('behavior',) else 'neural'
             try:
