@@ -12,6 +12,7 @@ from typing import Any, Dict, Optional, Set
 from brainscore_core.contract import Subject, TaskContext
 from brainscore_core.streaming import StreamEvent
 from brainscore_core.streaming_helpers import (
+    demultiplex_neural_output,
     drain_session_inputs,
     drive_behavior_session,
     drive_neural_session,
@@ -220,9 +221,13 @@ class LanguageModelAdapter(Subject):
                                             settings.get('recording_type', 'fMRI'))
         drain_session_inputs(session)
         result = self._legacy.digest_text(settings['legacy_text'])
+        regions = [(channel, channel.split(':', 1)[1]) for channel in channels
+                   if channel.startswith('neural:')]
+        payloads = {channel: payload for channel, _, payload
+                    in demultiplex_neural_output(result['neural'], regions)} if regions else {}
         for channel in channels:
-            key = 'neural' if channel.startswith('neural:') else 'behavior'
-            session.respond(StreamEvent(channel, result[key], None, meta={'driver': 'legacy'}))
+            payload = payloads[channel] if channel in payloads else result['behavior']
+            session.respond(StreamEvent(channel, payload, None, meta={'driver': 'legacy'}))
 
     # Backwards-compatible: existing benchmarks call digest_text() directly
     def digest_text(self, text):

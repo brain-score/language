@@ -849,3 +849,26 @@ def test_a_session_with_no_requested_output_is_told_to_request_one():
     with pytest.raises(ValueError, match='at least one'):
         LanguageModelAdapter(_AppendingSubject()).participate(Session([], []))
 
+
+def test_a_legacy_text_session_gives_each_region_only_its_neuroids():
+    """One digest_text for two regions: each channel gets its region's part, as the core driver."""
+    from brainscore_core.streaming import Session
+
+    class TwoRegions(_AppendingSubject):
+        def __init__(self):
+            super().__init__()
+            self.region_layer_mapping = {'early': 'transformer.h.1', 'late': 'transformer.h.5'}
+
+        def digest_text(self, text):
+            regions = [target for target, _ in self.neural_recordings]
+            return {'neural': NeuroidAssembly(
+                np.zeros((len(text), len(regions))), dims=['presentation', 'neuroid'],
+                coords={'stimulus': ('presentation', list(text)),
+                        'neuroid_id': ('neuroid', regions), 'region': ('neuroid', regions),
+                        'layer': ('neuroid', [self.region_layer_mapping[r] for r in regions])})}
+
+    session = Session([], ['neural:early', 'neural:late'], settings={'legacy_text': ['a', 'b']})
+    LanguageModelAdapter(TwoRegions()).participate(session)
+    assert sorted(event.channel for event in session.emitted) == ['neural:early', 'neural:late']
+    for event in session.emitted:
+        assert event.payload['region'].values.tolist() == [event.channel.split(':')[1]]
