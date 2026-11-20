@@ -12,6 +12,7 @@ from typing import Any, Dict, Optional, Set
 from brainscore_core.contract import Subject, TaskContext
 from brainscore_core.streaming import StreamEvent
 from brainscore_core.streaming_helpers import (
+    demultiplex_neural_output,
     drain_session_inputs,
     drive_behavior_session,
     drive_neural_session,
@@ -190,12 +191,18 @@ class LanguageModelAdapter(Subject):
         around one legacy model object are not guarded against each other.
         """
         channels = tuple(session.outputs or ())
+        if not channels:
+            raise ValueError(f'The session requests no output; request at least one of '
+                             f'{sorted(self.out_channels)}.')
         missing = set(channels) - self.out_channels
-        if not channels or missing:
+        if missing:
             raise ValueError(f'Undeclared output channels {sorted(missing)}; declared: '
                              f'{sorted(self.out_channels)}')
         task = session.task
         settings = measurement_settings(session)
+        if (task is None or task.task_type == 'passive') and self._configured_task is not None:
+            # A session with no task starts as on a fresh adapter: an earlier task is undone.
+            self.reset()
         if 'legacy_text' not in settings:
             self._requested_output = 'behavior' if channels == ('behavior',) else 'neural'
             try:
@@ -214,9 +221,13 @@ class LanguageModelAdapter(Subject):
                                             settings.get('recording_type', 'fMRI'))
         drain_session_inputs(session)
         result = self._legacy.digest_text(settings['legacy_text'])
+        regions = [(channel, channel.split(':', 1)[1]) for channel in channels
+                   if channel.startswith('neural:')]
+        payloads = {channel: payload for channel, _, payload
+                    in demultiplex_neural_output(result['neural'], regions)} if regions else {}
         for channel in channels:
-            key = 'neural' if channel.startswith('neural:') else 'behavior'
-            session.respond(StreamEvent(channel, result[key], None, meta={'driver': 'legacy'}))
+            payload = payloads[channel] if channel in payloads else result['behavior']
+            session.respond(StreamEvent(channel, payload, None, meta={'driver': 'legacy'}))
 
     # Backwards-compatible: existing benchmarks call digest_text() directly
     def digest_text(self, text):
