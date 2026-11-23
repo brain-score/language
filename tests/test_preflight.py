@@ -300,7 +300,7 @@ class TestRefusalDuringTheRunIsAnError:
 
     @patch('brainscore_language.load_benchmark')
     @patch('brainscore_language.load_model')
-    def test_a_legacy_behavioral_task_for_a_neural_only_subject_is_an_error(
+    def test_a_legacy_behavioral_task_for_a_neural_only_subject_is_not_applicable(
             self, mock_load_model, mock_load_benchmark):
         from brainscore_language import _run_score
         subject = _NeuralOnly()
@@ -311,10 +311,12 @@ class TestRefusalDuringTheRunIsAnError:
         mock_load_model.return_value = subject
         mock_load_benchmark.return_value = self._legacy_benchmark(run)
 
-        with pytest.raises(ExecutionNotFeasibleError, match="declares no 'behavior' output") as caught:
-            _run_score('neural-only', 'legacy-reading-times', check_mem=False)
+        # Refused before any input reached the subject: N/A with the refusal as the reason.
+        result = _run_score('neural-only', 'legacy-reading-times', check_mem=False)
 
-        assert caught.value.channels == {'behavior'}
+        assert result.attrs['status'] == 'N/A'
+        assert "declares no 'behavior' output" in result.attrs['reason']
+        assert result.attrs['missing_channels'] == ['behavior']
         assert subject.inputs == []
 
     @patch('brainscore_language.load_benchmark')
