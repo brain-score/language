@@ -1,4 +1,5 @@
 import logging
+import math
 import numpy as np
 import pytest
 from pytest import approx
@@ -81,11 +82,10 @@ class TestRunScoring:
         score_entries = list(score_entries)
         assert len(score_entries) == 1
         score_entry = score_entries[0]
-        assert score_entry.score_ceiled is None
-        assert score_entry.score_raw is None
+        # The model refuses the task before any input reached it, so the pair is N/A
+        # (Contract Rules 5.6, 5.7): NaN with the reason in the comment, not retried.
+        assert math.isnan(score_entry.score_ceiled)
+        assert math.isnan(score_entry.score_raw)
         assert score_entry.error is None
-        assert 'ExecutionNotFeasibleError' in score_entry.comment
+        assert score_entry.comment.startswith('N/A: ')
         assert "declares no 'behavior' output" in score_entry.comment
-        # The comment is shortened in the middle to the column length, and the long
-        # refusal message fills its end, so the stack trace is not checked here.
-        assert score_entry.comment.startswith('Model randomembedding-100 could not run')
